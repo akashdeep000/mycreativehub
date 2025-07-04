@@ -16,11 +16,8 @@ export default function Landing() {
           <h1 className="text-5xl font-serif font-bold text-gray-800 mb-4">
             The Creative Business Toolkit
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-            The complete digital workspace that transforms how creative entrepreneurs 
-            plan, organize, and scale their business. Beautiful tools that actually 
-            work the way you think.
-          </p>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">Designed for Makers, Dreamers and Doers.
+          This is your space to stay organised, feel inspired and build a business that works for you.</p>
           <Button 
             size="lg" 
             className="bg-gradient-to-r from-[#f46454] to-[#e53e3e] hover:from-[#e53e3e] hover:to-[#d53534] text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
