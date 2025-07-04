@@ -1,11 +1,23 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Palette } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Login() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    staySignedIn: false
+  });
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
@@ -13,6 +25,54 @@ export default function Login() {
       window.location.href = "/";
     }
   }, [isAuthenticated]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          staySignedIn: formData.staySignedIn
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Login failed");
+      }
+
+      toast({
+        title: "Welcome back!",
+        description: "Successfully logged in. Redirecting to dashboard...",
+      });
+
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Invalid email or password. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value
+    });
+  };
 
   if (isLoading) {
     return (
@@ -51,23 +111,75 @@ export default function Login() {
             {/* Login Card */}
             <Card className="border-pink-100 shadow-lg">
               <CardHeader className="text-center pb-6">
-                <CardTitle className="text-xl font-serif">Ready to get creative?</CardTitle>
+                <CardTitle className="text-xl font-serif">Welcome Back!</CardTitle>
                 <CardDescription>
-                  Access your personal dashboard, templates, and progress
+                  Sign in to access your personal dashboard and continue your creative journey
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <Button 
-                  size="lg" 
-                  className="w-full bg-gradient-to-r from-[#f46454] to-[#e53e3e] hover:from-[#e53e3e] hover:to-[#d53534] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-                  onClick={() => window.location.href = '/api/login'}
-                >
-                  Enter Your Dashboard
-                </Button>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      className="rounded-lg"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      name="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                      className="rounded-lg"
+                      placeholder="Enter your password"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="staySignedIn"
+                      name="staySignedIn"
+                      checked={formData.staySignedIn}
+                      onCheckedChange={(checked) => 
+                        setFormData({...formData, staySignedIn: checked as boolean})
+                      }
+                    />
+                    <Label htmlFor="staySignedIn" className="text-sm text-gray-600">
+                      Stay signed in for 30 days
+                    </Label>
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    size="lg" 
+                    disabled={isSubmitting}
+                    className="w-full bg-gradient-to-r from-[#f46454] to-[#e53e3e] hover:from-[#e53e3e] hover:to-[#d53534] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    {isSubmitting ? "Signing In..." : "Enter Your Dashboard"}
+                  </Button>
+                </form>
                 
-                <div className="text-center pt-4">
-                  <p className="text-sm text-gray-500">
-                    Secure authentication powered by Replit
+                <div className="text-center pt-6">
+                  <p className="text-sm text-gray-600">
+                    Don't have an account?{" "}
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto text-[#f46454] hover:text-[#e53e3e]"
+                      onClick={() => window.location.href = '/signup'}
+                    >
+                      Sign up here
+                    </Button>
                   </p>
                 </div>
               </CardContent>

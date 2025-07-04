@@ -88,7 +88,17 @@ export default function Sidebar() {
             <span>Settings</span>
           </button>
           <button 
-            onClick={() => window.location.href = '/api/logout'}
+            onClick={async () => {
+              try {
+                await fetch("/api/auth/logout", {
+                  method: "POST",
+                  credentials: "include",
+                });
+                window.location.href = "/";
+              } catch (error) {
+                console.error("Logout error:", error);
+              }
+            }}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors"
           >
             <LogOut className="w-5 h-5" />
