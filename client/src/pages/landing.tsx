@@ -4,7 +4,7 @@ import { Palette, Calendar, Clock, TrendingUp, Lightbulb, Mail } from "lucide-re
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50">
+    <div className="min-h-screen" style={{backgroundColor: '#fff7e5'}}>
       <div className="container mx-auto px-4 py-16">
         {/* Header */}
         <div className="text-center mb-16">
@@ -23,7 +23,7 @@ export default function Landing() {
           </p>
           <Button 
             size="lg" 
-            className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+            className="bg-gradient-to-r from-[#f46454] to-[#e53e3e] hover:from-[#e53e3e] hover:to-[#d53534] text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
             onClick={() => window.location.href = '/api/login'}
           >
             Get Started
@@ -118,7 +118,7 @@ export default function Landing() {
               </p>
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white px-8 py-3 rounded-full"
+                className="bg-gradient-to-r from-[#f46454] to-[#e53e3e] hover:from-[#e53e3e] hover:to-[#d53534] text-white px-8 py-3 rounded-full"
                 onClick={() => window.location.href = '/api/login'}
               >
                 Start Your Journey
