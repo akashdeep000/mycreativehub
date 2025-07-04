@@ -120,6 +120,11 @@ Changelog:
   - Implemented secure user authentication with Replit Auth (OpenID Connect)
   - Added logout functionality in sidebar navigation
   - Users are automatically redirected to dashboard after login
+- July 04, 2025. Restructured homepage layout:
+  - Login page is now the main homepage (/) with large title and subtitle
+  - Removed feature sections from login page - users see toolkit modules in dashboard
+  - Dashboard shows all toolkit modules after successful authentication
+  - Streamlined user flow: homepage login → dashboard with full toolkit access
 
 ## User Preferences
 
