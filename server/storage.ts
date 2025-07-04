@@ -182,16 +182,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserTemplateInstances(userId: string, templateId?: number): Promise<UserTemplateInstance[]> {
-    let query = db
-      .select()
-      .from(userTemplateInstances)
-      .where(eq(userTemplateInstances.userId, userId));
-
     if (templateId) {
-      query = query.where(eq(userTemplateInstances.templateId, templateId));
+      return await db
+        .select()
+        .from(userTemplateInstances)
+        .where(and(eq(userTemplateInstances.userId, userId), eq(userTemplateInstances.templateId, templateId)))
+        .orderBy(desc(userTemplateInstances.updatedAt));
     }
 
-    return await query.orderBy(desc(userTemplateInstances.updatedAt));
+    return await db
+      .select()
+      .from(userTemplateInstances)
+      .where(eq(userTemplateInstances.userId, userId))
+      .orderBy(desc(userTemplateInstances.updatedAt));
   }
 
   async createUserTemplateInstance(instance: InsertUserTemplateInstance): Promise<UserTemplateInstance> {

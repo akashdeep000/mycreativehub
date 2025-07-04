@@ -14,12 +14,12 @@ export default function Landing() {
             </div>
           </div>
           <h1 className="text-5xl font-serif font-bold text-gray-800 mb-4">
-            Creative Business Toolkit
+            Your Creative Business Hub
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-            Your all-in-one digital workspace for creative entrepreneurs. 
-            Organize, plan, and grow your creative business with beautiful, 
-            functional tools designed just for you.
+            The complete digital workspace that transforms how creative entrepreneurs 
+            plan, organize, and scale their business. Beautiful tools that actually 
+            work the way you think.
           </p>
           <Button 
             size="lg" 
