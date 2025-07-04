@@ -11,6 +11,7 @@ import RecentActivity from "@/components/toolkit/recent-activity";
 import StatsCard from "@/components/toolkit/stats-card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import type { User, UserStats } from "@shared/schema";
 
 const toolkitModules = [
   {
@@ -79,7 +80,7 @@ export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
 
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<UserStats>({
     queryKey: ["/api/stats"],
     retry: false,
   });
@@ -124,7 +125,7 @@ export default function Dashboard() {
         {/* Welcome Header */}
         <div className="mb-8">
           <h2 className="text-3xl lg:text-4xl font-serif font-semibold text-gray-800 mb-2">
-            Good morning, {user?.firstName || "Creative"}
+            Good morning, {user?.firstName || "there"}
           </h2>
           <p className="text-gray-600 text-lg">Ready to build your creative empire today?</p>
         </div>
