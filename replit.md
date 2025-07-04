@@ -112,6 +112,14 @@ This is a full-stack web application designed as a creative business toolkit for
 
 Changelog:
 - July 04, 2025. Initial setup
+- July 04, 2025. Enhanced authentication system:
+  - Created custom login page with brand styling (cream background #fff7e5, mint logo, coral buttons #f46454)
+  - Updated landing page to redirect authenticated users to dashboard
+  - Changed "Get Started" button to "Enter Your Dashboard" 
+  - Added /login route with friendly copy: "Welcome back to your Creative Toolkit!"
+  - Implemented secure user authentication with Replit Auth (OpenID Connect)
+  - Added logout functionality in sidebar navigation
+  - Users are automatically redirected to dashboard after login
 
 ## User Preferences
 

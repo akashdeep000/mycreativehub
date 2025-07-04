@@ -1,8 +1,31 @@
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Palette, Calendar, Clock, TrendingUp, Lightbulb, Mail } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Landing() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (isAuthenticated) {
+      window.location.href = "/";
+    }
+  }, [isAuthenticated]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#fff7e5'}}>
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#b9e6e0] to-[#8dd3c7] rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse shadow-2xl drop-shadow-lg">
+            <Palette className="w-8 h-8 text-white" />
+          </div>
+          <p className="text-gray-600">Loading your creative workspace...</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen" style={{backgroundColor: '#fff7e5'}}>
       <div className="container mx-auto px-4 py-16">
@@ -21,9 +44,9 @@ export default function Landing() {
           <Button 
             size="lg" 
             className="bg-gradient-to-r from-[#f46454] to-[#e53e3e] hover:from-[#e53e3e] hover:to-[#d53534] text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-            onClick={() => window.location.href = '/api/login'}
+            onClick={() => window.location.href = '/login'}
           >
-            Get Started
+            Enter Your Dashboard
           </Button>
         </div>
 
@@ -116,9 +139,9 @@ export default function Landing() {
               <Button 
                 size="lg" 
                 className="bg-gradient-to-r from-[#f46454] to-[#e53e3e] hover:from-[#e53e3e] hover:to-[#d53534] text-white px-8 py-3 rounded-full"
-                onClick={() => window.location.href = '/api/login'}
+                onClick={() => window.location.href = '/login'}
               >
-                Start Your Journey
+                Enter Your Dashboard
               </Button>
             </CardContent>
           </Card>
