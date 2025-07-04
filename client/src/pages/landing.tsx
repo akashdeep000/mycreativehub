@@ -14,7 +14,7 @@ export default function Landing() {
             </div>
           </div>
           <h1 className="text-5xl font-serif font-bold text-gray-800 mb-4">
-            Your Creative Business Toolkit
+            The Creative Business Toolkit
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
             The complete digital workspace that transforms how creative entrepreneurs 
