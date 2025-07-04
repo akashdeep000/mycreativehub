@@ -1,0 +1,184 @@
+import { useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import Sidebar from "@/components/layout/sidebar";
+import MobileNav from "@/components/layout/mobile-nav";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { TrendingUp, Plus, DollarSign, PieChart, Calculator, Receipt } from "lucide-react";
+
+export default function FinanceTracker() {
+  const { toast } = useToast();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+      return;
+    }
+  }, [isAuthenticated, isLoading, toast]);
+
+  if (isLoading || !isAuthenticated) {
+    return null;
+  }
+
+  const templates = [
+    {
+      id: 1,
+      name: "Monthly Budget Tracker",
+      description: "Track your monthly income and expenses with detailed categorization",
+      icon: DollarSign,
+      color: "green",
+      lastUsed: "Yesterday",
+      isPopular: true
+    },
+    {
+      id: 2,
+      name: "Revenue Goals Planner",
+      description: "Set and track your revenue goals with milestone tracking",
+      icon: TrendingUp,
+      color: "blue",
+      lastUsed: "1 week ago",
+      isPopular: true
+    },
+    {
+      id: 3,
+      name: "Expense Categories",
+      description: "Organize your business expenses by category for better insights",
+      icon: PieChart,
+      color: "purple",
+      lastUsed: "3 days ago",
+      isPopular: false
+    },
+    {
+      id: 4,
+      name: "Tax Preparation Sheet",
+      description: "Keep track of tax-deductible expenses and important documents",
+      icon: Calculator,
+      color: "orange",
+      lastUsed: "2 weeks ago",
+      isPopular: false
+    },
+    {
+      id: 5,
+      name: "Invoice Tracker",
+      description: "Monitor your sent invoices and payment status",
+      icon: Receipt,
+      color: "indigo",
+      lastUsed: "5 days ago",
+      isPopular: true
+    }
+  ];
+
+  return (
+    <div className="min-h-screen flex flex-col lg:flex-row bg-rose-50">
+      <Sidebar />
+      
+      <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-xl flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-serif font-semibold text-gray-800">Finance Tracker</h1>
+              <p className="text-gray-600">Manage your creative business finances</p>
+            </div>
+          </div>
+          
+          <div className="flex justify-between items-center">
+            <div className="flex gap-2">
+              <Badge variant="secondary" className="bg-green-100 text-green-700">
+                6 Trackers
+              </Badge>
+              <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                Financial
+              </Badge>
+            </div>
+            <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
+              <Plus className="w-4 h-4 mr-2" />
+              New Tracker
+            </Button>
+          </div>
+        </div>
+
+        {/* Templates Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {templates.map((template) => (
+            <Card key={template.id} className="border-pink-100 hover:shadow-md transition-shadow cursor-pointer group">
+              <CardHeader>
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`w-10 h-10 bg-gradient-to-br from-${template.color}-400 to-${template.color}-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                    <template.icon className="w-5 h-5 text-white" />
+                  </div>
+                  {template.isPopular && (
+                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs">
+                      Popular
+                    </Badge>
+                  )}
+                </div>
+                <CardTitle className="text-lg font-serif">{template.name}</CardTitle>
+                <CardDescription>{template.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                  <span>Last used: {template.lastUsed}</span>
+                  <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
+                    Open
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Financial Tips */}
+        <Card className="mt-8 border-pink-100 bg-gradient-to-r from-green-50 to-blue-50">
+          <CardContent className="p-6">
+            <h3 className="text-xl font-serif font-semibold text-gray-800 mb-4">
+              Financial Management Tips
+            </h3>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-semibold text-gray-700 mb-2">💰 Separate Business & Personal</h4>
+                <p className="text-gray-600 text-sm mb-4">
+                  Keep your business and personal finances completely separate for cleaner bookkeeping.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-700 mb-2">📊 Track Everything</h4>
+                <p className="text-gray-600 text-sm mb-4">
+                  Record every business expense, no matter how small. It all adds up at tax time.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-700 mb-2">🎯 Set Monthly Goals</h4>
+                <p className="text-gray-600 text-sm mb-4">
+                  Break down your annual revenue goals into monthly targets for better focus.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-700 mb-2">💡 Plan for Taxes</h4>
+                <p className="text-gray-600 text-sm mb-4">
+                  Set aside 25-30% of your income for taxes to avoid surprises later.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <MobileNav />
+    </div>
+  );
+}
