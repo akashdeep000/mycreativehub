@@ -107,9 +107,7 @@ export default function SignUp() {
               <div className="w-16 h-16 bg-gradient-to-br from-[#b9e6e0] to-[#8dd3c7] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl drop-shadow-lg">
                 <Palette className="w-8 h-8 text-white" />
               </div>
-              <h1 className="text-3xl font-serif font-bold text-gray-800 mb-2">
-                Join Your Creative Community
-              </h1>
+              <h1 className="text-3xl font-serif font-bold text-gray-800 mb-2">Access your Creative Business Headquarters!</h1>
               <p className="text-gray-600">
                 Create your account and start building your dream business today.
               </p>
