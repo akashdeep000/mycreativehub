@@ -108,9 +108,7 @@ export default function SignUp() {
                 <Palette className="w-8 h-8 text-white" />
               </div>
               <h1 className="text-3xl font-serif font-bold text-gray-800 mb-2">Access your Creative Business Headquarters!</h1>
-              <p className="text-gray-600">
-                Create your account and start building your dream business today.
-              </p>
+              <p className="text-gray-600">Sign up to unlock your personalised toolkit for planning, organising, and growing your creative business.</p>
             </div>
 
             {/* Sign Up Form */}
