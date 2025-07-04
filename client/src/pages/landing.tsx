@@ -26,7 +26,7 @@ export default function Landing() {
             className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
             onClick={() => window.location.href = '/api/login'}
           >
-            Get Started ✨
+            Get Started
           </Button>
         </div>
 
