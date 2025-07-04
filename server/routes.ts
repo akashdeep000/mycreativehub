@@ -113,7 +113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Daily focus tasks
   app.get('/api/daily-focus/:date', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const date = new Date(req.params.date);
       const tasks = await storage.getDailyFocusTasks(userId, date);
       res.json(tasks);
@@ -125,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/daily-focus', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const taskData = insertDailyFocusTaskSchema.parse({
         ...req.body,
         userId,
@@ -149,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/daily-focus/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const taskId = parseInt(req.params.id);
       const { completed } = req.body;
       
@@ -173,7 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Activity log
   app.get('/api/activity', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const limit = parseInt(req.query.limit as string) || 10;
       const activities = await storage.getRecentActivity(userId, limit);
       res.json(activities);
@@ -186,7 +186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User stats
   app.get('/api/stats', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const stats = await storage.getUserStats(userId);
       res.json(stats || { completedTasks: 0, focusHours: 0, streakDays: 0 });
     } catch (error) {
@@ -210,7 +210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User template instances
   app.get('/api/user-templates', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const templateId = req.query.templateId ? parseInt(req.query.templateId as string) : undefined;
       const instances = await storage.getUserTemplateInstances(userId, templateId);
       res.json(instances);
@@ -222,7 +222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/user-templates', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const instanceData = insertUserTemplateInstanceSchema.parse({
         ...req.body,
         userId,
@@ -246,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/user-templates/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const instanceId = parseInt(req.params.id);
       const { data } = req.body;
       
@@ -269,7 +269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/user-templates/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const instanceId = parseInt(req.params.id);
       
       await storage.deleteUserTemplateInstance(instanceId);

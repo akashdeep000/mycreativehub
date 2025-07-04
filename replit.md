@@ -125,6 +125,14 @@ Changelog:
   - Removed feature sections from login page - users see toolkit modules in dashboard
   - Dashboard shows all toolkit modules after successful authentication
   - Streamlined user flow: homepage login → dashboard with full toolkit access
+- July 04, 2025. Migrated to custom authentication system:
+  - Replaced Replit Auth with custom email/password authentication
+  - Added bcrypt password hashing for security
+  - Created sign-up page with user registration form
+  - Updated login page with email/password fields and "Stay signed in" checkbox
+  - Added secure session management with PostgreSQL storage
+  - Updated all API routes to use new authentication format
+  - Users can now create accounts and access their personal dashboards
 
 ## User Preferences
 
