@@ -128,38 +128,32 @@ export default function DailyFocus() {
     must: { 
       label: "Must Do Today", 
       icon: CheckCircle,
-      bgColor: "bg-[#f05da7]", 
-      borderColor: "border-[#f05da7]",
-      textColor: "text-white",
-      iconColor: "text-white",
-      checkboxColor: "data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-[#f05da7]",
-      badgeBg: "bg-white",
-      badgeText: "text-[#f05da7]",
-      placeholder: "+ Add a Must Do Task"
+      bgColor: "bg-white", 
+      borderColor: "border-t-red-500",
+      textColor: "text-black",
+      iconColor: "text-red-500",
+      checkboxColor: "data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500",
+      placeholder: "+ Add a task"
     },
     should: { 
       label: "Should Do", 
       icon: Clock,
-      bgColor: "bg-[#3cd473]", 
-      borderColor: "border-[#3cd473]",
-      textColor: "text-white",
-      iconColor: "text-white",
-      checkboxColor: "data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-[#3cd473]",
-      badgeBg: "bg-white",
-      badgeText: "text-[#3cd473]",
-      placeholder: "+ Add a Should Do Task"
+      bgColor: "bg-white", 
+      borderColor: "border-t-green-500",
+      textColor: "text-black",
+      iconColor: "text-green-500",
+      checkboxColor: "data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500",
+      placeholder: "+ Add a task"
     },
     could: { 
       label: "Could Do", 
       icon: Lightbulb,
-      bgColor: "bg-[#f97f25]", 
-      borderColor: "border-[#f97f25]",
-      textColor: "text-white",
-      iconColor: "text-white",
-      checkboxColor: "data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-[#f97f25]",
-      badgeBg: "bg-white",
-      badgeText: "text-[#f97f25]",
-      placeholder: "+ Add a Could Do Task"
+      bgColor: "bg-white", 
+      borderColor: "border-t-orange-500",
+      textColor: "text-black",
+      iconColor: "text-orange-500",
+      checkboxColor: "data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500",
+      placeholder: "+ Add a task"
     }
   };
 
@@ -258,20 +252,20 @@ export default function DailyFocus() {
           </div>
         )}
 
-      {/* White container with three task cards */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
+      {/* Soft background container with three task cards */}
+      <div className="bg-[#b9e6e0] rounded-xl shadow-lg p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {(Object.entries(priorityConfig) as [keyof typeof priorityConfig, typeof priorityConfig[keyof typeof priorityConfig]][]).map(([priority, config]) => (
             <Card 
               key={priority} 
-              className={`${config.bgColor} ${config.borderColor} border-2 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1`}
+              className={`${config.bgColor} ${config.borderColor} border-t-4 shadow-sm rounded-lg`}
             >
             <CardHeader className="pb-3">
-              <div className="flex justify-center">
-                <div className={`${config.badgeBg} ${config.badgeText} px-5 py-3 rounded-full shadow-lg flex items-center space-x-2 font-bold text-sm`}>
-                  <config.icon className={`w-4 h-4`} />
-                  <span>{config.label}</span>
-                </div>
+              <div className="flex items-center space-x-2">
+                <config.icon className={`w-5 h-5 ${config.iconColor}`} />
+                <span className="text-sm font-bold text-black">
+                  {config.label}
+                </span>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
@@ -305,7 +299,7 @@ export default function DailyFocus() {
                   {inlineInputs[priority] ? (
                     <Checkbox className="opacity-50" disabled />
                   ) : (
-                    <Edit3 className="w-4 h-4 text-black opacity-60" />
+                    <Edit3 className="w-4 h-4 text-gray-400" />
                   )}
                   <input
                     type="text"
@@ -317,7 +311,7 @@ export default function DailyFocus() {
                         handleInlineTaskSubmit(priority, inlineInputs[priority] || "");
                       }
                     }}
-                    className={`flex-1 p-2 text-sm border-none bg-transparent ${config.textColor} placeholder-black placeholder-opacity-80 italic focus:outline-none focus:ring-0 focus:not-italic`}
+                    className="flex-1 p-2 text-sm border-none bg-transparent text-black placeholder-gray-500 italic focus:outline-none focus:ring-0 focus:not-italic focus:border-b-2 focus:border-gray-300 border-b border-transparent transition-all"
                   />
                 </div>
 
@@ -328,10 +322,10 @@ export default function DailyFocus() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowInputs(prev => ({ ...prev, [priority]: true }))}
-                      className={`${config.textColor} hover:opacity-70 text-xs`}
+                      className="text-gray-500 hover:text-gray-700 text-xs"
                     >
                       <Plus className="w-3 h-3 mr-1" />
-                      Add another {priority === 'must' ? 'Must Do' : priority === 'should' ? 'Should Do' : 'Could Do'} task
+                      Add another task
                     </Button>
                   </div>
                 )}
