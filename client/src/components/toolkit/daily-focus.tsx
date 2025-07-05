@@ -21,6 +21,8 @@ export default function DailyFocus() {
   const [isEditing, setIsEditing] = useState(false);
   const [newTask, setNewTask] = useState({ task: "", priority: "must" });
   const [isAddingTask, setIsAddingTask] = useState(false);
+  const [inlineInputs, setInlineInputs] = useState<{[key: string]: string}>({});
+  const [showInputs, setShowInputs] = useState<{[key: string]: boolean}>({});
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -95,6 +97,21 @@ export default function DailyFocus() {
     updateTaskMutation.mutate({ id, completed });
   };
 
+  const handleInlineTaskSubmit = (priority: string, task: string) => {
+    if (task.trim()) {
+      addTaskMutation.mutate({ 
+        task: task.trim(), 
+        priority: priority as "must" | "should" | "could" 
+      });
+      setInlineInputs(prev => ({ ...prev, [priority]: "" }));
+      setShowInputs(prev => ({ ...prev, [priority]: true }));
+    }
+  };
+
+  const handleInputChange = (priority: string, value: string) => {
+    setInlineInputs(prev => ({ ...prev, [priority]: value }));
+  };
+
   const handleAddTask = () => {
     if (newTask.task.trim()) {
       addTaskMutation.mutate(newTask);
@@ -116,8 +133,9 @@ export default function DailyFocus() {
       textColor: "text-gray-700",
       iconColor: "text-gray-600",
       checkboxColor: "data-[state=checked]:bg-[#ea580c] data-[state=checked]:border-[#ea580c]",
-      badgeBg: "bg-white",
-      badgeText: "text-black"
+      badgeBg: "bg-[#f46454]",
+      badgeText: "text-white",
+      placeholder: "+ Add a Must Do Task"
     },
     should: { 
       label: "Should Do", 
@@ -127,8 +145,9 @@ export default function DailyFocus() {
       textColor: "text-gray-700",
       iconColor: "text-gray-600",
       checkboxColor: "data-[state=checked]:bg-[#b45309] data-[state=checked]:border-[#b45309]",
-      badgeBg: "bg-white",
-      badgeText: "text-black"
+      badgeBg: "bg-[#f46454]",
+      badgeText: "text-white",
+      placeholder: "+ Add a Should Do Task"
     },
     could: { 
       label: "Could Do", 
@@ -138,8 +157,9 @@ export default function DailyFocus() {
       textColor: "text-gray-700",
       iconColor: "text-gray-600",
       checkboxColor: "data-[state=checked]:bg-[#047857] data-[state=checked]:border-[#047857]",
-      badgeBg: "bg-white",
-      badgeText: "text-black"
+      badgeBg: "bg-[#f46454]",
+      badgeText: "text-white",
+      placeholder: "+ Add a Could Do Task"
     }
   };
 
@@ -248,41 +268,70 @@ export default function DailyFocus() {
             >
             <CardHeader className="pb-3">
               <div className="flex justify-center">
-                <div className={`${config.badgeBg} ${config.badgeText} px-5 py-3 rounded-full shadow-md flex items-center space-x-2 font-medium text-sm`}>
-                  <config.icon className={`w-4 h-4 ${config.badgeText}`} />
+                <div className={`${config.badgeBg} ${config.badgeText} px-5 py-3 rounded-full shadow-lg flex items-center space-x-2 font-bold text-sm`}>
+                  <config.icon className={`w-4 h-4`} />
                   <span>{config.label}</span>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-3">
-                {tasksByPriority[priority].length > 0 ? (
-                  tasksByPriority[priority].map((task) => (
-                    <div key={task.id} className="flex items-center space-x-3">
-                      <Checkbox
-                        checked={Boolean(task.completed)}
-                        onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
-                        className={config.checkboxColor}
-                      />
-                      <span className={`text-gray-700 ${task.completed ? 'line-through text-gray-500' : ''} text-sm`}>
-                        {task.task}
-                      </span>
-                      {isEditing && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {/* TODO: Add delete functionality */}}
-                          className="ml-auto text-red-500 hover:text-red-700 p-1 h-auto"
-                        >
-                          ×
-                        </Button>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-400 text-sm italic py-4 text-center">
-                    No {priority === 'must' ? 'must do' : priority === 'should' ? 'should do' : 'could do'} tasks yet
-                  </p>
+                {/* Existing tasks */}
+                {tasksByPriority[priority].map((task) => (
+                  <div key={task.id} className="flex items-center space-x-3">
+                    <Checkbox
+                      checked={Boolean(task.completed)}
+                      onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
+                      className={config.checkboxColor}
+                    />
+                    <span className={`text-gray-700 ${task.completed ? 'line-through text-gray-500' : ''} text-sm flex-1`}>
+                      {task.task}
+                    </span>
+                    {isEditing && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {/* TODO: Add delete functionality */}}
+                        className="ml-auto text-red-500 hover:text-red-700 p-1 h-auto"
+                      >
+                        ×
+                      </Button>
+                    )}
+                  </div>
+                ))}
+
+                {/* Inline task input */}
+                <div className="flex items-center space-x-3">
+                  {inlineInputs[priority] && (
+                    <Checkbox className="opacity-50" disabled />
+                  )}
+                  <input
+                    type="text"
+                    placeholder={config.placeholder}
+                    value={inlineInputs[priority] || ""}
+                    onChange={(e) => handleInputChange(priority, e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleInlineTaskSubmit(priority, inlineInputs[priority] || "");
+                      }
+                    }}
+                    className="flex-1 p-2 text-sm border-none bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0"
+                  />
+                </div>
+
+                {/* Add more button - shown only when there are tasks */}
+                {tasksByPriority[priority].length > 0 && showInputs[priority] && (
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowInputs(prev => ({ ...prev, [priority]: true }))}
+                      className="text-gray-500 hover:text-gray-700 text-xs"
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Add another {priority === 'must' ? 'Must Do' : priority === 'should' ? 'Should Do' : 'Could Do'} task
+                    </Button>
+                  </div>
                 )}
               </div>
             </CardContent>
