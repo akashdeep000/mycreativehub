@@ -17,12 +17,12 @@ import {
 
 const navigationItems = [
   { href: "/", icon: Home, label: "Dashboard" },
-  { href: "/workflow", icon: Workflow, label: "Streamline Your Workflow" },
-  { href: "/content", icon: FileText, label: "Content Creation System" },
+  { href: "/workflow", icon: Workflow, label: "Streamline Workflow" },
+  { href: "/content", icon: FileText, label: "Content System" },
   { href: "/email", icon: Mail, label: "Email Marketing" },
-  { href: "/launch", icon: Rocket, label: "Product Launch System" },
-  { href: "/finance", icon: DollarSign, label: "Financial Management" },
-  { href: "/affiliate", icon: Users, label: "The Affiliate Marketing Hub" },
+  { href: "/launch", icon: Rocket, label: "Product Launch" },
+  { href: "/finance", icon: DollarSign, label: "Finance" },
+  { href: "/affiliate", icon: Users, label: "Affiliate Hub" },
 ];
 
 export default function Sidebar() {
@@ -66,19 +66,19 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation Menu */}
-        <nav className="space-y-2 mb-8">
+        <nav className="space-y-3 mb-8">
           {navigationItems.map((item) => (
             <button
               key={item.href}
               onClick={() => setLocation(item.href)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
+              className={`w-full flex items-center space-x-3 px-4 py-4 rounded-xl text-left transition-colors ${
                 location === item.href
                   ? "bg-pink-100 text-pink-600 font-medium"
                   : "text-gray-600 hover:bg-gray-50"
               }`}
             >
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <span className="text-left">{item.label}</span>
             </button>
           ))}
         </nav>

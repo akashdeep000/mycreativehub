@@ -16,7 +16,7 @@ import type { User, UserStats } from "@shared/schema";
 // Mapping module names to routes
 const routeMap: Record<string, string> = {
   "Streamline Your Workflow": "/workflow",
-  "Content Creation System": "/content",
+  "Content Creation System": "/content", 
   "Email Marketing": "/email",
   "Product Launch System": "/launch",
   "Financial Management": "/finance",

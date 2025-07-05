@@ -150,6 +150,8 @@ Changelog:
   - Updated sidebar, mobile navigation, and dashboard cards with new names
   - Replaced hardcoded modules with dynamic database-driven content
   - Added proper routing and icon mapping for all new sections
+  - Updated sidebar with shortened navigation titles for cleaner UI
+  - Improved sidebar styling with left-aligned text and increased vertical spacing
 
 ## User Preferences
 
