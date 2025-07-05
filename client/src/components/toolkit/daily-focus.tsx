@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Edit, Plus, Timer, Play } from "lucide-react";
+import { Edit, Plus, Timer, Play, CheckCircle, Clock, Lightbulb } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import FocusTimer from "./focus-timer";
 import type { DailyFocusTask } from "@shared/schema";
@@ -108,9 +108,33 @@ export default function DailyFocus() {
   };
 
   const priorityConfig = {
-    must: { color: "red", label: "MUST DO" },
-    should: { color: "yellow", label: "SHOULD DO" },
-    could: { color: "green", label: "COULD DO" },
+    must: { 
+      label: "Must Do Today", 
+      icon: CheckCircle,
+      bgColor: "bg-pink-50", 
+      borderColor: "border-pink-200",
+      textColor: "text-pink-700",
+      iconColor: "text-pink-500",
+      checkboxColor: "data-[state=checked]:bg-pink-500 data-[state=checked]:border-pink-500"
+    },
+    should: { 
+      label: "Should Do", 
+      icon: Clock,
+      bgColor: "bg-orange-50", 
+      borderColor: "border-orange-200",
+      textColor: "text-orange-700",
+      iconColor: "text-orange-500",
+      checkboxColor: "data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+    },
+    could: { 
+      label: "Could Do", 
+      icon: Lightbulb,
+      bgColor: "bg-emerald-50", 
+      borderColor: "border-emerald-200",
+      textColor: "text-emerald-700",
+      iconColor: "text-emerald-500",
+      checkboxColor: "data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+    }
   };
 
   if (isLoading) {
@@ -130,51 +154,50 @@ export default function DailyFocus() {
   }
 
   return (
-    <Card className="border-pink-100">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-serif">Today's Focus</CardTitle>
-          <div className="flex gap-2">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="text-purple-600 hover:text-purple-700"
-                >
-                  <Timer className="w-4 h-4 mr-1" />
-                  Focus
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <FocusTimer onComplete={() => {
-                  // Refresh stats after focus session
-                  queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-                }} />
-              </DialogContent>
-            </Dialog>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => setIsAddingTask(true)}
-              className="text-pink-600 hover:text-pink-700"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Add
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => setIsEditing(!isEditing)}
-              className="text-pink-600 hover:text-pink-700"
-            >
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
-            </Button>
-          </div>
+    <div className="mb-6">
+      {/* Header with action buttons */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-serif font-semibold text-gray-800">Today's Focus</h2>
+        <div className="flex gap-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="text-purple-600 border-purple-200 hover:bg-purple-50"
+              >
+                <Timer className="w-4 h-4 mr-1" />
+                Focus
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <FocusTimer onComplete={() => {
+                queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+              }} />
+            </DialogContent>
+          </Dialog>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setIsAddingTask(true)}
+            className="text-pink-600 border-pink-200 hover:bg-pink-50"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Add
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setIsEditing(!isEditing)}
+            className="text-gray-600 border-gray-200 hover:bg-gray-50"
+          >
+            <Edit className="w-4 h-4 mr-1" />
+            Edit
+          </Button>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+
+      {/* Add task form */}
         {isAddingTask && (
           <div className="mb-6 p-4 bg-pink-50 rounded-lg">
             <div className="flex flex-col gap-3">
@@ -209,35 +232,54 @@ export default function DailyFocus() {
           </div>
         )}
 
-        <div className="space-y-6">
-          {(Object.entries(priorityConfig) as [keyof typeof priorityConfig, typeof priorityConfig[keyof typeof priorityConfig]][]).map(([priority, config]) => (
-            <div key={priority}>
-              <h4 className={`text-sm font-semibold text-${config.color}-600 mb-3 flex items-center`}>
-                <div className={`w-3 h-3 bg-${config.color}-500 rounded-full mr-2`}></div>
-                {config.label}
-              </h4>
-              <div className="space-y-2">
+      {/* Three-card layout */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {(Object.entries(priorityConfig) as [keyof typeof priorityConfig, typeof priorityConfig[keyof typeof priorityConfig]][]).map(([priority, config]) => (
+          <Card 
+            key={priority} 
+            className={`${config.bgColor} ${config.borderColor} border-2 hover:shadow-md transition-all duration-200 hover:-translate-y-1`}
+          >
+            <CardHeader className="pb-3">
+              <div className="flex items-center space-x-2">
+                <config.icon className={`w-5 h-5 ${config.iconColor}`} />
+                <h3 className={`font-bold ${config.textColor}`}>{config.label}</h3>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="space-y-3">
                 {tasksByPriority[priority].length > 0 ? (
                   tasksByPriority[priority].map((task) => (
                     <div key={task.id} className="flex items-center space-x-3">
                       <Checkbox
                         checked={Boolean(task.completed)}
                         onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
-                        className={`data-[state=checked]:bg-${config.color}-500 data-[state=checked]:border-${config.color}-500`}
+                        className={config.checkboxColor}
                       />
-                      <span className={`text-gray-700 ${task.completed ? 'line-through text-gray-500' : ''}`}>
+                      <span className={`text-gray-700 ${task.completed ? 'line-through text-gray-500' : ''} text-sm`}>
                         {task.task}
                       </span>
+                      {isEditing && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {/* TODO: Add delete functionality */}}
+                          className="ml-auto text-red-500 hover:text-red-700 p-1 h-auto"
+                        >
+                          ×
+                        </Button>
+                      )}
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-400 text-sm italic">No {priority} tasks yet</p>
+                  <p className="text-gray-400 text-sm italic py-4 text-center">
+                    No {priority === 'must' ? 'must do' : priority === 'should' ? 'should do' : 'could do'} tasks yet
+                  </p>
                 )}
               </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }
