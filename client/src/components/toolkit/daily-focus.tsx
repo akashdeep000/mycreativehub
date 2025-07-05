@@ -175,46 +175,9 @@ export default function DailyFocus() {
 
   return (
     <div className="mb-6">
-      {/* Header with action buttons */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Simple header */}
+      <div className="mb-4">
         <h2 className="text-2xl font-serif font-semibold text-gray-800">Today's Focus</h2>
-        <div className="flex gap-2">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="text-purple-600 border-purple-200 hover:bg-purple-50"
-              >
-                <Timer className="w-4 h-4 mr-1" />
-                Focus
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <FocusTimer onComplete={() => {
-                queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-              }} />
-            </DialogContent>
-          </Dialog>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setIsAddingTask(true)}
-            className="text-pink-600 border-pink-200 hover:bg-pink-50"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Add
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setIsEditing(!isEditing)}
-            className="text-gray-600 border-gray-200 hover:bg-gray-50"
-          >
-            <Edit className="w-4 h-4 mr-1" />
-            Edit
-          </Button>
-        </div>
       </div>
 
       {/* Add task form */}
@@ -253,7 +216,7 @@ export default function DailyFocus() {
         )}
 
       {/* Soft background container with three task cards */}
-      <div className="bg-[#fff7e5] rounded-xl shadow-lg p-6">
+      <div className="bg-pink-50 rounded-xl shadow-lg p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {(Object.entries(priorityConfig) as [keyof typeof priorityConfig, typeof priorityConfig[keyof typeof priorityConfig]][]).map(([priority, config]) => (
             <Card 
