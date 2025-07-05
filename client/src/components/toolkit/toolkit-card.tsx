@@ -63,7 +63,7 @@ export default function ToolkitCard({ module }: ToolkitCardProps) {
   
   return (
     <Card 
-      className="border-pink-100 hover:shadow-md transition-shadow cursor-pointer group"
+      className="border-pink-100 shadow-lg hover:shadow-xl transition-shadow cursor-pointer group"
       onClick={() => setLocation(module.href)}
     >
       <CardHeader>
