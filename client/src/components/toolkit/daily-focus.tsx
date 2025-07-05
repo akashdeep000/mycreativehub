@@ -128,37 +128,37 @@ export default function DailyFocus() {
     must: { 
       label: "Must Do Today", 
       icon: CheckCircle,
-      bgColor: "bg-[#ffd4cb]", 
-      borderColor: "border-[#ffd4cb]",
-      textColor: "text-gray-700",
-      iconColor: "text-gray-600",
-      checkboxColor: "data-[state=checked]:bg-[#ea580c] data-[state=checked]:border-[#ea580c]",
-      badgeBg: "bg-[#f46454]",
-      badgeText: "text-white",
+      bgColor: "bg-[#f46454]", 
+      borderColor: "border-[#f46454]",
+      textColor: "text-white",
+      iconColor: "text-white",
+      checkboxColor: "data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-[#f46454]",
+      badgeBg: "bg-white",
+      badgeText: "text-[#f46454]",
       placeholder: "+ Add a Must Do Task"
     },
     should: { 
       label: "Should Do", 
       icon: Clock,
-      bgColor: "bg-[#fff7e5]", 
-      borderColor: "border-[#fff7e5]",
-      textColor: "text-gray-700",
-      iconColor: "text-gray-600",
-      checkboxColor: "data-[state=checked]:bg-[#b45309] data-[state=checked]:border-[#b45309]",
-      badgeBg: "bg-[#f46454]",
-      badgeText: "text-white",
+      bgColor: "bg-[#ffb347]", 
+      borderColor: "border-[#ffb347]",
+      textColor: "text-white",
+      iconColor: "text-white",
+      checkboxColor: "data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-[#ffb347]",
+      badgeBg: "bg-white",
+      badgeText: "text-[#ffb347]",
       placeholder: "+ Add a Should Do Task"
     },
     could: { 
       label: "Could Do", 
       icon: Lightbulb,
-      bgColor: "bg-[#b9e6e0]", 
-      borderColor: "border-[#b9e6e0]",
-      textColor: "text-gray-700",
-      iconColor: "text-gray-600",
-      checkboxColor: "data-[state=checked]:bg-[#047857] data-[state=checked]:border-[#047857]",
-      badgeBg: "bg-[#f46454]",
-      badgeText: "text-white",
+      bgColor: "bg-[#6bc9b5]", 
+      borderColor: "border-[#6bc9b5]",
+      textColor: "text-white",
+      iconColor: "text-white",
+      checkboxColor: "data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-[#6bc9b5]",
+      badgeBg: "bg-white",
+      badgeText: "text-[#6bc9b5]",
       placeholder: "+ Add a Could Do Task"
     }
   };
@@ -284,7 +284,7 @@ export default function DailyFocus() {
                       onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
                       className={config.checkboxColor}
                     />
-                    <span className={`text-gray-700 ${task.completed ? 'line-through text-gray-500' : ''} text-sm flex-1`}>
+                    <span className={`${config.textColor} ${task.completed ? 'line-through opacity-70' : ''} text-sm flex-1`}>
                       {task.task}
                     </span>
                     {isEditing && (
@@ -315,7 +315,7 @@ export default function DailyFocus() {
                         handleInlineTaskSubmit(priority, inlineInputs[priority] || "");
                       }
                     }}
-                    className="flex-1 p-2 text-sm border-none bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0"
+                    className={`flex-1 p-2 text-sm border-none bg-transparent ${config.textColor} placeholder-white placeholder-opacity-70 focus:outline-none focus:ring-0`}
                   />
                 </div>
 
@@ -326,7 +326,7 @@ export default function DailyFocus() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowInputs(prev => ({ ...prev, [priority]: true }))}
-                      className="text-gray-500 hover:text-gray-700 text-xs"
+                      className={`${config.textColor} hover:opacity-70 text-xs`}
                     >
                       <Plus className="w-3 h-3 mr-1" />
                       Add another {priority === 'must' ? 'Must Do' : priority === 'should' ? 'Should Do' : 'Could Do'} task
