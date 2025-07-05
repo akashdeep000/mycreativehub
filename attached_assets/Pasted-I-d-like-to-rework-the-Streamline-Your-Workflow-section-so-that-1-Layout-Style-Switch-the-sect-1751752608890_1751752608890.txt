@@ -1,0 +1,67 @@
+I’d like to rework the Streamline Your Workflow section so that:
+
+1. 🧱 Layout Style
+Switch the section layout to grid view, matching the style and spacing of the cards on the main dashboard (Your Creative Toolkit).
+
+Each card should:
+
+Have an icon, bold title, and short description.
+
+Show how many templates exist inside (e.g. “1 Template” or “Pre-loaded”).
+
+Be clickable to open the template directly — no “Create New” screen.
+
+2. 📦 Pre-Made Templates (Auto-Generated)
+Each card should come with one pre-built template already generated based on the requirements given earlier in the chat:
+
+A. Creative Inspiration Hub
+Comes with: example moodboard section, 3 image slots with placeholder images, and note fields pre-filled.
+
+Allow users to click to replace images and edit notes.
+
+B. Time Blocking Planner
+Pre-built with a weekly view (Mon–Sun) with example blocks (e.g. “Focus Work”, “Emails”, “Break”).
+
+Editable in real time; user can drag, resize, and rename blocks.
+
+C. Daily Prioritisation Framework
+Comes with example tasks in Must / Should / Could format.
+
+Editable inline with tick boxes and a plus button to add new.
+
+D. Automate with Manychat
+Embed the Manychat affiliate link at the top.
+
+Provide one demo chatbot sequence with editable fields and icons for each step (e.g. Welcome → Ask → Link).
+
+E. Automation System Toolkit
+One demo automation flow card pre-created (e.g. “New sale in Stripe → Add to Notion DB”).
+
+Editable parameters and toggle for activation.
+
+3. 💾 Auto-Create and Store
+When the user opens this section for the first time, automatically create one template per type and store it under their user ID.
+
+Skip the "Create Template" button for now — we want to showcase the tools immediately.
+
+4. 📁 Archive Button
+On each template screen, add a small “⋮” menu with “Archive This Template”.
+
+Archived versions appear in the “Archived” tab with timestamp and label.
+
+5. 💅 Visuals & Centering
+Ensure the grid aligns centrally (not left-aligned).
+
+Add consistent top/bottom padding and box spacing like the home hub.
+
+Match the pink side nav tone with soft dividers if needed.
+
+6. ✅ Summary
+Grid layout like main hub.
+
+Pre-built templates (not empty states).
+
+Remove unnecessary “Create New” buttons.
+
+Easy archive + return flow.
+
