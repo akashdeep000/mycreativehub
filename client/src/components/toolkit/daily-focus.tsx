@@ -116,8 +116,8 @@ export default function DailyFocus() {
       textColor: "text-gray-700",
       iconColor: "text-gray-600",
       checkboxColor: "data-[state=checked]:bg-[#ea580c] data-[state=checked]:border-[#ea580c]",
-      badgeBg: "bg-[#f46454]",
-      badgeText: "text-white"
+      badgeBg: "bg-white",
+      badgeText: "text-[#224264]"
     },
     should: { 
       label: "Should Do", 
@@ -127,8 +127,8 @@ export default function DailyFocus() {
       textColor: "text-gray-700",
       iconColor: "text-gray-600",
       checkboxColor: "data-[state=checked]:bg-[#b45309] data-[state=checked]:border-[#b45309]",
-      badgeBg: "bg-[#d97706]",
-      badgeText: "text-white"
+      badgeBg: "bg-white",
+      badgeText: "text-[#224264]"
     },
     could: { 
       label: "Could Do", 
@@ -138,8 +138,8 @@ export default function DailyFocus() {
       textColor: "text-gray-700",
       iconColor: "text-gray-600",
       checkboxColor: "data-[state=checked]:bg-[#047857] data-[state=checked]:border-[#047857]",
-      badgeBg: "bg-[#047857]",
-      badgeText: "text-white"
+      badgeBg: "bg-white",
+      badgeText: "text-[#224264]"
     }
   };
 
@@ -248,8 +248,8 @@ export default function DailyFocus() {
             >
             <CardHeader className="pb-3">
               <div className="flex justify-center">
-                <div className={`${config.badgeBg} ${config.badgeText} px-4 py-2 rounded-full shadow-sm flex items-center space-x-2 font-bold text-sm`}>
-                  <config.icon className={`w-4 h-4`} />
+                <div className={`${config.badgeBg} ${config.badgeText} px-5 py-3 rounded-full shadow-md flex items-center space-x-2 font-medium text-sm`}>
+                  <config.icon className={`w-4 h-4 ${config.badgeText}`} />
                   <span>{config.label}</span>
                 </div>
               </div>
