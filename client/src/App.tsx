@@ -13,6 +13,7 @@ import ContentPlanning from "@/pages/content-planning";
 import TimeBlocking from "@/pages/time-blocking";
 import FinanceTracker from "@/pages/finance-tracker";
 import InspirationHub from "@/pages/inspiration-hub";
+import StreamlineWorkflow from "@/pages/streamline-workflow";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -27,9 +28,10 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Dashboard} />
-          <Route path="/content-planning" component={ContentPlanning} />
+          <Route path="/workflow" component={StreamlineWorkflow} />
+          <Route path="/content" component={ContentPlanning} />
           <Route path="/time-blocking" component={TimeBlocking} />
-          <Route path="/finance-tracker" component={FinanceTracker} />
+          <Route path="/finance" component={FinanceTracker} />
           <Route path="/inspiration-hub" component={InspirationHub} />
         </>
       )}

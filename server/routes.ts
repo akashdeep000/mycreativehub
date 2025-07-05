@@ -402,6 +402,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Workflow Template Routes
+  app.get("/api/workflow-templates", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { templateType, includeArchived } = req.query;
+      
+      const templates = await storage.getWorkflowTemplateInstances(
+        userId, 
+        templateType as string, 
+        includeArchived === 'true'
+      );
+      
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching workflow templates:", error);
+      res.status(500).json({ message: "Failed to fetch workflow templates" });
+    }
+  });
+
+  app.get("/api/workflow-templates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const template = await storage.getWorkflowTemplateInstance(parseInt(id));
+      
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      
+      // Check if user owns this template
+      if (template.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json(template);
+    } catch (error) {
+      console.error("Error fetching workflow template:", error);
+      res.status(500).json({ message: "Failed to fetch workflow template" });
+    }
+  });
+
+  app.post("/api/workflow-templates", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { templateType, title, data } = req.body;
+      
+      const template = await storage.createWorkflowTemplateInstance({
+        userId,
+        templateType,
+        title,
+        data: data || {},
+      });
+      
+      res.status(201).json(template);
+    } catch (error) {
+      console.error("Error creating workflow template:", error);
+      res.status(500).json({ message: "Failed to create workflow template" });
+    }
+  });
+
+  app.put("/api/workflow-templates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { data, title } = req.body;
+      
+      // Check if user owns this template
+      const existingTemplate = await storage.getWorkflowTemplateInstance(parseInt(id));
+      if (!existingTemplate || existingTemplate.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const template = await storage.updateWorkflowTemplateInstance(
+        parseInt(id), 
+        data, 
+        title
+      );
+      
+      res.json(template);
+    } catch (error) {
+      console.error("Error updating workflow template:", error);
+      res.status(500).json({ message: "Failed to update workflow template" });
+    }
+  });
+
+  app.post("/api/workflow-templates/:id/archive", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Check if user owns this template
+      const existingTemplate = await storage.getWorkflowTemplateInstance(parseInt(id));
+      if (!existingTemplate || existingTemplate.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const template = await storage.archiveWorkflowTemplateInstance(parseInt(id));
+      res.json(template);
+    } catch (error) {
+      console.error("Error archiving workflow template:", error);
+      res.status(500).json({ message: "Failed to archive workflow template" });
+    }
+  });
+
+  app.delete("/api/workflow-templates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Check if user owns this template
+      const existingTemplate = await storage.getWorkflowTemplateInstance(parseInt(id));
+      if (!existingTemplate || existingTemplate.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      await storage.deleteWorkflowTemplateInstance(parseInt(id));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting workflow template:", error);
+      res.status(500).json({ message: "Failed to delete workflow template" });
+    }
+  });
+
   // Initialize default toolkit modules if they don't exist
   app.post('/api/toolkit/initialize', isAuthenticated, async (req, res) => {
     try {

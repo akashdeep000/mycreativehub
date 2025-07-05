@@ -8,6 +8,8 @@ import {
   templates,
   userTemplateInstances,
   dashboardAccess,
+  workflowTemplateInstances,
+  workflowTemplateFiles,
   type User,
   type UpsertUser,
   type ToolkitModule,
@@ -20,6 +22,10 @@ import {
   type Template,
   type UserTemplateInstance,
   type InsertUserTemplateInstance,
+  type WorkflowTemplateInstance,
+  type InsertWorkflowTemplateInstance,
+  type WorkflowTemplateFile,
+  type InsertWorkflowTemplateFile,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
@@ -59,6 +65,19 @@ export interface IStorage {
   createUserTemplateInstance(instance: InsertUserTemplateInstance): Promise<UserTemplateInstance>;
   updateUserTemplateInstance(id: number, data: any): Promise<UserTemplateInstance>;
   deleteUserTemplateInstance(id: number): Promise<void>;
+  
+  // Workflow Templates
+  getWorkflowTemplateInstances(userId: string, templateType?: string, includeArchived?: boolean): Promise<WorkflowTemplateInstance[]>;
+  getWorkflowTemplateInstance(id: number): Promise<WorkflowTemplateInstance | undefined>;
+  createWorkflowTemplateInstance(instance: InsertWorkflowTemplateInstance): Promise<WorkflowTemplateInstance>;
+  updateWorkflowTemplateInstance(id: number, data: any, title?: string): Promise<WorkflowTemplateInstance>;
+  archiveWorkflowTemplateInstance(id: number): Promise<WorkflowTemplateInstance>;
+  deleteWorkflowTemplateInstance(id: number): Promise<void>;
+  
+  // Workflow Template Files
+  getWorkflowTemplateFiles(templateInstanceId: number): Promise<WorkflowTemplateFile[]>;
+  createWorkflowTemplateFile(file: InsertWorkflowTemplateFile): Promise<WorkflowTemplateFile>;
+  deleteWorkflowTemplateFile(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -307,6 +326,102 @@ export class DatabaseStorage implements IStorage {
         daysShowedUp: currentDays + 1,
       });
     }
+  }
+
+  // Workflow Templates
+  async getWorkflowTemplateInstances(userId: string, templateType?: string, includeArchived?: boolean): Promise<WorkflowTemplateInstance[]> {
+    const conditions = [eq(workflowTemplateInstances.userId, userId)];
+    
+    if (templateType) {
+      conditions.push(eq(workflowTemplateInstances.templateType, templateType));
+    }
+    
+    if (!includeArchived) {
+      conditions.push(eq(workflowTemplateInstances.isArchived, false));
+    }
+    
+    return await db.select()
+      .from(workflowTemplateInstances)
+      .where(and(...conditions))
+      .orderBy(desc(workflowTemplateInstances.lastEditedAt));
+  }
+
+  async getWorkflowTemplateInstance(id: number): Promise<WorkflowTemplateInstance | undefined> {
+    const [instance] = await db.select()
+      .from(workflowTemplateInstances)
+      .where(eq(workflowTemplateInstances.id, id));
+    return instance;
+  }
+
+  async createWorkflowTemplateInstance(instance: InsertWorkflowTemplateInstance): Promise<WorkflowTemplateInstance> {
+    const [newInstance] = await db
+      .insert(workflowTemplateInstances)
+      .values(instance)
+      .returning();
+    return newInstance;
+  }
+
+  async updateWorkflowTemplateInstance(id: number, data: any, title?: string): Promise<WorkflowTemplateInstance> {
+    const updateData: any = {
+      data,
+      lastEditedAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    if (title) {
+      updateData.title = title;
+    }
+    
+    const [updatedInstance] = await db
+      .update(workflowTemplateInstances)
+      .set(updateData)
+      .where(eq(workflowTemplateInstances.id, id))
+      .returning();
+    return updatedInstance;
+  }
+
+  async archiveWorkflowTemplateInstance(id: number): Promise<WorkflowTemplateInstance> {
+    const [archivedInstance] = await db
+      .update(workflowTemplateInstances)
+      .set({
+        isArchived: true,
+        archivedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(workflowTemplateInstances.id, id))
+      .returning();
+    return archivedInstance;
+  }
+
+  async deleteWorkflowTemplateInstance(id: number): Promise<void> {
+    // First delete associated files
+    await db.delete(workflowTemplateFiles)
+      .where(eq(workflowTemplateFiles.templateInstanceId, id));
+    
+    // Then delete the instance
+    await db.delete(workflowTemplateInstances)
+      .where(eq(workflowTemplateInstances.id, id));
+  }
+
+  // Workflow Template Files
+  async getWorkflowTemplateFiles(templateInstanceId: number): Promise<WorkflowTemplateFile[]> {
+    return await db.select()
+      .from(workflowTemplateFiles)
+      .where(eq(workflowTemplateFiles.templateInstanceId, templateInstanceId))
+      .orderBy(desc(workflowTemplateFiles.uploadedAt));
+  }
+
+  async createWorkflowTemplateFile(file: InsertWorkflowTemplateFile): Promise<WorkflowTemplateFile> {
+    const [newFile] = await db
+      .insert(workflowTemplateFiles)
+      .values(file)
+      .returning();
+    return newFile;
+  }
+
+  async deleteWorkflowTemplateFile(id: number): Promise<void> {
+    await db.delete(workflowTemplateFiles)
+      .where(eq(workflowTemplateFiles.id, id));
   }
 }
 

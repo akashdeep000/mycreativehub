@@ -131,6 +131,32 @@ export const dashboardAccess = pgTable("dashboard_access", {
   uniqueUserDate: uniqueIndex("unique_user_date").on(table.userId, table.accessDate),
 }));
 
+// Workflow template instances for the Streamline Your Workflow hub
+export const workflowTemplateInstances = pgTable("workflow_template_instances", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  templateType: varchar("template_type").notNull(), // 'inspiration', 'time-blocking', 'prioritization', 'manychat', 'automation'
+  title: varchar("title").notNull(),
+  data: jsonb("data").notNull(), // Template-specific data payload
+  version: integer("version").default(1),
+  isArchived: boolean("is_archived").default(false),
+  archivedAt: timestamp("archived_at"),
+  lastEditedAt: timestamp("last_edited_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Template files/images storage metadata
+export const workflowTemplateFiles = pgTable("workflow_template_files", {
+  id: serial("id").primaryKey(),
+  templateInstanceId: integer("template_instance_id").notNull().references(() => workflowTemplateInstances.id),
+  fileName: varchar("file_name").notNull(),
+  fileType: varchar("file_type").notNull(), // 'image', 'document', etc.
+  fileUrl: varchar("file_url").notNull(),
+  fileSize: integer("file_size"),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   toolkitData: many(userToolkitData),
@@ -138,6 +164,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   activityLog: many(activityLog),
   userStats: many(userStats),
   templateInstances: many(userTemplateInstances),
+  workflowTemplateInstances: many(workflowTemplateInstances),
 }));
 
 export const toolkitModulesRelations = relations(toolkitModules, ({ many }) => ({
@@ -196,6 +223,21 @@ export const userTemplateInstancesRelations = relations(userTemplateInstances, (
   }),
 }));
 
+export const workflowTemplateInstancesRelations = relations(workflowTemplateInstances, ({ one, many }) => ({
+  user: one(users, {
+    fields: [workflowTemplateInstances.userId],
+    references: [users.id],
+  }),
+  files: many(workflowTemplateFiles),
+}));
+
+export const workflowTemplateFilesRelations = relations(workflowTemplateFiles, ({ one }) => ({
+  templateInstance: one(workflowTemplateInstances, {
+    fields: [workflowTemplateFiles.templateInstanceId],
+    references: [workflowTemplateInstances.id],
+  }),
+}));
+
 // Insert schemas
 export const insertDailyFocusTaskSchema = createInsertSchema(dailyFocusTasks).omit({
   id: true,
@@ -220,6 +262,19 @@ export const insertUserTemplateInstanceSchema = createInsertSchema(userTemplateI
   updatedAt: true,
 });
 
+export const insertWorkflowTemplateInstanceSchema = createInsertSchema(workflowTemplateInstances).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastEditedAt: true,
+  archivedAt: true,
+});
+
+export const insertWorkflowTemplateFileSchema = createInsertSchema(workflowTemplateFiles).omit({
+  id: true,
+  uploadedAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -233,3 +288,7 @@ export type UserStats = typeof userStats.$inferSelect;
 export type Template = typeof templates.$inferSelect;
 export type UserTemplateInstance = typeof userTemplateInstances.$inferSelect;
 export type InsertUserTemplateInstance = z.infer<typeof insertUserTemplateInstanceSchema>;
+export type WorkflowTemplateInstance = typeof workflowTemplateInstances.$inferSelect;
+export type InsertWorkflowTemplateInstance = z.infer<typeof insertWorkflowTemplateInstanceSchema>;
+export type WorkflowTemplateFile = typeof workflowTemplateFiles.$inferSelect;
+export type InsertWorkflowTemplateFile = z.infer<typeof insertWorkflowTemplateFileSchema>;

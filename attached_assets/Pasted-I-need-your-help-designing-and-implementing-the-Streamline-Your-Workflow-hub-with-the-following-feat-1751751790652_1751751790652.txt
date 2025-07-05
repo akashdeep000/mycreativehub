@@ -1,0 +1,113 @@
+I need your help designing and implementing the Streamline Your Workflow hub with the following features for each template:
+
+1. Layout & Styling
+
+Display each template as a card (similar to main hub), with clear icon, bold title, and subtitle.
+
+Cards should be arranged in a responsive grid.
+
+On hover: subtle elevation and border highlight.
+
+2. Templates & Interactivity
+For each card, when clicked, open the template workspace with:
+
+A. The Creative Inspiration Hub
+
+A scrollable board to store moodboards, color palettes, reference links.
+
+Users can upload images, add notes under each image, tag items.
+
+Drag or reorder items; search or filter by tag.
+
+B. Time Blocking Planner
+
+Weekly calendar view (Mon–Sun), selectable hourly slots.
+
+Option for Monthly Calendar view (in real time) for batching overview
+
+Users drag/drop their to-dos or blocks into slots.
+
+Blocks are resizable and labelable (e.g. “Focus Work”, “Emails”).
+
+Real-time editing and autosave.
+
+C. Daily Prioritisation Framework
+
+Three-category task system (Must / Should / Could).
+
+Click-to-add tasks inline, checkbox to mark complete, editable.
+
+Ability to reorder priority, drag tasks between categories.
+
+D. Automate with Manychat
+
+Embed your affiliate link or call-to-action at top.
+
+Include real-time template copy and suggested flow diagrams.
+
+Users can customize step-by-step flows (e.g. triggers, responses).
+
+E. Automation System Toolkit
+
+Card-based set up guides for connecting tools (e.g. Zapier templates).
+
+Users can toggle ON/OFF each automation, customize trigger/action values.
+
+Console logs or last-run timestamps displayed.
+
+3. Customisation & Editing
+
+All templates catch edits in real time (autosave after edit or drag).
+
+Live collaboration: if possible, indicate “last edited at” with timestamp.
+
+4. Archiving Previous Versions
+
+Add "Archive current version" button at top of each template.
+
+Archive entries appear in an “Archive” tab (sorted by date).
+
+Archived version is read-only, searchable by month or label.
+
+5. Navigation / UX Flow
+
+"Back to Workflow Hub" button at top of each template.
+
+Breadcrumbs: Streamline → [Template Name].
+
+Sidebar should highlight “Streamline Workflow” when inside this section.
+
+6. Data Storage & Schema
+
+Templates saved in your database with schema:
+• Template ID, user ID, type, data payload, version, timestamp, archived flag.
+
+Ensure efficient storage for images/files (e.g. external blob storage).
+
+7. Accessibility & Mobile Support
+
+All elements responsive to mobile.
+
+Inputs keyboard-accessible, ARIA roles on elements.
+
+8. Testing & Edge Cases
+
+Autosave should debounce (e.g., 500 ms after user stops typing).
+
+Warn users before closing unsaved changes (if not autosaved yet).
+
+Multi-user conflict handling: last edit wins or prompt user.
+
+Please provide:
+
+Component/file structure (e.g. StreamlineHub, TemplateCard, InspirationWorkspace...)
+
+Route structure (e.g. /workflow, /workflow/inspiration, etc.)
+
+Any required database table/collection schemas.
+
+Example mock JSON for data payloads.
+
+CSS or styled‑component suggestions for card and archive UI.
+
+Short QA steps to test the workflow, editing, and archiving.
