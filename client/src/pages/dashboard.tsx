@@ -70,7 +70,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-rose-50">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
       <Sidebar />
       
       <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
@@ -87,15 +87,16 @@ export default function Dashboard() {
           <DailyFocus />
         </div>
 
-        {/* Monthly Stats Heading */}
-        <div className="mb-4">
-          <h2 className="text-xl font-serif font-semibold text-gray-800">
-            Your Stats for {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
-          </h2>
-        </div>
+        {/* Monthly Stats Section */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <div className="mb-6">
+            <h2 className="text-xl font-serif font-semibold text-gray-800">
+              Your Stats for {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+            </h2>
+          </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatsCard
             title="Tasks Completed"
             value={stats?.completedTasks || 0}
@@ -117,10 +118,11 @@ export default function Dashboard() {
             color="pink"
             icon="heart"
           />
+          </div>
         </div>
 
         {/* Main Toolkit Sections */}
-        <div className="mb-8">
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <h3 className="text-2xl font-serif font-semibold text-gray-800 mb-6">Your Creative Toolkit</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

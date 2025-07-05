@@ -30,7 +30,7 @@ export default function Sidebar() {
   const [location, setLocation] = useLocation();
 
   return (
-    <div className="lg:w-64 bg-white shadow-lg lg:shadow-none lg:border-r border-pink-200 hidden lg:block">
+    <div className="lg:w-64 bg-white lg:shadow-[4px_0_20px_-4px_rgba(0,0,0,0.1)] relative hidden lg:block">
       <div className="p-6">
         {/* Logo/Brand */}
         <div className="flex items-center space-x-3 mb-8">

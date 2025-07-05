@@ -129,30 +129,30 @@ export default function DailyFocus() {
       label: "Must Do Today", 
       icon: CheckCircle,
       bgColor: "bg-white", 
-      borderColor: "border-t-red-500",
+      borderColor: "border-t-[#ff2e23]",
       textColor: "text-black",
-      iconColor: "text-red-500",
-      checkboxColor: "data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500",
+      iconColor: "text-[#ff2e23]",
+      checkboxColor: "data-[state=checked]:bg-[#ff2e23] data-[state=checked]:border-[#ff2e23]",
       placeholder: "+ Add a task"
     },
     should: { 
       label: "Should Do", 
       icon: Clock,
       bgColor: "bg-white", 
-      borderColor: "border-t-green-500",
+      borderColor: "border-t-[#3cd473]",
       textColor: "text-black",
-      iconColor: "text-green-500",
-      checkboxColor: "data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500",
+      iconColor: "text-[#3cd473]",
+      checkboxColor: "data-[state=checked]:bg-[#3cd473] data-[state=checked]:border-[#3cd473]",
       placeholder: "+ Add a task"
     },
     could: { 
       label: "Could Do", 
       icon: Lightbulb,
       bgColor: "bg-white", 
-      borderColor: "border-t-orange-500",
+      borderColor: "border-t-[#f97f25]",
       textColor: "text-black",
-      iconColor: "text-orange-500",
-      checkboxColor: "data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500",
+      iconColor: "text-[#f97f25]",
+      checkboxColor: "data-[state=checked]:bg-[#f97f25] data-[state=checked]:border-[#f97f25]",
       placeholder: "+ Add a task"
     }
   };
@@ -258,7 +258,7 @@ export default function DailyFocus() {
           {(Object.entries(priorityConfig) as [keyof typeof priorityConfig, typeof priorityConfig[keyof typeof priorityConfig]][]).map(([priority, config]) => (
             <Card 
               key={priority} 
-              className={`${config.bgColor} ${config.borderColor} border-t-4 shadow-lg rounded-lg`}
+              className={`${config.bgColor} ${config.borderColor} border-t-4 shadow-xl rounded-lg`}
             >
             <CardHeader className="pb-3">
               <div className="flex items-center space-x-2">
