@@ -78,7 +78,7 @@ export default function Sidebar() {
               }`}
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />
-              <span className="text-left">{item.label}</span>
+              <span className="text-left text-sm whitespace-nowrap">{item.label}</span>
             </button>
           ))}
         </nav>
@@ -87,7 +87,7 @@ export default function Sidebar() {
         <div className="border-t border-pink-200 pt-6 space-y-2">
           <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors">
             <Settings className="w-5 h-5" />
-            <span>Settings</span>
+            <span className="text-sm">Settings</span>
           </button>
           <button 
             onClick={async () => {
@@ -104,7 +104,7 @@ export default function Sidebar() {
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors"
           >
             <LogOut className="w-5 h-5" />
-            <span>Logout</span>
+            <span className="text-sm">Logout</span>
           </button>
         </div>
       </div>
