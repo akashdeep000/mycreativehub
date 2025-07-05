@@ -4,10 +4,12 @@ import { useLocation } from "wouter";
 import { 
   Calendar, 
   Clock, 
-  TrendingUp, 
-  Lightbulb, 
+  Workflow, 
+  FileText, 
   Mail, 
-  Handshake,
+  Rocket,
+  DollarSign,
+  Users,
   LucideIcon
 } from "lucide-react";
 
@@ -27,15 +29,16 @@ interface ToolkitCardProps {
 }
 
 const iconMap: Record<string, LucideIcon> = {
-  "calendar-check": Calendar,
-  "stopwatch": Clock,
-  "chart-pie": TrendingUp,
-  "lightbulb": Lightbulb,
-  "envelope": Mail,
-  "handshake": Handshake,
+  "Workflow": Workflow,
+  "FileText": FileText,
+  "Mail": Mail,
+  "Rocket": Rocket,
+  "DollarSign": DollarSign,
+  "Users": Users,
 };
 
 const colorMap: Record<string, string> = {
+  emerald: "from-emerald-400 to-emerald-500",
   blue: "from-blue-400 to-blue-500",
   orange: "from-orange-400 to-orange-500",
   green: "from-green-400 to-green-500",
@@ -45,6 +48,7 @@ const colorMap: Record<string, string> = {
 };
 
 const badgeColorMap: Record<string, string> = {
+  emerald: "bg-emerald-50 text-emerald-600",
   blue: "bg-blue-50 text-blue-600",
   orange: "bg-orange-50 text-orange-600",
   green: "bg-green-50 text-green-600",

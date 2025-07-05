@@ -1,11 +1,12 @@
 import { useLocation } from "wouter";
-import { Home, Calendar, Lightbulb, User } from "lucide-react";
+import { Home, Workflow, FileText, Mail, Rocket } from "lucide-react";
 
 const navigationItems = [
   { href: "/", icon: Home, label: "Home" },
-  { href: "/content-planning", icon: Calendar, label: "Calendar" },
-  { href: "/inspiration-hub", icon: Lightbulb, label: "Inspire" },
-  { href: "#", icon: User, label: "Profile" },
+  { href: "/workflow", icon: Workflow, label: "Workflow" },
+  { href: "/content", icon: FileText, label: "Content" },
+  { href: "/email", icon: Mail, label: "Email" },
+  { href: "/launch", icon: Rocket, label: "Launch" },
 ];
 
 export default function MobileNav() {

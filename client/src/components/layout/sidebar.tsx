@@ -4,11 +4,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLocation } from "wouter";
 import { 
   Home, 
-  Calendar, 
-  Clock, 
-  TrendingUp, 
-  Lightbulb, 
+  Workflow, 
+  FileText, 
   Mail, 
+  Rocket, 
+  DollarSign, 
+  Users, 
   Settings, 
   LogOut,
   Palette 
@@ -16,11 +17,12 @@ import {
 
 const navigationItems = [
   { href: "/", icon: Home, label: "Dashboard" },
-  { href: "/content-planning", icon: Calendar, label: "Content Planning" },
-  { href: "/time-blocking", icon: Clock, label: "Time Blocking" },
-  { href: "/finance-tracker", icon: TrendingUp, label: "Finance Tracker" },
-  { href: "/inspiration-hub", icon: Lightbulb, label: "Inspiration Hub" },
-  { href: "/email-systems", icon: Mail, label: "Email Systems" },
+  { href: "/workflow", icon: Workflow, label: "Streamline Your Workflow" },
+  { href: "/content", icon: FileText, label: "Content Creation System" },
+  { href: "/email", icon: Mail, label: "Email Marketing" },
+  { href: "/launch", icon: Rocket, label: "Product Launch System" },
+  { href: "/finance", icon: DollarSign, label: "Financial Management" },
+  { href: "/affiliate", icon: Users, label: "The Affiliate Marketing Hub" },
 ];
 
 export default function Sidebar() {

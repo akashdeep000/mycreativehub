@@ -13,68 +13,15 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import type { User, UserStats } from "@shared/schema";
 
-const toolkitModules = [
-  {
-    id: 1,
-    name: "Content Planning",
-    description: "Monthly calendars, batch planning, and content workflows",
-    icon: "calendar-check",
-    color: "blue",
-    templateCount: 12,
-    lastUsed: "2 days ago",
-    href: "/content-planning"
-  },
-  {
-    id: 2,
-    name: "Time Blocking",
-    description: "Daily planners, focus sessions, and productivity trackers",
-    icon: "stopwatch",
-    color: "orange",
-    templateCount: 8,
-    lastUsed: "today",
-    href: "/time-blocking"
-  },
-  {
-    id: 3,
-    name: "Finance Tracker",
-    description: "Revenue goals, expense tracking, and profit analysis",
-    icon: "chart-pie",
-    color: "green",
-    templateCount: 6,
-    lastUsed: "yesterday",
-    href: "/finance-tracker"
-  },
-  {
-    id: 4,
-    name: "Inspiration Hub",
-    description: "Mood boards, color palettes, and creative references",
-    icon: "lightbulb",
-    color: "purple",
-    templateCount: 0,
-    lastUsed: "24 saved items",
-    href: "/inspiration-hub"
-  },
-  {
-    id: 5,
-    name: "Email Systems",
-    description: "Templates, sequences, and automation workflows",
-    icon: "envelope",
-    color: "indigo",
-    templateCount: 15,
-    lastUsed: "3 days ago",
-    href: "/email-systems"
-  },
-  {
-    id: 6,
-    name: "Affiliate Marketing",
-    description: "Partner programs, commission tracking, and strategies",
-    icon: "handshake",
-    color: "pink",
-    templateCount: 0,
-    lastUsed: "Premium feature",
-    href: "/affiliate-marketing"
-  }
-];
+// Mapping module names to routes
+const routeMap: Record<string, string> = {
+  "Streamline Your Workflow": "/workflow",
+  "Content Creation System": "/content",
+  "Email Marketing": "/email",
+  "Product Launch System": "/launch",
+  "Financial Management": "/finance",
+  "The Affiliate Marketing Hub": "/affiliate",
+};
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -82,6 +29,11 @@ export default function Dashboard() {
 
   const { data: stats } = useQuery<UserStats>({
     queryKey: ["/api/stats"],
+    retry: false,
+  });
+
+  const { data: toolkitModules = [] } = useQuery<any[]>({
+    queryKey: ["/api/toolkit-modules"],
     retry: false,
   });
 
@@ -172,8 +124,12 @@ export default function Dashboard() {
           <h3 className="text-2xl font-serif font-semibold text-gray-800 mb-6">Your Creative Toolkit</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {toolkitModules.map((module) => (
-              <ToolkitCard key={module.id} module={module} />
+            {(toolkitModules as any[]).map((module: any) => (
+              <ToolkitCard key={module.id} module={{
+                ...module,
+                href: routeMap[module.name] || "/",
+                lastUsed: "New"
+              }} />
             ))}
           </div>
         </div>

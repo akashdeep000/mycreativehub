@@ -258,6 +258,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get toolkit modules
+  app.get('/api/toolkit-modules', isAuthenticated, async (req: any, res) => {
+    try {
+      const modules = await storage.getToolkitModules();
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching toolkit modules:", error);
+      res.status(500).json({ message: "Failed to fetch toolkit modules" });
+    }
+  });
+
   // Focus time tracking
   app.post('/api/focus/log', isAuthenticated, async (req: any, res) => {
     try {
