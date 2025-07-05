@@ -64,13 +64,13 @@ const workflowTemplates = [
     defaultData: {
       weeklyView: {
         blocks: [
-          { id: "block-1", title: "Focus Work", startTime: "09:00", duration: 2, color: "#3B82F6", day: "Monday" },
-          { id: "block-2", title: "Emails", startTime: "11:00", duration: 1, color: "#10B981", day: "Monday" },
-          { id: "block-3", title: "Creative Session", startTime: "14:00", duration: 2, color: "#8B5CF6", day: "Monday" },
-          { id: "block-4", title: "Planning", startTime: "09:00", duration: 1, color: "#F59E0B", day: "Tuesday" },
-          { id: "block-5", title: "Client Work", startTime: "10:00", duration: 2, color: "#EF4444", day: "Tuesday" },
-          { id: "block-6", title: "Deep Work", startTime: "09:00", duration: 3, color: "#3B82F6", day: "Wednesday" },
-          { id: "block-7", title: "Team Meeting", startTime: "13:00", duration: 1, color: "#10B981", day: "Wednesday" }
+          { id: "block-1", title: "Focus Work", startTime: "09:00", duration: 2, color: "#3B82F6", colorTagId: "tag-1", day: "Monday" },
+          { id: "block-2", title: "Emails", startTime: "11:00", duration: 1, color: "#10B981", colorTagId: "tag-2", day: "Monday" },
+          { id: "block-3", title: "Creative Session", startTime: "14:00", duration: 2, color: "#8B5CF6", colorTagId: "tag-3", day: "Monday" },
+          { id: "block-4", title: "Planning", startTime: "09:00", duration: 1, color: "#F59E0B", colorTagId: "tag-4", day: "Tuesday" },
+          { id: "block-5", title: "Client Work", startTime: "10:00", duration: 2, color: "#EF4444", colorTagId: "tag-5", day: "Tuesday" },
+          { id: "block-6", title: "Deep Work", startTime: "09:00", duration: 3, color: "#3B82F6", colorTagId: "tag-1", day: "Wednesday" },
+          { id: "block-7", title: "Team Meeting", startTime: "13:00", duration: 1, color: "#10B981", colorTagId: "tag-2", day: "Wednesday" }
         ]
       },
       monthlyView: {
@@ -81,6 +81,7 @@ const workflowTemplates = [
             startTime: "10:00", 
             duration: 1, 
             color: "#EF4444", 
+            colorTagId: "tag-5",
             day: new Date().toISOString().split('T')[0]
           },
           { 
@@ -89,11 +90,19 @@ const workflowTemplates = [
             startTime: "15:00", 
             duration: 1, 
             color: "#8B5CF6", 
+            colorTagId: "tag-3",
             day: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
           }
         ],
         selectedMonth: new Date().toISOString().slice(0, 7)
-      }
+      },
+      colorTags: [
+        { id: "tag-1", label: "Focus Time", color: "#3B82F6" },
+        { id: "tag-2", label: "Communication", color: "#10B981" },
+        { id: "tag-3", label: "Creative Work", color: "#8B5CF6" },
+        { id: "tag-4", label: "Planning", color: "#F59E0B" },
+        { id: "tag-5", label: "Urgent", color: "#EF4444" }
+      ]
     }
   },
   {

@@ -4,8 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar as CalendarIcon, Clock, Plus, Edit2, X, GripVertical } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Plus, Edit2, X, GripVertical, Palette, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+
+interface ColorTag {
+  id: string;
+  label: string;
+  color: string;
+}
 
 interface TimeBlock {
   id: string;
@@ -13,6 +20,7 @@ interface TimeBlock {
   startTime: string;
   duration: number; // in hours
   color: string;
+  colorTagId?: string;
   day: string;
 }
 
@@ -24,6 +32,7 @@ interface TimeBlockingData {
     blocks: TimeBlock[];
     selectedMonth: string;
   };
+  colorTags: ColorTag[];
 }
 
 interface TimeBlockingPlannerProps {
@@ -52,7 +61,10 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [editingBlock, setEditingBlock] = useState<string | null>(null);
   const [draggedBlock, setDraggedBlock] = useState<TimeBlock | null>(null);
   const [newBlockTitle, setNewBlockTitle] = useState('');
+  const [selectedColorTagId, setSelectedColorTagId] = useState<string>('');
   const [isCreatingBlock, setIsCreatingBlock] = useState<{ day: string; hour: number } | null>(null);
+  const [editingColorTag, setEditingColorTag] = useState<string | null>(null);
+  const [newColorTagLabel, setNewColorTagLabel] = useState('');
 
   // Auto-save functionality
   useEffect(() => {
@@ -91,12 +103,16 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   };
 
   const createTimeBlock = (day: string, hour: number, title: string) => {
+    const selectedColorTag = data.colorTags.find(tag => tag.id === selectedColorTagId);
+    const color = selectedColorTag?.color || BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)];
+    
     const newBlock: TimeBlock = {
       id: `block-${Date.now()}`,
       title,
       startTime: `${hour.toString().padStart(2, '0')}:00`,
       duration: 1,
-      color: BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)],
+      color,
+      colorTagId: selectedColorTagId || undefined,
       day
     };
 
@@ -167,6 +183,141 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     return `${displayHour}:00 ${period}`;
   };
 
+  // Color tag management functions
+  const addColorTag = () => {
+    if (newColorTagLabel.trim()) {
+      const newTag: ColorTag = {
+        id: `tag-${Date.now()}`,
+        label: newColorTagLabel.trim(),
+        color: BLOCK_COLORS[data.colorTags.length % BLOCK_COLORS.length]
+      };
+
+      setData(prev => ({
+        ...prev,
+        colorTags: [...prev.colorTags, newTag]
+      }));
+      setNewColorTagLabel('');
+    }
+  };
+
+  const updateColorTag = (tagId: string, updates: Partial<ColorTag>) => {
+    setData(prev => ({
+      ...prev,
+      colorTags: prev.colorTags.map(tag =>
+        tag.id === tagId ? { ...tag, ...updates } : tag
+      )
+    }));
+  };
+
+  const deleteColorTag = (tagId: string) => {
+    setData(prev => ({
+      ...prev,
+      colorTags: prev.colorTags.filter(tag => tag.id !== tagId),
+      weeklyView: {
+        ...prev.weeklyView,
+        blocks: prev.weeklyView.blocks.map(block =>
+          block.colorTagId === tagId ? { ...block, colorTagId: undefined } : block
+        )
+      },
+      monthlyView: {
+        ...prev.monthlyView,
+        blocks: prev.monthlyView.blocks.map(block =>
+          block.colorTagId === tagId ? { ...block, colorTagId: undefined } : block
+        )
+      }
+    }));
+  };
+
+  const getColorTagLabel = (colorTagId?: string) => {
+    const tag = data.colorTags.find(tag => tag.id === colorTagId);
+    return tag?.label || 'Untitled';
+  };
+
+  // Color Key Panel Component
+  const renderColorKeyPanel = () => (
+    <Card className="mb-6">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Palette className="h-5 w-5" />
+          Color Key
+        </CardTitle>
+        <CardDescription>
+          Assign colors to categorize your time blocks
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-wrap gap-3 items-center">
+          {data.colorTags.map((tag) => (
+            <div
+              key={tag.id}
+              className="flex items-center gap-2 bg-gray-50 rounded-lg p-2 border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div
+                className="w-4 h-4 rounded-full border border-gray-300 cursor-pointer"
+                style={{ backgroundColor: tag.color }}
+                onClick={() => setSelectedColorTagId(tag.id)}
+                title={`Select ${tag.label} color`}
+              />
+              {editingColorTag === tag.id ? (
+                <Input
+                  value={tag.label}
+                  onChange={(e) => updateColorTag(tag.id, { label: e.target.value })}
+                  onBlur={() => setEditingColorTag(null)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') setEditingColorTag(null);
+                  }}
+                  className="h-6 text-xs w-24"
+                  autoFocus
+                />
+              ) : (
+                <span
+                  className="text-sm cursor-pointer hover:bg-gray-100 px-1 rounded"
+                  onClick={() => setEditingColorTag(tag.id)}
+                >
+                  {tag.label}
+                </span>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                onClick={() => deleteColorTag(tag.id)}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          ))}
+          
+          {/* Add new color tag */}
+          <div className="flex items-center gap-2">
+            <Input
+              value={newColorTagLabel}
+              onChange={(e) => setNewColorTagLabel(e.target.value)}
+              placeholder="New category..."
+              className="h-8 text-sm w-32"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') addColorTag();
+              }}
+            />
+            <Button
+              size="sm"
+              onClick={addColorTag}
+              className="h-8 w-8 p-0"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        
+        {selectedColorTagId && (
+          <div className="mt-3 text-xs text-gray-600">
+            Selected: <span className="font-medium">{getColorTagLabel(selectedColorTagId)}</span> - New blocks will use this color
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   const renderWeeklyView = () => {
     const weekDates = getCurrentWeekDates();
 
@@ -205,6 +356,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                       style={{ backgroundColor: block.color, height: `${block.duration * 60 - 8}px` }}
                       draggable
                       onDragStart={() => handleDragStart(block)}
+                      title={`${block.title}${block.colorTagId ? ` (${getColorTagLabel(block.colorTagId)})` : ''}`}
                     >
                       <div className="flex-1 truncate">
                         {editingBlock === block.id ? (
@@ -435,6 +587,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         </TabsList>
 
         <TabsContent value="weekly" className="space-y-4">
+          {renderColorKeyPanel()}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -452,6 +605,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         </TabsContent>
 
         <TabsContent value="monthly" className="space-y-4">
+          {renderColorKeyPanel()}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
