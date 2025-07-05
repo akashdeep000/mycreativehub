@@ -9,7 +9,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Edit, Plus } from "lucide-react";
+import { Edit, Plus, Timer, Play } from "lucide-react";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import FocusTimer from "./focus-timer";
 import type { DailyFocusTask } from "@shared/schema";
 
 export default function DailyFocus() {
@@ -133,6 +135,24 @@ export default function DailyFocus() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-serif">Today's Focus</CardTitle>
           <div className="flex gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-purple-600 hover:text-purple-700"
+                >
+                  <Timer className="w-4 h-4 mr-1" />
+                  Focus
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <FocusTimer onComplete={() => {
+                  // Refresh stats after focus session
+                  queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+                }} />
+              </DialogContent>
+            </Dialog>
             <Button 
               variant="ghost" 
               size="sm"
@@ -201,7 +221,7 @@ export default function DailyFocus() {
                   tasksByPriority[priority].map((task) => (
                     <div key={task.id} className="flex items-center space-x-3">
                       <Checkbox
-                        checked={task.completed}
+                        checked={Boolean(task.completed)}
                         onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
                         className={`data-[state=checked]:bg-${config.color}-500 data-[state=checked]:border-${config.color}-500`}
                       />

@@ -88,7 +88,8 @@ export const userStats = pgTable("user_stats", {
   completedTasks: integer("completed_tasks").default(0),
   focusHours: integer("focus_hours").default(0), // stored as minutes
   streakDays: integer("streak_days").default(0),
-  weekStart: timestamp("week_start").notNull(),
+  weekStart: timestamp("week_start").notNull().defaultNow(),
+  lastTaskCompletionDate: timestamp("last_task_completion_date"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

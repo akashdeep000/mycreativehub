@@ -177,13 +177,33 @@ export class DatabaseStorage implements IStorage {
     return stats;
   }
 
-  async updateUserStats(userId: string, stats: Partial<UserStats>): Promise<UserStats> {
-    const [result] = await db
-      .update(userStats)
-      .set({ ...stats, updatedAt: new Date() })
-      .where(eq(userStats.userId, userId))
-      .returning();
-    return result;
+  async updateUserStats(userId: string, statsUpdate: Partial<UserStats>): Promise<UserStats> {
+    // Check if stats exist for this user
+    const existingStats = await this.getUserStats(userId);
+    
+    if (existingStats) {
+      // Update existing stats
+      const [result] = await db
+        .update(userStats)
+        .set({ ...statsUpdate, updatedAt: new Date() })
+        .where(eq(userStats.userId, userId))
+        .returning();
+      return result;
+    } else {
+      // Create new stats entry
+      const [result] = await db
+        .insert(userStats)
+        .values({
+          userId,
+          completedTasks: 0,
+          focusHours: 0,
+          streakDays: 0,
+          weekStart: new Date(),
+          ...statsUpdate,
+        })
+        .returning();
+      return result;
+    }
   }
 
   async getTemplatesByModule(moduleId: number): Promise<Template[]> {

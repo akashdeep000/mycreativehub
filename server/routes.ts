@@ -5,6 +5,61 @@ import { getSession, isAuthenticated, hashPassword, comparePassword } from "./cu
 import { nanoid } from "nanoid";
 import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplateInstanceSchema } from "@shared/schema";
 
+// Helper function to update user stats on task completion
+async function updateUserStatsOnTaskCompletion(userId: string) {
+  try {
+    // Get current stats
+    let stats = await storage.getUserStats(userId);
+    
+    if (!stats) {
+      // Create initial stats if they don't exist
+      stats = await storage.updateUserStats(userId, {
+        completedTasks: 1,
+        focusHours: 0,
+        streakDays: 1,
+        lastTaskCompletionDate: new Date(),
+      });
+    } else {
+      // Update completed tasks count
+      const newCompletedTasks = (stats.completedTasks || 0) + 1;
+      
+      // Calculate streak
+      const today = new Date();
+      const lastCompletion = stats.lastTaskCompletionDate ? new Date(stats.lastTaskCompletionDate) : null;
+      let newStreak = stats.streakDays || 0;
+      
+      if (lastCompletion) {
+        const daysSinceLastCompletion = Math.floor((today.getTime() - lastCompletion.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (daysSinceLastCompletion === 0) {
+          // Same day, keep streak
+          newStreak = stats.streakDays || 1;
+        } else if (daysSinceLastCompletion === 1) {
+          // Next day, increment streak
+          newStreak = (stats.streakDays || 0) + 1;
+        } else {
+          // Gap in days, reset streak
+          newStreak = 1;
+        }
+      } else {
+        // First completion
+        newStreak = 1;
+      }
+      
+      // Update stats
+      await storage.updateUserStats(userId, {
+        completedTasks: newCompletedTasks,
+        streakDays: newStreak,
+        lastTaskCompletionDate: today,
+      });
+    }
+    
+    console.log(`Updated stats for user ${userId}: tasks completed, streak calculated`);
+  } catch (error) {
+    console.error('Error updating user stats:', error);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Session middleware
   app.use(getSession());
@@ -163,6 +218,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata: { taskId: task.id, priority: task.priority },
       });
       
+      // Update user stats when task is completed
+      if (completed) {
+        await updateUserStatsOnTaskCompletion(userId);
+      }
+      
       res.json(task);
     } catch (error) {
       console.error("Error updating daily focus task:", error);
@@ -192,6 +252,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user stats:", error);
       res.status(500).json({ message: "Failed to fetch user stats" });
+    }
+  });
+
+  // Focus time tracking
+  app.post('/api/focus/log', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { minutes, sessionType } = req.body;
+      
+      // Get current stats
+      let stats = await storage.getUserStats(userId);
+      const currentFocusHours = stats?.focusHours || 0;
+      const newFocusHours = currentFocusHours + minutes;
+      
+      // Update focus hours
+      if (!stats) {
+        await storage.updateUserStats(userId, {
+          completedTasks: 0,
+          focusHours: newFocusHours,
+          streakDays: 0,
+        });
+      } else {
+        await storage.updateUserStats(userId, {
+          focusHours: newFocusHours,
+        });
+      }
+      
+      // Log the focus session activity
+      await storage.createActivityLog({
+        userId,
+        action: 'focus_session',
+        description: `Completed ${minutes} minute ${sessionType || 'focus'} session`,
+        metadata: { duration: minutes, sessionType },
+      });
+      
+      res.json({ success: true, totalFocusHours: newFocusHours });
+    } catch (error) {
+      console.error("Error logging focus time:", error);
+      res.status(500).json({ message: "Failed to log focus time" });
     }
   });
 
