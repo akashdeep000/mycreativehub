@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Edit, Plus, Timer, Play, CheckCircle, Clock, Lightbulb } from "lucide-react";
+import { Edit, Plus, Timer, Play, CheckCircle, Clock, Lightbulb, Edit3 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import FocusTimer from "./focus-timer";
 import type { DailyFocusTask } from "@shared/schema";
@@ -302,8 +302,10 @@ export default function DailyFocus() {
 
                 {/* Inline task input */}
                 <div className="flex items-center space-x-3">
-                  {inlineInputs[priority] && (
+                  {inlineInputs[priority] ? (
                     <Checkbox className="opacity-50" disabled />
+                  ) : (
+                    <Edit3 className="w-4 h-4 text-black opacity-60" />
                   )}
                   <input
                     type="text"
@@ -315,7 +317,7 @@ export default function DailyFocus() {
                         handleInlineTaskSubmit(priority, inlineInputs[priority] || "");
                       }
                     }}
-                    className={`flex-1 p-2 text-sm border-none bg-transparent ${config.textColor} placeholder-white placeholder-opacity-70 focus:outline-none focus:ring-0`}
+                    className={`flex-1 p-2 text-sm border-none bg-transparent ${config.textColor} placeholder-black placeholder-opacity-80 italic focus:outline-none focus:ring-0 focus:not-italic`}
                   />
                 </div>
 
