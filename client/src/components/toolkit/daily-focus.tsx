@@ -117,7 +117,7 @@ export default function DailyFocus() {
       iconColor: "text-gray-600",
       checkboxColor: "data-[state=checked]:bg-[#ea580c] data-[state=checked]:border-[#ea580c]",
       badgeBg: "bg-white",
-      badgeText: "text-[#224264]"
+      badgeText: "text-black"
     },
     should: { 
       label: "Should Do", 
@@ -128,7 +128,7 @@ export default function DailyFocus() {
       iconColor: "text-gray-600",
       checkboxColor: "data-[state=checked]:bg-[#b45309] data-[state=checked]:border-[#b45309]",
       badgeBg: "bg-white",
-      badgeText: "text-[#224264]"
+      badgeText: "text-black"
     },
     could: { 
       label: "Could Do", 
@@ -139,7 +139,7 @@ export default function DailyFocus() {
       iconColor: "text-gray-600",
       checkboxColor: "data-[state=checked]:bg-[#047857] data-[state=checked]:border-[#047857]",
       badgeBg: "bg-white",
-      badgeText: "text-[#224264]"
+      badgeText: "text-black"
     }
   };
 
