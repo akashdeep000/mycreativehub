@@ -130,6 +130,11 @@ export default function Dashboard() {
           <p className="text-gray-600 text-lg">Ready to build your creative empire today?</p>
         </div>
 
+        {/* Today's Focus */}
+        <div className="mb-8">
+          <DailyFocus />
+        </div>
+
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatsCard
@@ -166,9 +171,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Today's Focus and Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <DailyFocus />
+        {/* Recent Activity */}
+        <div className="mb-8">
           <RecentActivity />
         </div>
       </div>
