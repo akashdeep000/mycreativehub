@@ -135,6 +135,13 @@ export default function Dashboard() {
           <DailyFocus />
         </div>
 
+        {/* Monthly Stats Heading */}
+        <div className="mb-4">
+          <h2 className="text-xl font-serif font-semibold text-gray-800">
+            Your Stats for {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+          </h2>
+        </div>
+
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatsCard
@@ -152,9 +159,9 @@ export default function Dashboard() {
             icon="clock"
           />
           <StatsCard
-            title="Day Streak"
-            value={stats?.streakDays || 0}
-            subtitle="Days in a Row"
+            title="Days You Showed Up"
+            value={stats?.daysShowedUp || 0}
+            subtitle="This month"
             color="pink"
             icon="heart"
           />

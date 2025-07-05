@@ -8,6 +8,8 @@ import {
   serial,
   boolean,
   integer,
+  unique,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -87,9 +89,11 @@ export const userStats = pgTable("user_stats", {
   userId: varchar("user_id").notNull().references(() => users.id),
   completedTasks: integer("completed_tasks").default(0),
   focusHours: integer("focus_hours").default(0), // stored as minutes
-  streakDays: integer("streak_days").default(0),
+  daysShowedUp: integer("days_showed_up").default(0), // unique days in current month
+  currentMonth: varchar("current_month").notNull(), // YYYY-MM format
   weekStart: timestamp("week_start").notNull().defaultNow(),
   lastTaskCompletionDate: timestamp("last_task_completion_date"),
+  lastDashboardAccess: timestamp("last_dashboard_access"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -115,6 +119,17 @@ export const userTemplateInstances = pgTable("user_template_instances", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Dashboard access tracking
+export const dashboardAccess = pgTable("dashboard_access", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  accessDate: varchar("access_date").notNull(), // YYYY-MM-DD format
+  month: varchar("month").notNull(), // YYYY-MM format
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  uniqueUserDate: uniqueIndex("unique_user_date").on(table.userId, table.accessDate),
+}));
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({

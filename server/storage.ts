@@ -7,6 +7,7 @@ import {
   userStats,
   templates,
   userTemplateInstances,
+  dashboardAccess,
   type User,
   type UpsertUser,
   type ToolkitModule,
@@ -21,7 +22,7 @@ import {
   type InsertUserTemplateInstance,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, gte, lte } from "drizzle-orm";
+import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations - supports both Replit Auth and custom auth
@@ -47,6 +48,10 @@ export interface IStorage {
   // User stats
   getUserStats(userId: string): Promise<UserStats | undefined>;
   updateUserStats(userId: string, stats: Partial<UserStats>): Promise<UserStats>;
+  
+  // Dashboard access tracking
+  recordDashboardAccess(userId: string): Promise<void>;
+  getMonthlyDashboardAccess(userId: string, month: string): Promise<number>;
   
   // Templates
   getTemplatesByModule(moduleId: number): Promise<Template[]>;
@@ -197,7 +202,8 @@ export class DatabaseStorage implements IStorage {
           userId,
           completedTasks: 0,
           focusHours: 0,
-          streakDays: 0,
+          daysShowedUp: 0,
+          currentMonth: new Date().toISOString().slice(0, 7), // YYYY-MM format
           weekStart: new Date(),
           ...statsUpdate,
         })
@@ -248,6 +254,59 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUserTemplateInstance(id: number): Promise<void> {
     await db.delete(userTemplateInstances).where(eq(userTemplateInstances.id, id));
+  }
+  
+  async recordDashboardAccess(userId: string): Promise<void> {
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD format
+    const currentMonth = today.slice(0, 7); // YYYY-MM format
+    
+    try {
+      // Try to insert a new access record (will fail if already exists for today)
+      await db.insert(dashboardAccess).values({
+        userId,
+        accessDate: today,
+        month: currentMonth,
+      });
+      
+      // If successful, update the user's stats
+      await this.updateDashboardAccessStats(userId, currentMonth);
+    } catch (error) {
+      // Access already recorded for today, that's fine
+    }
+  }
+  
+  async getMonthlyDashboardAccess(userId: string, month: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(dashboardAccess)
+      .where(and(
+        eq(dashboardAccess.userId, userId),
+        eq(dashboardAccess.month, month)
+      ));
+    
+    return result[0]?.count || 0;
+  }
+  
+  private async updateDashboardAccessStats(userId: string, currentMonth: string): Promise<void> {
+    // Get current stats
+    const existingStats = await this.getUserStats(userId);
+    
+    // Check if we need to reset for a new month
+    const shouldReset = existingStats?.currentMonth !== currentMonth;
+    
+    if (shouldReset) {
+      // Reset stats for new month
+      await this.updateUserStats(userId, {
+        daysShowedUp: 1,
+        currentMonth: currentMonth,
+      });
+    } else {
+      // Increment days showed up
+      const currentDays = existingStats?.daysShowedUp || 0;
+      await this.updateUserStats(userId, {
+        daysShowedUp: currentDays + 1,
+      });
+    }
   }
 }
 

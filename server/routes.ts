@@ -16,7 +16,7 @@ async function updateUserStatsOnTaskCompletion(userId: string) {
       stats = await storage.updateUserStats(userId, {
         completedTasks: 1,
         focusHours: 0,
-        streakDays: 1,
+        daysShowedUp: 1,
         lastTaskCompletionDate: new Date(),
       });
     } else {
@@ -26,17 +26,17 @@ async function updateUserStatsOnTaskCompletion(userId: string) {
       // Calculate streak
       const today = new Date();
       const lastCompletion = stats.lastTaskCompletionDate ? new Date(stats.lastTaskCompletionDate) : null;
-      let newStreak = stats.streakDays || 0;
+      let newStreak = stats.daysShowedUp || 0;
       
       if (lastCompletion) {
         const daysSinceLastCompletion = Math.floor((today.getTime() - lastCompletion.getTime()) / (1000 * 60 * 60 * 24));
         
         if (daysSinceLastCompletion === 0) {
           // Same day, keep streak
-          newStreak = stats.streakDays || 1;
+          newStreak = stats.daysShowedUp || 1;
         } else if (daysSinceLastCompletion === 1) {
           // Next day, increment streak
-          newStreak = (stats.streakDays || 0) + 1;
+          newStreak = (stats.daysShowedUp || 0) + 1;
         } else {
           // Gap in days, reset streak
           newStreak = 1;
@@ -49,7 +49,7 @@ async function updateUserStatsOnTaskCompletion(userId: string) {
       // Update stats
       await storage.updateUserStats(userId, {
         completedTasks: newCompletedTasks,
-        streakDays: newStreak,
+        daysShowedUp: newStreak,
         lastTaskCompletionDate: today,
       });
     }
@@ -144,6 +144,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(401).json({ message: "Unauthorized" });
       }
+      
+      // Record dashboard access when user is authenticated
+      await storage.recordDashboardAccess(user.id);
       
       // Return user (without password)
       const { password: _, ...userWithoutPassword } = user;
@@ -248,7 +251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const stats = await storage.getUserStats(userId);
-      res.json(stats || { completedTasks: 0, focusHours: 0, streakDays: 0 });
+      res.json(stats || { completedTasks: 0, focusHours: 0, daysShowedUp: 0 });
     } catch (error) {
       console.error("Error fetching user stats:", error);
       res.status(500).json({ message: "Failed to fetch user stats" });
@@ -271,7 +274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateUserStats(userId, {
           completedTasks: 0,
           focusHours: newFocusHours,
-          streakDays: 0,
+          daysShowedUp: 0,
         });
       } else {
         await storage.updateUserStats(userId, {
