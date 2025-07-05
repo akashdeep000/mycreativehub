@@ -111,29 +111,29 @@ export default function DailyFocus() {
     must: { 
       label: "Must Do Today", 
       icon: CheckCircle,
-      bgColor: "bg-pink-50", 
-      borderColor: "border-pink-200",
-      textColor: "text-pink-700",
-      iconColor: "text-pink-500",
-      checkboxColor: "data-[state=checked]:bg-pink-500 data-[state=checked]:border-pink-500"
+      bgColor: "bg-[#ffd4cb]", 
+      borderColor: "border-[#ffd4cb]",
+      textColor: "text-[#d97706]",
+      iconColor: "text-[#ea580c]",
+      checkboxColor: "data-[state=checked]:bg-[#ea580c] data-[state=checked]:border-[#ea580c]"
     },
     should: { 
       label: "Should Do", 
       icon: Clock,
-      bgColor: "bg-orange-50", 
-      borderColor: "border-orange-200",
-      textColor: "text-orange-700",
-      iconColor: "text-orange-500",
-      checkboxColor: "data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+      bgColor: "bg-[#fff7e5]", 
+      borderColor: "border-[#fff7e5]",
+      textColor: "text-[#92400e]",
+      iconColor: "text-[#b45309]",
+      checkboxColor: "data-[state=checked]:bg-[#b45309] data-[state=checked]:border-[#b45309]"
     },
     could: { 
       label: "Could Do", 
       icon: Lightbulb,
-      bgColor: "bg-emerald-50", 
-      borderColor: "border-emerald-200",
-      textColor: "text-emerald-700",
-      iconColor: "text-emerald-500",
-      checkboxColor: "data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+      bgColor: "bg-[#b9e6e0]", 
+      borderColor: "border-[#b9e6e0]",
+      textColor: "text-[#065f46]",
+      iconColor: "text-[#047857]",
+      checkboxColor: "data-[state=checked]:bg-[#047857] data-[state=checked]:border-[#047857]"
     }
   };
 
@@ -232,13 +232,14 @@ export default function DailyFocus() {
           </div>
         )}
 
-      {/* Three-card layout */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {(Object.entries(priorityConfig) as [keyof typeof priorityConfig, typeof priorityConfig[keyof typeof priorityConfig]][]).map(([priority, config]) => (
-          <Card 
-            key={priority} 
-            className={`${config.bgColor} ${config.borderColor} border-2 hover:shadow-md transition-all duration-200 hover:-translate-y-1`}
-          >
+      {/* White container with three task cards */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {(Object.entries(priorityConfig) as [keyof typeof priorityConfig, typeof priorityConfig[keyof typeof priorityConfig]][]).map(([priority, config]) => (
+            <Card 
+              key={priority} 
+              className={`${config.bgColor} ${config.borderColor} border-2 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1`}
+            >
             <CardHeader className="pb-3">
               <div className="flex items-center space-x-2">
                 <config.icon className={`w-5 h-5 ${config.iconColor}`} />
@@ -279,6 +280,7 @@ export default function DailyFocus() {
             </CardContent>
           </Card>
         ))}
+        </div>
       </div>
     </div>
   );
