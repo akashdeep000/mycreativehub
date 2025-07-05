@@ -253,12 +253,12 @@ export default function DailyFocus() {
         )}
 
       {/* Soft background container with three task cards */}
-      <div className="bg-[#b9e6e0] rounded-xl shadow-lg p-6">
+      <div className="bg-[#fff7e5] rounded-xl shadow-lg p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {(Object.entries(priorityConfig) as [keyof typeof priorityConfig, typeof priorityConfig[keyof typeof priorityConfig]][]).map(([priority, config]) => (
             <Card 
               key={priority} 
-              className={`${config.bgColor} ${config.borderColor} border-t-4 shadow-sm rounded-lg`}
+              className={`${config.bgColor} ${config.borderColor} border-t-4 shadow-lg rounded-lg`}
             >
             <CardHeader className="pb-3">
               <div className="flex items-center space-x-2">
