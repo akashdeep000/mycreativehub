@@ -113,27 +113,33 @@ export default function DailyFocus() {
       icon: CheckCircle,
       bgColor: "bg-[#ffd4cb]", 
       borderColor: "border-[#ffd4cb]",
-      textColor: "text-[#d97706]",
-      iconColor: "text-[#ea580c]",
-      checkboxColor: "data-[state=checked]:bg-[#ea580c] data-[state=checked]:border-[#ea580c]"
+      textColor: "text-gray-700",
+      iconColor: "text-gray-600",
+      checkboxColor: "data-[state=checked]:bg-[#ea580c] data-[state=checked]:border-[#ea580c]",
+      badgeBg: "bg-[#f46454]",
+      badgeText: "text-white"
     },
     should: { 
       label: "Should Do", 
       icon: Clock,
       bgColor: "bg-[#fff7e5]", 
       borderColor: "border-[#fff7e5]",
-      textColor: "text-[#92400e]",
-      iconColor: "text-[#b45309]",
-      checkboxColor: "data-[state=checked]:bg-[#b45309] data-[state=checked]:border-[#b45309]"
+      textColor: "text-gray-700",
+      iconColor: "text-gray-600",
+      checkboxColor: "data-[state=checked]:bg-[#b45309] data-[state=checked]:border-[#b45309]",
+      badgeBg: "bg-[#d97706]",
+      badgeText: "text-white"
     },
     could: { 
       label: "Could Do", 
       icon: Lightbulb,
       bgColor: "bg-[#b9e6e0]", 
       borderColor: "border-[#b9e6e0]",
-      textColor: "text-[#065f46]",
-      iconColor: "text-[#047857]",
-      checkboxColor: "data-[state=checked]:bg-[#047857] data-[state=checked]:border-[#047857]"
+      textColor: "text-gray-700",
+      iconColor: "text-gray-600",
+      checkboxColor: "data-[state=checked]:bg-[#047857] data-[state=checked]:border-[#047857]",
+      badgeBg: "bg-[#047857]",
+      badgeText: "text-white"
     }
   };
 
@@ -241,9 +247,11 @@ export default function DailyFocus() {
               className={`${config.bgColor} ${config.borderColor} border-2 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1`}
             >
             <CardHeader className="pb-3">
-              <div className="flex items-center space-x-2">
-                <config.icon className={`w-5 h-5 ${config.iconColor}`} />
-                <h3 className={`font-bold ${config.textColor}`}>{config.label}</h3>
+              <div className="flex justify-center">
+                <div className={`${config.badgeBg} ${config.badgeText} px-4 py-2 rounded-full shadow-sm flex items-center space-x-2 font-bold text-sm`}>
+                  <config.icon className={`w-4 h-4`} />
+                  <span>{config.label}</span>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
