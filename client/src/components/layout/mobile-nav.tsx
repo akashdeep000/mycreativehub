@@ -1,13 +1,15 @@
 import { useLocation } from "wouter";
-import { Home, Workflow, FileText, Mail, Rocket } from "lucide-react";
+import { navigationItems } from "@/lib/navigation";
 
-const navigationItems = [
-  { href: "/", icon: Home, label: "Home" },
-  { href: "/workflow", icon: Workflow, label: "Workflow" },
-  { href: "/content", icon: FileText, label: "Content" },
-  { href: "/email", icon: Mail, label: "Email" },
-  { href: "/launch", icon: Rocket, label: "Launch" },
-];
+// Filter for mobile navigation - show only first 5 items
+const mobileNavigationItems = navigationItems.slice(0, 5).map(item => ({
+  ...item,
+  label: item.label === "Dashboard" ? "Home" : 
+         item.label === "Streamline Workflow" ? "Workflow" :
+         item.label === "Content System" ? "Content" :
+         item.label === "Product Launch" ? "Launch" :
+         item.label
+}));
 
 export default function MobileNav() {
   const [location, setLocation] = useLocation();
@@ -15,7 +17,7 @@ export default function MobileNav() {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-pink-200 lg:hidden">
       <div className="flex items-center justify-around py-3">
-        {navigationItems.map((item) => (
+        {mobileNavigationItems.map((item) => (
           <button
             key={item.href}
             onClick={() => item.href !== "#" && setLocation(item.href)}

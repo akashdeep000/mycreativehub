@@ -2,28 +2,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLocation } from "wouter";
+import { navigationItems } from "@/lib/navigation";
 import { 
-  Home, 
-  Workflow, 
-  FileText, 
-  Mail, 
-  Rocket, 
-  DollarSign, 
-  Users, 
   Settings, 
   LogOut,
   Palette 
 } from "lucide-react";
-
-const navigationItems = [
-  { href: "/", icon: Home, label: "Dashboard" },
-  { href: "/workflow", icon: Workflow, label: "Streamline Workflow" },
-  { href: "/content", icon: FileText, label: "Content System" },
-  { href: "/email", icon: Mail, label: "Email Marketing" },
-  { href: "/launch", icon: Rocket, label: "Product Launch" },
-  { href: "/finance", icon: DollarSign, label: "Finance" },
-  { href: "/affiliate", icon: Users, label: "Affiliate Hub" },
-];
 
 export default function Sidebar() {
   const { user } = useAuth();

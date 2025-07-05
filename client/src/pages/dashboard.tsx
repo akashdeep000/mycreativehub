@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { routeMap } from "@/lib/navigation";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import ToolkitCard from "@/components/toolkit/toolkit-card";
@@ -12,16 +13,6 @@ import StatsCard from "@/components/toolkit/stats-card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import type { User, UserStats } from "@shared/schema";
-
-// Mapping module names to routes
-const routeMap: Record<string, string> = {
-  "Streamline Your Workflow": "/workflow",
-  "Content Creation System": "/content", 
-  "Email Marketing": "/email",
-  "Product Launch System": "/launch",
-  "Financial Management": "/finance",
-  "The Affiliate Marketing Hub": "/affiliate",
-};
 
 export default function Dashboard() {
   const { toast } = useToast();
