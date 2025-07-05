@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import type { WorkflowTemplateInstance } from "@shared/schema";
 import CreativeInspirationHub from "@/components/workflow/creative-inspiration-hub";
+import TimeBlockingPlanner from "@/components/workflow/time-blocking-planner";
 
 // Template configuration with pre-built data
 const workflowTemplates = [
@@ -61,20 +62,37 @@ const workflowTemplates = [
     color: "bg-gradient-to-br from-blue-500 to-teal-500",
     textColor: "text-white",
     defaultData: {
-      schedule: {
-        monday: [
-          { time: "09:00", duration: 2, task: "Focus Work", color: "#3B82F6" },
-          { time: "11:00", duration: 1, task: "Emails", color: "#10B981" },
-          { time: "14:00", duration: 3, task: "Creative Session", color: "#8B5CF6" }
-        ],
-        tuesday: [
-          { time: "09:00", duration: 1, task: "Planning", color: "#F59E0B" },
-          { time: "10:00", duration: 2, task: "Client Work", color: "#EF4444" }
-        ],
-        wednesday: [
-          { time: "09:00", duration: 4, task: "Deep Work", color: "#3B82F6" },
-          { time: "15:00", duration: 1, task: "Break", color: "#6B7280" }
+      weeklyView: {
+        blocks: [
+          { id: "block-1", title: "Focus Work", startTime: "09:00", duration: 2, color: "#3B82F6", day: "Monday" },
+          { id: "block-2", title: "Emails", startTime: "11:00", duration: 1, color: "#10B981", day: "Monday" },
+          { id: "block-3", title: "Creative Session", startTime: "14:00", duration: 2, color: "#8B5CF6", day: "Monday" },
+          { id: "block-4", title: "Planning", startTime: "09:00", duration: 1, color: "#F59E0B", day: "Tuesday" },
+          { id: "block-5", title: "Client Work", startTime: "10:00", duration: 2, color: "#EF4444", day: "Tuesday" },
+          { id: "block-6", title: "Deep Work", startTime: "09:00", duration: 3, color: "#3B82F6", day: "Wednesday" },
+          { id: "block-7", title: "Team Meeting", startTime: "13:00", duration: 1, color: "#10B981", day: "Wednesday" }
         ]
+      },
+      monthlyView: {
+        blocks: [
+          { 
+            id: "month-1", 
+            title: "Project Deadline", 
+            startTime: "10:00", 
+            duration: 1, 
+            color: "#EF4444", 
+            day: new Date().toISOString().split('T')[0]
+          },
+          { 
+            id: "month-2", 
+            title: "Weekly Review", 
+            startTime: "15:00", 
+            duration: 1, 
+            color: "#8B5CF6", 
+            day: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          }
+        ],
+        selectedMonth: new Date().toISOString().slice(0, 7)
       }
     }
   },
@@ -318,7 +336,21 @@ export default function StreamlineWorkflow() {
                     }}
                   />
                 )}
-                {selectedTemplate !== "inspiration" && (
+                {selectedTemplate === "time-blocking" && (
+                  <TimeBlockingPlanner
+                    templateId={templateInstance.id}
+                    initialData={templateInstance.data?.weeklyView ? templateInstance.data : templateConfig.defaultData}
+                    onSave={(data) => {
+                      // Update template data via API
+                      fetch(`/api/workflow-templates/${templateInstance.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ data }),
+                      });
+                    }}
+                  />
+                )}
+                {selectedTemplate !== "inspiration" && selectedTemplate !== "time-blocking" && (
                   <div className="bg-gray-50 rounded-lg p-6 text-center">
                     <p className="text-gray-600">
                       {templateConfig.name} workspace coming soon!
