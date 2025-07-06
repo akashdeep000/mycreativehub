@@ -99,6 +99,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       allCookies: Object.keys(req.cookies || {}),
     });
   });
+
+  // Test board creation WITHOUT authentication to verify database connectivity
+  app.post('/api/test-board-creation', async (req, res) => {
+    try {
+      console.log("=== TEST BOARD CREATION (NO AUTH) ===");
+      console.log("Environment:", process.env.NODE_ENV);
+      console.log("Database available:", !!process.env.DATABASE_URL);
+      
+      // Try to create a test board with a hardcoded user ID
+      const testBoardData = {
+        userId: "test-user-id",
+        title: "Test Board",
+        description: "Test board creation without auth",
+      };
+      
+      console.log("Test - Attempting board creation with data:", testBoardData);
+      
+      const board = await storage.createInspirationBoard(testBoardData);
+      console.log("Test - Board created successfully:", board.id);
+      
+      res.json({ 
+        success: true, 
+        boardId: board.id, 
+        message: "Test board created successfully - database is working" 
+      });
+    } catch (error) {
+      console.error("Test - Board creation failed:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message,
+        message: "Test board creation failed - database issue"
+      });
+    }
+  });
   
   // Session middleware
   app.use(getSession());
@@ -183,12 +217,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Set httpOnly cookie
       console.log("Login - Setting httpOnly cookie");
       console.log("Login - Cookie secure flag:", process.env.NODE_ENV === 'production');
-      res.cookie('authToken', token, {
+      const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: 'strict' as const,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+        path: '/',
+      };
+      console.log("Login - Cookie options:", JSON.stringify(cookieOptions, null, 2));
+      res.cookie('authToken', token, cookieOptions);
+      
+      // ALSO store in localStorage as backup for production
+      console.log("Login - Also providing token for localStorage storage");
       
       console.log("Login - JWT token generated and cookie set");
       
