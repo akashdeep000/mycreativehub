@@ -778,20 +778,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/inspiration-boards', jwtAuth, async (req: any, res) => {
     try {
       console.log("=== BOARD CREATION START ===");
-      console.log("Environment:", process.env.NODE_ENV);
-      console.log("Request method:", req.method);
-      console.log("Request headers:", JSON.stringify(req.headers, null, 2));
-      console.log("Request body:", JSON.stringify(req.body, null, 2));
+      console.log("PRODUCTION DEBUG - Environment:", process.env.NODE_ENV);
+      console.log("PRODUCTION DEBUG - Request method:", req.method);
+      console.log("PRODUCTION DEBUG - Request URL:", req.url);
+      console.log("PRODUCTION DEBUG - Request headers:", JSON.stringify(req.headers, null, 2));
+      console.log("PRODUCTION DEBUG - Request body:", JSON.stringify(req.body, null, 2));
+      console.log("PRODUCTION DEBUG - Database URL available:", !!process.env.DATABASE_URL);
+      console.log("PRODUCTION DEBUG - Database URL preview:", process.env.DATABASE_URL?.substring(0, 50) + "...");
       
       // Validate authentication
       if (!req.user || !req.user.id) {
-        console.log("AUTH ERROR: No user found in request");
+        console.log("PRODUCTION DEBUG - AUTH ERROR: No user found in request");
+        console.log("PRODUCTION DEBUG - req.user:", req.user);
         return res.status(401).json({ message: "Authentication required" });
       }
       
       const userId = req.user.id;
-      console.log("Creating inspiration board - User ID:", userId);
-      console.log("User object:", JSON.stringify(req.user, null, 2));
+      console.log("PRODUCTION DEBUG - Creating inspiration board - User ID:", userId);
+      console.log("PRODUCTION DEBUG - User object:", JSON.stringify(req.user, null, 2));
       
       const { title, description, backgroundColor, backgroundTexture } = req.body;
       
@@ -808,41 +812,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
         backgroundTexture: backgroundTexture || "paper",
       };
       
-      console.log("Creating inspiration board - Board data:", JSON.stringify(boardData, null, 2));
+      console.log("PRODUCTION DEBUG - Creating inspiration board - Board data:", JSON.stringify(boardData, null, 2));
       
       // Test database connection
-      console.log("Testing database connection...");
+      console.log("PRODUCTION DEBUG - Testing database connection...");
       try {
-        await storage.getInspirationBoards(userId);
-        console.log("Database connection successful");
+        const existingBoards = await storage.getInspirationBoards(userId);
+        console.log("PRODUCTION DEBUG - Database connection successful, existing boards count:", existingBoards.length);
       } catch (dbError) {
-        console.error("DATABASE CONNECTION ERROR:", dbError);
+        console.error("PRODUCTION DEBUG - DATABASE CONNECTION ERROR:", dbError);
+        console.error("PRODUCTION DEBUG - DB Error type:", typeof dbError);
+        console.error("PRODUCTION DEBUG - DB Error message:", dbError instanceof Error ? dbError.message : 'Unknown error');
+        console.error("PRODUCTION DEBUG - DB Error stack:", dbError instanceof Error ? dbError.stack : 'No stack');
         return res.status(500).json({ message: "Database connection failed" });
       }
       
+      console.log("PRODUCTION DEBUG - About to create board...");
       const board = await storage.createInspirationBoard(boardData);
-      console.log("Creating inspiration board - Board created successfully:", JSON.stringify(board, null, 2));
+      console.log("PRODUCTION DEBUG - Board created successfully:", JSON.stringify(board, null, 2));
+      console.log("PRODUCTION DEBUG - Board ID:", board.id);
       console.log("=== BOARD CREATION SUCCESS ===");
       
       res.status(201).json(board);
     } catch (error: any) {
       console.error("=== BOARD CREATION ERROR ===");
-      console.error("Error creating inspiration board:", error);
-      console.error("Error type:", typeof error);
-      console.error("Error name:", error?.name);
-      console.error("Error message:", error?.message);
-      console.error("Error stack:", error?.stack);
-      console.error("Error details:", {
+      console.error("PRODUCTION DEBUG - Error creating inspiration board:", error);
+      console.error("PRODUCTION DEBUG - Error type:", typeof error);
+      console.error("PRODUCTION DEBUG - Error name:", error?.name);
+      console.error("PRODUCTION DEBUG - Error message:", error?.message);
+      console.error("PRODUCTION DEBUG - Error stack:", error?.stack);
+      console.error("PRODUCTION DEBUG - Error code:", error?.code);
+      console.error("PRODUCTION DEBUG - Error errno:", error?.errno);
+      console.error("PRODUCTION DEBUG - Error details:", {
         message: error?.message,
         stack: error?.stack,
+        code: error?.code,
+        errno: error?.errno,
         userId: req.user?.id,
         requestBody: req.body,
-        environment: process.env.NODE_ENV
+        environment: process.env.NODE_ENV,
+        databaseUrl: !!process.env.DATABASE_URL,
+        pgUser: !!process.env.PGUSER,
+        pgDatabase: !!process.env.PGDATABASE
       });
+      console.error("PRODUCTION DEBUG - Full error object:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
       console.error("=== BOARD CREATION ERROR END ===");
       res.status(500).json({ 
         message: "Failed to create inspiration board",
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: error?.message,
+        errorCode: error?.code,
+        debug: process.env.NODE_ENV === 'production' ? 'Check server logs for details' : error.message
       });
     }
   });
