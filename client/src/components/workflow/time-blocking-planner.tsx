@@ -9,10 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 
-interface ColorTag {
+interface ColourTag {
   id: string;
   label: string;
-  color: string;
+  colour: string;
 }
 
 interface TimeBlock {
@@ -20,8 +20,8 @@ interface TimeBlock {
   title: string;
   startTime: string;
   duration: number; // in hours
-  color: string;
-  colorTagId?: string;
+  colour: string;
+  colourTagId?: string;
   day: string;
 }
 
@@ -33,7 +33,7 @@ interface TimeBlockingData {
     blocks: TimeBlock[];
     selectedMonth: string;
   };
-  colorTags: ColorTag[];
+  colourTags: ColourTag[];
 }
 
 interface TimeBlockingPlannerProps {
@@ -45,7 +45,7 @@ interface TimeBlockingPlannerProps {
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 7); // 7 AM to 9 PM
 
-const BLOCK_COLORS = [
+const BLOCK_COLOURS = [
   '#3B82F6', // Blue
   '#10B981', // Green
   '#8B5CF6', // Purple
@@ -62,11 +62,11 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [editingBlock, setEditingBlock] = useState<string | null>(null);
   const [draggedBlock, setDraggedBlock] = useState<TimeBlock | null>(null);
   const [newBlockTitle, setNewBlockTitle] = useState('');
-  const [activeColorTagId, setActiveColorTagId] = useState<string>(initialData.colorTags[0]?.id || '');
+  const [activeColourTagId, setActiveColourTagId] = useState<string>(initialData.colourTags[0]?.id || '');
   const [isCreatingBlock, setIsCreatingBlock] = useState<{ day: string; hour: number } | null>(null);
-  const [editingColorTag, setEditingColorTag] = useState<string | null>(null);
-  const [newColorTagLabel, setNewColorTagLabel] = useState('');
-  const [showColorSelector, setShowColorSelector] = useState<string | null>(null);
+  const [editingColourTag, setEditingColourTag] = useState<string | null>(null);
+  const [newColourTagLabel, setNewColourTagLabel] = useState('');
+  const [showColourSelector, setShowColourSelector] = useState<string | null>(null);
   
   // Navigation state
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
@@ -126,21 +126,21 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     setCurrentMonthOffset(0);
   };
 
-  const createTimeBlock = (day: string, hour: number, title?: string, colorTagId?: string) => {
-    const useColorTagId = colorTagId || activeColorTagId;
-    const selectedColorTag = data.colorTags.find(tag => tag.id === useColorTagId);
-    const color = selectedColorTag?.color || BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)];
+  const createTimeBlock = (day: string, hour: number, title?: string, colourTagId?: string) => {
+    const useColourTagId = colourTagId || activeColourTagId;
+    const selectedColourTag = data.colourTags.find(tag => tag.id === useColourTagId);
+    const colour = selectedColourTag?.colour || BLOCK_COLOURS[Math.floor(Math.random() * BLOCK_COLOURS.length)];
     
     // Auto-fill with category label if no title provided
-    const blockTitle = title || selectedColorTag?.label || 'Untitled';
+    const blockTitle = title || selectedColourTag?.label || 'Untitled';
     
     const newBlock: TimeBlock = {
       id: `block-${Date.now()}`,
       title: blockTitle,
       startTime: `${hour.toString().padStart(2, '0')}:00`,
       duration: 1,
-      color,
-      colorTagId: useColorTagId,
+      colour,
+      colourTagId: useColourTagId,
       day
     };
 
@@ -212,76 +212,76 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     return `${displayHour}:00 ${period}`;
   };
 
-  // Color tag management functions
-  const addColorTag = () => {
-    if (newColorTagLabel.trim()) {
-      const newTag: ColorTag = {
+  // Colour tag management functions
+  const addColourTag = () => {
+    if (newColourTagLabel.trim()) {
+      const newTag: ColourTag = {
         id: `tag-${Date.now()}`,
-        label: newColorTagLabel.trim(),
-        color: BLOCK_COLORS[data.colorTags.length % BLOCK_COLORS.length]
+        label: newColourTagLabel.trim(),
+        colour: BLOCK_COLOURS[data.colourTags.length % BLOCK_COLOURS.length]
       };
 
       setData(prev => ({
         ...prev,
-        colorTags: [...prev.colorTags, newTag]
+        colourTags: [...prev.colourTags, newTag]
       }));
-      setNewColorTagLabel('');
+      setNewColourTagLabel('');
     }
   };
 
-  const updateColorTag = (tagId: string, updates: Partial<ColorTag>) => {
+  const updateColourTag = (tagId: string, updates: Partial<ColourTag>) => {
     setData(prev => ({
       ...prev,
-      colorTags: prev.colorTags.map(tag =>
+      colourTags: prev.colourTags.map(tag =>
         tag.id === tagId ? { ...tag, ...updates } : tag
       )
     }));
   };
 
-  const deleteColorTag = (tagId: string) => {
+  const deleteColourTag = (tagId: string) => {
     setData(prev => ({
       ...prev,
-      colorTags: prev.colorTags.filter(tag => tag.id !== tagId),
+      colourTags: prev.colourTags.filter(tag => tag.id !== tagId),
       weeklyView: {
         ...prev.weeklyView,
         blocks: prev.weeklyView.blocks.map(block =>
-          block.colorTagId === tagId ? { ...block, colorTagId: undefined } : block
+          block.colourTagId === tagId ? { ...block, colourTagId: undefined } : block
         )
       },
       monthlyView: {
         ...prev.monthlyView,
         blocks: prev.monthlyView.blocks.map(block =>
-          block.colorTagId === tagId ? { ...block, colorTagId: undefined } : block
+          block.colourTagId === tagId ? { ...block, colourTagId: undefined } : block
         )
       }
     }));
   };
 
-  const getColorTagLabel = (colorTagId?: string) => {
-    const tag = data.colorTags.find(tag => tag.id === colorTagId);
+  const getColourTagLabel = (colourTagId?: string) => {
+    const tag = data.colourTags.find(tag => tag.id === colourTagId);
     return tag?.label || 'Untitled';
   };
 
-  // Handle creating block with color selection
-  const handleCreateBlockWithColor = (day: string, hour: number, colorTagId?: string) => {
-    createTimeBlock(day, hour, undefined, colorTagId);
-    setShowColorSelector(null);
+  // Handle creating block with colour selection
+  const handleCreateBlockWithColour = (day: string, hour: number, colourTagId?: string) => {
+    createTimeBlock(day, hour, undefined, colourTagId);
+    setShowColourSelector(null);
   };
 
-  // Inline Color Selector Component
-  const renderInlineColorSelector = (day: string, hour: number) => (
+  // Inline Colour Selector Component
+  const renderInlineColourSelector = (day: string, hour: number) => (
     <div className="absolute top-full left-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 min-w-[200px]">
-      <div className="text-xs text-gray-600 mb-2 font-medium">Select a color category:</div>
+      <div className="text-xs text-gray-600 mb-2 font-medium">Select a colour category:</div>
       <div className="flex flex-col gap-1">
-        {data.colorTags.map((tag) => (
+        {data.colourTags.map((tag) => (
           <button
             key={tag.id}
             className="flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-gray-50 border border-gray-200 text-left"
-            onClick={() => handleCreateBlockWithColor(day, hour, tag.id)}
+            onClick={() => handleCreateBlockWithColour(day, hour, tag.id)}
           >
             <div
               className="w-3 h-3 rounded-full border border-gray-300 flex-shrink-0"
-              style={{ backgroundColor: tag.color }}
+              style={{ backgroundColor: tag.colour }}
             />
             <span className="truncate">{tag.label}</span>
           </button>
@@ -290,40 +290,40 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       <div className="mt-2 pt-2 border-t border-gray-100">
         <button
           className="text-xs text-gray-500 hover:text-gray-700 underline"
-          onClick={() => handleCreateBlockWithColor(day, hour)}
+          onClick={() => handleCreateBlockWithColour(day, hour)}
         >
-          Use default color
+          Use default colour
         </button>
       </div>
     </div>
   );
 
-  // Color Key Panel Component
-  const renderColorKeyPanel = () => (
+  // Colour Key Panel Component
+  const renderColourKeyPanel = () => (
     <Card className="mb-6">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Palette className="h-5 w-5" />
-          Color Key
+          Colour Key
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
               </TooltipTrigger>
               <TooltipContent>
-                <p>Click any color tag to activate it. When you click a calendar block, the selected tag is applied automatically with editable text.</p>
+                <p>Click any colour tag to activate it. When you click a calendar block, the selected tag is applied automatically with editable text.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </CardTitle>
         <CardDescription>
-          Select a color category, then click a calendar block to apply it. The block will auto-fill with the category name, which you can edit anytime.
+          Select a colour category, then click a calendar block to apply it. The block will auto-fill with the category name, which you can edit anytime.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-3 items-center">
-          {data.colorTags.map((tag) => {
-            const isActive = activeColorTagId === tag.id;
+          {data.colourTags.map((tag) => {
+            const isActive = activeColourTagId === tag.id;
             return (
               <div
                 key={tag.id}
@@ -332,7 +332,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                     ? 'bg-blue-50 border-2 border-blue-500 shadow-md ring-2 ring-blue-200' 
                     : 'bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
                 }`}
-                onClick={() => setActiveColorTagId(tag.id)}
+                onClick={() => setActiveColourTagId(tag.id)}
               >
                 {isActive && (
                   <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
@@ -343,16 +343,16 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   className={`w-4 h-4 rounded-full border transition-all ${
                     isActive ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
                   }`}
-                  style={{ backgroundColor: tag.color }}
-                  title={`${isActive ? 'Active: ' : 'Select '}${tag.label} color`}
+                  style={{ backgroundColor: tag.colour }}
+                  title={`${isActive ? 'Active: ' : 'Select '}${tag.label} colour`}
                 />
-              {editingColorTag === tag.id ? (
+              {editingColourTag === tag.id ? (
                 <Input
                   value={tag.label}
-                  onChange={(e) => updateColorTag(tag.id, { label: e.target.value })}
-                  onBlur={() => setEditingColorTag(null)}
+                  onChange={(e) => updateColourTag(tag.id, { label: e.target.value })}
+                  onBlur={() => setEditingColourTag(null)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') setEditingColorTag(null);
+                    if (e.key === 'Enter') setEditingColourTag(null);
                   }}
                   className="h-6 text-xs w-24"
                   autoFocus
@@ -360,7 +360,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
               ) : (
                 <span
                   className="text-sm cursor-pointer hover:bg-gray-100 px-1 rounded"
-                  onClick={() => setEditingColorTag(tag.id)}
+                  onClick={() => setEditingColourTag(tag.id)}
                 >
                   {tag.label}
                 </span>
@@ -371,7 +371,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                 className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
                 onClick={(e) => {
                   e.stopPropagation();
-                  deleteColorTag(tag.id);
+                  deleteColourTag(tag.id);
                 }}
               >
                 <Trash2 className="h-3 w-3" />
@@ -380,20 +380,20 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
             );
           })}
           
-          {/* Add new color tag */}
+          {/* Add new colour tag */}
           <div className="flex items-center gap-2">
             <Input
-              value={newColorTagLabel}
-              onChange={(e) => setNewColorTagLabel(e.target.value)}
+              value={newColourTagLabel}
+              onChange={(e) => setNewColourTagLabel(e.target.value)}
               placeholder="New category..."
               className="h-8 text-sm w-32"
               onKeyDown={(e) => {
-                if (e.key === 'Enter') addColorTag();
+                if (e.key === 'Enter') addColourTag();
               }}
             />
             <Button
               size="sm"
-              onClick={addColorTag}
+              onClick={addColourTag}
               className="h-8 w-8 p-0"
             >
               <Plus className="h-4 w-4" />
@@ -401,13 +401,13 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           </div>
         </div>
         
-        {activeColorTagId && (
+        {activeColourTagId && (
           <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
             <div className="text-xs text-blue-700 font-medium">
-              Active Color: <span className="text-blue-800">{getColorTagLabel(activeColorTagId)}</span>
+              Active Colour: <span className="text-blue-800">{getColourTagLabel(activeColourTagId)}</span>
             </div>
             <div className="text-xs text-blue-600 mt-1">
-              New blocks will automatically use this color and category
+              New blocks will automatically use this colour and category
             </div>
           </div>
         )}
@@ -491,10 +491,10 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, day, hour)}
                   onClick={() => {
-                    if (activeColorTagId) {
+                    if (activeColourTagId) {
                       createTimeBlock(day, hour);
                     } else {
-                      setShowColorSelector(`${day}-${hour}`);
+                      setShowColourSelector(`${day}-${hour}`);
                     }
                   }}
                 >
@@ -502,10 +502,10 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                     <div
                       key={block.id}
                       className="absolute inset-1 rounded text-white text-sm font-medium p-2 cursor-move flex items-center justify-between group shadow-sm"
-                      style={{ backgroundColor: block.color, height: `${Math.max(block.duration * 80 - 8, 75)}px` }}
+                      style={{ backgroundColor: block.colour, height: `${Math.max(block.duration * 80 - 8, 75)}px` }}
                       draggable
                       onDragStart={() => handleDragStart(block)}
-                      title={`${block.title}${block.colorTagId ? ` (${getColorTagLabel(block.colorTagId)})` : ''} - Click to edit`}
+                      title={`${block.title}${block.colourTagId ? ` (${getColourTagLabel(block.colourTagId)})` : ''} - Click to edit`}
                     >
                       <div className="flex-1 flex items-center justify-center text-center px-1">
                         {editingBlock === block.id ? (
@@ -559,7 +559,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                     </div>
                   ))}
                   
-                  {showColorSelector === `${day}-${hour}` && renderInlineColorSelector(day, hour)}
+                  {showColourSelector === `${day}-${hour}` && renderInlineColourSelector(day, hour)}
                 </div>
               ))
             ])}
@@ -671,12 +671,12 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                     }`}
                     onClick={() => {
                       if (isCurrentMonth) {
-                        if (activeColorTagId) {
-                          // Auto-create block with selected color category
+                        if (activeColourTagId) {
+                          // Auto-create block with selected colour category
                           createTimeBlock(dateString, 9);
                         } else {
-                          // Show color selector if no color is active
-                          setShowColorSelector(`${dateString}-9`);
+                          // Show colour selector if no colour is active
+                          setShowColourSelector(`${dateString}-9`);
                         }
                       }
                     }}
@@ -687,7 +687,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                       <div
                         key={block.id}
                         className="text-xs p-2 rounded text-white cursor-pointer shadow-sm hover:shadow-md transition-shadow"
-                        style={{ backgroundColor: block.color }}
+                        style={{ backgroundColor: block.colour }}
                         onClick={(e) => {
                           e.stopPropagation();
                           setEditingBlock(block.id);
@@ -703,9 +703,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                     )}
                   </div>
 
-                  {showColorSelector === `${dateString}-9` && (
+                  {showColourSelector === `${dateString}-9` && (
                     <div className="mt-1 relative">
-                      {renderInlineColorSelector(dateString, 9)}
+                      {renderInlineColourSelector(dateString, 9)}
                     </div>
                   )}
                   </div>
@@ -745,7 +745,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         </TabsList>
 
         <TabsContent value="weekly" className="space-y-4">
-          {renderColorKeyPanel()}
+          {renderColourKeyPanel()}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -763,7 +763,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         </TabsContent>
 
         <TabsContent value="monthly" className="space-y-4">
-          {renderColorKeyPanel()}
+          {renderColourKeyPanel()}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

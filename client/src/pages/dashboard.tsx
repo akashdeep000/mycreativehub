@@ -92,21 +92,21 @@ export default function Dashboard() {
             title="Tasks Completed"
             value={stats?.completedTasks || 0}
             subtitle="This Week"
-            color="green"
+            colour="green"
             icon="check"
           />
           <StatsCard
             title="Focus Hours"
             value={((stats?.focusHours || 0) / 60).toFixed(1)}
             subtitle="Focus Time"
-            color="purple"
+            colour="purple"
             icon="clock"
           />
           <StatsCard
             title="Days You Showed Up"
             value={stats?.daysShowedUp || 0}
             subtitle="This month"
-            color="pink"
+            colour="pink"
             icon="heart"
           />
           </div>

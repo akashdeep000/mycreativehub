@@ -6,7 +6,7 @@ interface StatsCardProps {
   title: string;
   value: string | number;
   subtitle: string;
-  color: "green" | "purple" | "pink";
+  colour: "green" | "purple" | "pink";
   icon: "check" | "clock" | "heart";
 }
 
@@ -16,7 +16,7 @@ const iconMap: Record<string, LucideIcon> = {
   heart: Heart,
 };
 
-const colorMap = {
+const colourMap = {
   green: {
     bg: "from-green-400 to-green-500",
     badge: "bg-green-50 text-green-600",
@@ -31,18 +31,18 @@ const colorMap = {
   },
 };
 
-export default function StatsCard({ title, value, subtitle, color, icon }: StatsCardProps) {
+export default function StatsCard({ title, value, subtitle, colour, icon }: StatsCardProps) {
   const IconComponent = iconMap[icon];
-  const colorConfig = colorMap[color];
+  const colourConfig = colourMap[colour];
 
   return (
     <Card className="border-pink-100">
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <div className={`w-12 h-12 bg-gradient-to-br ${colorConfig.bg} rounded-xl flex items-center justify-center`}>
+          <div className={`w-12 h-12 bg-gradient-to-br ${colourConfig.bg} rounded-xl flex items-center justify-center`}>
             <IconComponent className="w-6 h-6 text-white" />
           </div>
-          <Badge variant="secondary" className={`text-sm ${colorConfig.badge}`}>
+          <Badge variant="secondary" className={`text-sm ${colourConfig.badge}`}>
             {subtitle}
           </Badge>
         </div>

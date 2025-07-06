@@ -35,9 +35,9 @@ const workflowTemplates = [
   {
     id: "inspiration",
     name: "Creative Inspiration Hub",
-    description: "Store moodboards, color palettes, and reference links",
+    description: "Store moodboards, colour palettes, and reference links",
     icon: Lightbulb,
-    color: "bg-gradient-to-br from-purple-500 to-pink-500",
+    colour: "bg-gradient-to-br from-purple-500 to-pink-500",
     textColor: "text-white",
     defaultData: {
       moodboard: {
@@ -47,9 +47,9 @@ const workflowTemplates = [
           { id: 3, url: "https://via.placeholder.com/200x150/9333EA/FFFFFF?text=Inspiration+3", alt: "Inspiration 3" }
         ],
         notes: [
-          { id: 1, text: "Minimalist design with bold typography", color: "#8B5CF6" },
-          { id: 2, text: "Nature-inspired color palette", color: "#A855F7" },
-          { id: 3, text: "Clean layouts with plenty of white space", color: "#9333EA" }
+          { id: 1, text: "Minimalist design with bold typography", colour: "#8B5CF6" },
+          { id: 2, text: "Nature-inspired colour palette", colour: "#A855F7" },
+          { id: 3, text: "Clean layouts with plenty of white space", colour: "#9333EA" }
         ]
       }
     }
@@ -59,18 +59,18 @@ const workflowTemplates = [
     name: "Time Blocking Planner",
     description: "Weekly calendar with drag-and-drop scheduling",
     icon: Calendar,
-    color: "bg-gradient-to-br from-blue-500 to-teal-500",
+    colour: "bg-gradient-to-br from-blue-500 to-teal-500",
     textColor: "text-white",
     defaultData: {
       weeklyView: {
         blocks: [
-          { id: "block-1", title: "Focus Work", startTime: "09:00", duration: 2, color: "#3B82F6", colorTagId: "tag-1", day: "Monday" },
-          { id: "block-2", title: "Emails", startTime: "11:00", duration: 1, color: "#10B981", colorTagId: "tag-2", day: "Monday" },
-          { id: "block-3", title: "Creative Session", startTime: "14:00", duration: 2, color: "#8B5CF6", colorTagId: "tag-3", day: "Monday" },
-          { id: "block-4", title: "Planning", startTime: "09:00", duration: 1, color: "#F59E0B", colorTagId: "tag-4", day: "Tuesday" },
-          { id: "block-5", title: "Client Work", startTime: "10:00", duration: 2, color: "#EF4444", colorTagId: "tag-5", day: "Tuesday" },
-          { id: "block-6", title: "Deep Work", startTime: "09:00", duration: 3, color: "#3B82F6", colorTagId: "tag-1", day: "Wednesday" },
-          { id: "block-7", title: "Team Meeting", startTime: "13:00", duration: 1, color: "#10B981", colorTagId: "tag-2", day: "Wednesday" }
+          { id: "block-1", title: "Focus Work", startTime: "09:00", duration: 2, colour: "#3B82F6", colourTagId: "tag-1", day: "Monday" },
+          { id: "block-2", title: "Emails", startTime: "11:00", duration: 1, colour: "#10B981", colourTagId: "tag-2", day: "Monday" },
+          { id: "block-3", title: "Creative Session", startTime: "14:00", duration: 2, colour: "#8B5CF6", colourTagId: "tag-3", day: "Monday" },
+          { id: "block-4", title: "Planning", startTime: "09:00", duration: 1, colour: "#F59E0B", colourTagId: "tag-4", day: "Tuesday" },
+          { id: "block-5", title: "Client Work", startTime: "10:00", duration: 2, colour: "#EF4444", colourTagId: "tag-5", day: "Tuesday" },
+          { id: "block-6", title: "Deep Work", startTime: "09:00", duration: 3, colour: "#3B82F6", colourTagId: "tag-1", day: "Wednesday" },
+          { id: "block-7", title: "Team Meeting", startTime: "13:00", duration: 1, colour: "#10B981", colourTagId: "tag-2", day: "Wednesday" }
         ]
       },
       monthlyView: {
@@ -80,8 +80,8 @@ const workflowTemplates = [
             title: "Project Deadline", 
             startTime: "10:00", 
             duration: 1, 
-            color: "#EF4444", 
-            colorTagId: "tag-5",
+            colour: "#EF4444", 
+            colourTagId: "tag-5",
             day: new Date().toISOString().split('T')[0]
           },
           { 
@@ -89,19 +89,19 @@ const workflowTemplates = [
             title: "Weekly Review", 
             startTime: "15:00", 
             duration: 1, 
-            color: "#8B5CF6", 
-            colorTagId: "tag-3",
+            colour: "#8B5CF6", 
+            colourTagId: "tag-3",
             day: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
           }
         ],
         selectedMonth: new Date().toISOString().slice(0, 7)
       },
-      colorTags: [
-        { id: "tag-1", label: "Focus Time", color: "#3B82F6" },
-        { id: "tag-2", label: "Communication", color: "#10B981" },
-        { id: "tag-3", label: "Creative Work", color: "#8B5CF6" },
-        { id: "tag-4", label: "Planning", color: "#F59E0B" },
-        { id: "tag-5", label: "Urgent", color: "#EF4444" }
+      colourTags: [
+        { id: "tag-1", label: "Focus Time", colour: "#3B82F6" },
+        { id: "tag-2", label: "Communication", colour: "#10B981" },
+        { id: "tag-3", label: "Creative Work", colour: "#8B5CF6" },
+        { id: "tag-4", label: "Planning", colour: "#F59E0B" },
+        { id: "tag-5", label: "Urgent", colour: "#EF4444" }
       ]
     }
   },
@@ -110,7 +110,7 @@ const workflowTemplates = [
     name: "Daily Prioritization Framework",
     description: "Must/Should/Could task organization system",
     icon: CheckSquare,
-    color: "bg-gradient-to-br from-green-500 to-emerald-500",
+    colour: "bg-gradient-to-br from-green-500 to-emerald-500",
     textColor: "text-white",
     defaultData: {
       tasks: {
@@ -135,7 +135,7 @@ const workflowTemplates = [
     name: "Automate with Manychat",
     description: "Build chatbot sequences and automate conversations",
     icon: Bot,
-    color: "bg-gradient-to-br from-orange-500 to-red-500",
+    colour: "bg-gradient-to-br from-orange-500 to-red-500",
     textColor: "text-white",
     defaultData: {
       affiliateLink: "https://manychat.com/ref/affiliate-link",
@@ -152,7 +152,7 @@ const workflowTemplates = [
     name: "Automation System Toolkit",
     description: "Connect apps and automate repetitive tasks",
     icon: Zap,
-    color: "bg-gradient-to-br from-yellow-500 to-orange-500",
+    colour: "bg-gradient-to-br from-yellow-500 to-orange-500",
     textColor: "text-white",
     defaultData: {
       flows: [
@@ -384,7 +384,7 @@ export default function StreamlineWorkflow() {
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Streamline Your Workflow</h1>
               <p className="text-gray-600">
-                Pre-built templates to organize your creative business processes
+                Pre-built templates to organise your creative business processes
               </p>
             </div>
 
@@ -423,7 +423,7 @@ export default function StreamlineWorkflow() {
                         >
                           <CardHeader className="pb-3">
                             <div className="flex items-center gap-3">
-                              <div className={`p-3 rounded-lg ${template.color}`}>
+                              <div className={`p-3 rounded-lg ${template.colour}`}>
                                 <IconComponent className={`h-6 w-6 ${template.textColor}`} />
                               </div>
                               <div className="flex-1">
@@ -480,7 +480,7 @@ export default function StreamlineWorkflow() {
                         <Card key={template.id} className="border-0 shadow-md bg-white opacity-75">
                           <CardHeader className="pb-3">
                             <div className="flex items-center gap-3">
-                              <div className={`p-3 rounded-lg ${templateConfig.color}`}>
+                              <div className={`p-3 rounded-lg ${templateConfig.colour}`}>
                                 <IconComponent className={`h-6 w-6 ${templateConfig.textColor}`} />
                               </div>
                               <div className="flex-1">

@@ -37,16 +37,16 @@ export default function ContentPlanning() {
       name: "Monthly Content Calendar",
       description: "Plan your content for the entire month with this comprehensive calendar template",
       icon: Calendar,
-      color: "blue",
+      colour: "blue",
       lastUsed: "2 days ago",
       isPopular: true
     },
     {
       id: 2,
       name: "Content Batching Planner",
-      description: "Organize your content creation sessions for maximum efficiency",
+      description: "Organise your content creation sessions for maximum efficiency",
       icon: Grid3X3,
-      color: "purple",
+      colour: "purple",
       lastUsed: "1 week ago",
       isPopular: false
     },
@@ -55,16 +55,16 @@ export default function ContentPlanning() {
       name: "Blog Post Planner",
       description: "Structure your blog posts with this detailed planning template",
       icon: FileText,
-      color: "green",
+      colour: "green",
       lastUsed: "3 days ago",
       isPopular: true
     },
     {
       id: 4,
-      name: "Brand Color Palette",
-      description: "Keep track of your brand colors and visual identity",
+      name: "Brand Colour Palette",
+      description: "Keep track of your brand colours and visual identity",
       icon: Palette,
-      color: "pink",
+      colour: "pink",
       lastUsed: "Never",
       isPopular: false
     }
@@ -109,7 +109,7 @@ export default function ContentPlanning() {
             <Card key={template.id} className="border-pink-100 hover:shadow-md transition-shadow cursor-pointer group">
               <CardHeader>
                 <div className="flex items-center justify-between mb-3">
-                  <div className={`w-10 h-10 bg-gradient-to-br from-${template.color}-400 to-${template.color}-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                  <div className={`w-10 h-10 bg-gradient-to-br from-${template.colour}-400 to-${template.colour}-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
                     <template.icon className="w-5 h-5 text-white" />
                   </div>
                   {template.isPopular && (
