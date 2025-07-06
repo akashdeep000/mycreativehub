@@ -213,7 +213,6 @@ export default function InspirationHub() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-cream">
       <Sidebar />
-      
       <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
         {/* Header */}
         <div className="mb-8">
@@ -305,9 +304,10 @@ export default function InspirationHub() {
             <h2 className="text-2xl font-serif font-semibold text-gray-800 mb-2">
               Welcome to Your Inspiration Hub
             </h2>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              Create your first inspiration board to start collecting visual references, colour palettes, notes, and links that inspire your creative projects.
-            </p>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">Saw something that sparked an idea? 
+            Snap it, screenshot it, drop it in here.
+
+            No more digging through your camera roll...this is your space to collect, save and actually use the things that inspire you.</p>
             <Button 
               onClick={() => setIsCreateDialogOpen(true)}
               className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
@@ -491,7 +491,6 @@ export default function InspirationHub() {
           </Card>
         )}
       </div>
-
       <MobileNav />
     </div>
   );
