@@ -71,9 +71,9 @@ export default function Sidebar() {
         {/* Archive Link */}
         <div className="mb-6">
           <button
-            onClick={() => setLocation("/archived")}
+            onClick={() => setLocation("/archived-templates")}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colours ${
-              location === "/archived"
+              location === "/archived-templates"
                 ? "bg-pink-100 text-pink-600 font-medium"
                 : "text-gray-600 hover:bg-gray-50"
             }`}
