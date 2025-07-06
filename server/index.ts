@@ -13,6 +13,7 @@ console.log("PGUSER available:", !!process.env.PGUSER);
 console.log("PGDATABASE available:", !!process.env.PGDATABASE);
 const effectiveJwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
 console.log("Effective JWT Secret available:", !!effectiveJwtSecret && effectiveJwtSecret !== "fallback-secret");
+console.log("SERVER BUILD VERSION: 3.0 - FORCED DEPLOYMENT");
 console.log("=== ENVIRONMENT CHECK END ===");
 
 const app = express();

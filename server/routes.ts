@@ -76,7 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       hasJwtSecret: !!process.env.JWT_SECRET,
       hasEffectiveJwtSecret: !!JWT_SECRET && JWT_SECRET !== "fallback-secret",
       jwtSecretSource: process.env.JWT_SECRET ? "JWT_SECRET" : process.env.SESSION_SECRET ? "SESSION_SECRET" : "fallback",
-      deploymentVersion: "v2.0",
+      deploymentVersion: "v3.0-forced",
     });
   });
 
