@@ -21,11 +21,21 @@ import DailyFocusPage from "@/pages/daily-focus";
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  // Always show login/signup routes for unauthenticated users
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
+      {!isAuthenticated ? (
         <>
           <Route path="/" component={Login} />
+          <Route path="/login" component={Login} />
           <Route path="/signup" component={SignUp} />
         </>
       ) : (
