@@ -157,6 +157,68 @@ export const workflowTemplateFiles = pgTable("workflow_template_files", {
   uploadedAt: timestamp("uploaded_at").defaultNow(),
 });
 
+// Inspiration boards
+export const inspirationBoards = pgTable("inspiration_boards", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  backgroundColor: varchar("background_color").default("white"),
+  backgroundTexture: varchar("background_texture").default("paper"),
+  isArchived: boolean("is_archived").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  archivedAt: timestamp("archived_at"),
+});
+
+// Inspiration board images
+export const inspirationBoardImages = pgTable("inspiration_board_images", {
+  id: serial("id").primaryKey(),
+  boardId: integer("board_id").references(() => inspirationBoards.id, { onDelete: "cascade" }),
+  imageUrl: varchar("image_url").notNull(),
+  caption: text("caption"),
+  tags: text("tags").array(),
+  position: jsonb("position"), // { x: number, y: number, width: number, height: number }
+  isPinned: boolean("is_pinned").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Inspiration board notes
+export const inspirationBoardNotes = pgTable("inspiration_board_notes", {
+  id: serial("id").primaryKey(),
+  boardId: integer("board_id").references(() => inspirationBoards.id, { onDelete: "cascade" }),
+  title: varchar("title"),
+  content: text("content").notNull(),
+  color: varchar("color").default("yellow"), // yellow, pink, blue, lilac
+  position: jsonb("position"), // { x: number, y: number, rotation: number }
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Color palettes
+export const colorPalettes = pgTable("color_palettes", {
+  id: serial("id").primaryKey(),
+  boardId: integer("board_id").references(() => inspirationBoards.id, { onDelete: "cascade" }),
+  name: varchar("name").notNull(),
+  colors: jsonb("colors").notNull(), // Array of { color: string, name?: string }
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Board links/references
+export const boardLinks = pgTable("board_links", {
+  id: serial("id").primaryKey(),
+  boardId: integer("board_id").references(() => inspirationBoards.id, { onDelete: "cascade" }),
+  url: varchar("url").notNull(),
+  title: varchar("title"),
+  description: text("description"),
+  thumbnailUrl: varchar("thumbnail_url"),
+  position: integer("position").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   toolkitData: many(userToolkitData),
@@ -238,6 +300,45 @@ export const workflowTemplateFilesRelations = relations(workflowTemplateFiles, (
   }),
 }));
 
+export const inspirationBoardsRelations = relations(inspirationBoards, ({ one, many }) => ({
+  user: one(users, {
+    fields: [inspirationBoards.userId],
+    references: [users.id],
+  }),
+  images: many(inspirationBoardImages),
+  notes: many(inspirationBoardNotes),
+  colorPalettes: many(colorPalettes),
+  links: many(boardLinks),
+}));
+
+export const inspirationBoardImagesRelations = relations(inspirationBoardImages, ({ one }) => ({
+  board: one(inspirationBoards, {
+    fields: [inspirationBoardImages.boardId],
+    references: [inspirationBoards.id],
+  }),
+}));
+
+export const inspirationBoardNotesRelations = relations(inspirationBoardNotes, ({ one }) => ({
+  board: one(inspirationBoards, {
+    fields: [inspirationBoardNotes.boardId],
+    references: [inspirationBoards.id],
+  }),
+}));
+
+export const colorPalettesRelations = relations(colorPalettes, ({ one }) => ({
+  board: one(inspirationBoards, {
+    fields: [colorPalettes.boardId],
+    references: [inspirationBoards.id],
+  }),
+}));
+
+export const boardLinksRelations = relations(boardLinks, ({ one }) => ({
+  board: one(inspirationBoards, {
+    fields: [boardLinks.boardId],
+    references: [inspirationBoards.id],
+  }),
+}));
+
 // Insert schemas
 export const insertDailyFocusTaskSchema = createInsertSchema(dailyFocusTasks).omit({
   id: true,
@@ -275,6 +376,37 @@ export const insertWorkflowTemplateFileSchema = createInsertSchema(workflowTempl
   uploadedAt: true,
 });
 
+export const insertInspirationBoardSchema = createInsertSchema(inspirationBoards).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  archivedAt: true,
+});
+
+export const insertInspirationBoardImageSchema = createInsertSchema(inspirationBoardImages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInspirationBoardNoteSchema = createInsertSchema(inspirationBoardNotes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertColorPaletteSchema = createInsertSchema(colorPalettes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBoardLinkSchema = createInsertSchema(boardLinks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -292,3 +424,13 @@ export type WorkflowTemplateInstance = typeof workflowTemplateInstances.$inferSe
 export type InsertWorkflowTemplateInstance = z.infer<typeof insertWorkflowTemplateInstanceSchema>;
 export type WorkflowTemplateFile = typeof workflowTemplateFiles.$inferSelect;
 export type InsertWorkflowTemplateFile = z.infer<typeof insertWorkflowTemplateFileSchema>;
+export type InspirationBoard = typeof inspirationBoards.$inferSelect;
+export type InsertInspirationBoard = z.infer<typeof insertInspirationBoardSchema>;
+export type InspirationBoardImage = typeof inspirationBoardImages.$inferSelect;
+export type InsertInspirationBoardImage = z.infer<typeof insertInspirationBoardImageSchema>;
+export type InspirationBoardNote = typeof inspirationBoardNotes.$inferSelect;
+export type InsertInspirationBoardNote = z.infer<typeof insertInspirationBoardNoteSchema>;
+export type ColorPalette = typeof colorPalettes.$inferSelect;
+export type InsertColorPalette = z.infer<typeof insertColorPaletteSchema>;
+export type BoardLink = typeof boardLinks.$inferSelect;
+export type InsertBoardLink = z.infer<typeof insertBoardLinkSchema>;

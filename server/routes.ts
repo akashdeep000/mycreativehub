@@ -594,6 +594,180 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Inspiration Boards API Routes
+  app.get('/api/inspiration-boards', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const boards = await storage.getInspirationBoards(userId);
+      res.json(boards);
+    } catch (error) {
+      console.error("Error fetching inspiration boards:", error);
+      res.status(500).json({ message: "Failed to fetch inspiration boards" });
+    }
+  });
+
+  app.get('/api/inspiration-boards/archived', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const archivedBoards = await storage.getArchivedInspirationBoards(userId);
+      res.json(archivedBoards);
+    } catch (error) {
+      console.error("Error fetching archived inspiration boards:", error);
+      res.status(500).json({ message: "Failed to fetch archived inspiration boards" });
+    }
+  });
+
+  app.get('/api/inspiration-boards/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      // Verify ownership
+      if (board.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json(board);
+    } catch (error) {
+      console.error("Error fetching inspiration board:", error);
+      res.status(500).json({ message: "Failed to fetch inspiration board" });
+    }
+  });
+
+  app.post('/api/inspiration-boards', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { title, description, backgroundColor, backgroundTexture } = req.body;
+      
+      if (!title?.trim()) {
+        return res.status(400).json({ message: "Title is required" });
+      }
+      
+      const board = await storage.createInspirationBoard({
+        userId,
+        title: title.trim(),
+        description: description?.trim() || null,
+        backgroundColor: backgroundColor || "white",
+        backgroundTexture: backgroundTexture || "paper",
+      });
+      
+      res.status(201).json(board);
+    } catch (error) {
+      console.error("Error creating inspiration board:", error);
+      res.status(500).json({ message: "Failed to create inspiration board" });
+    }
+  });
+
+  app.patch('/api/inspiration-boards/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      if (board.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const updatedBoard = await storage.updateInspirationBoard(parseInt(id), req.body);
+      res.json(updatedBoard);
+    } catch (error) {
+      console.error("Error updating inspiration board:", error);
+      res.status(500).json({ message: "Failed to update inspiration board" });
+    }
+  });
+
+  app.post('/api/inspiration-boards/:id/duplicate', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      if (board.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const duplicatedBoard = await storage.duplicateInspirationBoard(parseInt(id), userId);
+      res.status(201).json(duplicatedBoard);
+    } catch (error) {
+      console.error("Error duplicating inspiration board:", error);
+      res.status(500).json({ message: "Failed to duplicate inspiration board" });
+    }
+  });
+
+  app.post('/api/inspiration-boards/:id/archive', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      if (board.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const archivedBoard = await storage.archiveInspirationBoard(parseInt(id));
+      res.json(archivedBoard);
+    } catch (error) {
+      console.error("Error archiving inspiration board:", error);
+      res.status(500).json({ message: "Failed to archive inspiration board" });
+    }
+  });
+
+  app.post('/api/inspiration-boards/:id/restore', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      if (board.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const restoredBoard = await storage.restoreInspirationBoard(parseInt(id));
+      res.json(restoredBoard);
+    } catch (error) {
+      console.error("Error restoring inspiration board:", error);
+      res.status(500).json({ message: "Failed to restore inspiration board" });
+    }
+  });
+
+  app.delete('/api/inspiration-boards/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      if (board.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      await storage.deleteInspirationBoard(parseInt(id));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting inspiration board:", error);
+      res.status(500).json({ message: "Failed to delete inspiration board" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

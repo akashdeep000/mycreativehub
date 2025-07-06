@@ -10,6 +10,11 @@ import {
   dashboardAccess,
   workflowTemplateInstances,
   workflowTemplateFiles,
+  inspirationBoards,
+  inspirationBoardImages,
+  inspirationBoardNotes,
+  colorPalettes,
+  boardLinks,
   type User,
   type UpsertUser,
   type ToolkitModule,
@@ -26,9 +31,19 @@ import {
   type InsertWorkflowTemplateInstance,
   type WorkflowTemplateFile,
   type InsertWorkflowTemplateFile,
+  type InspirationBoard,
+  type InsertInspirationBoard,
+  type InspirationBoardImage,
+  type InsertInspirationBoardImage,
+  type InspirationBoardNote,
+  type InsertInspirationBoardNote,
+  type ColorPalette,
+  type InsertColorPalette,
+  type BoardLink,
+  type InsertBoardLink,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, gte, lte, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, asc, gte, lte, sql, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // User operations - supports both Replit Auth and custom auth
@@ -81,6 +96,41 @@ export interface IStorage {
   getWorkflowTemplateFiles(templateInstanceId: number): Promise<WorkflowTemplateFile[]>;
   createWorkflowTemplateFile(file: InsertWorkflowTemplateFile): Promise<WorkflowTemplateFile>;
   deleteWorkflowTemplateFile(id: number): Promise<void>;
+  
+  // Inspiration Boards
+  getInspirationBoards(userId: string, includeArchived?: boolean): Promise<InspirationBoard[]>;
+  getArchivedInspirationBoards(userId: string): Promise<InspirationBoard[]>;
+  getInspirationBoard(id: number): Promise<InspirationBoard | undefined>;
+  createInspirationBoard(board: InsertInspirationBoard): Promise<InspirationBoard>;
+  updateInspirationBoard(id: number, data: any): Promise<InspirationBoard>;
+  duplicateInspirationBoard(id: number, userId: string): Promise<InspirationBoard>;
+  archiveInspirationBoard(id: number): Promise<InspirationBoard>;
+  restoreInspirationBoard(id: number): Promise<InspirationBoard>;
+  deleteInspirationBoard(id: number): Promise<void>;
+  
+  // Inspiration Board Images
+  getBoardImages(boardId: number): Promise<InspirationBoardImage[]>;
+  createBoardImage(image: InsertInspirationBoardImage): Promise<InspirationBoardImage>;
+  updateBoardImage(id: number, data: any): Promise<InspirationBoardImage>;
+  deleteBoardImage(id: number): Promise<void>;
+  
+  // Inspiration Board Notes
+  getBoardNotes(boardId: number): Promise<InspirationBoardNote[]>;
+  createBoardNote(note: InsertInspirationBoardNote): Promise<InspirationBoardNote>;
+  updateBoardNote(id: number, data: any): Promise<InspirationBoardNote>;
+  deleteBoardNote(id: number): Promise<void>;
+  
+  // Color Palettes
+  getBoardColorPalettes(boardId: number): Promise<ColorPalette[]>;
+  createColorPalette(palette: InsertColorPalette): Promise<ColorPalette>;
+  updateColorPalette(id: number, data: any): Promise<ColorPalette>;
+  deleteColorPalette(id: number): Promise<void>;
+  
+  // Board Links
+  getBoardLinks(boardId: number): Promise<BoardLink[]>;
+  createBoardLink(link: InsertBoardLink): Promise<BoardLink>;
+  updateBoardLink(id: number, data: any): Promise<BoardLink>;
+  deleteBoardLink(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -460,6 +510,281 @@ export class DatabaseStorage implements IStorage {
   async deleteWorkflowTemplateFile(id: number): Promise<void> {
     await db.delete(workflowTemplateFiles)
       .where(eq(workflowTemplateFiles.id, id));
+  }
+
+  // Inspiration Boards
+  async getInspirationBoards(userId: string, includeArchived = false): Promise<InspirationBoard[]> {
+    return await db
+      .select()
+      .from(inspirationBoards)
+      .where(and(
+        eq(inspirationBoards.userId, userId),
+        includeArchived ? undefined : eq(inspirationBoards.isArchived, false)
+      ))
+      .orderBy(desc(inspirationBoards.createdAt));
+  }
+
+  async getArchivedInspirationBoards(userId: string): Promise<InspirationBoard[]> {
+    return await db
+      .select()
+      .from(inspirationBoards)
+      .where(and(
+        eq(inspirationBoards.userId, userId),
+        eq(inspirationBoards.isArchived, true)
+      ))
+      .orderBy(desc(inspirationBoards.archivedAt));
+  }
+
+  async getInspirationBoard(id: number): Promise<InspirationBoard | undefined> {
+    const [board] = await db
+      .select()
+      .from(inspirationBoards)
+      .where(eq(inspirationBoards.id, id));
+    return board;
+  }
+
+  async createInspirationBoard(board: InsertInspirationBoard): Promise<InspirationBoard> {
+    const [newBoard] = await db
+      .insert(inspirationBoards)
+      .values(board)
+      .returning();
+    return newBoard;
+  }
+
+  async updateInspirationBoard(id: number, data: any): Promise<InspirationBoard> {
+    const [updatedBoard] = await db
+      .update(inspirationBoards)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(inspirationBoards.id, id))
+      .returning();
+    return updatedBoard;
+  }
+
+  async duplicateInspirationBoard(id: number, userId: string): Promise<InspirationBoard> {
+    const originalBoard = await this.getInspirationBoard(id);
+    if (!originalBoard) throw new Error("Board not found");
+
+    const [duplicatedBoard] = await db
+      .insert(inspirationBoards)
+      .values({
+        userId,
+        title: `${originalBoard.title} (Copy)`,
+        description: originalBoard.description,
+        backgroundColor: originalBoard.backgroundColor,
+        backgroundTexture: originalBoard.backgroundTexture,
+      })
+      .returning();
+
+    // Copy images, notes, palettes, and links
+    const [images, notes, palettes, links] = await Promise.all([
+      this.getBoardImages(id),
+      this.getBoardNotes(id),
+      this.getBoardColorPalettes(id),
+      this.getBoardLinks(id),
+    ]);
+
+    await Promise.all([
+      ...images.map(img => this.createBoardImage({
+        boardId: duplicatedBoard.id,
+        imageUrl: img.imageUrl,
+        caption: img.caption,
+        tags: img.tags,
+        position: img.position,
+        isPinned: img.isPinned,
+      })),
+      ...notes.map(note => this.createBoardNote({
+        boardId: duplicatedBoard.id,
+        title: note.title,
+        content: note.content,
+        color: note.color,
+        position: note.position,
+      })),
+      ...palettes.map(palette => this.createColorPalette({
+        boardId: duplicatedBoard.id,
+        name: palette.name,
+        colors: palette.colors,
+      })),
+      ...links.map(link => this.createBoardLink({
+        boardId: duplicatedBoard.id,
+        url: link.url,
+        title: link.title,
+        description: link.description,
+        thumbnailUrl: link.thumbnailUrl,
+        position: link.position,
+      })),
+    ]);
+
+    return duplicatedBoard;
+  }
+
+  async archiveInspirationBoard(id: number): Promise<InspirationBoard> {
+    const [archivedBoard] = await db
+      .update(inspirationBoards)
+      .set({
+        isArchived: true,
+        archivedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(inspirationBoards.id, id))
+      .returning();
+    return archivedBoard;
+  }
+
+  async restoreInspirationBoard(id: number): Promise<InspirationBoard> {
+    const [restoredBoard] = await db
+      .update(inspirationBoards)
+      .set({
+        isArchived: false,
+        archivedAt: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(inspirationBoards.id, id))
+      .returning();
+    return restoredBoard;
+  }
+
+  async deleteInspirationBoard(id: number): Promise<void> {
+    await db.delete(inspirationBoards)
+      .where(eq(inspirationBoards.id, id));
+  }
+
+  // Inspiration Board Images
+  async getBoardImages(boardId: number): Promise<InspirationBoardImage[]> {
+    return await db
+      .select()
+      .from(inspirationBoardImages)
+      .where(eq(inspirationBoardImages.boardId, boardId))
+      .orderBy(desc(inspirationBoardImages.createdAt));
+  }
+
+  async createBoardImage(image: InsertInspirationBoardImage): Promise<InspirationBoardImage> {
+    const [newImage] = await db
+      .insert(inspirationBoardImages)
+      .values(image)
+      .returning();
+    return newImage;
+  }
+
+  async updateBoardImage(id: number, data: any): Promise<InspirationBoardImage> {
+    const [updatedImage] = await db
+      .update(inspirationBoardImages)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(inspirationBoardImages.id, id))
+      .returning();
+    return updatedImage;
+  }
+
+  async deleteBoardImage(id: number): Promise<void> {
+    await db.delete(inspirationBoardImages)
+      .where(eq(inspirationBoardImages.id, id));
+  }
+
+  // Inspiration Board Notes
+  async getBoardNotes(boardId: number): Promise<InspirationBoardNote[]> {
+    return await db
+      .select()
+      .from(inspirationBoardNotes)
+      .where(eq(inspirationBoardNotes.boardId, boardId))
+      .orderBy(desc(inspirationBoardNotes.createdAt));
+  }
+
+  async createBoardNote(note: InsertInspirationBoardNote): Promise<InspirationBoardNote> {
+    const [newNote] = await db
+      .insert(inspirationBoardNotes)
+      .values(note)
+      .returning();
+    return newNote;
+  }
+
+  async updateBoardNote(id: number, data: any): Promise<InspirationBoardNote> {
+    const [updatedNote] = await db
+      .update(inspirationBoardNotes)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(inspirationBoardNotes.id, id))
+      .returning();
+    return updatedNote;
+  }
+
+  async deleteBoardNote(id: number): Promise<void> {
+    await db.delete(inspirationBoardNotes)
+      .where(eq(inspirationBoardNotes.id, id));
+  }
+
+  // Color Palettes
+  async getBoardColorPalettes(boardId: number): Promise<ColorPalette[]> {
+    return await db
+      .select()
+      .from(colorPalettes)
+      .where(eq(colorPalettes.boardId, boardId))
+      .orderBy(desc(colorPalettes.createdAt));
+  }
+
+  async createColorPalette(palette: InsertColorPalette): Promise<ColorPalette> {
+    const [newPalette] = await db
+      .insert(colorPalettes)
+      .values(palette)
+      .returning();
+    return newPalette;
+  }
+
+  async updateColorPalette(id: number, data: any): Promise<ColorPalette> {
+    const [updatedPalette] = await db
+      .update(colorPalettes)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(colorPalettes.id, id))
+      .returning();
+    return updatedPalette;
+  }
+
+  async deleteColorPalette(id: number): Promise<void> {
+    await db.delete(colorPalettes)
+      .where(eq(colorPalettes.id, id));
+  }
+
+  // Board Links
+  async getBoardLinks(boardId: number): Promise<BoardLink[]> {
+    return await db
+      .select()
+      .from(boardLinks)
+      .where(eq(boardLinks.boardId, boardId))
+      .orderBy(asc(boardLinks.position));
+  }
+
+  async createBoardLink(link: InsertBoardLink): Promise<BoardLink> {
+    const [newLink] = await db
+      .insert(boardLinks)
+      .values(link)
+      .returning();
+    return newLink;
+  }
+
+  async updateBoardLink(id: number, data: any): Promise<BoardLink> {
+    const [updatedLink] = await db
+      .update(boardLinks)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(boardLinks.id, id))
+      .returning();
+    return updatedLink;
+  }
+
+  async deleteBoardLink(id: number): Promise<void> {
+    await db.delete(boardLinks)
+      .where(eq(boardLinks.id, id));
   }
 }
 

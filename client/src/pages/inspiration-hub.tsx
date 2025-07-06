@@ -1,16 +1,63 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Lightbulb, Plus, Palette, Image, Bookmark, Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { 
+  Lightbulb, 
+  Plus, 
+  Palette, 
+  Image, 
+  Bookmark, 
+  Sparkles,
+  MoreHorizontal,
+  Archive,
+  Copy,
+  Trash2,
+  Edit,
+  Eye,
+  Pin,
+  Grid3X3,
+  Link as LinkIcon,
+  StickyNote,
+  Download
+} from "lucide-react";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import type { InspirationBoard } from "@shared/schema";
+
+const backgroundOptions = [
+  { value: "white", label: "Clean White", class: "bg-white" },
+  { value: "cream", label: "Soft Cream", class: "bg-cream" },
+  { value: "grey", label: "Light Grey", class: "bg-gray-50" },
+  { value: "pink", label: "Soft Pink", class: "bg-pink-50" },
+  { value: "blue", label: "Soft Blue", class: "bg-blue-50" },
+  { value: "purple", label: "Soft Purple", class: "bg-purple-50" },
+];
+
+const textureOptions = [
+  { value: "paper", label: "Paper", class: "bg-gradient-to-br from-white to-gray-50" },
+  { value: "canvas", label: "Canvas", class: "bg-gradient-to-br from-amber-50 to-orange-50" },
+  { value: "linen", label: "Linen", class: "bg-gradient-to-br from-stone-50 to-stone-100" },
+];
 
 export default function InspirationHub() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedBoard, setSelectedBoard] = useState<InspirationBoard | null>(null);
+  const [newBoardTitle, setNewBoardTitle] = useState("");
+  const [newBoardDescription, setNewBoardDescription] = useState("");
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -21,57 +68,150 @@ export default function InspirationHub() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/";
       }, 500);
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
 
+  const { data: boards = [], isLoading: boardsLoading } = useQuery({
+    queryKey: ["/api/inspiration-boards"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: archivedBoards = [] } = useQuery({
+    queryKey: ["/api/inspiration-boards/archived"],
+    enabled: isAuthenticated,
+  });
+
+  const createBoardMutation = useMutation({
+    mutationFn: async (boardData: { title: string; description?: string }) => {
+      return await apiRequest("/api/inspiration-boards", {
+        method: "POST",
+        body: JSON.stringify(boardData),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards"] });
+      setIsCreateDialogOpen(false);
+      setNewBoardTitle("");
+      setNewBoardDescription("");
+      toast({
+        title: "Board Created",
+        description: "Your new inspiration board has been created successfully.",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to create inspiration board. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const duplicateBoardMutation = useMutation({
+    mutationFn: async (boardId: number) => {
+      return await apiRequest(`/api/inspiration-boards/${boardId}/duplicate`, {
+        method: "POST",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards"] });
+      toast({
+        title: "Board Duplicated",
+        description: "Board has been duplicated successfully.",
+      });
+    },
+  });
+
+  const archiveBoardMutation = useMutation({
+    mutationFn: async (boardId: number) => {
+      return await apiRequest(`/api/inspiration-boards/${boardId}/archive`, {
+        method: "POST",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards/archived"] });
+      toast({
+        title: "Board Archived",
+        description: "Board has been moved to archives.",
+      });
+    },
+  });
+
+  const deleteBoardMutation = useMutation({
+    mutationFn: async (boardId: number) => {
+      return await apiRequest(`/api/inspiration-boards/${boardId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards"] });
+      toast({
+        title: "Board Deleted",
+        description: "Board has been permanently deleted.",
+      });
+    },
+  });
+
+  const handleCreateBoard = () => {
+    if (!newBoardTitle.trim()) {
+      toast({
+        title: "Title Required",
+        description: "Please enter a title for your inspiration board.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createBoardMutation.mutate({
+      title: newBoardTitle.trim(),
+      description: newBoardDescription.trim() || undefined,
+    });
+  };
+
+  const handleViewBoard = (boardId: number) => {
+    setLocation(`/inspiration-hub/board/${boardId}`);
+  };
+
   if (isLoading || !isAuthenticated) {
     return null;
   }
 
-  const collections = [
-    {
-      id: 1,
-      name: "Brand Colors",
-      description: "Curated color palettes for your brand identity",
-      icon: Palette,
-      color: "pink",
-      itemCount: 12,
-      isNew: true
-    },
-    {
-      id: 2,
-      name: "Design References",
-      description: "Inspiring designs and layouts for your projects",
-      icon: Image,
-      color: "purple",
-      itemCount: 24,
-      isNew: false
-    },
-    {
-      id: 3,
-      name: "Mood Boards",
-      description: "Visual inspiration boards for different projects",
-      icon: Sparkles,
-      color: "blue",
-      itemCount: 8,
-      isNew: false
-    },
-    {
-      id: 4,
-      name: "Saved Ideas",
-      description: "Quick notes and ideas for future projects",
-      icon: Bookmark,
-      color: "green",
-      itemCount: 15,
-      isNew: false
-    }
-  ];
+  if (boardsLoading) {
+    return (
+      <div className="min-h-screen flex flex-col lg:flex-row bg-cream">
+        <Sidebar />
+        <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-64 mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <MobileNav />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-rose-50">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-cream">
       <Sidebar />
       
       <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
@@ -83,113 +223,273 @@ export default function InspirationHub() {
             </div>
             <div>
               <h1 className="text-3xl font-serif font-semibold text-gray-800">Inspiration Hub</h1>
-              <p className="text-gray-600">Collect and organize your creative inspiration</p>
+              <p className="text-gray-600">Create visual moodboards and organise your creative inspiration</p>
             </div>
           </div>
           
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-purple-100 text-purple-700">
-                59 Items
+                {boards.length} Active Board{boards.length !== 1 ? 's' : ''}
               </Badge>
-              <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
-                New
-              </Badge>
+              {archivedBoards.length > 0 && (
+                <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                  {archivedBoards.length} Archived
+                </Badge>
+              )}
             </div>
-            <Button className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Inspiration
-            </Button>
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Board
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Inspiration Board</DialogTitle>
+                  <DialogDescription>
+                    Start a new visual moodboard to collect and organise your creative inspiration.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <label htmlFor="title" className="text-sm font-medium">
+                      Board Title
+                    </label>
+                    <Input
+                      id="title"
+                      value={newBoardTitle}
+                      onChange={(e) => setNewBoardTitle(e.target.value)}
+                      placeholder="e.g. Brand Identity, Website Redesign, Product Launch"
+                      maxLength={100}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label htmlFor="description" className="text-sm font-medium">
+                      Description (Optional)
+                    </label>
+                    <Textarea
+                      id="description"
+                      value={newBoardDescription}
+                      onChange={(e) => setNewBoardDescription(e.target.value)}
+                      placeholder="Brief description of what this board is for..."
+                      rows={3}
+                      maxLength={500}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleCreateBoard}
+                    disabled={createBoardMutation.isPending}
+                    className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+                  >
+                    {createBoardMutation.isPending ? "Creating..." : "Create Board"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
-        {/* Collections Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {collections.map((collection) => (
-            <Card key={collection.id} className="border-pink-100 hover:shadow-md transition-shadow cursor-pointer group">
-              <CardHeader>
-                <div className="flex items-center justify-between mb-3">
-                  <div className={`w-10 h-10 bg-gradient-to-br from-${collection.color}-400 to-${collection.color}-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                    <collection.icon className="w-5 h-5 text-white" />
-                  </div>
-                  {collection.isNew && (
-                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs">
-                      New
-                    </Badge>
-                  )}
-                </div>
-                <CardTitle className="text-lg font-serif">{collection.name}</CardTitle>
-                <CardDescription>{collection.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <span>{collection.itemCount} items</span>
-                  <Button variant="ghost" size="sm" className="text-purple-600 hover:text-purple-700">
-                    View
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Quick Add Section */}
-        <Card className="border-pink-100 bg-gradient-to-r from-purple-50 to-pink-50">
-          <CardContent className="p-6">
-            <h3 className="text-xl font-serif font-semibold text-gray-800 mb-4">
-              Quick Add
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Button variant="outline" className="h-20 border-purple-200 hover:bg-purple-50">
-                <div className="text-center">
-                  <Image className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                  <span className="text-sm font-medium">Upload Image</span>
-                </div>
-              </Button>
-              <Button variant="outline" className="h-20 border-purple-200 hover:bg-purple-50">
-                <div className="text-center">
-                  <Bookmark className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                  <span className="text-sm font-medium">Save Link</span>
-                </div>
-              </Button>
+        {/* Empty State */}
+        {boards.length === 0 && archivedBoards.length === 0 && (
+          <div className="text-center py-16">
+            <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Lightbulb className="w-10 h-10 text-white" />
             </div>
-          </CardContent>
-        </Card>
+            <h2 className="text-2xl font-serif font-semibold text-gray-800 mb-2">
+              Welcome to Your Inspiration Hub
+            </h2>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              Create your first inspiration board to start collecting visual references, colour palettes, notes, and links that inspire your creative projects.
+            </p>
+            <Button 
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Your First Board
+            </Button>
+          </div>
+        )}
 
-        {/* Inspiration Tips */}
-        <Card className="mt-8 border-pink-100 bg-gradient-to-r from-pink-50 to-purple-50">
-          <CardContent className="p-6">
-            <h3 className="text-xl font-serif font-semibold text-gray-800 mb-4">
-              Building Your Inspiration Library
-            </h3>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-semibold text-gray-700 mb-2">🎨 Organize by Project</h4>
-                <p className="text-gray-600 text-sm mb-4">
-                  Create separate boards for different projects or clients to keep inspiration focused.
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-700 mb-2">🏷️ Tag Everything</h4>
-                <p className="text-gray-600 text-sm mb-4">
-                  Use descriptive tags to make it easy to find specific inspiration later.
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-700 mb-2">📱 Capture on the Go</h4>
-                <p className="text-gray-600 text-sm mb-4">
-                  Take photos of interesting designs, colors, or layouts you encounter daily.
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-700 mb-2">🔄 Regular Review</h4>
-                <p className="text-gray-600 text-sm mb-4">
-                  Review your inspiration regularly to keep ideas fresh and relevant.
-                </p>
-              </div>
+        {/* Active Boards Grid */}
+        {boards.length > 0 && (
+          <div>
+            <h2 className="text-xl font-serif font-semibold text-gray-800 mb-6">Active Boards</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {boards.map((board: InspirationBoard) => (
+                <Card key={board.id} className="border-pink-100 hover:shadow-lg transition-all duration-300 cursor-pointer group relative overflow-hidden">
+                  <div 
+                    className={`absolute inset-0 opacity-5 ${
+                      backgroundOptions.find(bg => bg.value === board.backgroundColor)?.class || "bg-white"
+                    }`}
+                  />
+                  <CardHeader className="relative z-10">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Lightbulb className="w-5 h-5 text-white" />
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleViewBoard(board.id)}>
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Board
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => duplicateBoardMutation.mutate(board.id)}>
+                            <Copy className="w-4 h-4 mr-2" />
+                            Duplicate
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => archiveBoardMutation.mutate(board.id)}>
+                            <Archive className="w-4 h-4 mr-2" />
+                            Archive
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => deleteBoardMutation.mutate(board.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <CardTitle className="text-lg font-serif group-hover:text-purple-600 transition-colors">
+                      {board.title}
+                    </CardTitle>
+                    {board.description && (
+                      <CardDescription className="line-clamp-2">
+                        {board.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent className="relative z-10">
+                    <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                      <span>Created {new Date(board.createdAt!).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-1">
+                        <Grid3X3 className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="w-full group-hover:bg-purple-50 group-hover:border-purple-200 transition-colors"
+                      onClick={() => handleViewBoard(board.id)}
+                    >
+                      Open Board
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        )}
+
+        {/* Archived Boards */}
+        {archivedBoards.length > 0 && (
+          <div>
+            <h2 className="text-xl font-serif font-semibold text-gray-800 mb-6 flex items-center gap-2">
+              <Archive className="w-5 h-5" />
+              Archived Boards
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {archivedBoards.map((board: InspirationBoard) => (
+                <Card key={board.id} className="border-gray-200 hover:shadow-md transition-shadow opacity-75">
+                  <CardHeader>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-10 h-10 bg-gray-400 rounded-lg flex items-center justify-center">
+                        <Archive className="w-5 h-5 text-white" />
+                      </div>
+                      <Badge variant="secondary" className="bg-gray-100 text-gray-600 text-xs">
+                        Archived
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-lg font-serif text-gray-700">
+                      {board.title}
+                    </CardTitle>
+                    {board.description && (
+                      <CardDescription className="line-clamp-2">
+                        {board.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm text-gray-500 mb-4">
+                      Archived {board.archivedAt ? new Date(board.archivedAt).toLocaleDateString() : "Unknown"}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1">
+                        Restore
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Quick Tips */}
+        {boards.length > 0 && (
+          <Card className="mt-12 border-pink-100 bg-gradient-to-r from-pink-50 to-purple-50">
+            <CardContent className="p-6">
+              <h3 className="text-xl font-serif font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                Inspiration Board Tips
+              </h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                    <Image className="w-4 h-4" />
+                    Visual Moodboards
+                  </h4>
+                  <p className="text-gray-600 text-sm">
+                    Drag and drop images to create flexible layouts. Pin important images to the top and add captions for context.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                    <StickyNote className="w-4 h-4" />
+                    Quick Notes
+                  </h4>
+                  <p className="text-gray-600 text-sm">
+                    Add post-it style notes to capture ideas and insights. Use different colours to categorise your thoughts.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                    <Palette className="w-4 h-4" />
+                    Colour Palettes
+                  </h4>
+                  <p className="text-gray-600 text-sm">
+                    Extract colours from images or create custom palettes. Save hex codes and name your favourite combinations.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                    <LinkIcon className="w-4 h-4" />
+                    Reference Links
+                  </h4>
+                  <p className="text-gray-600 text-sm">
+                    Bookmark external resources and inspiration. Add notes to remember why each link is valuable.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <MobileNav />

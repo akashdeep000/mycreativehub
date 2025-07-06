@@ -1,0 +1,124 @@
+Redesign the Inspiration Hub (Visual Moodboard + Creative Workspace)
+
+We’d like to upgrade the current Inspiration Hub into a more visually engaging and creatively useful space — something that feels like a true inspiration board rather than a static image uploader. This new version should be both practical for organising ideas and aesthetically enjoyable to use.
+
+✅ 1. Moodboard Layout Upgrade
+Goal: Replace the rigid image grid with a more flexible and visual moodboard-style display.
+
+Please implement:
+
+A Pinterest-style masonry grid OR drag-and-drop layout with variable image sizes (to avoid uniformity)
+
+Allow manual rearrangement of images via drag-and-drop
+
+Each image card should support:
+
+Optional labels/tags (e.g. “Typography,” “Textures,” etc.)
+
+A small note or caption area
+
+An optional “pin to top” or “highlight” toggle (for hero images)
+
+Optional UI polish: slight drop shadow or layering effect to give depth, like a physical collage
+
+✅ 2. Multiple Inspiration Boards / Projects
+Goal: Allow users to organise inspiration by theme, project, or idea.
+
+Please implement:
+
+A top-level dashboard for boards, showing:
+
+Thumbnail preview
+
+Title
+
+Quick actions: Create New Board, Duplicate, Delete
+
+Within each board: show the full moodboard layout, notes, colors, and links
+
+Each board should be self-contained and saved separately
+
+✅ 3. Inspiration Notes (Post-It Style)
+Goal: Let users jot down quick bursts of thought or insight in a tactile, visual way.
+
+Please implement:
+
+Notes should appear as sticky note-style cards (post-it aesthetic)
+
+Slight angle/random placement for realism
+
+Varying colors (yellow, pink, pale blue, lilac) with option to choose
+
+Rich text editor inside each note:
+
+Title or heading
+
+Body text (support for line breaks and bold if possible)
+
+Optional prompts shown in faint text inside new notes:
+
+“What does this make you think of?”
+
+“Where could this lead?”
+
+“What project might this inspire?”
+
+✅ 4. Color Palette Builder
+Goal: Help users capture the color feel of their ideas.
+
+Please implement:
+
+Option to manually add hex codes or pick from a color picker
+
+Option to extract palette from uploaded image
+
+Save 3–6 swatches per palette, with optional name
+
+Display swatches as circular or rounded-square blocks
+
+Label each swatch with hex code
+
+✅ 5. Link & Reference Collection
+Goal: Allow users to save external resources relevant to their board.
+
+Please implement:
+
+Add a “Links & References” section on each board
+
+For each link:
+
+Show a thumbnail preview (if possible)
+
+Display the page title
+
+Include a small description or note field
+
+Users can reorder links or drag to prioritise
+
+✅ 6. Archived Boards + Export Options
+Support archiving of entire boards (via “...” menu on board preview)
+
+Archived boards should move to an “Archived Inspiration Boards” section (separate from active ones)
+
+Optional: Add “Export board as PDF” with image thumbnails, notes, and palette
+
+✅ 7. Visual & UI Enhancements
+Add a heading/title field at the top of each board
+
+Allow background colour or texture options (e.g. soft paper, white, soft grey, pastel)
+
+Hover states or subtle shadows for image and note interactions
+
+Slight animated bounce or fade when rearranging content for delight
+
+Summary of Sections Within Each Board:
+Moodboard Images (drag-and-drop, reorderable)
+
+Inspiration Notes (styled as post-it notes)
+
+Color Palettes (named sets of swatches)
+
+Links & References (visual bookmarks)
+
+Archived Boards (accessible in sidebar or archive section)
+

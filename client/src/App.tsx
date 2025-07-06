@@ -34,6 +34,7 @@ function Router() {
           <Route path="/time-blocking" component={TimeBlocking} />
           <Route path="/finance" component={FinanceTracker} />
           <Route path="/inspiration-hub" component={InspirationHub} />
+          <Route path="/inspiration-hub/board/:id" component={() => <div>Board Detail Page Coming Soon</div>} />
           <Route path="/archived-templates" component={ArchivedTemplates} />
         </>
       )}
