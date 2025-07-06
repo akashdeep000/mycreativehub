@@ -59,6 +59,13 @@ export default function SignUp() {
         throw new Error(error.message || "Sign-up failed");
       }
 
+      const responseData = await response.json();
+      
+      // Store JWT token in localStorage
+      if (responseData.token) {
+        localStorage.setItem('authToken', responseData.token);
+      }
+
       toast({
         title: "Account created!",
         description: "Welcome to your Creative Toolkit! Redirecting to dashboard...",

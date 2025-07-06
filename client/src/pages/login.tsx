@@ -52,8 +52,14 @@ export default function Login() {
         throw new Error(error.message || "Login failed");
       }
 
-      const userData = await response.json();
-      console.log("Frontend - User data received:", userData);
+      const responseData = await response.json();
+      console.log("Frontend - Response data received:", responseData);
+      
+      // Store JWT token in localStorage for additional security
+      if (responseData.token) {
+        localStorage.setItem('authToken', responseData.token);
+        console.log("Frontend - JWT token stored in localStorage");
+      }
 
       toast({
         title: "Welcome back!",

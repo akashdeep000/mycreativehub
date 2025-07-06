@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { getSession, isAuthenticated, hashPassword, comparePassword } from "./customAuth";
+import { getSession } from "./customAuth";
+import { generateToken, jwtAuth, hashPassword, comparePassword } from "./jwtAuth";
 import { nanoid } from "nanoid";
 import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplateInstanceSchema } from "@shared/schema";
 
@@ -88,23 +89,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         authProvider: "custom"
       });
       
-      // Create session
-      console.log("Signup - Creating session for user:", user.email);
-      req.session.userId = user.id;
+      // Generate JWT token
+      console.log("Signup - Generating JWT token for user:", user.email);
+      const token = generateToken(user.id, user.email);
       
-      // Explicitly save session to ensure persistence
-      req.session.save((err) => {
-        if (err) {
-          console.error("Signup - Session save error:", err);
-          return res.status(500).json({ message: "Failed to create session" });
-        }
-        
-        console.log("Signup - Session saved successfully, ID:", req.session.id);
-        
-        // Return user (without password)
-        const { password: _, ...userWithoutPassword } = user;
-        res.json(userWithoutPassword);
+      // Set httpOnly cookie
+      res.cookie('authToken', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
+      
+      console.log("Signup - JWT token generated and cookie set");
+      
+      // Return user (without password) and token
+      const { password: _, ...userWithoutPassword } = user;
+      res.json({ user: userWithoutPassword, token });
     } catch (error) {
       console.error("Sign-up error:", error);
       res.status(500).json({ message: "Failed to create account" });
@@ -127,31 +128,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid email or password" });
       }
       
-      // Create session
-      console.log("Login - Creating session for user:", user.email);
-      console.log("Login - Session before setting userId:", req.session.id);
-      req.session.userId = user.id;
-      console.log("Login - Session after setting userId:", req.session.id);
-      console.log("Login - Session userId set to:", req.session.userId);
+      // Generate JWT token
+      console.log("Login - Generating JWT token for user:", user.email);
+      const token = generateToken(user.id, user.email);
       
-      // Explicitly save session to ensure persistence
-      req.session.save((err) => {
-        if (err) {
-          console.error("Login - Session save error:", err);
-          return res.status(500).json({ message: "Failed to create session" });
-        }
-        
-        console.log("Login - Session saved successfully, ID:", req.session.id);
-        console.log("Login - Session userId after save:", req.session.userId);
-        console.log("Login - Response headers will include session cookie");
-        
-        // Debug: Check if session cookie is being set
-        console.log("Login - Set-Cookie header:", res.getHeader('set-cookie'));
-        
-        // Return user (without password)
-        const { password: _, ...userWithoutPassword } = user;
-        res.json(userWithoutPassword);
+      // Set httpOnly cookie
+      res.cookie('authToken', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
+      
+      console.log("Login - JWT token generated and cookie set");
+      
+      // Return user (without password) and token
+      const { password: _, ...userWithoutPassword } = user;
+      res.json({ user: userWithoutPassword, token });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Failed to login" });
@@ -159,16 +152,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post('/api/auth/logout', (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        console.error("Logout error:", err);
-        return res.status(500).json({ message: "Failed to logout" });
-      }
-      res.json({ message: "Logged out successfully" });
-    });
+    console.log("Logout - Clearing auth token cookie");
+    res.clearCookie('authToken');
+    res.json({ message: "Logged out successfully" });
   });
 
-  app.get('/api/auth/user', isAuthenticated, async (req, res) => {
+  app.get('/api/auth/user', jwtAuth, async (req, res) => {
     try {
       console.log("Auth check - User from middleware:", req.user?.email);
       const user = req.user;
@@ -192,7 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Toolkit modules
-  app.get('/api/toolkit/modules', isAuthenticated, async (req, res) => {
+  app.get('/api/toolkit/modules', jwtAuth, async (req, res) => {
     try {
       const modules = await storage.getToolkitModules();
       res.json(modules);
@@ -203,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Daily focus tasks
-  app.get('/api/daily-focus/:date', isAuthenticated, async (req: any, res) => {
+  app.get('/api/daily-focus/:date', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const date = new Date(req.params.date);
@@ -215,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/daily-focus', isAuthenticated, async (req: any, res) => {
+  app.post('/api/daily-focus', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const taskData = insertDailyFocusTaskSchema.parse({
@@ -239,7 +228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/daily-focus/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/daily-focus/:id', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const taskId = parseInt(req.params.id);
@@ -268,7 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Activity log
-  app.get('/api/activity', isAuthenticated, async (req: any, res) => {
+  app.get('/api/activity', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const limit = parseInt(req.query.limit as string) || 10;
@@ -281,7 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User stats
-  app.get('/api/stats', isAuthenticated, async (req: any, res) => {
+  app.get('/api/stats', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const stats = await storage.getUserStats(userId);
@@ -293,7 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get toolkit modules
-  app.get('/api/toolkit-modules', isAuthenticated, async (req: any, res) => {
+  app.get('/api/toolkit-modules', jwtAuth, async (req: any, res) => {
     try {
       const modules = await storage.getToolkitModules();
       res.json(modules);
@@ -304,7 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Focus time tracking
-  app.post('/api/focus/log', isAuthenticated, async (req: any, res) => {
+  app.post('/api/focus/log', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { minutes, sessionType } = req.body;
@@ -343,7 +332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Templates
-  app.get('/api/templates/:moduleId', isAuthenticated, async (req, res) => {
+  app.get('/api/templates/:moduleId', jwtAuth, async (req, res) => {
     try {
       const moduleId = parseInt(req.params.moduleId);
       const templates = await storage.getTemplatesByModule(moduleId);
@@ -355,7 +344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User template instances
-  app.get('/api/user-templates', isAuthenticated, async (req: any, res) => {
+  app.get('/api/user-templates', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const templateId = req.query.templateId ? parseInt(req.query.templateId as string) : undefined;
@@ -367,7 +356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/user-templates', isAuthenticated, async (req: any, res) => {
+  app.post('/api/user-templates', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const instanceData = insertUserTemplateInstanceSchema.parse({
@@ -391,7 +380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/user-templates/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/user-templates/:id', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const instanceId = parseInt(req.params.id);
@@ -414,7 +403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/user-templates/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/user-templates/:id', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const instanceId = parseInt(req.params.id);
@@ -437,7 +426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Workflow Template Routes
-  app.get("/api/workflow-templates", isAuthenticated, async (req: any, res) => {
+  app.get("/api/workflow-templates", jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { templateType, includeArchived } = req.query;
@@ -456,7 +445,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Archive system routes - must come before generic :id route
-  app.get("/api/workflow-templates/archived", isAuthenticated, async (req: any, res) => {
+  app.get("/api/workflow-templates/archived", jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const archivedTemplates = await storage.getArchivedWorkflowTemplateInstances(userId);
@@ -467,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/workflow-templates/:id", isAuthenticated, async (req: any, res) => {
+  app.get("/api/workflow-templates/:id", jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const template = await storage.getWorkflowTemplateInstance(parseInt(id));
@@ -488,7 +477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/workflow-templates", isAuthenticated, async (req: any, res) => {
+  app.post("/api/workflow-templates", jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { templateType, title, data } = req.body;
@@ -507,7 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/workflow-templates/:id", isAuthenticated, async (req: any, res) => {
+  app.put("/api/workflow-templates/:id", jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const { data, title } = req.body;
@@ -533,7 +522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  app.post("/api/workflow-templates/:id/archive", isAuthenticated, async (req: any, res) => {
+  app.post("/api/workflow-templates/:id/archive", jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       
@@ -551,7 +540,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/workflow-templates/:id/restore", isAuthenticated, async (req: any, res) => {
+  app.post("/api/workflow-templates/:id/restore", jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       
@@ -569,7 +558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/workflow-templates/bulk-delete", isAuthenticated, async (req: any, res) => {
+  app.post("/api/workflow-templates/bulk-delete", jwtAuth, async (req: any, res) => {
     try {
       const { templateIds } = req.body;
       
@@ -593,7 +582,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/workflow-templates/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/workflow-templates/:id", jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       
@@ -612,7 +601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Initialize default toolkit modules if they don't exist
-  app.post('/api/toolkit/initialize', isAuthenticated, async (req, res) => {
+  app.post('/api/toolkit/initialize', jwtAuth, async (req, res) => {
     try {
       const modules = await storage.getToolkitModules();
       if (modules.length === 0) {
@@ -629,7 +618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Inspiration Boards API Routes
-  app.get('/api/inspiration-boards', isAuthenticated, async (req: any, res) => {
+  app.get('/api/inspiration-boards', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const boards = await storage.getInspirationBoards(userId);
@@ -640,7 +629,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/inspiration-boards/archived', isAuthenticated, async (req: any, res) => {
+  app.get('/api/inspiration-boards/archived', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const archivedBoards = await storage.getArchivedInspirationBoards(userId);
@@ -651,7 +640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/inspiration-boards/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/inspiration-boards/:id', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
@@ -672,7 +661,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/inspiration-boards', isAuthenticated, async (req: any, res) => {
+  app.post('/api/inspiration-boards', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { title, description, backgroundColor, backgroundTexture } = req.body;
@@ -696,7 +685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/inspiration-boards/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/inspiration-boards/:id', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
@@ -717,7 +706,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/inspiration-boards/:id/duplicate', isAuthenticated, async (req: any, res) => {
+  app.post('/api/inspiration-boards/:id/duplicate', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const userId = req.user.id;
@@ -739,7 +728,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/inspiration-boards/:id/archive', isAuthenticated, async (req: any, res) => {
+  app.post('/api/inspiration-boards/:id/archive', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
@@ -760,7 +749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/inspiration-boards/:id/restore', isAuthenticated, async (req: any, res) => {
+  app.post('/api/inspiration-boards/:id/restore', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
@@ -781,7 +770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/inspiration-boards/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/inspiration-boards/:id', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
@@ -803,7 +792,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Board content routes - Images, Notes, Palettes, Links
-  app.get('/api/inspiration-boards/:id/images', isAuthenticated, async (req: any, res) => {
+  app.get('/api/inspiration-boards/:id/images', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
@@ -820,7 +809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/inspiration-boards/:id/images', isAuthenticated, async (req: any, res) => {
+  app.post('/api/inspiration-boards/:id/images', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
@@ -840,7 +829,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/inspiration-boards/:id/notes', isAuthenticated, async (req: any, res) => {
+  app.get('/api/inspiration-boards/:id/notes', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
@@ -857,7 +846,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/inspiration-boards/:id/notes', isAuthenticated, async (req: any, res) => {
+  app.post('/api/inspiration-boards/:id/notes', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
@@ -877,7 +866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/inspiration-boards/:id/palettes', isAuthenticated, async (req: any, res) => {
+  app.get('/api/inspiration-boards/:id/palettes', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
@@ -894,7 +883,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/inspiration-boards/:id/palettes', isAuthenticated, async (req: any, res) => {
+  app.post('/api/inspiration-boards/:id/palettes', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
@@ -914,7 +903,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/inspiration-boards/:id/links', isAuthenticated, async (req: any, res) => {
+  app.get('/api/inspiration-boards/:id/links', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
@@ -931,7 +920,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/inspiration-boards/:id/links', isAuthenticated, async (req: any, res) => {
+  app.post('/api/inspiration-boards/:id/links', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
@@ -952,7 +941,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Focus session logging
-  app.post('/api/focus/log', isAuthenticated, async (req: any, res) => {
+  app.post('/api/focus/log', jwtAuth, async (req: any, res) => {
     try {
       const { minutes, sessionType, taskDescription } = req.body;
       const userId = req.user.id;

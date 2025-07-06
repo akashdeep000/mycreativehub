@@ -96,6 +96,8 @@ export default function Sidebar() {
                   method: "POST",
                   credentials: "include",
                 });
+                // Clear JWT token from localStorage
+                localStorage.removeItem('authToken');
                 window.location.href = "/";
               } catch (error) {
                 console.error("Logout error:", error);
