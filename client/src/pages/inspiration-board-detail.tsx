@@ -77,6 +77,7 @@ export default function InspirationBoardDetail() {
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [isPaletteDialogOpen, setIsPaletteDialogOpen] = useState(false);
+  const [imageGridRows, setImageGridRows] = useState(2); // Start with 2 rows of placeholders
   const boardRef = useRef<HTMLDivElement>(null);
 
   // Redirect to login if not authenticated
@@ -99,25 +100,27 @@ export default function InspirationBoardDetail() {
     enabled: isAuthenticated && !!id,
   });
 
-  const { data: images = [] } = useQuery({
+  const { data: images, isLoading: imagesLoading } = useQuery({
     queryKey: ["/api/inspiration-boards", id, "images"],
     enabled: isAuthenticated && !!id,
   });
 
-  const { data: notes = [] } = useQuery({
+  const { data: notes, isLoading: notesLoading } = useQuery({
     queryKey: ["/api/inspiration-boards", id, "notes"],
     enabled: isAuthenticated && !!id,
   });
 
-  const { data: palettes = [] } = useQuery({
+  const { data: palettes, isLoading: palettesLoading } = useQuery({
     queryKey: ["/api/inspiration-boards", id, "palettes"],
     enabled: isAuthenticated && !!id,
   });
 
-  const { data: links = [] } = useQuery({
+  const { data: links, isLoading: linksLoading } = useQuery({
     queryKey: ["/api/inspiration-boards", id, "links"],
     enabled: isAuthenticated && !!id,
   });
+
+  const isDataLoading = boardLoading || imagesLoading || notesLoading || palettesLoading || linksLoading;
 
   const updateBoardMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -368,7 +371,7 @@ export default function InspirationBoardDetail() {
     return null;
   }
 
-  if (boardLoading) {
+  if (isDataLoading) {
     return (
       <div className="min-h-screen flex flex-col lg:flex-row bg-cream">
         <Sidebar />
@@ -749,18 +752,20 @@ export default function InspirationBoardDetail() {
             </Dialog>
 
             <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <LinkIcon className="w-4 h-4 mr-2" />
-                  Add Link
-                </Button>
-              </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add Reference Link</DialogTitle>
-                  <DialogDescription>Save external resources and inspiration links.</DialogDescription>
+                  <DialogDescription>Save websites, videos, or resources you want to revisit later.</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <label className="text-sm font-medium">Description</label>
+                    <Input
+                      value={newLink.title}
+                      onChange={(e) => setNewLink(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="e.g. Reel about painting techniques"
+                    />
+                  </div>
                   <div className="grid gap-2">
                     <label className="text-sm font-medium">URL</label>
                     <Input
@@ -771,19 +776,11 @@ export default function InspirationBoardDetail() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium">Title (Optional)</label>
-                    <Input
-                      value={newLink.title}
-                      onChange={(e) => setNewLink(prev => ({ ...prev, title: e.target.value }))}
-                      placeholder="Descriptive title for this link"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">Description (Optional)</label>
+                    <label className="text-sm font-medium">Notes (Optional)</label>
                     <Textarea
                       value={newLink.description}
                       onChange={(e) => setNewLink(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Why this link is valuable or relevant..."
+                      placeholder="Additional notes about this resource..."
                       rows={3}
                     />
                   </div>
@@ -814,7 +811,7 @@ export default function InspirationBoardDetail() {
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {/* Existing Images */}
-                {images.map((image: InspirationBoardImage) => (
+                {(images || []).map((image: InspirationBoardImage) => (
                   <div
                     key={image.id}
                     className="group relative aspect-square bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-200 hover:border-gray-300"
@@ -839,7 +836,7 @@ export default function InspirationBoardDetail() {
                 ))}
                 
                 {/* Add Image Placeholder Cards */}
-                {Array.from({ length: Math.max(3, 6 - images.length) }).map((_, index) => (
+                {Array.from({ length: Math.max(8, (imageGridRows * 4) - (images?.length || 0)) }).map((_, index) => (
                   <Dialog key={`placeholder-${index}`} open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
                     <DialogTrigger asChild>
                       <div className="aspect-square bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 cursor-pointer group flex flex-col items-center justify-center">
@@ -850,6 +847,18 @@ export default function InspirationBoardDetail() {
                     </DialogTrigger>
                   </Dialog>
                 ))}
+              </div>
+              
+              {/* Add More Images Button */}
+              <div className="mt-6 text-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setImageGridRows(prev => prev + 1)}
+                  className="bg-white hover:bg-gray-50"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add More Images
+                </Button>
               </div>
             </div>
 
@@ -870,9 +879,9 @@ export default function InspirationBoardDetail() {
                 </Dialog>
               </div>
               
-              {palettes.length > 0 ? (
+              {(palettes || []).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {palettes.map((palette: ColorPalette) => (
+                  {(palettes || []).map((palette: ColorPalette) => (
                     <Card key={palette.id} className="bg-white shadow-sm hover:shadow-md transition-shadow">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-base">{palette.name}</CardTitle>
@@ -916,14 +925,14 @@ export default function InspirationBoardDetail() {
             </div>
 
             {/* Notes Section */}
-            {notes.length > 0 && (
+            {(notes || []).length > 0 && (
               <div className="mb-8">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   <StickyNote className="w-5 h-5" />
                   Notes
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {notes.map((note: InspirationBoardNote) => {
+                  {(notes || []).map((note: InspirationBoardNote) => {
                     const noteColor = noteColors.find(c => c.value === note.color) || noteColors[0];
                     return (
                       <div
@@ -943,37 +952,77 @@ export default function InspirationBoardDetail() {
               </div>
             )}
 
-            {/* Links Section */}
-            {links.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <LinkIcon className="w-5 h-5" />
-                  References
+            {/* Reference Links Section */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  💡 Reference Links
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {links.map((link: BoardLink) => (
-                    <a
+                <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Link
+                    </Button>
+                  </DialogTrigger>
+                </Dialog>
+              </div>
+              
+              {(links || []).length > 0 ? (
+                <div className="space-y-3">
+                  {(links || []).map((link: BoardLink) => (
+                    <div
                       key={link.id}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all"
+                      className="p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all"
                     >
-                      <div className="font-medium text-sm text-gray-900 mb-1 truncate">
-                        {link.title || "Untitled Link"}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900 mb-1">
+                            {link.title || "Untitled Link"}
+                          </h4>
+                          {link.description && (
+                            <p className="text-sm text-gray-600 mb-2 leading-relaxed">
+                              {link.description}
+                            </p>
+                          )}
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                          >
+                            <LinkIcon className="w-3 h-3 mr-1" />
+                            {link.url.length > 60 ? `${link.url.substring(0, 60)}...` : link.url}
+                          </a>
+                        </div>
+                        <Button size="sm" variant="ghost" className="text-gray-400 hover:text-gray-600">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
                       </div>
-                      <div className="text-xs text-blue-600 truncate mb-2">{link.url}</div>
-                      {link.description && (
-                        <div className="text-xs text-gray-600 line-clamp-2">{link.description}</div>
-                      )}
-                    </a>
+                    </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
+                  <LinkIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 font-medium mb-2">No links yet</p>
+                  <p className="text-sm text-gray-500 mb-4 max-w-md mx-auto">
+                    Use this section to save websites, Reels, or videos you want to revisit later.
+                  </p>
+                  <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Your First Link
+                      </Button>
+                    </DialogTrigger>
+                  </Dialog>
+                </div>
+              )}
+            </div>
 
             {/* Empty State */}
-            {notes.length === 0 && images.length === 0 && palettes.length === 0 && links.length === 0 && (
+            {(notes || []).length === 0 && (images || []).length === 0 && (palettes || []).length === 0 && (links || []).length === 0 && (
               <div className="flex items-center justify-center py-20">
                 <div className="text-center">
                   <div className="w-20 h-20 bg-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
