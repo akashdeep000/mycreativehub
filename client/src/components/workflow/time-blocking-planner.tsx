@@ -655,6 +655,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           <div className="grid grid-cols-7">
             {weeks.map((week, weekIndex) =>
               week.map((date, dayIndex) => {
+                const today = new Date();
                 const dayName = date.toLocaleDateString('en', { weekday: 'long' });
                 const dateString = date.toISOString().split('T')[0];
                 const isCurrentMonth = date.getMonth() === today.getMonth();
