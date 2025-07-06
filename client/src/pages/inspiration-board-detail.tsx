@@ -811,29 +811,36 @@ export default function InspirationBoardDetail() {
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {/* Existing Images */}
-                {(images || []).map((image: InspirationBoardImage) => (
-                  <div
-                    key={image.id}
-                    className="group relative aspect-square bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-200 hover:border-gray-300"
-                  >
-                    <img
-                      src={image.imageUrl}
-                      alt={image.caption || "Inspiration"}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 bg-white/90 hover:bg-white shadow-sm">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="bg-white/90 backdrop-blur-sm rounded px-2 py-1 text-xs text-gray-700 truncate">
-                        {image.caption || "Untitled"}
+                {(images || []).map((image: InspirationBoardImage) => {
+                  // Skip invalid images that don't have a URL
+                  if (!image || !image.imageUrl) {
+                    return null;
+                  }
+                  
+                  return (
+                    <div
+                      key={image.id}
+                      className="group relative aspect-square bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-200 hover:border-gray-300"
+                    >
+                      <img
+                        src={image.imageUrl}
+                        alt={image.caption || "Inspiration"}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 bg-white/90 hover:bg-white shadow-sm">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="bg-white/90 backdrop-blur-sm rounded px-2 py-1 text-xs text-gray-700 truncate">
+                          {image.caption || "Untitled"}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                }).filter(Boolean)}
                 
                 {/* Add Image Placeholder Cards */}
                 {Array.from({ length: Math.max(8, (imageGridRows * 4) - (images?.length || 0)) }).map((_, index) => (
@@ -881,31 +888,38 @@ export default function InspirationBoardDetail() {
               
               {(palettes || []).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {(palettes || []).map((palette: ColorPalette) => (
-                    <Card key={palette.id} className="bg-white shadow-sm hover:shadow-md transition-shadow">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base">{palette.name}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-5 gap-2">
-                          {palette.colors && Array.isArray(palette.colors) && (palette.colors as any[]).length > 0 ? (
-                            (palette.colors as any[]).map((colorObj: any, index: number) => (
-                              <div
-                                key={index}
-                                className="aspect-square rounded-lg border-2 border-white shadow-sm cursor-pointer hover:scale-105 transition-transform"
-                                style={{ backgroundColor: colorObj.color }}
-                                title={`${colorObj.color}${colorObj.name ? ` - ${colorObj.name}` : ''}`}
-                              />
-                            ))
-                          ) : (
-                            <div className="col-span-5 text-center py-4">
-                              <p className="text-sm text-gray-500 italic">No colors in this palette</p>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  {(palettes || []).map((palette: ColorPalette) => {
+                    // Skip invalid palettes that don't have a name or colors
+                    if (!palette || !palette.name) {
+                      return null;
+                    }
+                    
+                    return (
+                      <Card key={palette.id} className="bg-white shadow-sm hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base">{palette.name}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-5 gap-2">
+                            {palette.colors && Array.isArray(palette.colors) && (palette.colors as any[]).length > 0 ? (
+                              (palette.colors as any[]).map((colorObj: any, index: number) => (
+                                <div
+                                  key={index}
+                                  className="aspect-square rounded-lg border-2 border-white shadow-sm cursor-pointer hover:scale-105 transition-transform"
+                                  style={{ backgroundColor: colorObj.color }}
+                                  title={`${colorObj.color}${colorObj.name ? ` - ${colorObj.name}` : ''}`}
+                                />
+                              ))
+                            ) : (
+                              <div className="col-span-5 text-center py-4">
+                                <p className="text-sm text-gray-500 italic">No colors in this palette</p>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  }).filter(Boolean)}
                 </div>
               ) : (
                 <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
@@ -933,6 +947,11 @@ export default function InspirationBoardDetail() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {(notes || []).map((note: InspirationBoardNote) => {
+                    // Skip invalid notes that don't have content
+                    if (!note || (!note.title && !note.content)) {
+                      return null;
+                    }
+                    
                     const noteColor = noteColors.find(c => c.value === note.color) || noteColors[0];
                     return (
                       <div
@@ -947,7 +966,7 @@ export default function InspirationBoardDetail() {
                         </p>
                       </div>
                     );
-                  })}
+                  }).filter(Boolean)}
                 </div>
               </div>
             )}
@@ -970,37 +989,44 @@ export default function InspirationBoardDetail() {
               
               {(links || []).length > 0 ? (
                 <div className="space-y-3">
-                  {(links || []).map((link: BoardLink) => (
-                    <div
-                      key={link.id}
-                      className="p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-900 mb-1">
-                            {link.title || "Untitled Link"}
-                          </h4>
-                          {link.description && (
-                            <p className="text-sm text-gray-600 mb-2 leading-relaxed">
-                              {link.description}
-                            </p>
-                          )}
-                          <a
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 hover:underline"
-                          >
-                            <LinkIcon className="w-3 h-3 mr-1" />
-                            {link.url.length > 60 ? `${link.url.substring(0, 60)}...` : link.url}
-                          </a>
+                  {(links || []).map((link: BoardLink) => {
+                    // Skip invalid links that don't have a URL
+                    if (!link || !link.url) {
+                      return null;
+                    }
+                    
+                    return (
+                      <div
+                        key={link.id}
+                        className="p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-gray-900 mb-1">
+                              {link.title || "Untitled Link"}
+                            </h4>
+                            {link.description && (
+                              <p className="text-sm text-gray-600 mb-2 leading-relaxed">
+                                {link.description}
+                              </p>
+                            )}
+                            <a
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                            >
+                              <LinkIcon className="w-3 h-3 mr-1" />
+                              {link.url.length > 60 ? `${link.url.substring(0, 60)}...` : link.url}
+                            </a>
+                          </div>
+                          <Button size="sm" variant="ghost" className="text-gray-400 hover:text-gray-600">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
                         </div>
-                        <Button size="sm" variant="ghost" className="text-gray-400 hover:text-gray-600">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  }).filter(Boolean)}
                 </div>
               ) : (
                 <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
