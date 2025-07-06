@@ -768,6 +768,155 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Board content routes - Images, Notes, Palettes, Links
+  app.get('/api/inspiration-boards/:id/images', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      const images = await storage.getBoardImages(parseInt(id));
+      res.json(images);
+    } catch (error) {
+      console.error("Error fetching board images:", error);
+      res.status(500).json({ message: "Failed to fetch board images" });
+    }
+  });
+
+  app.post('/api/inspiration-boards/:id/images', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      const image = await storage.createBoardImage({
+        boardId: parseInt(id),
+        ...req.body,
+      });
+      res.status(201).json(image);
+    } catch (error) {
+      console.error("Error creating board image:", error);
+      res.status(500).json({ message: "Failed to create board image" });
+    }
+  });
+
+  app.get('/api/inspiration-boards/:id/notes', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      const notes = await storage.getBoardNotes(parseInt(id));
+      res.json(notes);
+    } catch (error) {
+      console.error("Error fetching board notes:", error);
+      res.status(500).json({ message: "Failed to fetch board notes" });
+    }
+  });
+
+  app.post('/api/inspiration-boards/:id/notes', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      const note = await storage.createBoardNote({
+        boardId: parseInt(id),
+        ...req.body,
+      });
+      res.status(201).json(note);
+    } catch (error) {
+      console.error("Error creating board note:", error);
+      res.status(500).json({ message: "Failed to create board note" });
+    }
+  });
+
+  app.get('/api/inspiration-boards/:id/palettes', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      const palettes = await storage.getBoardColorPalettes(parseInt(id));
+      res.json(palettes);
+    } catch (error) {
+      console.error("Error fetching board palettes:", error);
+      res.status(500).json({ message: "Failed to fetch board palettes" });
+    }
+  });
+
+  app.post('/api/inspiration-boards/:id/palettes', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      const palette = await storage.createColorPalette({
+        boardId: parseInt(id),
+        ...req.body,
+      });
+      res.status(201).json(palette);
+    } catch (error) {
+      console.error("Error creating color palette:", error);
+      res.status(500).json({ message: "Failed to create color palette" });
+    }
+  });
+
+  app.get('/api/inspiration-boards/:id/links', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      const links = await storage.getBoardLinks(parseInt(id));
+      res.json(links);
+    } catch (error) {
+      console.error("Error fetching board links:", error);
+      res.status(500).json({ message: "Failed to fetch board links" });
+    }
+  });
+
+  app.post('/api/inspiration-boards/:id/links', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      const link = await storage.createBoardLink({
+        boardId: parseInt(id),
+        ...req.body,
+      });
+      res.status(201).json(link);
+    } catch (error) {
+      console.error("Error creating board link:", error);
+      res.status(500).json({ message: "Failed to create board link" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

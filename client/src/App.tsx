@@ -15,6 +15,7 @@ import FinanceTracker from "@/pages/finance-tracker";
 import InspirationHub from "@/pages/inspiration-hub";
 import StreamlineWorkflow from "@/pages/streamline-workflow";
 import ArchivedTemplates from "@/pages/archived-templates";
+import InspirationBoardDetail from "@/pages/inspiration-board-detail";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -34,7 +35,7 @@ function Router() {
           <Route path="/time-blocking" component={TimeBlocking} />
           <Route path="/finance" component={FinanceTracker} />
           <Route path="/inspiration-hub" component={InspirationHub} />
-          <Route path="/inspiration-hub/board/:id" component={() => <div>Board Detail Page Coming Soon</div>} />
+          <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
           <Route path="/archived-templates" component={ArchivedTemplates} />
         </>
       )}
