@@ -104,14 +104,17 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     return dates;
   };
 
-  const createTimeBlock = (day: string, hour: number, title: string, colorTagId?: string) => {
+  const createTimeBlock = (day: string, hour: number, title?: string, colorTagId?: string) => {
     const useColorTagId = colorTagId || activeColorTagId;
     const selectedColorTag = data.colorTags.find(tag => tag.id === useColorTagId);
     const color = selectedColorTag?.color || BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)];
     
+    // Auto-fill with category label if no title provided
+    const blockTitle = title || selectedColorTag?.label || 'Untitled';
+    
     const newBlock: TimeBlock = {
       id: `block-${Date.now()}`,
-      title,
+      title: blockTitle,
       startTime: `${hour.toString().padStart(2, '0')}:00`,
       duration: 1,
       color,
@@ -129,6 +132,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
 
     setIsCreatingBlock(null);
     setNewBlockTitle('');
+    onSave(data);
   };
 
   const updateTimeBlock = (blockId: string, updates: Partial<TimeBlock>) => {
@@ -238,13 +242,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
 
   // Handle creating block with color selection
   const handleCreateBlockWithColor = (day: string, hour: number, colorTagId?: string) => {
-    if (newBlockTitle.trim()) {
-      createTimeBlock(day, hour, newBlockTitle.trim(), colorTagId);
-      setIsCreatingBlock(null);
-      setNewBlockTitle('');
-      setShowColorSelector(null);
-      onSave(data);
-    }
+    createTimeBlock(day, hour, undefined, colorTagId);
+    setShowColorSelector(null);
   };
 
   // Inline Color Selector Component
@@ -290,13 +289,13 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                 <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
               </TooltipTrigger>
               <TooltipContent>
-                <p>Click a color to tag your next time block. Or type into a block and assign a color from the menu.</p>
+                <p>Click any color tag to activate it. When you click a calendar block, the selected tag is applied automatically with editable text.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </CardTitle>
         <CardDescription>
-          Click a color to set it as active for new blocks
+          Select a color category, then click a calendar block to apply it. The block will auto-fill with the category name, which you can edit anytime.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -306,13 +305,18 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
             return (
               <div
                 key={tag.id}
-                className={`flex items-center gap-2 rounded-lg p-2 border transition-all cursor-pointer ${
+                className={`relative flex items-center gap-2 rounded-lg p-2 transition-all cursor-pointer ${
                   isActive 
-                    ? 'bg-blue-50 border-blue-300 shadow-md ring-2 ring-blue-200' 
-                    : 'bg-gray-50 border-gray-200 shadow-sm hover:shadow-md'
+                    ? 'bg-blue-50 border-2 border-blue-500 shadow-md ring-2 ring-blue-200' 
+                    : 'bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
                 }`}
                 onClick={() => setActiveColorTagId(tag.id)}
               >
+                {isActive && (
+                  <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
+                    Selected
+                  </div>
+                )}
                 <div
                   className={`w-4 h-4 rounded-full border transition-all ${
                     isActive ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
@@ -418,7 +422,15 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   className="min-h-[60px] border border-gray-200 rounded relative hover:bg-gray-50 transition-colors"
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, day, hour)}
-                  onClick={() => setIsCreatingBlock({ day, hour })}
+                  onClick={() => {
+                    if (activeColorTagId) {
+                      // Auto-create block with selected color category
+                      createTimeBlock(day, hour);
+                    } else {
+                      // Show color selector if no color is active
+                      setShowColorSelector(`${day}-${hour}`);
+                    }
+                  }}
                 >
                   {getBlocksForDayAndHour(day, hour).map(block => (
                     <div
@@ -477,49 +489,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                     </div>
                   ))}
                   
-                  {isCreatingBlock?.day === day && isCreatingBlock?.hour === hour && (
-                    <div className="absolute inset-1 bg-blue-100 border-2 border-blue-300 rounded p-1 z-20">
-                      <Input
-                        value={newBlockTitle}
-                        onChange={(e) => setNewBlockTitle(e.target.value)}
-                        placeholder="Block title..."
-                        className="h-6 text-xs"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && newBlockTitle.trim()) {
-                            if (activeColorTagId) {
-                              createTimeBlock(day, hour, newBlockTitle);
-                              setIsCreatingBlock(null);
-                              setNewBlockTitle('');
-                            } else {
-                              setShowColorSelector(`${day}-${hour}`);
-                            }
-                          }
-                          if (e.key === 'Escape') {
-                            setIsCreatingBlock(null);
-                            setNewBlockTitle('');
-                            setShowColorSelector(null);
-                          }
-                        }}
-                        onBlur={() => {
-                          if (newBlockTitle.trim()) {
-                            if (activeColorTagId) {
-                              createTimeBlock(day, hour, newBlockTitle);
-                              setIsCreatingBlock(null);
-                              setNewBlockTitle('');
-                            } else {
-                              setShowColorSelector(`${day}-${hour}`);
-                            }
-                          } else {
-                            setIsCreatingBlock(null);
-                            setNewBlockTitle('');
-                            setShowColorSelector(null);
-                          }
-                        }}
-                        autoFocus
-                      />
-                      {showColorSelector === `${day}-${hour}` && renderInlineColorSelector(day, hour)}
-                    </div>
-                  )}
+                  {showColorSelector === `${day}-${hour}` && renderInlineColorSelector(day, hour)}
                 </div>
               ))}
             </div>
@@ -588,7 +558,17 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   className={`min-h-[100px] border rounded p-2 ${
                     isCurrentMonth ? 'bg-white hover:bg-gray-50' : 'bg-gray-100 text-gray-400'
                   }`}
-                  onClick={() => isCurrentMonth && setIsCreatingBlock({ day: dateString, hour: 9 })}
+                  onClick={() => {
+                    if (isCurrentMonth) {
+                      if (activeColorTagId) {
+                        // Auto-create block with selected color category
+                        createTimeBlock(dateString, 9);
+                      } else {
+                        // Show color selector if no color is active
+                        setShowColorSelector(`${dateString}-9`);
+                      }
+                    }
+                  }}
                 >
                   <div className="text-sm font-medium mb-1">{date.getDate()}</div>
                   <div className="space-y-1">
@@ -611,32 +591,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                     )}
                   </div>
 
-                  {isCreatingBlock?.day === dateString && (
-                    <div className="mt-1">
-                      <Input
-                        value={newBlockTitle}
-                        onChange={(e) => setNewBlockTitle(e.target.value)}
-                        placeholder="Event title..."
-                        className="h-6 text-xs"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && newBlockTitle.trim()) {
-                            createTimeBlock(dateString, 9, newBlockTitle);
-                          }
-                          if (e.key === 'Escape') {
-                            setIsCreatingBlock(null);
-                            setNewBlockTitle('');
-                          }
-                        }}
-                        onBlur={() => {
-                          if (newBlockTitle.trim()) {
-                            createTimeBlock(dateString, 9, newBlockTitle);
-                          } else {
-                            setIsCreatingBlock(null);
-                            setNewBlockTitle('');
-                          }
-                        }}
-                        autoFocus
-                      />
+                  {showColorSelector === `${dateString}-9` && (
+                    <div className="mt-1 relative">
+                      {renderInlineColorSelector(dateString, 9)}
                     </div>
                   )}
                 </div>

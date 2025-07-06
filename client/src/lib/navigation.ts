@@ -19,7 +19,7 @@ export interface NavigationItem {
 // Centralized navigation configuration
 export const navigationItems: NavigationItem[] = [
   { href: "/", icon: Home, label: "Dashboard", moduleKey: "dashboard" },
-  { href: "/workflow", icon: Workflow, label: "Streamline Workflow", moduleKey: "Streamline Your Workflow" },
+  { href: "/streamline-workflow", icon: Workflow, label: "Streamline Workflow", moduleKey: "Streamline Your Workflow" },
   { href: "/content", icon: FileText, label: "Content System", moduleKey: "Content Creation System" },
   { href: "/email", icon: Mail, label: "Email Marketing", moduleKey: "Email Marketing" },
   { href: "/launch", icon: Rocket, label: "Product Launch", moduleKey: "Product Launch System" },

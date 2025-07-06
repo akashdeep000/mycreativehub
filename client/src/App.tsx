@@ -28,7 +28,7 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Dashboard} />
-          <Route path="/workflow" component={StreamlineWorkflow} />
+          <Route path="/streamline-workflow" component={StreamlineWorkflow} />
           <Route path="/content" component={ContentPlanning} />
           <Route path="/time-blocking" component={TimeBlocking} />
           <Route path="/finance" component={FinanceTracker} />
