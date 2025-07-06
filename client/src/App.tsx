@@ -14,6 +14,7 @@ import TimeBlocking from "@/pages/time-blocking";
 import FinanceTracker from "@/pages/finance-tracker";
 import InspirationHub from "@/pages/inspiration-hub";
 import StreamlineWorkflow from "@/pages/streamline-workflow";
+import ArchivedTemplates from "@/pages/archived-templates";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -33,6 +34,7 @@ function Router() {
           <Route path="/time-blocking" component={TimeBlocking} />
           <Route path="/finance" component={FinanceTracker} />
           <Route path="/inspiration-hub" component={InspirationHub} />
+          <Route path="/archived" component={ArchivedTemplates} />
         </>
       )}
       <Route component={NotFound} />

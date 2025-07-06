@@ -10,7 +10,7 @@ import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { 
   ArrowLeft, 
@@ -176,7 +176,7 @@ const workflowTemplates = [
 export default function StreamlineWorkflow() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("templates");
+
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -186,11 +186,7 @@ export default function StreamlineWorkflow() {
     enabled: !!user,
   });
 
-  // Fetch archived templates
-  const { data: archivedTemplates, isLoading: archivedLoading } = useQuery({
-    queryKey: ["/api/workflow-templates", "archived"],
-    enabled: !!user && activeTab === "archived",
-  });
+
 
   // Create template mutation
   const createTemplateMutation = useMutation({
@@ -282,7 +278,7 @@ export default function StreamlineWorkflow() {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const isLoading = templatesLoading || (activeTab === "archived" && archivedLoading);
+  const isLoading = templatesLoading;
 
   if (selectedTemplate) {
     const templateConfig = workflowTemplates.find(t => t.id === selectedTemplate);
@@ -388,132 +384,65 @@ export default function StreamlineWorkflow() {
               </p>
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2 max-w-xs">
-                <TabsTrigger value="templates">Templates</TabsTrigger>
-                <TabsTrigger value="archived">Archived</TabsTrigger>
-              </TabsList>
+            <div className="space-y-6">
 
-              <TabsContent value="templates" className="space-y-6">
-                {isLoading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[...Array(5)].map((_, i) => (
-                      <Card key={i} className="animate-pulse">
+              {isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[...Array(5)].map((_, i) => (
+                    <Card key={i} className="animate-pulse">
+                      <CardHeader className="pb-3">
+                        <div className="h-8 bg-gray-200 rounded mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded"></div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-4 bg-gray-200 rounded"></div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {workflowTemplates.map((template) => {
+                    const count = getTemplateCount(template.id);
+                    const IconComponent = template.icon;
+                    
+                    return (
+                      <Card 
+                        key={template.id} 
+                        className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-md bg-white"
+                        onClick={() => handleTemplateClick(template.id)}
+                      >
                         <CardHeader className="pb-3">
-                          <div className="h-8 bg-gray-200 rounded mb-2"></div>
-                          <div className="h-4 bg-gray-200 rounded"></div>
+                          <div className="flex items-center gap-3">
+                            <div className={`p-3 rounded-lg ${template.colour}`}>
+                              <IconComponent className={`h-6 w-6 ${template.textColor}`} />
+                            </div>
+                            <div className="flex-1">
+                              <CardTitle className="text-lg font-semibold text-gray-900 mb-1">
+                                {template.name}
+                              </CardTitle>
+                              <CardDescription className="text-sm text-gray-600">
+                                {template.description}
+                              </CardDescription>
+                            </div>
+                          </div>
                         </CardHeader>
-                        <CardContent>
-                          <div className="h-4 bg-gray-200 rounded"></div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {workflowTemplates.map((template) => {
-                      const count = getTemplateCount(template.id);
-                      const IconComponent = template.icon;
-                      
-                      return (
-                        <Card 
-                          key={template.id} 
-                          className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-md bg-white"
-                          onClick={() => handleTemplateClick(template.id)}
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-center gap-3">
-                              <div className={`p-3 rounded-lg ${template.colour}`}>
-                                <IconComponent className={`h-6 w-6 ${template.textColor}`} />
-                              </div>
-                              <div className="flex-1">
-                                <CardTitle className="text-lg font-semibold text-gray-900 mb-1">
-                                  {template.name}
-                                </CardTitle>
-                                <CardDescription className="text-sm text-gray-600">
-                                  {template.description}
-                                </CardDescription>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            <div className="flex items-center justify-between">
-                              <Badge variant="secondary" className="text-xs">
-                                {template.id === 'time-blocking' ? '2 Templates' : (count > 0 ? `${count} Template${count !== 1 ? 's' : ''}` : 'Pre-loaded')}
-                              </Badge>
-                              <div className="text-xs text-gray-500">
-                                Click to open
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="archived" className="space-y-6">
-                {isLoading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[...Array(3)].map((_, i) => (
-                      <Card key={i} className="animate-pulse">
-                        <CardHeader className="pb-3">
-                          <div className="h-6 bg-gray-200 rounded mb-2"></div>
-                          <div className="h-4 bg-gray-200 rounded"></div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="h-4 bg-gray-200 rounded"></div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : archivedTemplates && archivedTemplates.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {archivedTemplates.map((template: WorkflowTemplateInstance) => {
-                      const templateConfig = workflowTemplates.find(t => t.id === template.templateType);
-                      if (!templateConfig) return null;
-                      
-                      const IconComponent = templateConfig.icon;
-                      
-                      return (
-                        <Card key={template.id} className="border-0 shadow-md bg-white opacity-75">
-                          <CardHeader className="pb-3">
-                            <div className="flex items-center gap-3">
-                              <div className={`p-3 rounded-lg ${templateConfig.colour}`}>
-                                <IconComponent className={`h-6 w-6 ${templateConfig.textColor}`} />
-                              </div>
-                              <div className="flex-1">
-                                <CardTitle className="text-lg font-semibold text-gray-900 mb-1">
-                                  {template.title}
-                                </CardTitle>
-                                <CardDescription className="text-sm text-gray-600">
-                                  Archived {formatDate(template.archivedAt?.toString() || template.updatedAt?.toString())}
-                                </CardDescription>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            <Badge variant="outline" className="text-xs">
-                              <Archive className="h-3 w-3 mr-1" />
-                              Archived
+                        <CardContent className="pt-0">
+                          <div className="flex items-center justify-between">
+                            <Badge variant="secondary" className="text-xs">
+                              {template.id === 'time-blocking' ? '2 Templates' : (count > 0 ? `${count} Template${count !== 1 ? 's' : ''}` : 'Pre-loaded')}
                             </Badge>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Archive className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No archived templates</h3>
-                    <p className="text-gray-600">
-                      When you archive templates, they'll appear here
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+                            <div className="text-xs text-gray-500">
+                              Click to open
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </div>

@@ -6,7 +6,8 @@ import { navigationItems } from "@/lib/navigation";
 import { 
   Settings, 
   LogOut,
-  Palette 
+  Palette,
+  Archive 
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -66,6 +67,21 @@ export default function Sidebar() {
             </button>
           ))}
         </nav>
+
+        {/* Archive Link */}
+        <div className="mb-6">
+          <button
+            onClick={() => setLocation("/archived")}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colours ${
+              location === "/archived"
+                ? "bg-pink-100 text-pink-600 font-medium"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            <Archive className="w-5 h-5 flex-shrink-0" />
+            <span className="text-left text-sm">Archived Templates</span>
+          </button>
+        </div>
 
         {/* Settings and Logout */}
         <div className="border-t border-pink-200 pt-6 space-y-2">

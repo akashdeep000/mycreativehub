@@ -28,7 +28,7 @@ import {
   type InsertWorkflowTemplateFile,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
+import { eq, and, desc, gte, lte, sql, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // User operations - supports both Replit Auth and custom auth
@@ -68,11 +68,14 @@ export interface IStorage {
   
   // Workflow Templates
   getWorkflowTemplateInstances(userId: string, templateType?: string, includeArchived?: boolean): Promise<WorkflowTemplateInstance[]>;
+  getArchivedWorkflowTemplateInstances(userId: string): Promise<WorkflowTemplateInstance[]>;
   getWorkflowTemplateInstance(id: number): Promise<WorkflowTemplateInstance | undefined>;
   createWorkflowTemplateInstance(instance: InsertWorkflowTemplateInstance): Promise<WorkflowTemplateInstance>;
   updateWorkflowTemplateInstance(id: number, data: any, title?: string): Promise<WorkflowTemplateInstance>;
   archiveWorkflowTemplateInstance(id: number): Promise<WorkflowTemplateInstance>;
+  restoreWorkflowTemplateInstance(id: number): Promise<WorkflowTemplateInstance>;
   deleteWorkflowTemplateInstance(id: number): Promise<void>;
+  bulkDeleteWorkflowTemplateInstances(ids: number[]): Promise<void>;
   
   // Workflow Template Files
   getWorkflowTemplateFiles(templateInstanceId: number): Promise<WorkflowTemplateFile[]>;
@@ -380,6 +383,16 @@ export class DatabaseStorage implements IStorage {
     return updatedInstance;
   }
 
+  async getArchivedWorkflowTemplateInstances(userId: string): Promise<WorkflowTemplateInstance[]> {
+    return await db.select()
+      .from(workflowTemplateInstances)
+      .where(and(
+        eq(workflowTemplateInstances.userId, userId),
+        eq(workflowTemplateInstances.isArchived, true)
+      ))
+      .orderBy(desc(workflowTemplateInstances.archivedAt));
+  }
+
   async archiveWorkflowTemplateInstance(id: number): Promise<WorkflowTemplateInstance> {
     const [archivedInstance] = await db
       .update(workflowTemplateInstances)
@@ -393,6 +406,19 @@ export class DatabaseStorage implements IStorage {
     return archivedInstance;
   }
 
+  async restoreWorkflowTemplateInstance(id: number): Promise<WorkflowTemplateInstance> {
+    const [restoredInstance] = await db
+      .update(workflowTemplateInstances)
+      .set({
+        isArchived: false,
+        archivedAt: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(workflowTemplateInstances.id, id))
+      .returning();
+    return restoredInstance;
+  }
+
   async deleteWorkflowTemplateInstance(id: number): Promise<void> {
     // First delete associated files
     await db.delete(workflowTemplateFiles)
@@ -401,6 +427,18 @@ export class DatabaseStorage implements IStorage {
     // Then delete the instance
     await db.delete(workflowTemplateInstances)
       .where(eq(workflowTemplateInstances.id, id));
+  }
+
+  async bulkDeleteWorkflowTemplateInstances(ids: number[]): Promise<void> {
+    if (ids.length === 0) return;
+    
+    // First delete associated files for all instances
+    await db.delete(workflowTemplateFiles)
+      .where(inArray(workflowTemplateFiles.templateInstanceId, ids));
+    
+    // Then delete all instances
+    await db.delete(workflowTemplateInstances)
+      .where(inArray(workflowTemplateInstances.id, ids));
   }
 
   // Workflow Template Files

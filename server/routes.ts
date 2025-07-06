@@ -485,6 +485,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Archive system routes
+  app.get("/api/workflow-templates/archived", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const archivedTemplates = await storage.getArchivedWorkflowTemplateInstances(userId);
+      res.json(archivedTemplates);
+    } catch (error) {
+      console.error("Error fetching archived templates:", error);
+      res.status(500).json({ message: "Failed to fetch archived templates" });
+    }
+  });
+
   app.post("/api/workflow-templates/:id/archive", isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;
@@ -500,6 +512,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error archiving workflow template:", error);
       res.status(500).json({ message: "Failed to archive workflow template" });
+    }
+  });
+
+  app.post("/api/workflow-templates/:id/restore", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Check if user owns this template
+      const existingTemplate = await storage.getWorkflowTemplateInstance(parseInt(id));
+      if (!existingTemplate || existingTemplate.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const template = await storage.restoreWorkflowTemplateInstance(parseInt(id));
+      res.json(template);
+    } catch (error) {
+      console.error("Error restoring workflow template:", error);
+      res.status(500).json({ message: "Failed to restore workflow template" });
+    }
+  });
+
+  app.post("/api/workflow-templates/bulk-delete", isAuthenticated, async (req: any, res) => {
+    try {
+      const { templateIds } = req.body;
+      
+      if (!Array.isArray(templateIds) || templateIds.length === 0) {
+        return res.status(400).json({ message: "Template IDs are required" });
+      }
+      
+      // Verify user owns all templates
+      for (const id of templateIds) {
+        const template = await storage.getWorkflowTemplateInstance(parseInt(id));
+        if (!template || template.userId !== req.user.id) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+      
+      await storage.bulkDeleteWorkflowTemplateInstances(templateIds.map(id => parseInt(id)));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error bulk deleting templates:", error);
+      res.status(500).json({ message: "Failed to bulk delete templates" });
     }
   });
 

@@ -1,15 +1,24 @@
 import { useLocation } from "wouter";
 import { navigationItems } from "@/lib/navigation";
+import { Archive } from "lucide-react";
 
-// Filter for mobile navigation - show only first 5 items
-const mobileNavigationItems = navigationItems.slice(0, 5).map(item => ({
-  ...item,
-  label: item.label === "Dashboard" ? "Home" : 
-         item.label === "Streamline Workflow" ? "Workflow" :
-         item.label === "Content System" ? "Content" :
-         item.label === "Product Launch" ? "Launch" :
-         item.label
-}));
+// Filter for mobile navigation - show first 4 main items + archived
+const mobileNavigationItems = [
+  ...navigationItems.slice(0, 4).map(item => ({
+    ...item,
+    label: item.label === "Dashboard" ? "Home" : 
+           item.label === "Streamline Workflow" ? "Workflow" :
+           item.label === "Content System" ? "Content" :
+           item.label === "Product Launch" ? "Launch" :
+           item.label
+  })),
+  {
+    href: "/archived",
+    icon: Archive,
+    label: "Archive",
+    moduleKey: "archive"
+  }
+];
 
 export default function MobileNav() {
   const [location, setLocation] = useLocation();
