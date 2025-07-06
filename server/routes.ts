@@ -89,11 +89,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Create session
+      console.log("Signup - Creating session for user:", user.email);
       req.session.userId = user.id;
       
-      // Return user (without password)
-      const { password: _, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      // Explicitly save session to ensure persistence
+      req.session.save((err) => {
+        if (err) {
+          console.error("Signup - Session save error:", err);
+          return res.status(500).json({ message: "Failed to create session" });
+        }
+        
+        console.log("Signup - Session saved successfully, ID:", req.session.id);
+        
+        // Return user (without password)
+        const { password: _, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
+      });
     } catch (error) {
       console.error("Sign-up error:", error);
       res.status(500).json({ message: "Failed to create account" });
@@ -117,11 +128,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create session
+      console.log("Login - Creating session for user:", user.email);
       req.session.userId = user.id;
       
-      // Return user (without password)
-      const { password: _, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      // Explicitly save session to ensure persistence
+      req.session.save((err) => {
+        if (err) {
+          console.error("Login - Session save error:", err);
+          return res.status(500).json({ message: "Failed to create session" });
+        }
+        
+        console.log("Login - Session saved successfully, ID:", req.session.id);
+        
+        // Return user (without password)
+        const { password: _, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
+      });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Failed to login" });

@@ -20,9 +20,11 @@ export function getSession() {
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
+    name: 'toolkit.session',
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: sessionTtl,
     },
   });
@@ -38,16 +40,26 @@ export async function comparePassword(password: string, hash: string): Promise<b
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // Debug logging for session issues
+  console.log("Auth check - Session exists:", !!req.session);
+  console.log("Auth check - Session ID:", req.session?.id);
+  console.log("Auth check - User ID in session:", req.session?.userId);
+  
   if (req.session && req.session.userId) {
     try {
       const user = await storage.getUser(req.session.userId);
       if (user) {
+        console.log("Auth check - User found:", user.email);
         req.user = user;
         return next();
+      } else {
+        console.log("Auth check - User not found for ID:", req.session.userId);
       }
     } catch (error) {
       console.error("Error fetching user:", error);
     }
+  } else {
+    console.log("Auth check - No session or no userId in session");
   }
   
   return res.status(401).json({ message: "Unauthorized" });
