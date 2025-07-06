@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar as CalendarIcon, Clock, Plus, Edit2, X, GripVertical, Palette, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Plus, Edit2, X, GripVertical, Palette, Trash2, HelpCircle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 
 interface ColorTag {
@@ -61,10 +62,11 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [editingBlock, setEditingBlock] = useState<string | null>(null);
   const [draggedBlock, setDraggedBlock] = useState<TimeBlock | null>(null);
   const [newBlockTitle, setNewBlockTitle] = useState('');
-  const [selectedColorTagId, setSelectedColorTagId] = useState<string>('');
+  const [activeColorTagId, setActiveColorTagId] = useState<string>(initialData.colorTags[0]?.id || '');
   const [isCreatingBlock, setIsCreatingBlock] = useState<{ day: string; hour: number } | null>(null);
   const [editingColorTag, setEditingColorTag] = useState<string | null>(null);
   const [newColorTagLabel, setNewColorTagLabel] = useState('');
+  const [showColorSelector, setShowColorSelector] = useState<string | null>(null);
 
   // Auto-save functionality
   useEffect(() => {
@@ -102,8 +104,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     return dates;
   };
 
-  const createTimeBlock = (day: string, hour: number, title: string) => {
-    const selectedColorTag = data.colorTags.find(tag => tag.id === selectedColorTagId);
+  const createTimeBlock = (day: string, hour: number, title: string, colorTagId?: string) => {
+    const useColorTagId = colorTagId || activeColorTagId;
+    const selectedColorTag = data.colorTags.find(tag => tag.id === useColorTagId);
     const color = selectedColorTag?.color || BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)];
     
     const newBlock: TimeBlock = {
@@ -112,7 +115,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       startTime: `${hour.toString().padStart(2, '0')}:00`,
       duration: 1,
       color,
-      colorTagId: selectedColorTagId || undefined,
+      colorTagId: useColorTagId,
       day
     };
 
@@ -233,6 +236,47 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     return tag?.label || 'Untitled';
   };
 
+  // Handle creating block with color selection
+  const handleCreateBlockWithColor = (day: string, hour: number, colorTagId?: string) => {
+    if (newBlockTitle.trim()) {
+      createTimeBlock(day, hour, newBlockTitle.trim(), colorTagId);
+      setIsCreatingBlock(null);
+      setNewBlockTitle('');
+      setShowColorSelector(null);
+      onSave(data);
+    }
+  };
+
+  // Inline Color Selector Component
+  const renderInlineColorSelector = (day: string, hour: number) => (
+    <div className="absolute top-full left-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 min-w-[200px]">
+      <div className="text-xs text-gray-600 mb-2 font-medium">Select a color category:</div>
+      <div className="flex flex-col gap-1">
+        {data.colorTags.map((tag) => (
+          <button
+            key={tag.id}
+            className="flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-gray-50 border border-gray-200 text-left"
+            onClick={() => handleCreateBlockWithColor(day, hour, tag.id)}
+          >
+            <div
+              className="w-3 h-3 rounded-full border border-gray-300 flex-shrink-0"
+              style={{ backgroundColor: tag.color }}
+            />
+            <span className="truncate">{tag.label}</span>
+          </button>
+        ))}
+      </div>
+      <div className="mt-2 pt-2 border-t border-gray-100">
+        <button
+          className="text-xs text-gray-500 hover:text-gray-700 underline"
+          onClick={() => handleCreateBlockWithColor(day, hour)}
+        >
+          Use default color
+        </button>
+      </div>
+    </div>
+  );
+
   // Color Key Panel Component
   const renderColorKeyPanel = () => (
     <Card className="mb-6">
@@ -240,24 +284,42 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         <CardTitle className="flex items-center gap-2 text-lg">
           <Palette className="h-5 w-5" />
           Color Key
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Click a color to tag your next time block. Or type into a block and assign a color from the menu.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardTitle>
         <CardDescription>
-          Assign colors to categorize your time blocks
+          Click a color to set it as active for new blocks
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-3 items-center">
-          {data.colorTags.map((tag) => (
-            <div
-              key={tag.id}
-              className="flex items-center gap-2 bg-gray-50 rounded-lg p-2 border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-            >
+          {data.colorTags.map((tag) => {
+            const isActive = activeColorTagId === tag.id;
+            return (
               <div
-                className="w-4 h-4 rounded-full border border-gray-300 cursor-pointer"
-                style={{ backgroundColor: tag.color }}
-                onClick={() => setSelectedColorTagId(tag.id)}
-                title={`Select ${tag.label} color`}
-              />
+                key={tag.id}
+                className={`flex items-center gap-2 rounded-lg p-2 border transition-all cursor-pointer ${
+                  isActive 
+                    ? 'bg-blue-50 border-blue-300 shadow-md ring-2 ring-blue-200' 
+                    : 'bg-gray-50 border-gray-200 shadow-sm hover:shadow-md'
+                }`}
+                onClick={() => setActiveColorTagId(tag.id)}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full border transition-all ${
+                    isActive ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
+                  }`}
+                  style={{ backgroundColor: tag.color }}
+                  title={`${isActive ? 'Active: ' : 'Select '}${tag.label} color`}
+                />
               {editingColorTag === tag.id ? (
                 <Input
                   value={tag.label}
@@ -281,12 +343,16 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                 size="sm"
                 variant="ghost"
                 className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
-                onClick={() => deleteColorTag(tag.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteColorTag(tag.id);
+                }}
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
             </div>
-          ))}
+            );
+          })}
           
           {/* Add new color tag */}
           <div className="flex items-center gap-2">
@@ -309,9 +375,14 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           </div>
         </div>
         
-        {selectedColorTagId && (
-          <div className="mt-3 text-xs text-gray-600">
-            Selected: <span className="font-medium">{getColorTagLabel(selectedColorTagId)}</span> - New blocks will use this color
+        {activeColorTagId && (
+          <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="text-xs text-blue-700 font-medium">
+              Active Color: <span className="text-blue-800">{getColorTagLabel(activeColorTagId)}</span>
+            </div>
+            <div className="text-xs text-blue-600 mt-1">
+              New blocks will automatically use this color and category
+            </div>
           </div>
         )}
       </CardContent>
@@ -407,7 +478,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   ))}
                   
                   {isCreatingBlock?.day === day && isCreatingBlock?.hour === hour && (
-                    <div className="absolute inset-1 bg-blue-100 border-2 border-blue-300 rounded p-1">
+                    <div className="absolute inset-1 bg-blue-100 border-2 border-blue-300 rounded p-1 z-20">
                       <Input
                         value={newBlockTitle}
                         onChange={(e) => setNewBlockTitle(e.target.value)}
@@ -415,23 +486,38 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                         className="h-6 text-xs"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && newBlockTitle.trim()) {
-                            createTimeBlock(day, hour, newBlockTitle);
+                            if (activeColorTagId) {
+                              createTimeBlock(day, hour, newBlockTitle);
+                              setIsCreatingBlock(null);
+                              setNewBlockTitle('');
+                            } else {
+                              setShowColorSelector(`${day}-${hour}`);
+                            }
                           }
                           if (e.key === 'Escape') {
                             setIsCreatingBlock(null);
                             setNewBlockTitle('');
+                            setShowColorSelector(null);
                           }
                         }}
                         onBlur={() => {
                           if (newBlockTitle.trim()) {
-                            createTimeBlock(day, hour, newBlockTitle);
+                            if (activeColorTagId) {
+                              createTimeBlock(day, hour, newBlockTitle);
+                              setIsCreatingBlock(null);
+                              setNewBlockTitle('');
+                            } else {
+                              setShowColorSelector(`${day}-${hour}`);
+                            }
                           } else {
                             setIsCreatingBlock(null);
                             setNewBlockTitle('');
+                            setShowColorSelector(null);
                           }
                         }}
                         autoFocus
                       />
+                      {showColorSelector === `${day}-${hour}` && renderInlineColorSelector(day, hour)}
                     </div>
                   )}
                 </div>
