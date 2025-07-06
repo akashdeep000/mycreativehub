@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar as CalendarIcon, Clock, Plus, Edit2, X, GripVertical, Palette, Trash2, HelpCircle } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Plus, Edit2, X, GripVertical, Palette, Trash2, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
@@ -67,6 +67,10 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [editingColorTag, setEditingColorTag] = useState<string | null>(null);
   const [newColorTagLabel, setNewColorTagLabel] = useState('');
   const [showColorSelector, setShowColorSelector] = useState<string | null>(null);
+  
+  // Navigation state
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
+  const [currentMonthOffset, setCurrentMonthOffset] = useState(0);
 
 
   // Auto-save functionality
@@ -83,6 +87,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     const monday = new Date(today);
     monday.setDate(today.getDate() - (currentDay === 0 ? 6 : currentDay - 1));
     
+    // Apply week offset
+    monday.setDate(monday.getDate() + (currentWeekOffset * 7));
+    
     return DAYS.map((_, index) => {
       const date = new Date(monday);
       date.setDate(monday.getDate() + index);
@@ -93,7 +100,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const getCurrentMonthDates = () => {
     const today = new Date();
     const year = today.getFullYear();
-    const month = today.getMonth();
+    const month = today.getMonth() + currentMonthOffset;
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const dates = [];
@@ -103,6 +110,20 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     }
     
     return dates;
+  };
+
+  // Navigation functions
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    setCurrentWeekOffset(prev => direction === 'next' ? prev + 1 : prev - 1);
+  };
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setCurrentMonthOffset(prev => direction === 'next' ? prev + 1 : prev - 1);
+  };
+
+  const goToToday = () => {
+    setCurrentWeekOffset(0);
+    setCurrentMonthOffset(0);
   };
 
   const createTimeBlock = (day: string, hour: number, title?: string, colorTagId?: string) => {
@@ -396,9 +417,45 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
 
   const renderWeeklyView = () => {
     const weekDates = getCurrentWeekDates();
+    const weekStart = weekDates[0];
+    const weekEnd = weekDates[6];
+    const weekRange = `${weekStart.toLocaleDateString('en', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
     return (
       <div className="space-y-4">
+        {/* Week Navigation Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigateWeek('prev')}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <h3 className="text-lg font-semibold text-gray-900 min-w-[200px] text-center">
+              {weekRange}
+            </h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigateWeek('next')}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToToday}
+            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+          >
+            Today
+          </Button>
+        </div>
+        
         <div className="grid grid-cols-8 gap-2 text-sm">
           <div className="font-medium text-gray-500">Time</div>
           {DAYS.map((day, index) => (
@@ -514,8 +571,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
 
   const renderMonthlyView = () => {
     const monthDates = getCurrentMonthDates();
-    const today = new Date();
-    const monthName = today.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    const currentDate = new Date();
+    currentDate.setMonth(currentDate.getMonth() + currentMonthOffset);
+    const monthName = currentDate.toLocaleDateString('en', { month: 'long', year: 'numeric' });
 
     // Group dates by weeks
     const weeks: Date[][] = [];
@@ -545,8 +603,37 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
 
     return (
       <div className="space-y-4">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900">{monthName}</h3>
+        {/* Month Navigation Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigateMonth('prev')}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <h3 className="text-lg font-semibold text-gray-900 min-w-[200px] text-center">
+              {monthName}
+            </h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigateMonth('next')}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToToday}
+            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+          >
+            Today
+          </Button>
         </div>
 
         <div className="grid grid-cols-7 gap-2 text-sm">
