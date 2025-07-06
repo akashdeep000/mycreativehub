@@ -129,7 +129,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create session
       console.log("Login - Creating session for user:", user.email);
+      console.log("Login - Session before setting userId:", req.session.id);
       req.session.userId = user.id;
+      console.log("Login - Session after setting userId:", req.session.id);
+      console.log("Login - Session userId set to:", req.session.userId);
       
       // Explicitly save session to ensure persistence
       req.session.save((err) => {
@@ -139,6 +142,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         console.log("Login - Session saved successfully, ID:", req.session.id);
+        console.log("Login - Session userId after save:", req.session.userId);
+        console.log("Login - Response headers will include session cookie");
+        
+        // Debug: Check if session cookie is being set
+        console.log("Login - Set-Cookie header:", res.getHeader('set-cookie'));
         
         // Return user (without password)
         const { password: _, ...userWithoutPassword } = user;
@@ -162,14 +170,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/auth/user', isAuthenticated, async (req, res) => {
     try {
+      console.log("Auth check - User from middleware:", req.user?.email);
       const user = req.user;
       if (!user) {
+        console.log("Auth check - No user in middleware");
         return res.status(401).json({ message: "Unauthorized" });
       }
       
+      console.log("Auth check - Recording dashboard access for user:", user.email);
       // Record dashboard access when user is authenticated
       await storage.recordDashboardAccess(user.id);
       
+      console.log("Auth check - Returning user:", user.email);
       // Return user (without password)
       const { password: _, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);

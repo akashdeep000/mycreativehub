@@ -13,7 +13,14 @@ export function getSession() {
     createTableIfMissing: false,
     ttl: sessionTtl,
     tableName: "sessions",
+    schemaName: "public",
+    pruneSessionInterval: 60 * 15, // 15 minutes
   });
+  
+  const isProduction = process.env.NODE_ENV === "production";
+  console.log("Session configuration - Environment:", process.env.NODE_ENV);
+  console.log("Session configuration - Is production:", isProduction);
+  console.log("Session configuration - Secure cookies:", isProduction);
   
   return session({
     secret: process.env.SESSION_SECRET!,
@@ -21,11 +28,13 @@ export function getSession() {
     resave: false,
     saveUninitialized: false,
     name: 'toolkit.session',
+    rolling: true, // Reset expiry on every request
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax", // Change to "none" for production cross-origin
       maxAge: sessionTtl,
+      // Don't set domain for now - let it default to the current domain
     },
   });
 }

@@ -160,6 +160,12 @@ Changelog:
   - Added drag-and-drop time blocks, resizable scheduling, real-time editing
   - Integrated archive system with dropdown menu options per template
   - Connected template workspaces with proper data persistence and API integration
+- July 06, 2025. Debugging production session persistence issue:
+  - Added comprehensive logging to track session creation, saving, and authentication flow
+  - Verified session store is working properly with PostgreSQL (sessions table populated)
+  - Updated session configuration with production-optimized settings
+  - Added frontend debugging to track login success and immediate session verification
+  - Issue: Users experiencing login loops in deployed environment despite backend session creation
 
 ## User Preferences
 

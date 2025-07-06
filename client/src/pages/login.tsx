@@ -31,6 +31,7 @@ export default function Login() {
     setIsSubmitting(true);
 
     try {
+      console.log("Frontend - Starting login process");
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -42,15 +43,39 @@ export default function Login() {
         }),
       });
 
+      console.log("Frontend - Login response received:", response.status);
+      console.log("Frontend - Response headers:", Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
         const error = await response.json();
+        console.log("Frontend - Login error:", error);
         throw new Error(error.message || "Login failed");
       }
+
+      const userData = await response.json();
+      console.log("Frontend - User data received:", userData);
 
       toast({
         title: "Welcome back!",
         description: "Successfully logged in. Redirecting to dashboard...",
       });
+
+      // Test session immediately after login
+      console.log("Frontend - Testing session immediately after login");
+      try {
+        const authCheck = await fetch("/api/auth/user", {
+          method: "GET",
+          credentials: "include",
+        });
+        console.log("Frontend - Auth check response:", authCheck.status);
+        if (authCheck.ok) {
+          console.log("Frontend - Session verified, redirecting");
+        } else {
+          console.log("Frontend - Session verification failed");
+        }
+      } catch (error) {
+        console.error("Frontend - Session verification error:", error);
+      }
 
       setTimeout(() => {
         window.location.href = "/";
