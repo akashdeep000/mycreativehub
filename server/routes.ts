@@ -152,25 +152,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/login', async (req, res) => {
     try {
+      console.log("Login - Starting authentication process");
+      console.log("Login - Environment:", process.env.NODE_ENV);
+      console.log("Login - Request body:", { email: req.body.email, hasPassword: !!req.body.password });
+      
       const { email, password } = req.body;
       
       // Find user
+      console.log("Login - Looking up user:", email);
       const user = await storage.getUserByEmail(email);
       if (!user || !user.password) {
+        console.log("Login - User not found or no password");
         return res.status(401).json({ message: "Invalid email or password" });
       }
       
+      console.log("Login - User found, checking password");
       // Check password
       const isValidPassword = await comparePassword(password, user.password);
       if (!isValidPassword) {
+        console.log("Login - Password invalid");
         return res.status(401).json({ message: "Invalid email or password" });
       }
       
       // Generate JWT token
       console.log("Login - Generating JWT token for user:", user.email);
       const token = generateToken(user.id, user.email);
+      console.log("Login - JWT token generated, length:", token.length);
+      console.log("Login - Token preview:", token.substring(0, 20) + "...");
       
       // Set httpOnly cookie
+      console.log("Login - Setting httpOnly cookie");
+      console.log("Login - Cookie secure flag:", process.env.NODE_ENV === 'production');
       res.cookie('authToken', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
