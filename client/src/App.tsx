@@ -34,7 +34,7 @@ function Router() {
           <Route path="/time-blocking" component={TimeBlocking} />
           <Route path="/finance" component={FinanceTracker} />
           <Route path="/inspiration-hub" component={InspirationHub} />
-          <Route path="/archived" component={ArchivedTemplates} />
+          <Route path="/archived-templates" component={ArchivedTemplates} />
         </>
       )}
       <Route component={NotFound} />

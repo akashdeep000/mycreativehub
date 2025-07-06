@@ -13,7 +13,7 @@ const mobileNavigationItems = [
            item.label
   })),
   {
-    href: "/archived",
+    href: "/archived-templates",
     icon: Archive,
     label: "Archive",
     moduleKey: "archive"
