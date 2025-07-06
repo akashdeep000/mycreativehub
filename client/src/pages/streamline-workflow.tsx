@@ -439,7 +439,7 @@ export default function StreamlineWorkflow() {
                           <CardContent className="pt-0">
                             <div className="flex items-center justify-between">
                               <Badge variant="secondary" className="text-xs">
-                                2 Templates
+                                {template.id === 'time-blocking' ? '2 Templates' : (count > 0 ? `${count} Template${count !== 1 ? 's' : ''}` : 'Pre-loaded')}
                               </Badge>
                               <div className="text-xs text-gray-500">
                                 Click to open
