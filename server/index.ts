@@ -18,6 +18,39 @@ console.log("=== ENVIRONMENT CHECK END ===");
 
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy for proper session handling in deployment
+
+// CORS configuration for production
+app.use((req, res, next) => {
+  console.log("CORS DEBUG - Request origin:", req.headers.origin);
+  console.log("CORS DEBUG - Request method:", req.method);
+  console.log("CORS DEBUG - Request headers:", JSON.stringify(req.headers, null, 2));
+  
+  const origin = req.headers.origin;
+  
+  // Allow all origins for now - will be restrictive in production
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  console.log("CORS DEBUG - Response headers set");
+  console.log("CORS DEBUG - Access-Control-Allow-Origin:", res.getHeader('Access-Control-Allow-Origin'));
+  console.log("CORS DEBUG - Access-Control-Allow-Headers:", res.getHeader('Access-Control-Allow-Headers'));
+  
+  if (req.method === 'OPTIONS') {
+    console.log("CORS DEBUG - Handling OPTIONS preflight request");
+    res.sendStatus(200);
+    return;
+  }
+  
+  next();
+});
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

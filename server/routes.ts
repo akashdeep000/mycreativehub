@@ -133,6 +133,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Test authenticated board creation in production
+  app.get('/api/test-production-auth', jwtAuth, async (req: any, res) => {
+    try {
+      console.log("=== PRODUCTION AUTH TEST ===");
+      console.log("Environment:", process.env.NODE_ENV);
+      console.log("User authenticated:", !!req.user);
+      console.log("User ID:", req.user?.id);
+      console.log("User email:", req.user?.email);
+      
+      res.json({
+        success: true,
+        authenticated: true,
+        userId: req.user.id,
+        userEmail: req.user.email,
+        environment: process.env.NODE_ENV,
+        message: "Authentication working in production"
+      });
+    } catch (error) {
+      console.error("Production auth test error:", error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        message: "Production auth test failed"
+      });
+    }
+  });
   
   // Session middleware
   app.use(getSession());
