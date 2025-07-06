@@ -72,6 +72,7 @@ export default function InspirationBoardDetail() {
   const [newNote, setNewNote] = useState({ title: "", content: "", color: "yellow" });
   const [newLink, setNewLink] = useState({ url: "", title: "", description: "" });
   const [newPalette, setNewPalette] = useState({ name: "", colors: ["#ffffff"] });
+  const [newImage, setNewImage] = useState({ url: "", alt: "", file: null as File | null });
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
@@ -290,6 +291,73 @@ export default function InspirationBoardDetail() {
     }
   };
 
+  const addImageMutation = useMutation({
+    mutationFn: async (image: any) => {
+      return await apiRequest(`/api/inspiration-boards/${id}/images`, {
+        method: "POST",
+        body: JSON.stringify(image),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "images"] });
+      setIsImageDialogOpen(false);
+      setNewImage({ url: "", alt: "", file: null });
+      toast({
+        title: "Image Added",
+        description: "Image has been added to your board.",
+      });
+    },
+  });
+
+  const handleAddImage = () => {
+    if (!newImage.url.trim()) {
+      toast({
+        title: "URL Required",
+        description: "Please enter an image URL.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Generate random position for the image
+    const position = {
+      x: Math.random() * 300 + 100,
+      y: Math.random() * 200 + 100,
+      rotation: (Math.random() - 0.5) * 3, // -1.5 to +1.5 degrees
+    };
+
+    addImageMutation.mutate({
+      boardId: parseInt(id!),
+      imageUrl: newImage.url.trim(),
+      caption: newImage.alt.trim() || null,
+      position,
+    });
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // For now, just show a message that file upload is coming soon
+      toast({
+        title: "File Upload Coming Soon",
+        description: "File upload functionality will be available soon. Please use image URLs for now.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDragDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    const files = Array.from(event.dataTransfer.files);
+    if (files.length > 0) {
+      toast({
+        title: "Drag & Drop Coming Soon",
+        description: "Drag & drop functionality will be available soon. Please use image URLs for now.",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     if (board) {
       setBoardTitle(board.title);
@@ -427,21 +495,98 @@ export default function InspirationBoardDetail() {
         <div className="bg-white border-b border-gray-200 p-4">
           <div className="flex items-center gap-3">
             <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <ImageIcon className="w-4 h-4 mr-2" />
-                  Add Image
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-lg">
                 <DialogHeader>
                   <DialogTitle>Add Image to Board</DialogTitle>
-                  <DialogDescription>Upload an image or paste a URL to add visual inspiration.</DialogDescription>
+                  <DialogDescription>Add visual inspiration to your board using an image URL or file upload.</DialogDescription>
                 </DialogHeader>
-                <div className="text-center py-8 text-gray-500">
-                  <ImageIcon className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                  <p>Image upload functionality coming soon</p>
+                
+                <div className="grid gap-6 py-4">
+                  {/* URL Input */}
+                  <div className="grid gap-3">
+                    <label className="text-sm font-medium">Image URL</label>
+                    <Input
+                      value={newImage.url}
+                      onChange={(e) => setNewImage(prev => ({ ...prev, url: e.target.value }))}
+                      placeholder="https://example.com/image.jpg"
+                      type="url"
+                    />
+                    <div className="grid gap-2">
+                      <label className="text-sm font-medium">Description (Optional)</label>
+                      <Input
+                        value={newImage.alt}
+                        onChange={(e) => setNewImage(prev => ({ ...prev, alt: e.target.value }))}
+                        placeholder="Describe this image..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Preview */}
+                  {newImage.url && (
+                    <div className="grid gap-2">
+                      <label className="text-sm font-medium">Preview</label>
+                      <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden border">
+                        <img
+                          src={newImage.url}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                          onError={() => {
+                            toast({
+                              title: "Invalid Image",
+                              description: "Could not load image from this URL.",
+                              variant: "destructive",
+                            });
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Divider */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="bg-white px-2 text-gray-500">Or</span>
+                    </div>
+                  </div>
+
+                  {/* File Upload */}
+                  <div 
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer"
+                    onDrop={handleDragDrop}
+                    onDragOver={(e) => e.preventDefault()}
+                    onClick={() => document.getElementById('image-upload')?.click()}
+                  >
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600 mb-1">
+                      Click to upload or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG, GIF up to 10MB
+                    </p>
+                  </div>
                 </div>
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsImageDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleAddImage} 
+                    disabled={!newImage.url.trim() || addImageMutation.isPending}
+                  >
+                    {addImageMutation.isPending ? "Adding..." : "Add Image"}
+                  </Button>
+                </DialogFooter>
               </DialogContent>
             </Dialog>
 
@@ -504,18 +649,12 @@ export default function InspirationBoardDetail() {
             </Dialog>
 
             <Dialog open={isPaletteDialogOpen} onOpenChange={setIsPaletteDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Palette className="w-4 h-4 mr-2" />
-                  Add Palette
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Create Color Palette</DialogTitle>
                   <DialogDescription>Build a custom color palette for your inspiration board.</DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
+                <div className="grid gap-6 py-4">
                   <div className="grid gap-2">
                     <label className="text-sm font-medium">Palette Name</label>
                     <Input
@@ -524,7 +663,7 @@ export default function InspirationBoardDetail() {
                       placeholder="e.g. Brand Colors, Sunset Vibes..."
                     />
                   </div>
-                  <div className="grid gap-2">
+                  <div className="grid gap-4">
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium">Colors</label>
                       <Button size="sm" variant="outline" onClick={addColorToPalette}>
@@ -532,32 +671,71 @@ export default function InspirationBoardDetail() {
                         Add Color
                       </Button>
                     </div>
-                    <div className="grid gap-2">
+                    <div className="grid gap-3">
                       {newPalette.colors.map((color, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <input
-                            type="color"
-                            value={color}
-                            onChange={(e) => updatePaletteColor(index, e.target.value)}
-                            className="w-10 h-10 rounded border border-gray-300 cursor-pointer"
-                          />
+                        <div key={index} className="flex items-center gap-3">
+                          <div className="relative">
+                            <input
+                              type="color"
+                              value={color}
+                              onChange={(e) => updatePaletteColor(index, e.target.value)}
+                              className="w-12 h-12 rounded-lg border border-gray-300 cursor-pointer bg-white"
+                              style={{ backgroundColor: color }}
+                            />
+                            <div 
+                              className="absolute inset-0 rounded-lg border-2 border-white shadow-sm pointer-events-none"
+                              style={{ backgroundColor: color }}
+                            />
+                          </div>
                           <Input
                             value={color}
                             onChange={(e) => updatePaletteColor(index, e.target.value)}
                             placeholder="#ffffff"
-                            className="flex-1"
+                            className="flex-1 font-mono text-sm"
                           />
-                          {newPalette.colors.length > 1 && (
+                          <div className="flex items-center gap-1">
                             <Button 
                               size="sm" 
                               variant="ghost" 
-                              onClick={() => removePaletteColor(index)}
+                              onClick={() => {
+                                navigator.clipboard.writeText(color);
+                                toast({
+                                  title: "Copied!",
+                                  description: `Color ${color} copied to clipboard`,
+                                });
+                              }}
+                              className="h-8 w-8 p-0"
                             >
-                              <X className="w-4 h-4" />
+                              <Copy className="w-4 h-4" />
                             </Button>
-                          )}
+                            {newPalette.colors.length > 1 && (
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => removePaletteColor(index)}
+                                className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       ))}
+                    </div>
+                    
+                    {/* Color Palette Preview */}
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <h4 className="text-sm font-medium mb-3">Preview</h4>
+                      <div className="flex gap-2 flex-wrap">
+                        {newPalette.colors.map((color, index) => (
+                          <div
+                            key={index}
+                            className="w-10 h-10 rounded-full border-2 border-white shadow-sm"
+                            style={{ backgroundColor: color }}
+                            title={color}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -624,125 +802,199 @@ export default function InspirationBoardDetail() {
         {/* Board Canvas */}
         <div 
           ref={boardRef}
-          className={`flex-1 relative overflow-hidden ${selectedBackground?.class || "bg-white"}`}
+          className="flex-1 overflow-auto bg-gray-50"
           style={{ minHeight: "calc(100vh - 200px)" }}
         >
-          {/* Sticky Notes */}
-          {notes.map((note: InspirationBoardNote) => {
-            const noteColor = noteColors.find(c => c.value === note.color) || noteColors[0];
-            const position = note.position as any;
-            
-            return (
-              <div
-                key={note.id}
-                className={`absolute w-64 p-4 rounded-lg shadow-lg cursor-move border-2 ${noteColor.class} transform hover:scale-105 transition-transform`}
-                style={{
-                  left: position?.x || 100,
-                  top: position?.y || 100,
-                  transform: `rotate(${position?.rotation || 0}deg)`,
-                  zIndex: 10,
-                }}
-              >
-                {note.title && (
-                  <h4 className="font-semibold text-gray-800 mb-2">{note.title}</h4>
-                )}
-                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
-                  {note.content}
-                </p>
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
-                    <MoreHorizontal className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Color Palettes Sidebar */}
-          {palettes.length > 0 && (
-            <div className="absolute top-4 right-4 w-64 space-y-4">
-              {palettes.map((palette: ColorPalette) => (
-                <Card key={palette.id} className="bg-white/90 backdrop-blur-sm">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">{palette.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {palette.colors && Array.isArray(palette.colors) && (palette.colors as any[]).length > 0 ? (
-                        (palette.colors as any[]).map((colorObj: any, index: number) => (
-                          <div
-                            key={index}
-                            className="w-8 h-8 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform"
-                            style={{ backgroundColor: colorObj.color }}
-                            title={colorObj.color}
-                          />
-                        ))
-                      ) : (
-                        <p className="text-sm text-gray-500 italic">No colors yet</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {/* Links Section */}
-          {links.length > 0 && (
-            <div className="absolute bottom-4 left-4 right-80 bg-white/90 backdrop-blur-sm rounded-lg p-4">
-              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <LinkIcon className="w-4 h-4" />
-                References & Links
+          <div className="max-w-7xl mx-auto p-6">
+            {/* Images Grid */}
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <ImageIcon className="w-5 h-5" />
+                Images
               </h3>
-              <div className="grid gap-2">
-                {links.map((link: BoardLink) => (
-                  <div key={link.id} className="flex items-center gap-3 p-2 rounded hover:bg-gray-50">
-                    <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
-                      <LinkIcon className="w-4 h-4 text-gray-500" />
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {/* Existing Images */}
+                {images.map((image: InspirationBoardImage) => (
+                  <div
+                    key={image.id}
+                    className="group relative aspect-square bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-200 hover:border-gray-300"
+                  >
+                    <img
+                      src={image.imageUrl}
+                      alt={image.caption || "Inspiration"}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 bg-white/90 hover:bg-white shadow-sm">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm text-gray-900 truncate">
-                        {link.title || link.url}
-                      </h4>
-                      {link.description && (
-                        <p className="text-xs text-gray-500 truncate">{link.description}</p>
-                      )}
+                    <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="bg-white/90 backdrop-blur-sm rounded px-2 py-1 text-xs text-gray-700 truncate">
+                        {image.caption || "Untitled"}
+                      </div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => window.open(link.url, '_blank')}
-                    >
-                      Visit
-                    </Button>
                   </div>
+                ))}
+                
+                {/* Add Image Placeholder Cards */}
+                {Array.from({ length: Math.max(3, 6 - images.length) }).map((_, index) => (
+                  <Dialog key={`placeholder-${index}`} open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+                    <DialogTrigger asChild>
+                      <div className="aspect-square bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 cursor-pointer group flex flex-col items-center justify-center">
+                        <ImageIcon className="w-8 h-8 text-gray-400 group-hover:text-gray-500 mb-2" />
+                        <span className="text-sm text-gray-500 group-hover:text-gray-600 font-medium">Add Image</span>
+                        <span className="text-xs text-gray-400 mt-1">Click to upload</span>
+                      </div>
+                    </DialogTrigger>
+                  </Dialog>
                 ))}
               </div>
             </div>
-          )}
 
-          {/* Empty State */}
-          {notes.length === 0 && images.length === 0 && palettes.length === 0 && links.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-20 h-20 bg-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <StickyNote className="w-10 h-10 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-serif font-semibold text-gray-700 mb-2">
-                  Your Creative Canvas Awaits
+            {/* Color Palettes Section */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <Palette className="w-5 h-5" />
+                  Colors
                 </h3>
-                <p className="text-gray-500 mb-6 max-w-md">
-                  Start building your visual moodboard with images, notes, color palettes, and reference links.
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Button onClick={() => setIsNoteDialogOpen(true)}>
-                    <StickyNote className="w-4 h-4 mr-2" />
-                    Add First Note
-                  </Button>
+                <Dialog open={isPaletteDialogOpen} onOpenChange={setIsPaletteDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Palette
+                    </Button>
+                  </DialogTrigger>
+                </Dialog>
+              </div>
+              
+              {palettes.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {palettes.map((palette: ColorPalette) => (
+                    <Card key={palette.id} className="bg-white shadow-sm hover:shadow-md transition-shadow">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">{palette.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-5 gap-2">
+                          {palette.colors && Array.isArray(palette.colors) && (palette.colors as any[]).length > 0 ? (
+                            (palette.colors as any[]).map((colorObj: any, index: number) => (
+                              <div
+                                key={index}
+                                className="aspect-square rounded-lg border-2 border-white shadow-sm cursor-pointer hover:scale-105 transition-transform"
+                                style={{ backgroundColor: colorObj.color }}
+                                title={`${colorObj.color}${colorObj.name ? ` - ${colorObj.name}` : ''}`}
+                              />
+                            ))
+                          ) : (
+                            <div className="col-span-5 text-center py-4">
+                              <p className="text-sm text-gray-500 italic">No colors in this palette</p>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
+                  <Palette className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 font-medium mb-2">No color palettes yet</p>
+                  <p className="text-sm text-gray-500 mb-4">Add color palettes to organize your inspiration</p>
+                  <Dialog open={isPaletteDialogOpen} onOpenChange={setIsPaletteDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Your First Palette
+                      </Button>
+                    </DialogTrigger>
+                  </Dialog>
+                </div>
+              )}
+            </div>
+
+            {/* Notes Section */}
+            {notes.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <StickyNote className="w-5 h-5" />
+                  Notes
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {notes.map((note: InspirationBoardNote) => {
+                    const noteColor = noteColors.find(c => c.value === note.color) || noteColors[0];
+                    return (
+                      <div
+                        key={note.id}
+                        className={`p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow ${noteColor.class}`}
+                      >
+                        {note.title && (
+                          <h4 className="font-semibold text-sm mb-2 text-gray-800">{note.title}</h4>
+                        )}
+                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                          {note.content}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Links Section */}
+            {links.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <LinkIcon className="w-5 h-5" />
+                  References
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {links.map((link: BoardLink) => (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all"
+                    >
+                      <div className="font-medium text-sm text-gray-900 mb-1 truncate">
+                        {link.title || "Untitled Link"}
+                      </div>
+                      <div className="text-xs text-blue-600 truncate mb-2">{link.url}</div>
+                      {link.description && (
+                        <div className="text-xs text-gray-600 line-clamp-2">{link.description}</div>
+                      )}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {notes.length === 0 && images.length === 0 && palettes.length === 0 && links.length === 0 && (
+              <div className="flex items-center justify-center py-20">
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <StickyNote className="w-10 h-10 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-serif font-semibold text-gray-700 mb-2">
+                    Your Creative Canvas Awaits
+                  </h3>
+                  <p className="text-gray-500 mb-6 max-w-md">
+                    Start building your visual moodboard with images, notes, color palettes, and reference links.
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <Button onClick={() => setIsNoteDialogOpen(true)}>
+                      <StickyNote className="w-4 h-4 mr-2" />
+                      Add First Note
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
