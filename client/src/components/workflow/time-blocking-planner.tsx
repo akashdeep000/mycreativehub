@@ -67,6 +67,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [editingColorTag, setEditingColorTag] = useState<string | null>(null);
   const [newColorTagLabel, setNewColorTagLabel] = useState('');
   const [showColorSelector, setShowColorSelector] = useState<string | null>(null);
+  const [isCompactView, setIsCompactView] = useState(false);
 
   // Auto-save functionality
   useEffect(() => {
@@ -410,16 +411,16 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           ))}
         </div>
 
-        <div className="grid grid-cols-8 gap-2 text-sm max-h-96 overflow-y-auto">
+        <div className="grid grid-cols-8 gap-1 text-sm max-h-[600px] overflow-y-auto border border-gray-200 rounded-lg bg-white">
           {HOURS.map(hour => (
             <div key={hour} className="contents">
-              <div className="py-2 text-xs text-gray-500 font-medium border-r border-gray-200">
+              <div className="py-3 px-2 text-sm text-gray-600 font-semibold bg-gray-50 border-r border-b border-gray-200 flex items-center justify-center">
                 {formatTime(hour)}
               </div>
               {DAYS.map(day => (
                 <div
                   key={`${day}-${hour}`}
-                  className="min-h-[60px] border border-gray-200 rounded relative hover:bg-gray-50 transition-colors"
+                  className={`${isCompactView ? 'min-h-[50px]' : 'min-h-[75px]'} border-r border-b border-gray-200 relative hover:bg-blue-50 transition-colors cursor-pointer group`}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, day, hour)}
                   onClick={() => {
@@ -435,13 +436,13 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   {getBlocksForDayAndHour(day, hour).map(block => (
                     <div
                       key={block.id}
-                      className="absolute inset-1 rounded text-white text-xs p-1 cursor-move flex items-center justify-between group"
-                      style={{ backgroundColor: block.color, height: `${block.duration * 60 - 8}px` }}
+                      className="absolute inset-1 rounded text-white text-sm font-medium p-2 cursor-move flex items-center justify-between group shadow-sm"
+                      style={{ backgroundColor: block.color, height: `${Math.max(block.duration * (isCompactView ? 45 : 70) - 8, isCompactView ? 40 : 65)}px` }}
                       draggable
                       onDragStart={() => handleDragStart(block)}
-                      title={`${block.title}${block.colorTagId ? ` (${getColorTagLabel(block.colorTagId)})` : ''}`}
+                      title={`${block.title}${block.colorTagId ? ` (${getColorTagLabel(block.colorTagId)})` : ''} - Click to edit`}
                     >
-                      <div className="flex-1 truncate">
+                      <div className="flex-1 flex items-center justify-center text-center px-1">
                         {editingBlock === block.id ? (
                           <Input
                             value={block.title}
@@ -450,16 +451,20 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') setEditingBlock(null);
                             }}
-                            className="h-6 text-xs bg-white text-black"
+                            className="h-8 text-sm bg-white text-black text-center font-medium border-0 rounded-md"
                             autoFocus
                           />
                         ) : (
-                          <span onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingBlock(block.id);
-                          }}>
+                          <div 
+                            className="truncate cursor-pointer font-semibold leading-tight hover:bg-white/10 rounded px-1 py-0.5 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingBlock(block.id);
+                            }}
+                            title={block.title}
+                          >
                             {block.title}
-                          </span>
+                          </div>
                         )}
                       </div>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
@@ -544,7 +549,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-2 border border-gray-200 rounded-lg bg-white p-4">
           {weeks.map((week, weekIndex) =>
             week.map((date, dayIndex) => {
               const dayName = date.toLocaleDateString('en', { weekday: 'long' });
@@ -555,8 +560,10 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
               return (
                 <div
                   key={`${weekIndex}-${dayIndex}`}
-                  className={`min-h-[100px] border rounded p-2 ${
-                    isCurrentMonth ? 'bg-white hover:bg-gray-50' : 'bg-gray-100 text-gray-400'
+                  className={`min-h-[120px] border rounded-lg p-3 transition-colors cursor-pointer ${
+                    isCurrentMonth 
+                      ? 'bg-white hover:bg-blue-50 border-gray-200 shadow-sm' 
+                      : 'bg-gray-50 text-gray-400 border-gray-100'
                   }`}
                   onClick={() => {
                     if (isCurrentMonth) {
@@ -570,20 +577,21 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                     }
                   }}
                 >
-                  <div className="text-sm font-medium mb-1">{date.getDate()}</div>
-                  <div className="space-y-1">
+                  <div className="text-sm font-semibold mb-2 text-gray-700">{date.getDate()}</div>
+                  <div className="space-y-1.5">
                     {blocks.slice(0, 3).map(block => (
                       <div
                         key={block.id}
-                        className="text-xs p-1 rounded text-white cursor-pointer"
+                        className="text-xs p-2 rounded text-white cursor-pointer shadow-sm hover:shadow-md transition-shadow"
                         style={{ backgroundColor: block.color }}
                         onClick={(e) => {
                           e.stopPropagation();
                           setEditingBlock(block.id);
                         }}
+                        title={`${block.title} at ${block.startTime} - Click to edit`}
                       >
-                        <div className="truncate">{block.title}</div>
-                        <div className="text-xs opacity-75">{block.startTime}</div>
+                        <div className="truncate font-medium">{block.title}</div>
+                        <div className="text-xs opacity-80 mt-0.5">{block.startTime}</div>
                       </div>
                     ))}
                     {blocks.length > 3 && (
@@ -606,10 +614,10 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Time Blocking Planner</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Time Blocking Planner</h2>
           <p className="text-gray-600">Organize your schedule with drag-and-drop time blocks</p>
         </div>
         <Badge variant="outline" className="text-green-600 border-green-200">
@@ -617,17 +625,38 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         </Badge>
       </div>
 
-      <Tabs value={activeView} onValueChange={(value) => setActiveView(value as 'weekly' | 'monthly')}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="weekly" className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Weekly View
-          </TabsTrigger>
-          <TabsTrigger value="monthly" className="flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4" />
-            Monthly View
-          </TabsTrigger>
-        </TabsList>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <Tabs value={activeView} onValueChange={(value) => setActiveView(value as 'weekly' | 'monthly')}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="weekly" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">Weekly View</span>
+              <span className="sm:hidden">Week</span>
+            </TabsTrigger>
+            <TabsTrigger value="monthly" className="flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Monthly View</span>
+              <span className="sm:hidden">Month</span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
+        {activeView === 'weekly' && (
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600 font-medium">View:</label>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsCompactView(!isCompactView)}
+              className="text-xs"
+            >
+              {isCompactView ? 'Expanded' : 'Compact'}
+            </Button>
+          </div>
+        )}
+      </div>
+      
+      <Tabs value={activeView}>
 
         <TabsContent value="weekly" className="space-y-4">
           {renderColorKeyPanel()}
