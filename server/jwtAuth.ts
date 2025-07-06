@@ -38,6 +38,10 @@ export async function comparePassword(password: string, hash: string): Promise<b
 
 export const jwtAuth: RequestHandler = async (req, res, next) => {
   try {
+    console.log("=== JWT AUTH START ===");
+    console.log("JWT Auth - Environment:", process.env.NODE_ENV);
+    console.log("JWT Auth - Request URL:", req.url);
+    console.log("JWT Auth - Request method:", req.method);
     console.log("JWT Auth - Checking authentication");
     
     // Check for token in Authorization header
@@ -51,32 +55,47 @@ export const jwtAuth: RequestHandler = async (req, res, next) => {
     
     console.log("JWT Auth - Token found:", !!token);
     console.log("JWT Auth - Token source:", headerToken ? "header" : cookieToken ? "cookie" : "none");
+    console.log("JWT Auth - Auth header present:", !!authHeader);
+    console.log("JWT Auth - Cookie token present:", !!cookieToken);
+    console.log("JWT Auth - Available cookies:", Object.keys(req.cookies || {}));
     
     if (!token) {
       console.log("JWT Auth - No token provided");
+      console.log("=== JWT AUTH FAILED (NO TOKEN) ===");
       return res.status(401).json({ message: "Unauthorized" });
     }
     
     const decoded = verifyToken(token);
     if (!decoded) {
       console.log("JWT Auth - Invalid token");
+      console.log("JWT Auth - Token length:", token.length);
+      console.log("JWT Auth - Token preview:", token.substring(0, 20) + "...");
+      console.log("=== JWT AUTH FAILED (INVALID TOKEN) ===");
       return res.status(401).json({ message: "Unauthorized" });
     }
     
     console.log("JWT Auth - Token valid for user:", decoded.email);
+    console.log("JWT Auth - User ID from token:", decoded.userId);
     
     // Fetch user from database
     const user = await storage.getUser(decoded.userId);
     if (!user) {
       console.log("JWT Auth - User not found for ID:", decoded.userId);
+      console.log("=== JWT AUTH FAILED (USER NOT FOUND) ===");
       return res.status(401).json({ message: "Unauthorized" });
     }
     
     console.log("JWT Auth - User authenticated:", user.email);
+    console.log("JWT Auth - User object:", JSON.stringify(user, null, 2));
     req.user = user;
+    console.log("=== JWT AUTH SUCCESS ===");
     next();
   } catch (error) {
+    console.error("=== JWT AUTH ERROR ===");
     console.error("JWT Auth - Error:", error);
+    console.error("JWT Auth - Error type:", typeof error);
+    console.error("JWT Auth - Error message:", error instanceof Error ? error.message : 'Unknown error');
+    console.error("=== JWT AUTH ERROR END ===");
     res.status(401).json({ message: "Unauthorized" });
   }
 };

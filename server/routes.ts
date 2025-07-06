@@ -689,14 +689,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/inspiration-boards', jwtAuth, async (req: any, res) => {
     try {
-      console.log("Creating inspiration board - Request body:", req.body);
+      console.log("=== BOARD CREATION START ===");
+      console.log("Environment:", process.env.NODE_ENV);
+      console.log("Request method:", req.method);
+      console.log("Request headers:", JSON.stringify(req.headers, null, 2));
+      console.log("Request body:", JSON.stringify(req.body, null, 2));
+      
+      // Validate authentication
+      if (!req.user || !req.user.id) {
+        console.log("AUTH ERROR: No user found in request");
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
       const userId = req.user.id;
       console.log("Creating inspiration board - User ID:", userId);
+      console.log("User object:", JSON.stringify(req.user, null, 2));
       
       const { title, description, backgroundColor, backgroundTexture } = req.body;
       
       if (!title?.trim()) {
-        console.log("Creating inspiration board - Title validation failed");
+        console.log("VALIDATION ERROR: Title validation failed");
         return res.status(400).json({ message: "Title is required" });
       }
       
@@ -708,20 +720,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         backgroundTexture: backgroundTexture || "paper",
       };
       
-      console.log("Creating inspiration board - Board data:", boardData);
+      console.log("Creating inspiration board - Board data:", JSON.stringify(boardData, null, 2));
+      
+      // Test database connection
+      console.log("Testing database connection...");
+      try {
+        await storage.getInspirationBoards(userId);
+        console.log("Database connection successful");
+      } catch (dbError) {
+        console.error("DATABASE CONNECTION ERROR:", dbError);
+        return res.status(500).json({ message: "Database connection failed" });
+      }
+      
       const board = await storage.createInspirationBoard(boardData);
-      console.log("Creating inspiration board - Board created successfully:", board);
+      console.log("Creating inspiration board - Board created successfully:", JSON.stringify(board, null, 2));
+      console.log("=== BOARD CREATION SUCCESS ===");
       
       res.status(201).json(board);
-    } catch (error) {
+    } catch (error: any) {
+      console.error("=== BOARD CREATION ERROR ===");
       console.error("Error creating inspiration board:", error);
+      console.error("Error type:", typeof error);
+      console.error("Error name:", error?.name);
+      console.error("Error message:", error?.message);
+      console.error("Error stack:", error?.stack);
       console.error("Error details:", {
-        message: error.message,
-        stack: error.stack,
+        message: error?.message,
+        stack: error?.stack,
         userId: req.user?.id,
-        requestBody: req.body
+        requestBody: req.body,
+        environment: process.env.NODE_ENV
       });
-      res.status(500).json({ message: "Failed to create inspiration board" });
+      console.error("=== BOARD CREATION ERROR END ===");
+      res.status(500).json({ 
+        message: "Failed to create inspiration board",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
