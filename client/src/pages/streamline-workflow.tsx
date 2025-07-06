@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
@@ -176,6 +176,7 @@ const workflowTemplates = [
 export default function StreamlineWorkflow() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -263,6 +264,12 @@ export default function StreamlineWorkflow() {
   };
 
   const handleTemplateClick = (templateType: string) => {
+    // Route to standalone inspiration hub for the inspiration template
+    if (templateType === "inspiration") {
+      setLocation("/inspiration-hub");
+      return;
+    }
+    
     const template = getTemplateByType(templateType);
     if (template) {
       setSelectedTemplate(templateType);
