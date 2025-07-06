@@ -30,8 +30,7 @@ function Router() {
     );
   }
 
-  // Debug logging for routing issues
-  console.log("Router - Authentication state:", { isAuthenticated, isLoading });
+
 
   if (!isAuthenticated) {
     return (

@@ -668,14 +668,18 @@ export default function InspirationBoardDetail() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {(palette.colors as any[]).map((colorObj: any, index: number) => (
-                        <div
-                          key={index}
-                          className="w-8 h-8 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform"
-                          style={{ backgroundColor: colorObj.color }}
-                          title={colorObj.color}
-                        />
-                      ))}
+                      {palette.colors && Array.isArray(palette.colors) && (palette.colors as any[]).length > 0 ? (
+                        (palette.colors as any[]).map((colorObj: any, index: number) => (
+                          <div
+                            key={index}
+                            className="w-8 h-8 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform"
+                            style={{ backgroundColor: colorObj.color }}
+                            title={colorObj.color}
+                          />
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 italic">No colors yet</p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
