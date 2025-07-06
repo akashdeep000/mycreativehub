@@ -459,12 +459,12 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') setEditingBlock(null);
                             }}
-                            className="h-8 text-sm bg-white text-black text-center font-medium border-0 rounded-md"
+                            className="h-8 text-xs bg-white text-black text-center font-medium border-0 rounded-md"
                             autoFocus
                           />
                         ) : (
                           <div 
-                            className="truncate cursor-pointer font-semibold leading-tight hover:bg-white/10 rounded px-1 py-0.5 transition-colors"
+                            className="truncate cursor-pointer font-medium leading-tight hover:bg-white/10 rounded px-1 py-0.5 transition-colors text-xs"
                             onClick={(e) => {
                               e.stopPropagation();
                               setEditingBlock(block.id);
