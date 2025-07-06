@@ -66,6 +66,7 @@ async function updateUserStatsOnTaskCompletion(userId: string) {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint for production debugging
   app.get('/api/health', (req, res) => {
+    const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || "fallback-secret";
     res.json({
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -73,6 +74,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       hasDatabase: !!process.env.DATABASE_URL,
       hasSessionSecret: !!process.env.SESSION_SECRET,
       hasJwtSecret: !!process.env.JWT_SECRET,
+      hasEffectiveJwtSecret: !!JWT_SECRET && JWT_SECRET !== "fallback-secret",
+      jwtSecretSource: process.env.JWT_SECRET ? "JWT_SECRET" : process.env.SESSION_SECRET ? "SESSION_SECRET" : "fallback",
+      deploymentVersion: "v2.0",
+    });
+  });
+
+  // Test endpoint to bypass authentication and test basic functionality
+  app.get('/api/test-auth', (req, res) => {
+    const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || "fallback-secret";
+    const authHeader = req.headers.authorization;
+    const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+    const tokenFromCookie = req.cookies?.authToken;
+    
+    res.json({
+      environment: process.env.NODE_ENV,
+      jwtSecretAvailable: !!JWT_SECRET && JWT_SECRET !== "fallback-secret",
+      jwtSecretSource: process.env.JWT_SECRET ? "JWT_SECRET" : process.env.SESSION_SECRET ? "SESSION_SECRET" : "fallback",
+      hasAuthHeader: !!authHeader,
+      hasTokenFromHeader: !!tokenFromHeader,
+      hasTokenFromCookie: !!tokenFromCookie,
+      tokenPreview: tokenFromHeader ? tokenFromHeader.substring(0, 20) + "..." : null,
+      cookieTokenPreview: tokenFromCookie ? tokenFromCookie.substring(0, 20) + "..." : null,
+      allCookies: Object.keys(req.cookies || {}),
     });
   });
   

@@ -11,6 +11,8 @@ console.log("SESSION_SECRET available:", !!process.env.SESSION_SECRET);
 console.log("JWT_SECRET available:", !!process.env.JWT_SECRET);
 console.log("PGUSER available:", !!process.env.PGUSER);
 console.log("PGDATABASE available:", !!process.env.PGDATABASE);
+const effectiveJwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+console.log("Effective JWT Secret available:", !!effectiveJwtSecret && effectiveJwtSecret !== "fallback-secret");
 console.log("=== ENVIRONMENT CHECK END ===");
 
 const app = express();
