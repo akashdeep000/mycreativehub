@@ -67,7 +67,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [editingColorTag, setEditingColorTag] = useState<string | null>(null);
   const [newColorTagLabel, setNewColorTagLabel] = useState('');
   const [showColorSelector, setShowColorSelector] = useState<string | null>(null);
-  const [isCompactView, setIsCompactView] = useState(false);
+
 
   // Auto-save functionality
   useEffect(() => {
@@ -411,24 +411,32 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           ))}
         </div>
 
-        <div className="grid grid-cols-8 gap-1 text-sm max-h-[600px] overflow-y-auto border border-gray-200 rounded-lg bg-white">
-          {HOURS.map(hour => (
-            <div key={hour} className="contents">
-              <div className="py-3 px-2 text-sm text-gray-600 font-semibold bg-gray-50 border-r border-b border-gray-200 flex items-center justify-center">
-                {formatTime(hour)}
+        <div className="w-full border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
+          <div className="grid grid-cols-8 bg-gray-50 border-b border-gray-200">
+            <div className="py-4 px-3 text-sm font-semibold text-gray-700 border-r border-gray-200 text-center">
+              Time
+            </div>
+            {DAYS.map(day => (
+              <div key={day} className="py-4 px-3 text-sm font-semibold text-gray-700 text-center border-r border-gray-200 last:border-r-0">
+                {day.slice(0, 3)}
               </div>
-              {DAYS.map(day => (
+            ))}
+          </div>
+          <div className="grid grid-cols-8 max-h-[700px] overflow-y-auto">
+            {HOURS.map(hour => [
+              <div key={`time-${hour}`} className="py-4 px-3 text-sm text-gray-600 font-medium bg-gray-50 border-r border-b border-gray-200 flex items-center justify-center min-w-[80px]">
+                {formatTime(hour)}
+              </div>,
+              ...DAYS.map(day => (
                 <div
                   key={`${day}-${hour}`}
-                  className={`${isCompactView ? 'min-h-[50px]' : 'min-h-[75px]'} border-r border-b border-gray-200 relative hover:bg-blue-50 transition-colors cursor-pointer group`}
+                  className="min-h-[90px] border-r border-b border-gray-200 relative hover:bg-blue-50 transition-colors cursor-pointer group"
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, day, hour)}
                   onClick={() => {
                     if (activeColorTagId) {
-                      // Auto-create block with selected color category
                       createTimeBlock(day, hour);
                     } else {
-                      // Show color selector if no color is active
                       setShowColorSelector(`${day}-${hour}`);
                     }
                   }}
@@ -437,7 +445,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                     <div
                       key={block.id}
                       className="absolute inset-1 rounded text-white text-sm font-medium p-2 cursor-move flex items-center justify-between group shadow-sm"
-                      style={{ backgroundColor: block.color, height: `${Math.max(block.duration * (isCompactView ? 45 : 70) - 8, isCompactView ? 40 : 65)}px` }}
+                      style={{ backgroundColor: block.color, height: `${Math.max(block.duration * 80 - 8, 75)}px` }}
                       draggable
                       onDragStart={() => handleDragStart(block)}
                       title={`${block.title}${block.colorTagId ? ` (${getColorTagLabel(block.colorTagId)})` : ''} - Click to edit`}
@@ -496,9 +504,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   
                   {showColorSelector === `${day}-${hour}` && renderInlineColorSelector(day, hour)}
                 </div>
-              ))}
-            </div>
-          ))}
+              ))
+            ])}
+          </div>
         </div>
       </div>
     );
@@ -549,34 +557,42 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-2 border border-gray-200 rounded-lg bg-white p-4">
-          {weeks.map((week, weekIndex) =>
-            week.map((date, dayIndex) => {
-              const dayName = date.toLocaleDateString('en', { weekday: 'long' });
-              const dateString = date.toISOString().split('T')[0];
-              const isCurrentMonth = date.getMonth() === today.getMonth();
-              const blocks = data.monthlyView.blocks.filter(block => block.day === dateString);
+        <div className="w-full border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
+          <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+              <div key={day} className="py-3 px-4 text-sm font-semibold text-gray-700 text-center border-r border-gray-200 last:border-r-0">
+                {day}
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7">
+            {weeks.map((week, weekIndex) =>
+              week.map((date, dayIndex) => {
+                const dayName = date.toLocaleDateString('en', { weekday: 'long' });
+                const dateString = date.toISOString().split('T')[0];
+                const isCurrentMonth = date.getMonth() === today.getMonth();
+                const blocks = data.monthlyView.blocks.filter(block => block.day === dateString);
 
-              return (
-                <div
-                  key={`${weekIndex}-${dayIndex}`}
-                  className={`min-h-[120px] border rounded-lg p-3 transition-colors cursor-pointer ${
-                    isCurrentMonth 
-                      ? 'bg-white hover:bg-blue-50 border-gray-200 shadow-sm' 
-                      : 'bg-gray-50 text-gray-400 border-gray-100'
-                  }`}
-                  onClick={() => {
-                    if (isCurrentMonth) {
-                      if (activeColorTagId) {
-                        // Auto-create block with selected color category
-                        createTimeBlock(dateString, 9);
-                      } else {
-                        // Show color selector if no color is active
-                        setShowColorSelector(`${dateString}-9`);
+                return (
+                  <div
+                    key={`${weekIndex}-${dayIndex}`}
+                    className={`min-h-[140px] border-r border-b border-gray-200 p-3 transition-colors cursor-pointer ${
+                      isCurrentMonth 
+                        ? 'bg-white hover:bg-blue-50' 
+                        : 'bg-gray-50 text-gray-400'
+                    }`}
+                    onClick={() => {
+                      if (isCurrentMonth) {
+                        if (activeColorTagId) {
+                          // Auto-create block with selected color category
+                          createTimeBlock(dateString, 9);
+                        } else {
+                          // Show color selector if no color is active
+                          setShowColorSelector(`${dateString}-9`);
+                        }
                       }
-                    }
-                  }}
-                >
+                    }}
+                  >
                   <div className="text-sm font-semibold mb-2 text-gray-700">{date.getDate()}</div>
                   <div className="space-y-1.5">
                     {blocks.slice(0, 3).map(block => (
@@ -604,17 +620,18 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                       {renderInlineColorSelector(dateString, 9)}
                     </div>
                   )}
-                </div>
-              );
-            })
-          )}
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="w-full px-8 lg:px-12 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Time Blocking Planner</h2>
@@ -625,38 +642,19 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         </Badge>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <Tabs value={activeView} onValueChange={(value) => setActiveView(value as 'weekly' | 'monthly')}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="weekly" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              <span className="hidden sm:inline">Weekly View</span>
-              <span className="sm:hidden">Week</span>
-            </TabsTrigger>
-            <TabsTrigger value="monthly" className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4" />
-              <span className="hidden sm:inline">Monthly View</span>
-              <span className="sm:hidden">Month</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        
-        {activeView === 'weekly' && (
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600 font-medium">View:</label>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsCompactView(!isCompactView)}
-              className="text-xs"
-            >
-              {isCompactView ? 'Expanded' : 'Compact'}
-            </Button>
-          </div>
-        )}
-      </div>
-      
-      <Tabs value={activeView}>
+      <Tabs value={activeView} onValueChange={(value) => setActiveView(value as 'weekly' | 'monthly')}>
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="weekly" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            <span className="hidden sm:inline">Weekly View</span>
+            <span className="sm:hidden">Week</span>
+          </TabsTrigger>
+          <TabsTrigger value="monthly" className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Monthly View</span>
+            <span className="sm:hidden">Month</span>
+          </TabsTrigger>
+        </TabsList>
 
         <TabsContent value="weekly" className="space-y-4">
           {renderColorKeyPanel()}
