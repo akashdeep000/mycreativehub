@@ -14,15 +14,36 @@ export interface JwtPayload {
 }
 
 export function generateToken(userId: string, email: string): string {
-  return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  console.log("JWT Generate - Creating token for user:", email);
+  console.log("JWT Generate - Environment:", process.env.NODE_ENV);
+  console.log("JWT Generate - JWT_SECRET available:", !!JWT_SECRET);
+  console.log("JWT Generate - JWT_SECRET length:", JWT_SECRET.length);
+  
+  const token = jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  console.log("JWT Generate - Token created, length:", token.length);
+  console.log("JWT Generate - Token preview:", token.substring(0, 30) + "...");
+  
+  return token;
 }
 
 export function verifyToken(token: string): JwtPayload | null {
   try {
+    console.log("JWT Verify - Verifying token");
+    console.log("JWT Verify - Environment:", process.env.NODE_ENV);
+    console.log("JWT Verify - JWT_SECRET available:", !!JWT_SECRET);
+    console.log("JWT Verify - Token length:", token.length);
+    console.log("JWT Verify - Token preview:", token.substring(0, 30) + "...");
+    
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    console.log("JWT Verify - Token verified successfully for user:", decoded.email);
+    console.log("JWT Verify - Token payload:", JSON.stringify(decoded, null, 2));
+    
     return decoded;
   } catch (error) {
-    console.error("JWT verification error:", error);
+    console.error("JWT Verify - Token verification failed");
+    console.error("JWT Verify - Error:", error);
+    console.error("JWT Verify - Error type:", typeof error);
+    console.error("JWT Verify - Error message:", error instanceof Error ? error.message : 'Unknown error');
     return null;
   }
 }

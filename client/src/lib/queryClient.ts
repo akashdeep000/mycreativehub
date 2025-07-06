@@ -20,8 +20,19 @@ export async function apiRequest(
   
   // Add JWT token from localStorage if available
   const token = localStorage.getItem('authToken');
+  console.log("Frontend API - Token check:", {
+    tokenExists: !!token,
+    tokenLength: token?.length || 0,
+    tokenPreview: token?.substring(0, 30) + "..." || "none",
+    url: url,
+    method: method
+  });
+  
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+    console.log("Frontend API - Authorization header added");
+  } else {
+    console.log("Frontend API - No token found in localStorage");
   }
   
   const res = await fetch(url, {
@@ -45,8 +56,18 @@ export const getQueryFn: <T>(options: {
     
     // Add JWT token from localStorage if available
     const token = localStorage.getItem('authToken');
+    console.log("Frontend Query - Token check:", {
+      tokenExists: !!token,
+      tokenLength: token?.length || 0,
+      tokenPreview: token?.substring(0, 30) + "..." || "none",
+      url: queryKey[0] as string
+    });
+    
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
+      console.log("Frontend Query - Authorization header added");
+    } else {
+      console.log("Frontend Query - No token found in localStorage");
     }
     
     const res = await fetch(queryKey[0] as string, {

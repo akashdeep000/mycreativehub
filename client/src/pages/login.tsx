@@ -69,8 +69,14 @@ export default function Login() {
       // Test session immediately after login
       console.log("Frontend - Testing session immediately after login");
       try {
+        const authHeaders: Record<string, string> = {};
+        if (responseData.token) {
+          authHeaders["Authorization"] = `Bearer ${responseData.token}`;
+        }
+        
         const authCheck = await fetch("/api/auth/user", {
           method: "GET",
+          headers: authHeaders,
           credentials: "include",
         });
         console.log("Frontend - Auth check response:", authCheck.status);
