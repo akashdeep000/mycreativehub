@@ -3,6 +3,16 @@ import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+// Environment variable validation
+console.log("=== ENVIRONMENT CHECK ===");
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("DATABASE_URL available:", !!process.env.DATABASE_URL);
+console.log("SESSION_SECRET available:", !!process.env.SESSION_SECRET);
+console.log("JWT_SECRET available:", !!process.env.JWT_SECRET);
+console.log("PGUSER available:", !!process.env.PGUSER);
+console.log("PGDATABASE available:", !!process.env.PGDATABASE);
+console.log("=== ENVIRONMENT CHECK END ===");
+
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy for proper session handling in deployment
 app.use(cookieParser());

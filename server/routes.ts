@@ -64,6 +64,18 @@ async function updateUserStatsOnTaskCompletion(userId: string) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint for production debugging
+  app.get('/api/health', (req, res) => {
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      hasDatabase: !!process.env.DATABASE_URL,
+      hasSessionSecret: !!process.env.SESSION_SECRET,
+      hasJwtSecret: !!process.env.JWT_SECRET,
+    });
+  });
+  
   // Session middleware
   app.use(getSession());
 
