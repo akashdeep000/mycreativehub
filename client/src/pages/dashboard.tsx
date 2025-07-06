@@ -10,6 +10,7 @@ import ToolkitCard from "@/components/toolkit/toolkit-card";
 import DailyFocus from "@/components/toolkit/daily-focus";
 import RecentActivity from "@/components/toolkit/recent-activity";
 import StatsCard from "@/components/toolkit/stats-card";
+import QuickStartTimer from "@/components/toolkit/quick-start-timer";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import type { User, UserStats } from "@shared/schema";
@@ -110,6 +111,11 @@ export default function Dashboard() {
             icon="heart"
           />
           </div>
+        </div>
+
+        {/* Quick Start Timer */}
+        <div className="mb-8">
+          <QuickStartTimer />
         </div>
 
         {/* Main Toolkit Sections */}

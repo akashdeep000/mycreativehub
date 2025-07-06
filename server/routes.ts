@@ -917,6 +917,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Focus session logging
+  app.post('/api/focus/log', isAuthenticated, async (req: any, res) => {
+    try {
+      const { minutes, sessionType, taskDescription } = req.body;
+      const userId = req.user.id;
+      
+      // Log activity
+      await storage.createActivityLog({
+        userId,
+        action: `Completed ${minutes} minute focus session`,
+        type: 'focus',
+        metadata: { sessionType, taskDescription, minutes }
+      });
+      
+      // Update user stats
+      const currentStats = await storage.getUserStats(userId);
+      const currentFocusHours = currentStats?.focusHours || 0;
+      
+      await storage.updateUserStats(userId, {
+        focusHours: currentFocusHours + minutes
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error logging focus session:", error);
+      res.status(500).json({ message: "Failed to log focus session" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
