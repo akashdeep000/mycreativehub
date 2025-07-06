@@ -30,27 +30,31 @@ function Router() {
     );
   }
 
+  // Debug logging for routing issues
+  console.log("Router - Authentication state:", { isAuthenticated, isLoading });
+
+  if (!isAuthenticated) {
+    return (
+      <Switch>
+        <Route path="/" component={Login} />
+        <Route path="/login" component={Login} />
+        <Route path="/signup" component={SignUp} />
+        <Route component={NotFound} />
+      </Switch>
+    );
+  }
+
   return (
     <Switch>
-      {!isAuthenticated ? (
-        <>
-          <Route path="/" component={Login} />
-          <Route path="/login" component={Login} />
-          <Route path="/signup" component={SignUp} />
-        </>
-      ) : (
-        <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/streamline-workflow" component={StreamlineWorkflow} />
-          <Route path="/content" component={ContentPlanning} />
-          <Route path="/time-blocking" component={TimeBlocking} />
-          <Route path="/finance" component={FinanceTracker} />
-          <Route path="/inspiration-hub" component={InspirationHub} />
-          <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
-          <Route path="/daily-focus" component={DailyFocusPage} />
-          <Route path="/archived-templates" component={ArchivedTemplates} />
-        </>
-      )}
+      <Route path="/" component={Dashboard} />
+      <Route path="/streamline-workflow" component={StreamlineWorkflow} />
+      <Route path="/content" component={ContentPlanning} />
+      <Route path="/time-blocking" component={TimeBlocking} />
+      <Route path="/finance" component={FinanceTracker} />
+      <Route path="/daily-focus" component={DailyFocusPage} />
+      <Route path="/archived-templates" component={ArchivedTemplates} />
+      <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
+      <Route path="/inspiration-hub" component={InspirationHub} />
       <Route component={NotFound} />
     </Switch>
   );

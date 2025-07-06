@@ -5,6 +5,8 @@ import { getSession } from "./customAuth";
 import { generateToken, jwtAuth, hashPassword, comparePassword } from "./jwtAuth";
 import { nanoid } from "nanoid";
 import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplateInstanceSchema } from "@shared/schema";
+import { db } from "./db";
+import { inspirationBoards } from "@shared/schema";
 
 // Helper function to update user stats on task completion
 async function updateUserStatsOnTaskCompletion(userId: string) {
@@ -617,6 +619,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint to check environment
+  app.get('/api/debug/environment', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const boards = await storage.getInspirationBoards(userId);
+      res.json({
+        environment: process.env.NODE_ENV,
+        userId,
+        dbConnected: true,
+        existingBoards: boards.length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Debug - Environment check failed:", error);
+      res.status(500).json({ 
+        environment: process.env.NODE_ENV,
+        userId: req.user?.id,
+        dbConnected: false,
+        error: (error as Error).message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // Inspiration Boards API Routes
   app.get('/api/inspiration-boards', jwtAuth, async (req: any, res) => {
     try {
@@ -663,24 +689,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/inspiration-boards', jwtAuth, async (req: any, res) => {
     try {
+      console.log("Creating inspiration board - Request body:", req.body);
       const userId = req.user.id;
+      console.log("Creating inspiration board - User ID:", userId);
+      
       const { title, description, backgroundColor, backgroundTexture } = req.body;
       
       if (!title?.trim()) {
+        console.log("Creating inspiration board - Title validation failed");
         return res.status(400).json({ message: "Title is required" });
       }
       
-      const board = await storage.createInspirationBoard({
+      const boardData = {
         userId,
         title: title.trim(),
         description: description?.trim() || null,
         backgroundColor: backgroundColor || "white",
         backgroundTexture: backgroundTexture || "paper",
-      });
+      };
+      
+      console.log("Creating inspiration board - Board data:", boardData);
+      const board = await storage.createInspirationBoard(boardData);
+      console.log("Creating inspiration board - Board created successfully:", board);
       
       res.status(201).json(board);
     } catch (error) {
       console.error("Error creating inspiration board:", error);
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        userId: req.user?.id,
+        requestBody: req.body
+      });
       res.status(500).json({ message: "Failed to create inspiration board" });
     }
   });

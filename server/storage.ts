@@ -544,11 +544,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInspirationBoard(board: InsertInspirationBoard): Promise<InspirationBoard> {
-    const [newBoard] = await db
-      .insert(inspirationBoards)
-      .values(board)
-      .returning();
-    return newBoard;
+    console.log("Storage - Creating inspiration board with data:", board);
+    try {
+      const [newBoard] = await db
+        .insert(inspirationBoards)
+        .values(board)
+        .returning();
+      console.log("Storage - Inspiration board created successfully:", newBoard);
+      return newBoard;
+    } catch (error) {
+      console.error("Storage - Error creating inspiration board:", error);
+      throw error;
+    }
   }
 
   async updateInspirationBoard(id: number, data: any): Promise<InspirationBoard> {
