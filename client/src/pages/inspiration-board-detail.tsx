@@ -482,7 +482,7 @@ export default function InspirationBoardDetail() {
     addImageMutation.mutate({
       boardId: parseInt(id!),
       imageUrl: newImage.url.trim(),
-      caption: newImage.alt.trim() || null,
+      caption: null,
       position,
     });
   };
@@ -664,17 +664,9 @@ export default function InspirationBoardDetail() {
                       placeholder="https://example.com/image.jpg"
                       type="url"
                     />
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Description (Optional)</label>
-                      <Input
-                        value={newImage.alt}
-                        onChange={(e) => setNewImage(prev => ({ ...prev, alt: e.target.value }))}
-                        placeholder="Describe this image..."
-                      />
-                    </div>
                     <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
-                      <p className="font-medium mb-1">✨ New: After adding the image</p>
-                      <p>You can add notes and reference links directly below each image for better organization.</p>
+                      <p className="font-medium mb-1">✨ After adding the image</p>
+                      <p>You can add notes and reference links directly below each image in the grid for better organization.</p>
                     </div>
                   </div>
 
