@@ -190,6 +190,14 @@ Changelog:
   - Production health check now confirms: hasEffectiveJwtSecret: true, jwtSecretSource: "SESSION_SECRET"
   - Enhanced login process debugging with detailed authentication flow logging
   - Backend authentication system now fully operational in production environment
+- July 08, 2025. Enhanced Mobile-Friendly Image Management:
+  - Redesigned image cards to display notes and reference URL fields directly beneath each image
+  - Added "Notes" textarea and "Reference URL" input fields with clear labels
+  - Implemented always-visible sections with light gray background for better UX
+  - Added proper debouncing for auto-save functionality to prevent excessive API calls
+  - Updated database schema to include notes and referenceUrl fields for image metadata
+  - Created responsive grid layout: 1 column (mobile) → 2 columns (small) → 3-4 columns (desktop)
+  - Enhanced user experience with visual feedback during save operations
 
 ## User Preferences
 

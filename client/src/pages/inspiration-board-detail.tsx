@@ -164,42 +164,46 @@ function ImageCard({ image, boardId, onUpdate }: { image: InspirationBoardImage;
         )}
       </div>
 
-      {/* Notes and Reference Link */}
-      <div className="p-3 space-y-3">
-        {/* Notes Textarea */}
+      {/* Notes and Reference Link - Always Visible */}
+      <div className="p-4 space-y-3 bg-gray-50 border-t border-gray-100">
+        {/* Notes Section */}
         <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
           <Textarea
             value={notes}
             onChange={(e) => handleNotesChange(e.target.value)}
-            placeholder="Add a note..."
-            className="min-h-[80px] resize-none border-gray-200 focus:border-purple-300 focus:ring-purple-200 text-sm"
+            placeholder="Add creative notes or ideas..."
+            className="min-h-[70px] resize-none border-gray-200 focus:border-purple-300 focus:ring-purple-200 text-sm bg-white"
             rows={3}
           />
         </div>
 
-        {/* Reference Link Field */}
-        <div className="space-y-2">
-          <div className="relative">
-            <Input
-              value={referenceUrl}
-              onChange={(e) => handleReferenceUrlChange(e.target.value)}
-              placeholder="Paste reference link here..."
-              className="pl-8 border-gray-200 focus:border-purple-300 focus:ring-purple-200 text-sm"
-              type="url"
-            />
-            <LinkIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+        {/* Reference URL Section */}
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Reference URL</label>
+          <div className="space-y-2">
+            <div className="relative">
+              <Input
+                value={referenceUrl}
+                onChange={(e) => handleReferenceUrlChange(e.target.value)}
+                placeholder="Paste reference link here..."
+                className="pl-8 border-gray-200 focus:border-purple-300 focus:ring-purple-200 text-sm bg-white"
+                type="url"
+              />
+              <LinkIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+            </div>
+            {isValidReferenceUrl && (
+              <a
+                href={referenceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700 underline"
+              >
+                <LinkIcon className="h-3 w-3" />
+                Open reference link
+              </a>
+            )}
           </div>
-          {isValidReferenceUrl && (
-            <a
-              href={referenceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700 underline"
-            >
-              <LinkIcon className="h-3 w-3" />
-              Open reference link
-            </a>
-          )}
         </div>
       </div>
     </div>
