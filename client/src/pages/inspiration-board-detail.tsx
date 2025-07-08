@@ -222,7 +222,10 @@ export default function InspirationBoardDetail() {
   const [newNote, setNewNote] = useState({ title: "", content: "", color: "yellow" });
   const [newLink, setNewLink] = useState({ url: "", title: "", description: "" });
   const [newPalette, setNewPalette] = useState({ name: "", colors: ["#ffffff"] });
-  const [newImage, setNewImage] = useState({ url: "", alt: "", file: null as File | null });
+  const [newImage, setNewImage] = useState({ 
+    file: null as File | null, 
+    preview: null as string | null 
+  });
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
@@ -454,7 +457,7 @@ export default function InspirationBoardDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "images"] });
       setIsImageDialogOpen(false);
-      setNewImage({ url: "", alt: "", file: null });
+      setNewImage({ file: null, preview: null });
       toast({
         title: "Image Added",
         description: "Image has been added to your board.",
@@ -462,11 +465,45 @@ export default function InspirationBoardDetail() {
     },
   });
 
-  const handleAddImage = () => {
-    if (!newImage.url.trim()) {
+  const handleFileUpload = (file: File) => {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
       toast({
-        title: "URL Required",
-        description: "Please enter an image URL.",
+        title: "Invalid File Type",
+        description: "Please upload an image file (PNG, JPG, GIF).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload an image smaller than 10MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setNewImage({
+        file: file,
+        preview: e.target?.result as string,
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAddImage = async () => {
+    if (!newImage.file || !newImage.preview) {
+      toast({
+        title: "No Image Selected",
+        description: "Please select an image to upload.",
         variant: "destructive",
       });
       return;
@@ -481,33 +518,21 @@ export default function InspirationBoardDetail() {
 
     addImageMutation.mutate({
       boardId: parseInt(id!),
-      imageUrl: newImage.url.trim(),
+      imageUrl: newImage.preview, // Use the base64 preview as the image URL
       caption: null,
       position,
     });
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // For now, just show a message that file upload is coming soon
-      toast({
-        title: "File Upload Coming Soon",
-        description: "File upload functionality will be available soon. Please use image URLs for now.",
-        variant: "destructive",
-      });
-    }
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
   };
 
-  const handleDragDrop = (event: React.DragEvent) => {
+  const handleDrop = (event: React.DragEvent) => {
     event.preventDefault();
     const files = Array.from(event.dataTransfer.files);
     if (files.length > 0) {
-      toast({
-        title: "Drag & Drop Coming Soon",
-        description: "Drag & drop functionality will be available soon. Please use image URLs for now.",
-        variant: "destructive",
-      });
+      handleFileUpload(files[0]);
     }
   };
 
@@ -651,19 +676,66 @@ export default function InspirationBoardDetail() {
               <DialogContent className="max-w-lg">
                 <DialogHeader>
                   <DialogTitle>Add Image to Board</DialogTitle>
-                  <DialogDescription>Add visual inspiration to your board using an image URL.</DialogDescription>
+                  <DialogDescription>Upload an image to add visual inspiration to your board.</DialogDescription>
                 </DialogHeader>
                 
                 <div className="grid gap-6 py-4">
-                  {/* URL Input */}
+                  {/* File Upload Area */}
                   <div className="grid gap-3">
-                    <label className="text-sm font-medium">Image URL</label>
-                    <Input
-                      value={newImage.url}
-                      onChange={(e) => setNewImage(prev => ({ ...prev, url: e.target.value }))}
-                      placeholder="https://example.com/image.jpg"
-                      type="url"
-                    />
+                    <label className="text-sm font-medium">Upload Image</label>
+                    <div
+                      className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors"
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                    >
+                      {newImage.preview ? (
+                        <div className="space-y-3">
+                          <img 
+                            src={newImage.preview} 
+                            alt="Preview" 
+                            className="max-h-32 mx-auto rounded-lg object-cover"
+                          />
+                          <p className="text-sm text-gray-600">
+                            {newImage.file?.name}
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setNewImage({ file: null, preview: null })}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <ImageIcon className="w-12 h-12 text-gray-400 mx-auto" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">
+                              Drop an image here or click to select
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              PNG, JPG, GIF up to 10MB
+                            </p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleFileUpload(file);
+                            }}
+                            className="hidden"
+                            id="file-upload"
+                          />
+                          <label
+                            htmlFor="file-upload"
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+                          >
+                            Select Image
+                          </label>
+                        </div>
+                      )}
+                    </div>
                     <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
                       <p className="font-medium mb-1">✨ After adding the image</p>
                       <p>You can add notes and reference links directly below each image in the grid for better organization.</p>
@@ -731,7 +803,7 @@ export default function InspirationBoardDetail() {
                   </Button>
                   <Button 
                     onClick={handleAddImage} 
-                    disabled={!newImage.url.trim() || addImageMutation.isPending}
+                    disabled={!newImage.file || !newImage.preview || addImageMutation.isPending}
                   >
                     {addImageMutation.isPending ? "Adding..." : "Add Image"}
                   </Button>
