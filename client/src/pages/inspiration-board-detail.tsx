@@ -776,15 +776,18 @@ export default function InspirationBoardDetail() {
                   {/* File Upload */}
                   <div 
                     className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer"
-                    onDrop={handleDragDrop}
-                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
                     onClick={() => document.getElementById('image-upload')?.click()}
                   >
                     <input
                       id="image-upload"
                       type="file"
                       accept="image/*"
-                      onChange={handleFileUpload}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file);
+                      }}
                       className="hidden"
                     />
                     <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
