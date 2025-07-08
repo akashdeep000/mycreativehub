@@ -86,10 +86,8 @@ export default function InspirationHub() {
 
   const createBoardMutation = useMutation({
     mutationFn: async (boardData: { title: string; description?: string }) => {
-      return await apiRequest("/api/inspiration-boards", {
-        method: "POST",
-        body: JSON.stringify(boardData),
-      });
+      console.log("Frontend - Creating board with data:", boardData);
+      return await apiRequest("POST", "/api/inspiration-boards", boardData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards"] });
