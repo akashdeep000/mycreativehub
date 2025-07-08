@@ -449,6 +449,7 @@ export default function InspirationBoardDetail() {
 
   const addImageMutation = useMutation({
     mutationFn: async (image: any) => {
+      console.log("Adding image with data:", image);
       return await apiRequest(`/api/inspiration-boards/${id}/images`, {
         method: "POST",
         body: JSON.stringify(image),
@@ -461,6 +462,14 @@ export default function InspirationBoardDetail() {
       toast({
         title: "Image Added",
         description: "Image has been added to your board.",
+      });
+    },
+    onError: (error) => {
+      console.error("Error adding image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add image. Please try again.",
+        variant: "destructive",
       });
     },
   });

@@ -1020,9 +1020,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/inspiration-boards/:id/images', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
+      console.log("Creating board image for board ID:", id);
+      console.log("Request body:", req.body);
+      
       const board = await storage.getInspirationBoard(parseInt(id));
       
       if (!board || board.userId !== req.user.id) {
+        console.log("Board not found or access denied:", { boardExists: !!board, userId: req.user.id });
         return res.status(404).json({ message: "Board not found" });
       }
       
@@ -1030,6 +1034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         boardId: parseInt(id),
         ...req.body,
       });
+      console.log("Image created successfully:", image);
       res.status(201).json(image);
     } catch (error) {
       console.error("Error creating board image:", error);
