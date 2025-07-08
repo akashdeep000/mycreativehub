@@ -207,6 +207,12 @@ Changelog:
   - Base64 image data storage working correctly with existing database schema
   - Upload modal now properly closes after successful image addition to board
   - Complete mobile-friendly image management with auto-save notes and reference URLs
+- July 08, 2025. Enhanced Navigation for Daily Prioritisation Framework:
+  - Added "Daily Prioritisation" card to Streamline Workflow section for improved accessibility
+  - Implemented external routing system to handle standalone pages within workflow templates
+  - Users can now access Daily Prioritisation Framework from both dashboard Quick Start and Streamline Workflow
+  - Updated template handling to support both internal workflow components and external page routes
+  - Enhanced user experience with consistent navigation patterns across all workflow tools
 
 ## User Preferences
 

@@ -33,6 +33,17 @@ import TimeBlockingPlanner from "@/components/workflow/time-blocking-planner";
 // Template configuration with pre-built data
 const workflowTemplates = [
   {
+    id: "daily-prioritisation",
+    name: "Daily Prioritisation",
+    description: "Plan your day with Must/Should/Could priorities and focus blocks",
+    icon: CheckSquare,
+    colour: "bg-gradient-to-br from-green-500 to-emerald-500",
+    textColor: "text-white",
+    isExternal: true, // This will route to a different page
+    externalRoute: "/daily-focus",
+    defaultData: {}
+  },
+  {
     id: "inspiration",
     name: "Creative Inspiration Hub",
     description: "Store moodboards, colour palettes, and reference links",
@@ -250,6 +261,12 @@ export default function StreamlineWorkflow() {
   }, [user, templates, isInitialized, templatesLoading]);
 
   const getTemplateCount = (templateType: string) => {
+    // For external templates, show "Access" instead of count
+    const templateConfig = workflowTemplates.find(t => t.id === templateType);
+    if (templateConfig?.isExternal) {
+      return "Access";
+    }
+    
     if (!templates) return 0;
     return (templates as WorkflowTemplateInstance[]).filter(
       (t: WorkflowTemplateInstance) => t.templateType === templateType && !t.isArchived
@@ -264,6 +281,13 @@ export default function StreamlineWorkflow() {
   };
 
   const handleTemplateClick = (templateType: string) => {
+    // Check if it's an external route template
+    const templateConfig = workflowTemplates.find(t => t.id === templateType);
+    if (templateConfig?.isExternal) {
+      setLocation(templateConfig.externalRoute);
+      return;
+    }
+    
     // Route to standalone inspiration hub for the inspiration template
     if (templateType === "inspiration") {
       setLocation("/inspiration-hub");
@@ -437,7 +461,9 @@ export default function StreamlineWorkflow() {
                         <CardContent className="pt-0">
                           <div className="flex items-center justify-between">
                             <Badge variant="secondary" className="text-xs">
-                              {template.id === 'time-blocking' ? '2 Templates' : (count > 0 ? `${count} Template${count !== 1 ? 's' : ''}` : 'Pre-loaded')}
+                              {count === "Access" ? 'Access Framework' : 
+                               template.id === 'time-blocking' ? '2 Templates' : 
+                               (count > 0 ? `${count} Template${count !== 1 ? 's' : ''}` : 'Pre-loaded')}
                             </Badge>
                             <div className="text-xs text-gray-500">
                               Click to open
