@@ -177,6 +177,8 @@ export const inspirationBoardImages = pgTable("inspiration_board_images", {
   boardId: integer("board_id").references(() => inspirationBoards.id, { onDelete: "cascade" }),
   imageUrl: varchar("image_url").notNull(),
   caption: text("caption"),
+  notes: text("notes"), // Creative notes or inspiration
+  referenceUrl: varchar("reference_url"), // Reference link for the image
   tags: text("tags").array(),
   position: jsonb("position"), // { x: number, y: number, width: number, height: number }
   isPinned: boolean("is_pinned").default(false),

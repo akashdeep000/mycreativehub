@@ -60,6 +60,152 @@ const inspirationPrompts = [
   "What story does this tell?",
 ];
 
+// Helper function to validate URL
+const isValidUrl = (url: string) => {
+  try {
+    new URL(url);
+    return url.startsWith('http://') || url.startsWith('https://');
+  } catch {
+    return false;
+  }
+};
+
+// Individual Image Card Component
+function ImageCard({ image, boardId, onUpdate }: { image: InspirationBoardImage; boardId: number; onUpdate: () => void }) {
+  const { toast } = useToast();
+  const [notes, setNotes] = useState(image.notes || "");
+  const [referenceUrl, setReferenceUrl] = useState(image.referenceUrl || "");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+
+  const updateImageMutation = useMutation({
+    mutationFn: async (updateData: { notes?: string; referenceUrl?: string }) => {
+      return await apiRequest(`/api/inspiration-boards/${boardId}/images/${image.id}`, {
+        method: "PUT",
+        body: JSON.stringify(updateData),
+      });
+    },
+    onSuccess: () => {
+      onUpdate();
+      setIsUpdating(false);
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update image. Please try again.",
+        variant: "destructive",
+      });
+      setIsUpdating(false);
+    },
+  });
+
+  const debouncedUpdate = (updateData: { notes?: string; referenceUrl?: string }) => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+    
+    setIsUpdating(true);
+    const timer = setTimeout(() => {
+      updateImageMutation.mutate(updateData);
+    }, 1000);
+    
+    setDebounceTimer(timer);
+  };
+
+  const handleNotesChange = (value: string) => {
+    setNotes(value);
+    debouncedUpdate({ notes: value });
+  };
+
+  const handleReferenceUrlChange = (value: string) => {
+    setReferenceUrl(value);
+    debouncedUpdate({ referenceUrl: value });
+  };
+
+  const isValidReferenceUrl = referenceUrl && isValidUrl(referenceUrl);
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-gray-300 overflow-hidden">
+      {/* Image */}
+      <div className="aspect-square relative group">
+        <img
+          src={image.imageUrl}
+          alt={image.caption || "Inspiration"}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 bg-white/90 hover:bg-white shadow-sm">
+            <MoreHorizontal className="w-4 h-4" />
+          </Button>
+        </div>
+        {image.caption && (
+          <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="bg-white/90 backdrop-blur-sm rounded px-2 py-1 text-xs text-gray-700 truncate">
+              {image.caption}
+            </div>
+          </div>
+        )}
+        {isUpdating && (
+          <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-xs">
+            Saving...
+          </div>
+        )}
+      </div>
+
+      {/* Notes and Reference Link */}
+      <div className="p-3 space-y-3">
+        {/* Notes Textarea */}
+        <div>
+          <Textarea
+            value={notes}
+            onChange={(e) => handleNotesChange(e.target.value)}
+            placeholder="Add a note..."
+            className="min-h-[80px] resize-none border-gray-200 focus:border-purple-300 focus:ring-purple-200 text-sm"
+            rows={3}
+          />
+        </div>
+
+        {/* Reference Link Field */}
+        <div className="space-y-2">
+          <div className="relative">
+            <Input
+              value={referenceUrl}
+              onChange={(e) => handleReferenceUrlChange(e.target.value)}
+              placeholder="Paste reference link here..."
+              className="pl-8 border-gray-200 focus:border-purple-300 focus:ring-purple-200 text-sm"
+              type="url"
+            />
+            <LinkIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+          </div>
+          {isValidReferenceUrl && (
+            <a
+              href={referenceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700 underline"
+            >
+              <LinkIcon className="h-3 w-3" />
+              Open reference link
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function InspirationBoardDetail() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
@@ -501,7 +647,7 @@ export default function InspirationBoardDetail() {
               <DialogContent className="max-w-lg">
                 <DialogHeader>
                   <DialogTitle>Add Image to Board</DialogTitle>
-                  <DialogDescription>Add visual inspiration to your board using an image URL or file upload.</DialogDescription>
+                  <DialogDescription>Add visual inspiration to your board using an image URL.</DialogDescription>
                 </DialogHeader>
                 
                 <div className="grid gap-6 py-4">
@@ -521,6 +667,10 @@ export default function InspirationBoardDetail() {
                         onChange={(e) => setNewImage(prev => ({ ...prev, alt: e.target.value }))}
                         placeholder="Describe this image..."
                       />
+                    </div>
+                    <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
+                      <p className="font-medium mb-1">✨ New: After adding the image</p>
+                      <p>You can add notes and reference links directly below each image for better organization.</p>
                     </div>
                   </div>
 
@@ -809,7 +959,7 @@ export default function InspirationBoardDetail() {
                 <ImageIcon className="w-5 h-5" />
                 Images
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {/* Existing Images */}
                 {(images || []).map((image: InspirationBoardImage) => {
                   // Skip invalid images that don't have a URL
@@ -818,27 +968,14 @@ export default function InspirationBoardDetail() {
                   }
                   
                   return (
-                    <div
+                    <ImageCard
                       key={image.id}
-                      className="group relative aspect-square bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-200 hover:border-gray-300"
-                    >
-                      <img
-                        src={image.imageUrl}
-                        alt={image.caption || "Inspiration"}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 bg-white/90 hover:bg-white shadow-sm">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="bg-white/90 backdrop-blur-sm rounded px-2 py-1 text-xs text-gray-700 truncate">
-                          {image.caption || "Untitled"}
-                        </div>
-                      </div>
-                    </div>
+                      image={image}
+                      boardId={parseInt(id!)}
+                      onUpdate={() => {
+                        queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "images"] });
+                      }}
+                    />
                   );
                 }).filter(Boolean)}
                 

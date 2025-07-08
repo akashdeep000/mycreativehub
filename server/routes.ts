@@ -1037,6 +1037,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/inspiration-boards/:id/images/:imageId', jwtAuth, async (req: any, res) => {
+    try {
+      const { id, imageId } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      const image = await storage.updateBoardImage(parseInt(imageId), req.body);
+      res.json(image);
+    } catch (error) {
+      console.error("Error updating board image:", error);
+      res.status(500).json({ message: "Failed to update board image" });
+    }
+  });
+
   app.get('/api/inspiration-boards/:id/notes', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
