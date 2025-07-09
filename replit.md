@@ -225,6 +225,7 @@ Changelog:
   - Built pre-written message templates for lead magnets, FAQs, product follow-ups, and welcome sequences
   - Integrated with Streamline Workflow section as external template with proper routing
   - All sections feature mobile-friendly design with auto-save debouncing and copy-to-clipboard functionality
+  - Added prominent ManyChat affiliate button at top of page with gradient styling and proper affiliate link tracking
 
 ## User Preferences
 

@@ -293,6 +293,38 @@ export default function AutomationToolkit() {
 
             <div className="space-y-8">
               
+              {/* ManyChat Affiliate Button */}
+              <Card className="border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-red-50">
+                <CardContent className="p-6">
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                        <Zap className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-gray-900">
+                          Automate with ManyChat
+                        </h3>
+                        <p className="text-gray-600 text-sm">
+                          Click here to start building your automation (affiliate link)
+                        </p>
+                      </div>
+                    </div>
+                    <a
+                      href="https://manychat.partnerlinks.io/n6ui2n91rh1n"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-medium rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    >
+                      Start Now
+                      <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </a>
+                  </div>
+                </CardContent>
+              </Card>
+              
               {/* 1. Prompt Library */}
               <Card>
                 <CardHeader>
