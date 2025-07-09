@@ -254,6 +254,15 @@ Changelog:
   - Implemented content pillar dropdown with 7 predefined categories
   - Added "Top Tip" callout banner with content recycling best practices
   - Connected Monthly Content Calendar template card to new interactive planning tool
+- July 09, 2025. Enhanced Monthly Content Planner with Interactive Calendar:
+  - Added helper prompt above calendar: "Plan with purpose: Input which Reels, Carousels, or other content will be published each day"
+  - Implemented clickable calendar dates that open modal for adding/editing posts
+  - Built modal system with Post Title, Content Type dropdown, Content Pillar selection, Asset Link, and Notes fields
+  - Added inline post display with color-coded badges (Reel=Pink, Carousel=Coral, Promo=Orange, Other=Grey)
+  - Included edit and delete functionality with hover-activated buttons on calendar posts
+  - Added color key reference guide showing content type color coding
+  - Implemented auto-save functionality with success/error toast notifications
+  - Enhanced calendar with "Click to add post" prompt on empty dates for better UX
 
 ## User Preferences
 
