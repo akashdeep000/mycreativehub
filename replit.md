@@ -263,6 +263,14 @@ Changelog:
   - Added color key reference guide showing content type color coding
   - Implemented auto-save functionality with success/error toast notifications
   - Enhanced calendar with "Click to add post" prompt on empty dates for better UX
+- July 09, 2025. Simplified Monthly Content Planner to Lightweight Editable Grid:
+  - Replaced complex modal system with simple text boxes for each calendar day
+  - Updated helper prompt: "Plan with purpose: Use the table below to write what type of content you'll publish each day (e.g. Reel, Carousel, Promo). Keep it simple, keep it strategic."
+  - Implemented 7-column grid layout (Monday-Sunday) with 4-5 rows for weekly structure
+  - Added multiline text areas in each date cell supporting entries like "Reel: BTS / CTA: Email list"
+  - Enabled auto-save functionality with debounced toast notifications after each edit
+  - Content persists in local state and displays on page reload
+  - Streamlined interface removes complex interactions in favor of strategic simplicity
 
 ## User Preferences
 
