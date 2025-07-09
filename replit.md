@@ -231,6 +231,12 @@ Changelog:
   - Eliminated duplication as ManyChat functionality is now prominently featured in the Automation System Toolkit
   - Maintained affiliate integration through the featured button in the toolkit rather than separate card
   - Streamlined workflow interface with 4 core templates: Daily Prioritisation, Creative Inspiration Hub, Time Blocking Planner, and Automation System Toolkit
+- July 09, 2025. Added Reel & Carousel Template Pack to Content Creation System:
+  - Created new external template card linking to Canva with Instagram-style iconography
+  - Added "Open in Canva" button with pink-coral gradient styling matching Fizz & Flourish brand
+  - Implemented external URL handling with target="_blank" for seamless user experience
+  - Updated template counter to reflect 6 total templates in Content Creation System
+  - Enhanced template click handler to support both internal pages and external links
 
 ## User Preferences
 

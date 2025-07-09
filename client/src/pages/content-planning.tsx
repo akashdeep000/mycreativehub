@@ -6,7 +6,7 @@ import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Plus, FileText, Grid3X3, Palette, Target } from "lucide-react";
+import { Calendar, Plus, FileText, Grid3X3, Palette, Target, Play, Image } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function ContentPlanning() {
@@ -78,6 +78,17 @@ export default function ContentPlanning() {
       colour: "pink",
       lastUsed: "Never",
       isPopular: false
+    },
+    {
+      id: 6,
+      name: "Reel & Carousel Template Pack",
+      description: "Create on-brand, scroll-stopping content with customisable Canva templates for Reels and carousels.",
+      icon: Play,
+      colour: "rose",
+      lastUsed: "Never",
+      isPopular: true,
+      isExternal: true,
+      externalUrl: "https://www.canva.com"
     }
   ];
 
@@ -85,6 +96,9 @@ export default function ContentPlanning() {
     if (template.id === 1) {
       // My Social Media Strategy
       setLocation('/social-media-strategy');
+    } else if (template.isExternal && template.externalUrl) {
+      // External templates (like Canva template pack)
+      window.open(template.externalUrl, '_blank');
     } else {
       // Other templates can be handled here
       toast({
@@ -114,7 +128,7 @@ export default function ContentPlanning() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                12 Templates
+                6 Templates
               </Badge>
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 Active
@@ -155,13 +169,13 @@ export default function ContentPlanning() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="text-blue-600 hover:text-blue-700"
+                    className={`${template.isExternal ? 'text-pink-600 hover:text-pink-700 bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100' : 'text-blue-600 hover:text-blue-700'}`}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleTemplateClick(template);
                     }}
                   >
-                    Open
+                    {template.isExternal ? 'Open in Canva' : 'Open'}
                   </Button>
                 </div>
               </CardContent>
