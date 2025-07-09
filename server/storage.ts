@@ -15,6 +15,7 @@ import {
   inspirationBoardNotes,
   colorPalettes,
   boardLinks,
+  socialMediaStrategies,
   type User,
   type UpsertUser,
   type ToolkitModule,
@@ -41,6 +42,8 @@ import {
   type InsertColorPalette,
   type BoardLink,
   type InsertBoardLink,
+  type SocialMediaStrategy,
+  type InsertSocialMediaStrategy,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, gte, lte, sql, inArray } from "drizzle-orm";
@@ -131,6 +134,10 @@ export interface IStorage {
   createBoardLink(link: InsertBoardLink): Promise<BoardLink>;
   updateBoardLink(id: number, data: any): Promise<BoardLink>;
   deleteBoardLink(id: number): Promise<void>;
+  
+  // Social Media Strategy
+  getSocialMediaStrategy(userId: string): Promise<SocialMediaStrategy | undefined>;
+  upsertSocialMediaStrategy(strategy: InsertSocialMediaStrategy): Promise<SocialMediaStrategy>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -792,6 +799,31 @@ export class DatabaseStorage implements IStorage {
   async deleteBoardLink(id: number): Promise<void> {
     await db.delete(boardLinks)
       .where(eq(boardLinks.id, id));
+  }
+
+  // Social Media Strategy
+  async getSocialMediaStrategy(userId: string): Promise<SocialMediaStrategy | undefined> {
+    const [strategy] = await db
+      .select()
+      .from(socialMediaStrategies)
+      .where(eq(socialMediaStrategies.userId, userId));
+    return strategy;
+  }
+
+  async upsertSocialMediaStrategy(strategyData: InsertSocialMediaStrategy): Promise<SocialMediaStrategy> {
+    const [strategy] = await db
+      .insert(socialMediaStrategies)
+      .values(strategyData)
+      .onConflictDoUpdate({
+        target: socialMediaStrategies.userId,
+        set: {
+          contentGoals: strategyData.contentGoals,
+          pillars: strategyData.pillars,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return strategy;
   }
 }
 

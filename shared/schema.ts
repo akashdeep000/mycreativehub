@@ -221,6 +221,16 @@ export const boardLinks = pgTable("board_links", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Social media strategy
+export const socialMediaStrategies = pgTable("social_media_strategies", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
+  contentGoals: text("content_goals"),
+  pillars: jsonb("pillars").notNull(), // Array of { id: string, title: string, cta: string }
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   toolkitData: many(userToolkitData),
@@ -341,6 +351,13 @@ export const boardLinksRelations = relations(boardLinks, ({ one }) => ({
   }),
 }));
 
+export const socialMediaStrategiesRelations = relations(socialMediaStrategies, ({ one }) => ({
+  user: one(users, {
+    fields: [socialMediaStrategies.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertDailyFocusTaskSchema = createInsertSchema(dailyFocusTasks).omit({
   id: true,
@@ -409,6 +426,12 @@ export const insertBoardLinkSchema = createInsertSchema(boardLinks).omit({
   updatedAt: true,
 });
 
+export const insertSocialMediaStrategySchema = createInsertSchema(socialMediaStrategies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -436,3 +459,5 @@ export type ColorPalette = typeof colorPalettes.$inferSelect;
 export type InsertColorPalette = z.infer<typeof insertColorPaletteSchema>;
 export type BoardLink = typeof boardLinks.$inferSelect;
 export type InsertBoardLink = z.infer<typeof insertBoardLinkSchema>;
+export type SocialMediaStrategy = typeof socialMediaStrategies.$inferSelect;
+export type InsertSocialMediaStrategy = z.infer<typeof insertSocialMediaStrategySchema>;

@@ -1199,6 +1199,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Social Media Strategy routes
+  app.get('/api/social-media-strategy', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const strategy = await storage.getSocialMediaStrategy(userId);
+      res.json(strategy);
+    } catch (error) {
+      console.error("Error fetching social media strategy:", error);
+      res.status(500).json({ message: "Failed to fetch social media strategy" });
+    }
+  });
+
+  app.post('/api/social-media-strategy', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { contentGoals, pillars } = req.body;
+      
+      const strategy = await storage.upsertSocialMediaStrategy({
+        userId,
+        contentGoals,
+        pillars
+      });
+      
+      res.json(strategy);
+    } catch (error) {
+      console.error("Error saving social media strategy:", error);
+      res.status(500).json({ message: "Failed to save social media strategy" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

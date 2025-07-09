@@ -6,11 +6,13 @@ import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Plus, FileText, Grid3X3, Palette } from "lucide-react";
+import { Calendar, Plus, FileText, Grid3X3, Palette, Target } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function ContentPlanning() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -34,6 +36,15 @@ export default function ContentPlanning() {
   const templates = [
     {
       id: 1,
+      name: "My Social Media Strategy",
+      description: "Define your content goals, segment your content pillars, and match each pillar with a clear CTA",
+      icon: Target,
+      colour: "orange",
+      lastUsed: "Never",
+      isPopular: true
+    },
+    {
+      id: 2,
       name: "Monthly Content Calendar",
       description: "Plan your content for the entire month with this comprehensive calendar template",
       icon: Calendar,
@@ -42,7 +53,7 @@ export default function ContentPlanning() {
       isPopular: true
     },
     {
-      id: 2,
+      id: 3,
       name: "Content Batching Planner",
       description: "Organise your content creation sessions for maximum efficiency",
       icon: Grid3X3,
@@ -51,7 +62,7 @@ export default function ContentPlanning() {
       isPopular: false
     },
     {
-      id: 3,
+      id: 4,
       name: "Blog Post Planner",
       description: "Structure your blog posts with this detailed planning template",
       icon: FileText,
@@ -60,7 +71,7 @@ export default function ContentPlanning() {
       isPopular: true
     },
     {
-      id: 4,
+      id: 5,
       name: "Brand Colour Palette",
       description: "Keep track of your brand colours and visual identity",
       icon: Palette,
@@ -69,6 +80,19 @@ export default function ContentPlanning() {
       isPopular: false
     }
   ];
+
+  const handleTemplateClick = (template: any) => {
+    if (template.id === 1) {
+      // My Social Media Strategy
+      setLocation('/social-media-strategy');
+    } else {
+      // Other templates can be handled here
+      toast({
+        title: "Template",
+        description: `${template.name} is not yet implemented.`,
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-rose-50">
@@ -106,7 +130,11 @@ export default function ContentPlanning() {
         {/* Templates Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {templates.map((template) => (
-            <Card key={template.id} className="border-pink-100 hover:shadow-md transition-shadow cursor-pointer group">
+            <Card 
+              key={template.id} 
+              className="border-pink-100 hover:shadow-md transition-shadow cursor-pointer group"
+              onClick={() => handleTemplateClick(template)}
+            >
               <CardHeader>
                 <div className="flex items-center justify-between mb-3">
                   <div className={`w-10 h-10 bg-gradient-to-br from-${template.colour}-400 to-${template.colour}-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
@@ -124,7 +152,15 @@ export default function ContentPlanning() {
               <CardContent>
                 <div className="flex items-center justify-between text-sm text-gray-500">
                   <span>Last used: {template.lastUsed}</span>
-                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-blue-600 hover:text-blue-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTemplateClick(template);
+                    }}
+                  >
                     Open
                   </Button>
                 </div>

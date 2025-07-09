@@ -10,6 +10,7 @@ import Login from "@/pages/login";
 import SignUp from "@/pages/signup";
 import Dashboard from "@/pages/dashboard";
 import ContentPlanning from "@/pages/content-planning";
+import SocialMediaStrategy from "@/pages/social-media-strategy";
 import TimeBlocking from "@/pages/time-blocking";
 import FinanceTracker from "@/pages/finance-tracker";
 import InspirationHub from "@/pages/inspiration-hub";
@@ -49,6 +50,8 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/streamline-workflow" component={StreamlineWorkflow} />
       <Route path="/content" component={ContentPlanning} />
+      <Route path="/content-planning" component={ContentPlanning} />
+      <Route path="/social-media-strategy" component={SocialMediaStrategy} />
       <Route path="/time-blocking" component={TimeBlocking} />
       <Route path="/finance" component={FinanceTracker} />
       <Route path="/daily-focus" component={DailyFocusPage} />
