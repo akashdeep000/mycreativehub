@@ -1,0 +1,92 @@
+Build “Automation System Toolkit” Interactive Section
+Location:
+→ Add to Streamline Your Workflow section as a standalone interactive template
+→ Route: /automation-toolkit
+→ Title card: “Automation System Toolkit”
+→ Subtitle: “Plan out your flows and messages before building in ManyChat”
+
+✅ Functional Sections to Include:
+🔹 1. Prompt Library
+Purpose: Let users choose and edit pre-written automation message ideas.
+
+Display cards for common scenarios (lead magnet, FAQ, product follow-up, etc.)
+
+Each card includes:
+
+Scenario label
+
+Default suggested message (pre-filled)
+
+Editable text field (autosave with debounce)
+
+✅ Button: “Insert to Flow Builder” → Adds it into the user’s Flow Builder section (see below)
+
+🔹 2. Flow Builder
+Purpose: Users can build a step-by-step automation before building in ManyChat.
+
+UI: Vertical list of steps (drag-and-drop reordering)
+
+Each step includes:
+
+Trigger input field (e.g. “User sends: YES”)
+
+Message response field (multi-line textarea)
+
+Optional tag/note field
+
+“+ Add Another Step” button
+
+Autosaves on input with debounce
+
+“Copy Flow as Text” button at top or bottom — compiles full sequence in readable text (see section 5)
+
+🔹 3. Instagram CTA Copy Helper
+Purpose: Compose Instagram captions or bio lines to link into the automation.
+
+One rich textarea with a prompt:
+“Write your Instagram caption or call-to-action here…”
+
+Button: “📋 Copy CTA to Clipboard”
+
+🔹 4. Pre-Written Replies Vault
+Purpose: Help users plug in high-converting ManyChat responses.
+
+List of editable swipe blocks:
+
+“Delivery Reply”
+
+“Follow-Up Message”
+
+“Bonus Offer or Upsell”
+
+Each is:
+
+Pre-filled with example text
+
+Fully editable
+
+Includes “📋 Copy to Clipboard” button
+
+🔹 5. One-Click Copy Flow
+Purpose: Let users copy the entire built flow into ManyChat easily.
+
+Generates a single text output from the Flow Builder
+
+Includes all steps as:
+
+yaml
+Copy
+Edit
+Trigger: “___”
+→ Response: “___”
+→ Tag: “___”
+“📋 Copy Full Flow” button + optional “⬇ Download as .txt” button
+
+🧠 UX Considerations
+Mobile-friendly layout (stacked cards, expandable fields)
+
+Auto-save on input (with debounce delay)
+
+Visual flow builder should use minimal drag-and-drop logic (simple up/down reordering acceptable)
+
+Style consistent with Fizz and Flourish brand (use card, button, textarea classes from UI system)

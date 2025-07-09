@@ -117,11 +117,22 @@ const workflowTemplates = [
     }
   },
   {
+    id: "automation",
+    name: "Automation System Toolkit",
+    description: "Plan out your flows and messages before building in ManyChat",
+    icon: Zap,
+    colour: "bg-gradient-to-br from-orange-500 to-red-500",
+    textColor: "text-white",
+    isExternal: true,
+    externalRoute: "/automation-toolkit",
+    defaultData: {}
+  },
+  {
     id: "manychat",
     name: "Automate with Manychat",
     description: "Build chatbot sequences and automate conversations",
     icon: Bot,
-    colour: "bg-gradient-to-br from-orange-500 to-red-500",
+    colour: "bg-gradient-to-br from-yellow-500 to-orange-500",
     textColor: "text-white",
     defaultData: {
       affiliateLink: "https://manychat.com/ref/affiliate-link",
@@ -130,30 +141,6 @@ const workflowTemplates = [
         { id: 2, type: "question", text: "What are you looking for?", options: ["Products", "Support", "Info"], icon: "❓" },
         { id: 3, type: "response", text: "Great! Let me show you our options.", icon: "📱" },
         { id: 4, type: "link", text: "Check out our latest offerings", url: "#", icon: "🔗" }
-      ]
-    }
-  },
-  {
-    id: "automation",
-    name: "Automation System Toolkit",
-    description: "Connect apps and automate repetitive tasks",
-    icon: Zap,
-    colour: "bg-gradient-to-br from-yellow-500 to-orange-500",
-    textColor: "text-white",
-    defaultData: {
-      flows: [
-        {
-          id: 1,
-          name: "New Sale → Notion Database",
-          trigger: "New sale in Stripe",
-          action: "Add to Notion DB",
-          active: true,
-          parameters: {
-            stripeWebhook: "enabled",
-            notionDatabase: "Sales Tracker",
-            fields: ["Customer Name", "Amount", "Date", "Product"]
-          }
-        }
       ]
     }
   }
