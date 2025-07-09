@@ -87,8 +87,8 @@ export default function ContentPlanning() {
       colour: "rose",
       lastUsed: "Never",
       isPopular: true,
-      isExternal: true,
-      externalUrl: "https://www.canva.com"
+      isInternal: true,
+      internalUrl: "/reel-carousel-templates"
     }
   ];
 
@@ -96,6 +96,9 @@ export default function ContentPlanning() {
     if (template.id === 1) {
       // My Social Media Strategy
       setLocation('/social-media-strategy');
+    } else if (template.isInternal && template.internalUrl) {
+      // Internal templates (like Reel & Carousel Template Pack)
+      setLocation(template.internalUrl);
     } else if (template.isExternal && template.externalUrl) {
       // External templates (like Canva template pack)
       window.open(template.externalUrl, '_blank');

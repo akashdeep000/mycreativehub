@@ -237,6 +237,13 @@ Changelog:
   - Implemented external URL handling with target="_blank" for seamless user experience
   - Updated template counter to reflect 6 total templates in Content Creation System
   - Enhanced template click handler to support both internal pages and external links
+- July 09, 2025. Created Reel & Carousel Template Pack Subpage:
+  - Built dedicated subpage at /reel-carousel-templates with two internal template cards
+  - Added "Editable Reels Template" for short-form video content with Video icon
+  - Added "Editable Carousel Template" for swipe-worthy engagement content with Image icon
+  - Each template opens Canva in new tab with branded "Open in Canva" button styling
+  - Implemented comprehensive template usage tips section with best practices
+  - Enhanced navigation with "Back to Content Planning" button and proper routing
 
 ## User Preferences
 
