@@ -1,0 +1,79 @@
+Feature: Monthly Content Planner
+Location: /content section
+Component Type: Interactive planning tool
+Goal: Help users organise and schedule monthly social media content based on their existing content pillars and goals.
+
+✅ Requirements
+1. 🧠 Intro Text (Top of Page)
+Display the following static instructional text at the top of the planner:
+
+Use this section to turn your content ideas into a plan you can actually stick to.
+Batch your posts ahead of time, map them to your calendar, and keep everything organised with less stress and more strategy.
+
+2. ✍️ Content Batching Table (Editable Table Component)
+Create a dynamic, editable table with the following columns:
+
+Field Label	Input Type	Notes
+Post Idea	Text input	Free-form
+Content Pillar	Dropdown selector	Pull from user’s saved pillars
+Caption	Multiline text area	Allow text wrapping
+Visual Type	Dropdown	Options: Reel, Carousel, Photo, Graphic
+CTA	Text input	Copy-paste friendly
+Notes	Optional text input	For internal use
+
+Functionality:
+
+Allow user to add/remove rows
+
+Auto-save content or allow explicit save
+
+Reuse table content across months (optional for later version)
+
+3. 🗓️ Monthly Calendar View (Interactive Grid)
+Display a 4-week calendar grid (Monday–Sunday format)
+
+Allow users to:
+
+Click a date to “Add Post” (either from batching table or enter new)
+
+Drag-and-drop batched posts into dates
+
+Include basic tags or color-coded content types (optional):
+
+Reel = Pink
+
+Carousel = Coral
+
+Promo = Orange
+
+Other = Grey
+
+4. 📁 Folder System Setup (Static Info + Download Button)
+Below the calendar, add static instructional text:
+
+“Create folders on your desktop or cloud to store your content by format (Reels, Captions, Carousels). Label by post date so when it's time to publish, you’re one click away.”
+
+Add a placeholder button:
+
+Label: Download Folder System ZIP
+
+Action: For now, just show placeholder action (actual ZIP to be uploaded later)
+
+5. ✅ Checklist Sidebar or Footer Widget
+Create an interactive checklist with the following items:
+
+ Fill out your batching table
+
+ Schedule posts in the monthly calendar
+
+ Sort your content into your folder system
+
+ Set post reminders (or use scheduler of your choice)
+
+ Review and repeat next month
+
+Checklist should save state locally or to user account if logged in.
+
+6. 💡 Top Tip Callout (Static Banner or Box)
+Top Tip: Reuse what works! If a particular post or structure performed well, bring it back next month with a fresh spin. Batching + recycling = creative energy saved.
+

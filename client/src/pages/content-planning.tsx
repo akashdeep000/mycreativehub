@@ -102,6 +102,9 @@ export default function ContentPlanning() {
     if (template.id === 1) {
       // My Social Media Strategy
       setLocation('/social-media-strategy');
+    } else if (template.id === 2) {
+      // Monthly Content Calendar
+      setLocation('/monthly-content-planner');
     } else if (template.isInternal && template.internalUrl) {
       // Internal templates (like Reel & Carousel Template Pack)
       setLocation(template.internalUrl);
