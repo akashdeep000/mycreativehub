@@ -226,6 +226,11 @@ Changelog:
   - Integrated with Streamline Workflow section as external template with proper routing
   - All sections feature mobile-friendly design with auto-save debouncing and copy-to-clipboard functionality
   - Added prominent ManyChat affiliate button at top of page with gradient styling and proper affiliate link tracking
+- July 09, 2025. Removed Duplicate "Automate with ManyChat" Card:
+  - Cleaned up Streamline Workflow section by removing redundant "Automate with Manychat" template
+  - Eliminated duplication as ManyChat functionality is now prominently featured in the Automation System Toolkit
+  - Maintained affiliate integration through the featured button in the toolkit rather than separate card
+  - Streamlined workflow interface with 4 core templates: Daily Prioritisation, Creative Inspiration Hub, Time Blocking Planner, and Automation System Toolkit
 
 ## User Preferences
 

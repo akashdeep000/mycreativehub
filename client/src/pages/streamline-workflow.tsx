@@ -126,23 +126,6 @@ const workflowTemplates = [
     isExternal: true,
     externalRoute: "/automation-toolkit",
     defaultData: {}
-  },
-  {
-    id: "manychat",
-    name: "Automate with Manychat",
-    description: "Build chatbot sequences and automate conversations",
-    icon: Bot,
-    colour: "bg-gradient-to-br from-yellow-500 to-orange-500",
-    textColor: "text-white",
-    defaultData: {
-      affiliateLink: "https://manychat.com/ref/affiliate-link",
-      sequence: [
-        { id: 1, type: "welcome", text: "Welcome! How can I help you today?", icon: "👋" },
-        { id: 2, type: "question", text: "What are you looking for?", options: ["Products", "Support", "Info"], icon: "❓" },
-        { id: 3, type: "response", text: "Great! Let me show you our options.", icon: "📱" },
-        { id: 4, type: "link", text: "Check out our latest offerings", url: "#", icon: "🔗" }
-      ]
-    }
   }
 ];
 
