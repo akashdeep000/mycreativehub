@@ -260,6 +260,21 @@ export default function MonthlyContentPlanner() {
     setBatchingData(prev => prev.map(row => 
       row.id === id ? { ...row, [field]: value } : row
     ));
+    
+    // Auto-save with debouncing
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
+    
+    const timeout = setTimeout(() => {
+      toast({
+        title: "Auto-saved",
+        description: "Your content ideas have been saved",
+        duration: 2000,
+      });
+    }, 1000);
+    
+    setDebounceTimeout(timeout);
   };
 
   const addBatchingRow = () => {
@@ -405,6 +420,101 @@ export default function MonthlyContentPlanner() {
               {isExporting ? 'Generating PDF...' : 'Download as PDF'}
             </Button>
           </div>
+
+          {/* Content Batching Table - Moved Above Calendar */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-xl font-serif flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Content Batching Table
+              </CardTitle>
+              <CardDescription>
+                Organise your content ideas in a structured way before mapping them onto your calendar.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {batchingData.map((row, index) => (
+                  <div key={row.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-sm font-medium text-gray-700">Post #{index + 1}</div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteBatchingRow(row.id)}
+                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Post Type</label>
+                        <Input
+                          value={row.type}
+                          onChange={(e) => updateBatchingData(row.id, 'type', e.target.value)}
+                          placeholder="e.g., Reel, Carousel, Photo..."
+                          className="w-full"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Content Pillar</label>
+                        <Input
+                          value={row.pillar}
+                          onChange={(e) => updateBatchingData(row.id, 'pillar', e.target.value)}
+                          placeholder="e.g., Behind the scenes, Tips, Motivation..."
+                          className="w-full"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">CTA</label>
+                        <Input
+                          value={row.cta}
+                          onChange={(e) => updateBatchingData(row.id, 'cta', e.target.value)}
+                          placeholder="e.g., Save this post, Follow for more..."
+                          className="w-full"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Status</label>
+                        <Input
+                          value={row.status}
+                          onChange={(e) => updateBatchingData(row.id, 'status', e.target.value)}
+                          placeholder="e.g., Draft, Ready, Posted..."
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Caption / Notes</label>
+                      <Textarea
+                        value={row.caption}
+                        onChange={(e) => updateBatchingData(row.id, 'caption', e.target.value)}
+                        placeholder="Write your caption ideas, notes, or key points here..."
+                        className="w-full resize-none"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-6 text-center">
+                <Button
+                  onClick={addBatchingRow}
+                  className="bg-coral-500 hover:bg-coral-600 text-white"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Post
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Clean Color Key Section - Time Blocking Style */}
           <Card className="mb-6">
@@ -613,120 +723,7 @@ export default function MonthlyContentPlanner() {
             </CardContent>
           </Card>
 
-          {/* Content Batching Table */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-xl font-serif flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Content Batching Table
-              </CardTitle>
-              <CardDescription>
-                Organize your content ideas in a structured table format
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-300">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium text-gray-900">Post Title</th>
-                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium text-gray-900">Pillar</th>
-                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium text-gray-900">Type</th>
-                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium text-gray-900">Caption</th>
-                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium text-gray-900">CTA</th>
-                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium text-gray-900">Visual</th>
-                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium text-gray-900">Status</th>
-                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-medium text-gray-900">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {batchingData.map((row, index) => (
-                      <tr key={row.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="border border-gray-300 px-3 py-2">
-                          <Input
-                            value={row.postTitle}
-                            onChange={(e) => updateBatchingData(row.id, 'postTitle', e.target.value)}
-                            placeholder="Post title..."
-                            className="border-none bg-transparent p-0 focus:ring-0"
-                          />
-                        </td>
-                        <td className="border border-gray-300 px-3 py-2">
-                          <Input
-                            value={row.pillar}
-                            onChange={(e) => updateBatchingData(row.id, 'pillar', e.target.value)}
-                            placeholder="Content pillar..."
-                            className="border-none bg-transparent p-0 focus:ring-0"
-                          />
-                        </td>
-                        <td className="border border-gray-300 px-3 py-2">
-                          <Input
-                            value={row.type}
-                            onChange={(e) => updateBatchingData(row.id, 'type', e.target.value)}
-                            placeholder="Content type..."
-                            className="border-none bg-transparent p-0 focus:ring-0"
-                          />
-                        </td>
-                        <td className="border border-gray-300 px-3 py-2">
-                          <Textarea
-                            value={row.caption}
-                            onChange={(e) => updateBatchingData(row.id, 'caption', e.target.value)}
-                            placeholder="Caption..."
-                            className="border-none bg-transparent p-0 focus:ring-0 resize-none"
-                            rows={2}
-                          />
-                        </td>
-                        <td className="border border-gray-300 px-3 py-2">
-                          <Input
-                            value={row.cta}
-                            onChange={(e) => updateBatchingData(row.id, 'cta', e.target.value)}
-                            placeholder="CTA..."
-                            className="border-none bg-transparent p-0 focus:ring-0"
-                          />
-                        </td>
-                        <td className="border border-gray-300 px-3 py-2">
-                          <Input
-                            value={row.visual}
-                            onChange={(e) => updateBatchingData(row.id, 'visual', e.target.value)}
-                            placeholder="Visual type..."
-                            className="border-none bg-transparent p-0 focus:ring-0"
-                          />
-                        </td>
-                        <td className="border border-gray-300 px-3 py-2">
-                          <Input
-                            value={row.status}
-                            onChange={(e) => updateBatchingData(row.id, 'status', e.target.value)}
-                            placeholder="Status..."
-                            className="border-none bg-transparent p-0 focus:ring-0"
-                          />
-                        </td>
-                        <td className="border border-gray-300 px-3 py-2 text-center">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => deleteBatchingRow(row.id)}
-                            className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              <div className="mt-4 flex justify-center">
-                <Button
-                  onClick={addBatchingRow}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Row
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+
 
           {/* Checklist */}
           <Card>

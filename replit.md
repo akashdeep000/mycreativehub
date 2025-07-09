@@ -282,6 +282,15 @@ Changelog:
   - PDF includes month title, full calendar with colors and content, plus color key reference
   - Added previous/next month navigation with state persistence
   - Enhanced with loading states, error handling, and professional print-friendly styling
+- July 09, 2025. Restored Original Content Batching Table Style and Positioning:
+  - Reverted to vertical, workbook-style layout with clear field separation and calm spacing
+  - Repositioned Content Batching Table above Monthly Calendar for better workflow
+  - Implemented card-based post entries with Post Type, Content Pillar, CTA, Status, and Caption/Notes fields
+  - Added "Add Post" button with coral styling matching brand aesthetic
+  - Integrated auto-save functionality with debounced toast notifications
+  - Maintained Time Blocking calendar clean aesthetic for color key section
+  - Enhanced user experience with friendly placeholders and clean left-aligned inputs
+  - Removed duplicate table sections and streamlined page layout for better readability
 
 ## User Preferences
 
