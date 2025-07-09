@@ -32,6 +32,17 @@ interface ChecklistItem {
   completed: boolean;
 }
 
+interface BatchingRow {
+  id: string;
+  postTitle: string;
+  pillar: string;
+  type: string;
+  caption: string;
+  cta: string;
+  visual: string;
+  status: string;
+}
+
 export default function MonthlyContentPlanner() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
@@ -59,6 +70,19 @@ export default function MonthlyContentPlanner() {
     { id: '4', text: 'Review and finalize monthly plan', completed: false },
     { id: '5', text: 'Export or print your calendar', completed: false }
   ]);
+
+  // Content batching table data
+  const [batchingData, setBatchingData] = useState<BatchingRow[]>([
+    { id: '1', postTitle: '', pillar: '', type: '', caption: '', cta: '', visual: '', status: '' },
+    { id: '2', postTitle: '', pillar: '', type: '', caption: '', cta: '', visual: '', status: '' },
+    { id: '3', postTitle: '', pillar: '', type: '', caption: '', cta: '', visual: '', status: '' },
+    { id: '4', postTitle: '', pillar: '', type: '', caption: '', cta: '', visual: '', status: '' },
+    { id: '5', postTitle: '', pillar: '', type: '', caption: '', cta: '', visual: '', status: '' },
+  ]);
+
+  // New tag input state
+  const [newTagLabel, setNewTagLabel] = useState('');
+  const [editingTagId, setEditingTagId] = useState<string | null>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -98,13 +122,24 @@ export default function MonthlyContentPlanner() {
       });
       return;
     }
+
+    if (!newTagLabel.trim()) {
+      toast({
+        title: "Tag name required",
+        description: "Please enter a name for the new tag",
+        variant: "destructive",
+      });
+      return;
+    }
     
+    const availableColors = ['#EC4899', '#EF4444', '#3B82F6', '#F59E0B', '#8B5CF6', '#10B981', '#6B7280', '#14B8A6'];
     const newTag: ColorTag = {
       id: Date.now().toString(),
-      color: '#95a5a6',
-      label: 'New Tag'
+      color: availableColors[colorTags.length % availableColors.length],
+      label: newTagLabel.trim()
     };
     setColorTags([...colorTags, newTag]);
+    setNewTagLabel('');
   };
 
   const updateColorTag = (id: string, field: keyof ColorTag, value: string) => {
@@ -218,6 +253,31 @@ export default function MonthlyContentPlanner() {
     setChecklist(checklist.map(item =>
       item.id === id ? { ...item, completed: !item.completed } : item
     ));
+  };
+
+  // Batching data management
+  const updateBatchingData = (id: string, field: keyof BatchingRow, value: string) => {
+    setBatchingData(prev => prev.map(row => 
+      row.id === id ? { ...row, [field]: value } : row
+    ));
+  };
+
+  const addBatchingRow = () => {
+    const newRow: BatchingRow = {
+      id: Date.now().toString(),
+      postTitle: '',
+      pillar: '',
+      type: '',
+      caption: '',
+      cta: '',
+      visual: '',
+      status: ''
+    };
+    setBatchingData([...batchingData, newRow]);
+  };
+
+  const deleteBatchingRow = (id: string) => {
+    setBatchingData(prev => prev.filter(row => row.id !== id));
   };
 
   // PDF Export function
@@ -346,70 +406,110 @@ export default function MonthlyContentPlanner() {
             </Button>
           </div>
 
-          {/* Color Key Section */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="text-xl font-serif flex items-center space-x-2">
-                <Lightbulb className="w-5 h-5" />
-                <span>Content Color Key</span>
+          {/* Clean Color Key Section - Time Blocking Style */}
+          <Card className="mb-6">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Lightbulb className="h-5 w-5" />
+                Color Key
               </CardTitle>
               <CardDescription>
-                Create and customize color tags for your content types. Click a tag to select it, then click calendar dates to apply.
+                Select a color category, then click calendar dates to apply it.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-4">
-                {colorTags.map((tag) => (
-                  <div
-                    key={tag.id}
-                    className={`group p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      selectedTagId === tag.id ? 'border-gray-900 shadow-md' : 'border-gray-200'
-                    }`}
-                    onClick={() => setSelectedTagId(selectedTagId === tag.id ? null : tag.id)}
-                    onMouseDown={() => handleMouseDown(tag.id)}
-                  >
-                    <div className="flex items-center justify-between mb-2">
+              <div className="flex flex-wrap gap-3 items-center">
+                {colorTags.map((tag) => {
+                  const isActive = selectedTagId === tag.id;
+                  return (
+                    <div
+                      key={tag.id}
+                      className={`relative flex items-center gap-2 rounded-lg p-2 transition-all cursor-pointer ${
+                        isActive 
+                          ? 'bg-blue-50 border-2 border-blue-500 shadow-md ring-2 ring-blue-200' 
+                          : 'bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
+                      }`}
+                      onClick={() => setSelectedTagId(selectedTagId === tag.id ? null : tag.id)}
+                    >
+                      {isActive && (
+                        <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
+                          Selected
+                        </div>
+                      )}
                       <div
-                        className="w-6 h-6 rounded-full border-2 border-gray-300"
+                        className={`w-4 h-4 rounded-full border transition-all ${
+                          isActive ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
+                        }`}
                         style={{ backgroundColor: tag.color }}
                       />
-                      <button
+                      {editingTagId === tag.id ? (
+                        <Input
+                          value={tag.label}
+                          onChange={(e) => updateColorTag(tag.id, 'label', e.target.value)}
+                          onBlur={() => setEditingTagId(null)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') setEditingTagId(null);
+                          }}
+                          className="h-6 text-xs w-24"
+                          autoFocus
+                        />
+                      ) : (
+                        <span
+                          className="text-sm cursor-pointer hover:bg-gray-100 px-1 rounded"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingTagId(tag.id);
+                          }}
+                        >
+                          {tag.label}
+                        </span>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
                         onClick={(e) => {
                           e.stopPropagation();
                           deleteColorTag(tag.id);
                         }}
-                        className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
-                        <X className="w-4 h-4" />
-                      </button>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
-                    <Input
-                      type="color"
-                      value={tag.color}
-                      onChange={(e) => updateColorTag(tag.id, 'color', e.target.value)}
-                      className="w-full h-8 mb-2 cursor-pointer"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <Input
-                      value={tag.label}
-                      onChange={(e) => updateColorTag(tag.id, 'label', e.target.value)}
-                      className="text-sm"
-                      placeholder="Tag name"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                ))}
+                  );
+                })}
+                
+                {/* Add new color tag */}
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={newTagLabel}
+                    onChange={(e) => setNewTagLabel(e.target.value)}
+                    placeholder="New category..."
+                    className="h-8 text-sm w-32"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') addColorTag();
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={addColorTag}
+                    className="h-8 px-3 bg-pink-500 hover:bg-pink-600 text-white"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    New Category
+                  </Button>
+                </div>
               </div>
               
-              {colorTags.length < 12 && (
-                <Button
-                  onClick={addColorTag}
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add More
-                </Button>
+              {selectedTagId && (
+                <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="text-xs text-blue-700 font-medium">
+                    Active Color: <span className="text-blue-800">{colorTags.find(t => t.id === selectedTagId)?.label}</span>
+                  </div>
+                  <div className="text-xs text-blue-600 mt-1">
+                    Click calendar dates to apply this color tag
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -509,6 +609,121 @@ export default function MonthlyContentPlanner() {
                     </div>
                   );
                 })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Content Batching Table */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-xl font-serif flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Content Batching Table
+              </CardTitle>
+              <CardDescription>
+                Organize your content ideas in a structured table format
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-300">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium text-gray-900">Post Title</th>
+                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium text-gray-900">Pillar</th>
+                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium text-gray-900">Type</th>
+                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium text-gray-900">Caption</th>
+                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium text-gray-900">CTA</th>
+                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium text-gray-900">Visual</th>
+                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium text-gray-900">Status</th>
+                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-medium text-gray-900">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {batchingData.map((row, index) => (
+                      <tr key={row.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="border border-gray-300 px-3 py-2">
+                          <Input
+                            value={row.postTitle}
+                            onChange={(e) => updateBatchingData(row.id, 'postTitle', e.target.value)}
+                            placeholder="Post title..."
+                            className="border-none bg-transparent p-0 focus:ring-0"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-3 py-2">
+                          <Input
+                            value={row.pillar}
+                            onChange={(e) => updateBatchingData(row.id, 'pillar', e.target.value)}
+                            placeholder="Content pillar..."
+                            className="border-none bg-transparent p-0 focus:ring-0"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-3 py-2">
+                          <Input
+                            value={row.type}
+                            onChange={(e) => updateBatchingData(row.id, 'type', e.target.value)}
+                            placeholder="Content type..."
+                            className="border-none bg-transparent p-0 focus:ring-0"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-3 py-2">
+                          <Textarea
+                            value={row.caption}
+                            onChange={(e) => updateBatchingData(row.id, 'caption', e.target.value)}
+                            placeholder="Caption..."
+                            className="border-none bg-transparent p-0 focus:ring-0 resize-none"
+                            rows={2}
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-3 py-2">
+                          <Input
+                            value={row.cta}
+                            onChange={(e) => updateBatchingData(row.id, 'cta', e.target.value)}
+                            placeholder="CTA..."
+                            className="border-none bg-transparent p-0 focus:ring-0"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-3 py-2">
+                          <Input
+                            value={row.visual}
+                            onChange={(e) => updateBatchingData(row.id, 'visual', e.target.value)}
+                            placeholder="Visual type..."
+                            className="border-none bg-transparent p-0 focus:ring-0"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-3 py-2">
+                          <Input
+                            value={row.status}
+                            onChange={(e) => updateBatchingData(row.id, 'status', e.target.value)}
+                            placeholder="Status..."
+                            className="border-none bg-transparent p-0 focus:ring-0"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-3 py-2 text-center">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteBatchingRow(row.id)}
+                            className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              <div className="mt-4 flex justify-center">
+                <Button
+                  onClick={addBatchingRow}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Row
+                </Button>
               </div>
             </CardContent>
           </Card>
