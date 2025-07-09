@@ -40,6 +40,7 @@ export default function ContentPlanning() {
       description: "Define your content goals, segment your content pillars, and match each pillar with a clear CTA",
       icon: Target,
       colour: "orange",
+      bgGradient: "from-orange-400 to-orange-500",
       lastUsed: "Never",
       isPopular: true
     },
@@ -49,6 +50,7 @@ export default function ContentPlanning() {
       description: "Plan your content for the entire month with this comprehensive calendar template",
       icon: Calendar,
       colour: "blue",
+      bgGradient: "from-blue-400 to-blue-500",
       lastUsed: "2 days ago",
       isPopular: true
     },
@@ -58,6 +60,7 @@ export default function ContentPlanning() {
       description: "Organise your content creation sessions for maximum efficiency",
       icon: Grid3X3,
       colour: "purple",
+      bgGradient: "from-purple-400 to-purple-500",
       lastUsed: "1 week ago",
       isPopular: false
     },
@@ -67,6 +70,7 @@ export default function ContentPlanning() {
       description: "Structure your blog posts with this detailed planning template",
       icon: FileText,
       colour: "green",
+      bgGradient: "from-green-400 to-green-500",
       lastUsed: "3 days ago",
       isPopular: true
     },
@@ -76,6 +80,7 @@ export default function ContentPlanning() {
       description: "Keep track of your brand colours and visual identity",
       icon: Palette,
       colour: "pink",
+      bgGradient: "from-pink-400 to-pink-500",
       lastUsed: "Never",
       isPopular: false
     },
@@ -85,6 +90,7 @@ export default function ContentPlanning() {
       description: "Create on-brand, scroll-stopping content with customisable Canva templates for Reels and carousels.",
       icon: Play,
       colour: "rose",
+      bgGradient: "from-rose-400 to-rose-500",
       lastUsed: "Never",
       isPopular: true,
       isInternal: true,
@@ -154,7 +160,7 @@ export default function ContentPlanning() {
             >
               <CardHeader>
                 <div className="flex items-center justify-between mb-3">
-                  <div className={`w-10 h-10 bg-gradient-to-br from-${template.colour}-400 to-${template.colour}-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                  <div className={`w-10 h-10 bg-gradient-to-br ${template.bgGradient} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
                     <template.icon className="w-5 h-5 text-white" />
                   </div>
                   {template.isPopular && (
