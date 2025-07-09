@@ -213,6 +213,11 @@ Changelog:
   - Users can now access Daily Prioritisation Framework from both dashboard Quick Start and Streamline Workflow
   - Updated template handling to support both internal workflow components and external page routes
   - Enhanced user experience with consistent navigation patterns across all workflow tools
+- July 09, 2025. Removed Duplicate Daily Prioritisation Card:
+  - Cleaned up Streamline Workflow section by removing redundant "Daily Prioritization Framework" template
+  - Kept functional "Daily Prioritisation" card (external route to /daily-focus) in top-left position
+  - Eliminated confusion from having two similar prioritisation templates
+  - Maintained all existing functionality while streamlining the user interface
 
 ## User Preferences
 

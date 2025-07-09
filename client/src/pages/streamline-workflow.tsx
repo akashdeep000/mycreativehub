@@ -117,31 +117,6 @@ const workflowTemplates = [
     }
   },
   {
-    id: "prioritization",
-    name: "Daily Prioritization Framework",
-    description: "Must/Should/Could task organization system",
-    icon: CheckSquare,
-    colour: "bg-gradient-to-br from-green-500 to-emerald-500",
-    textColor: "text-white",
-    defaultData: {
-      tasks: {
-        must: [
-          { id: 1, text: "Complete project proposal", completed: false, priority: "high" },
-          { id: 2, text: "Review client feedback", completed: true, priority: "high" },
-          { id: 3, text: "Submit invoice", completed: false, priority: "medium" }
-        ],
-        should: [
-          { id: 4, text: "Update website content", completed: false, priority: "medium" },
-          { id: 5, text: "Schedule team meeting", completed: true, priority: "low" }
-        ],
-        could: [
-          { id: 6, text: "Research new tools", completed: false, priority: "low" },
-          { id: 7, text: "Organize workspace", completed: false, priority: "low" }
-        ]
-      }
-    }
-  },
-  {
     id: "manychat",
     name: "Automate with Manychat",
     description: "Build chatbot sequences and automate conversations",
