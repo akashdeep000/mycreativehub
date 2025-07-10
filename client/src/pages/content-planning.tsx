@@ -82,18 +82,7 @@ export default function ContentPlanning() {
       isInternal: true,
       internalUrl: "/reel-carousel-templates"
     },
-    {
-      id: 9,
-      name: "Repurposing Toolkit",
-      description: "Make your past content work harder for you. Plan how to transform existing content into new formats and organise your assets with a downloadable folder system.",
-      icon: Recycle,
-      colour: "emerald",
-      bgGradient: "from-emerald-400 to-emerald-500",
-      lastUsed: "Never",
-      isPopular: true,
-      isInternal: true,
-      internalUrl: "/repurposing-toolkit"
-    },
+
     {
       id: 10,
       name: "Content Performance & Strategy Worksheet",
@@ -159,7 +148,7 @@ export default function ContentPlanning() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                7 Templates
+                6 Templates
               </Badge>
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 Active
