@@ -6,7 +6,7 @@ import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Download } from "lucide-react";
+import { Mail, Download } from "lucide-react";
 
 export default function EmailMarketing() {
   const { toast } = useToast();
@@ -53,7 +53,7 @@ export default function EmailMarketing() {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-pink-500 rounded-xl flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-white" />
+              <Mail className="w-6 h-6 text-white" />
             </div>
             <div>
               <h1 className="text-3xl lg:text-4xl font-serif font-semibold text-gray-800">
@@ -80,16 +80,16 @@ export default function EmailMarketing() {
         {/* Email Marketing Starter Map Card */}
         <div className="max-w-4xl mx-auto">
           <Card className="border-pink-100 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
-            <CardHeader className="bg-gradient-to-r from-pink-400 to-pink-500 text-white rounded-t-lg">
+            <CardHeader className="border-b border-gray-100">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-pink-500 rounded-lg flex items-center justify-center">
+                  <Mail className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl font-serif">
+                  <CardTitle className="text-xl font-serif text-gray-800">
                     Email Marketing Starter Map
                   </CardTitle>
-                  <CardDescription className="text-pink-100">
+                  <CardDescription className="text-gray-600">
                     Your visual reference for building a simple and powerful email funnel.
                   </CardDescription>
                 </div>
@@ -124,43 +124,7 @@ export default function EmailMarketing() {
                   </div>
                 </div>
 
-                {/* Features List */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-gray-800">What's included:</h4>
-                    <ul className="space-y-2 text-sm text-gray-600">
-                      <li className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 bg-pink-400 rounded-full mt-2 flex-shrink-0"></span>
-                        <span>Lead magnet strategy overview</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 bg-pink-400 rounded-full mt-2 flex-shrink-0"></span>
-                        <span>Welcome email sequence structure</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 bg-pink-400 rounded-full mt-2 flex-shrink-0"></span>
-                        <span>Mini sequence planning template</span>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-gray-800">Perfect for:</h4>
-                    <ul className="space-y-2 text-sm text-gray-600">
-                      <li className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 bg-pink-400 rounded-full mt-2 flex-shrink-0"></span>
-                        <span>Setting up your first email funnel</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 bg-pink-400 rounded-full mt-2 flex-shrink-0"></span>
-                        <span>Refreshing existing email flows</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 bg-pink-400 rounded-full mt-2 flex-shrink-0"></span>
-                        <span>Quick reference during setup</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
+
               </div>
             </CardContent>
           </Card>
