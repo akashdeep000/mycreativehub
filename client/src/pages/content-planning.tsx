@@ -6,7 +6,7 @@ import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Plus, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck, Recycle, BookOpen } from "lucide-react";
+import { Calendar, Plus, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck, Recycle, BookOpen, BarChart3 } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function ContentPlanning() {
@@ -147,6 +147,18 @@ export default function ContentPlanning() {
       isPopular: true,
       isInternal: true,
       internalUrl: "/content-performance-strategy"
+    },
+    {
+      id: 11,
+      name: "Performance Tracking Table",
+      description: "Track which content performs best so you can create more of what works. Monitor engagement, saves, and insights across all platforms.",
+      icon: BarChart3,
+      colour: "purple",
+      bgGradient: "from-purple-400 to-purple-500",
+      lastUsed: "Never",
+      isPopular: true,
+      isInternal: true,
+      internalUrl: "/performance-tracking-table"
     }
   ];
 
@@ -189,7 +201,7 @@ export default function ContentPlanning() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                10 Templates
+                11 Templates
               </Badge>
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 Active
