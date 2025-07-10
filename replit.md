@@ -299,6 +299,15 @@ Changelog:
   - Added "Add More" button with pink styling and trash icons for row deletion
   - Maintained auto-save functionality with real-time updates
   - Positioned as prep zone above Monthly Calendar for natural workflow progression
+- July 10, 2025. Added Custom Dropdown Options to Content Batching Table:
+  - Enhanced Content Pillar and Post Type dropdowns with "+ Add Custom Type" functionality
+  - Implemented inline input fields that appear when custom option is selected
+  - Added Enter key and checkmark button confirmation for seamless UX
+  - Integrated local storage persistence for custom options across sessions
+  - Custom options appear in separate optgroups with font styling to distinguish from defaults
+  - Added toast notifications for successful custom option additions
+  - Escape key cancels custom input mode and returns to dropdown selection
+  - Unlimited custom values can be added and persist between table rows and sessions
 
 ## User Preferences
 

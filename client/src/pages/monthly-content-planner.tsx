@@ -80,6 +80,34 @@ export default function MonthlyContentPlanner() {
     { id: '5', postTitle: '', pillar: '', type: '', caption: '', cta: '', visual: '', status: '' },
   ]);
 
+  // Custom dropdown options state
+  const [customPillars, setCustomPillars] = useState<string[]>([]);
+  const [customPostTypes, setCustomPostTypes] = useState<string[]>([]);
+  const [showCustomPillarInput, setShowCustomPillarInput] = useState<string | null>(null);
+  const [showCustomTypeInput, setShowCustomTypeInput] = useState<string | null>(null);
+  const [customPillarValue, setCustomPillarValue] = useState('');
+  const [customTypeValue, setCustomTypeValue] = useState('');
+
+  // Default options
+  const defaultPillars = [
+    "Behind the scenes",
+    "Tips & advice", 
+    "Motivation",
+    "Education",
+    "Personal story",
+    "Product feature",
+    "Community"
+  ];
+
+  const defaultPostTypes = [
+    "Reel",
+    "Carousel", 
+    "Photo",
+    "Story",
+    "IGTV",
+    "Live"
+  ];
+
   // New tag input state
   const [newTagLabel, setNewTagLabel] = useState('');
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
@@ -98,6 +126,19 @@ export default function MonthlyContentPlanner() {
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
+
+  // Load custom options from localStorage on mount
+  useEffect(() => {
+    const savedPillars = localStorage.getItem('customContentPillars');
+    const savedTypes = localStorage.getItem('customPostTypes');
+    
+    if (savedPillars) {
+      setCustomPillars(JSON.parse(savedPillars));
+    }
+    if (savedTypes) {
+      setCustomPostTypes(JSON.parse(savedTypes));
+    }
+  }, []);
 
   // Clean up timeout on unmount
   useEffect(() => {
@@ -253,6 +294,59 @@ export default function MonthlyContentPlanner() {
     setChecklist(checklist.map(item =>
       item.id === id ? { ...item, completed: !item.completed } : item
     ));
+  };
+
+  // Custom dropdown functions
+  const addCustomPillar = (rowId: string) => {
+    if (customPillarValue.trim()) {
+      const newPillars = [...customPillars, customPillarValue.trim()];
+      setCustomPillars(newPillars);
+      updateBatchingData(rowId, 'pillar', customPillarValue.trim());
+      setCustomPillarValue('');
+      setShowCustomPillarInput(null);
+      localStorage.setItem('customContentPillars', JSON.stringify(newPillars));
+      toast({
+        title: "Custom pillar added",
+        description: `"${customPillarValue.trim()}" has been added to your options`,
+        duration: 2000,
+      });
+    }
+  };
+
+  const addCustomType = (rowId: string) => {
+    if (customTypeValue.trim()) {
+      const newTypes = [...customPostTypes, customTypeValue.trim()];
+      setCustomPostTypes(newTypes);
+      updateBatchingData(rowId, 'type', customTypeValue.trim());
+      setCustomTypeValue('');
+      setShowCustomTypeInput(null);
+      localStorage.setItem('customPostTypes', JSON.stringify(newTypes));
+      toast({
+        title: "Custom type added",
+        description: `"${customTypeValue.trim()}" has been added to your options`,
+        duration: 2000,
+      });
+    }
+  };
+
+  const handleCustomPillarKeyDown = (e: React.KeyboardEvent, rowId: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addCustomPillar(rowId);
+    } else if (e.key === 'Escape') {
+      setShowCustomPillarInput(null);
+      setCustomPillarValue('');
+    }
+  };
+
+  const handleCustomTypeKeyDown = (e: React.KeyboardEvent, rowId: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addCustomType(rowId);
+    } else if (e.key === 'Escape') {
+      setShowCustomTypeInput(null);
+      setCustomTypeValue('');
+    }
   };
 
   // Batching data management
@@ -454,35 +548,126 @@ export default function MonthlyContentPlanner() {
                         />
                       </td>
                       <td className="p-3 border-r border-gray-100">
-                        <select
-                          value={row.pillar}
-                          onChange={(e) => updateBatchingData(row.id, 'pillar', e.target.value)}
-                          className="w-full border-none bg-transparent p-0 focus:ring-0 text-sm"
-                        >
-                          <option value="">Select pillar...</option>
-                          <option value="Behind the scenes">Behind the scenes</option>
-                          <option value="Tips & advice">Tips & advice</option>
-                          <option value="Motivation">Motivation</option>
-                          <option value="Education">Education</option>
-                          <option value="Personal story">Personal story</option>
-                          <option value="Product feature">Product feature</option>
-                          <option value="Community">Community</option>
-                        </select>
+                        {showCustomPillarInput === row.id ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={customPillarValue}
+                              onChange={(e) => setCustomPillarValue(e.target.value)}
+                              onKeyDown={(e) => handleCustomPillarKeyDown(e, row.id)}
+                              placeholder="Type custom pillar..."
+                              className="border-none bg-transparent p-0 focus:ring-0 text-sm flex-1"
+                              autoFocus
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => addCustomPillar(row.id)}
+                              className="h-5 w-5 p-0 bg-green-500 hover:bg-green-600 text-white"
+                            >
+                              ✓
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setShowCustomPillarInput(null);
+                                setCustomPillarValue('');
+                              }}
+                              className="h-5 w-5 p-0 bg-gray-400 hover:bg-gray-500 text-white"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <select
+                            value={row.pillar}
+                            onChange={(e) => {
+                              if (e.target.value === '+ Add Custom Type') {
+                                setShowCustomPillarInput(row.id);
+                                setCustomPillarValue('');
+                              } else {
+                                updateBatchingData(row.id, 'pillar', e.target.value);
+                              }
+                            }}
+                            className="w-full border-none bg-transparent p-0 focus:ring-0 text-sm"
+                          >
+                            <option value="">Select pillar...</option>
+                            {defaultPillars.map((pillar) => (
+                              <option key={pillar} value={pillar}>{pillar}</option>
+                            ))}
+                            {customPillars.length > 0 && (
+                              <optgroup label="Custom Pillars">
+                                {customPillars.map((pillar) => (
+                                  <option key={pillar} value={pillar} className="font-medium">
+                                    {pillar}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            )}
+                            <option value="+ Add Custom Type" className="text-blue-600 font-medium">
+                              + Add Custom Type
+                            </option>
+                          </select>
+                        )}
                       </td>
                       <td className="p-3 border-r border-gray-100">
-                        <select
-                          value={row.type}
-                          onChange={(e) => updateBatchingData(row.id, 'type', e.target.value)}
-                          className="w-full border-none bg-transparent p-0 focus:ring-0 text-sm"
-                        >
-                          <option value="">Select type...</option>
-                          <option value="Reel">Reel</option>
-                          <option value="Carousel">Carousel</option>
-                          <option value="Photo">Photo</option>
-                          <option value="Story">Story</option>
-                          <option value="IGTV">IGTV</option>
-                          <option value="Live">Live</option>
-                        </select>
+                        {showCustomTypeInput === row.id ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={customTypeValue}
+                              onChange={(e) => setCustomTypeValue(e.target.value)}
+                              onKeyDown={(e) => handleCustomTypeKeyDown(e, row.id)}
+                              placeholder="Type custom type..."
+                              className="border-none bg-transparent p-0 focus:ring-0 text-sm flex-1"
+                              autoFocus
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => addCustomType(row.id)}
+                              className="h-5 w-5 p-0 bg-green-500 hover:bg-green-600 text-white"
+                            >
+                              ✓
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setShowCustomTypeInput(null);
+                                setCustomTypeValue('');
+                              }}
+                              className="h-5 w-5 p-0 bg-gray-400 hover:bg-gray-500 text-white"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <select
+                            value={row.type}
+                            onChange={(e) => {
+                              if (e.target.value === '+ Add Custom Type') {
+                                setShowCustomTypeInput(row.id);
+                                setCustomTypeValue('');
+                              } else {
+                                updateBatchingData(row.id, 'type', e.target.value);
+                              }
+                            }}
+                            className="w-full border-none bg-transparent p-0 focus:ring-0 text-sm"
+                          >
+                            <option value="">Select type...</option>
+                            {defaultPostTypes.map((type) => (
+                              <option key={type} value={type}>{type}</option>
+                            ))}
+                            {customPostTypes.length > 0 && (
+                              <optgroup label="Custom Types">
+                                {customPostTypes.map((type) => (
+                                  <option key={type} value={type} className="font-medium">
+                                    {type}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            )}
+                            <option value="+ Add Custom Type" className="text-blue-600 font-medium">
+                              + Add Custom Type
+                            </option>
+                          </select>
+                        )}
                       </td>
                       <td className="p-3 border-r border-gray-100">
                         <Input
