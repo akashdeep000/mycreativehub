@@ -291,6 +291,14 @@ Changelog:
   - Maintained Time Blocking calendar clean aesthetic for color key section
   - Enhanced user experience with friendly placeholders and clean left-aligned inputs
   - Removed duplicate table sections and streamlined page layout for better readability
+- July 09, 2025. Simplified Content Batching Table to Lightweight Spreadsheet Style:
+  - Redesigned as banner-style table with 5 key columns: Post Title, Content Pillar, Post Type, CTA, Notes
+  - Added dropdown menus for Content Pillar and Post Type with predefined options
+  - Wrapped table in light pink background container with rounded corners matching Fizz & Flourish aesthetic
+  - Implemented single-line horizontal format for quick entry and scanning
+  - Added "Add More" button with pink styling and trash icons for row deletion
+  - Maintained auto-save functionality with real-time updates
+  - Positioned as prep zone above Monthly Calendar for natural workflow progression
 
 ## User Preferences
 

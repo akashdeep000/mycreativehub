@@ -421,100 +421,114 @@ export default function MonthlyContentPlanner() {
             </Button>
           </div>
 
-          {/* Content Batching Table - Moved Above Calendar */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-xl font-serif flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Content Batching Table
-              </CardTitle>
-              <CardDescription>
-                Organise your content ideas in a structured way before mapping them onto your calendar.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {batchingData.map((row, index) => (
-                  <div key={row.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="text-sm font-medium text-gray-700">Post #{index + 1}</div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deleteBatchingRow(row.id)}
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Post Type</label>
+          {/* Content Batching Table - Lightweight Spreadsheet Style */}
+          <div className="mb-6 bg-pink-50 rounded-lg p-4 border border-pink-100">
+            <div className="mb-4">
+              <h3 className="text-lg font-medium text-gray-800 mb-1">Content Batching Space</h3>
+              <p className="text-sm text-gray-600">
+                Use this batching space to map out what you'll create before plugging your content into the calendar below.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="text-left text-sm font-medium text-gray-700 p-3 border-r border-gray-200">Post Title</th>
+                    <th className="text-left text-sm font-medium text-gray-700 p-3 border-r border-gray-200">Content Pillar</th>
+                    <th className="text-left text-sm font-medium text-gray-700 p-3 border-r border-gray-200">Post Type</th>
+                    <th className="text-left text-sm font-medium text-gray-700 p-3 border-r border-gray-200">CTA</th>
+                    <th className="text-left text-sm font-medium text-gray-700 p-3 border-r border-gray-200">Notes</th>
+                    <th className="text-center text-sm font-medium text-gray-700 p-3 w-12"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {batchingData.map((row, index) => (
+                    <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="p-3 border-r border-gray-100">
                         <Input
-                          value={row.type}
-                          onChange={(e) => updateBatchingData(row.id, 'type', e.target.value)}
-                          placeholder="e.g., Reel, Carousel, Photo..."
-                          className="w-full"
+                          value={row.postTitle}
+                          onChange={(e) => updateBatchingData(row.id, 'postTitle', e.target.value)}
+                          placeholder="Post title..."
+                          className="border-none bg-transparent p-0 focus:ring-0 text-sm"
                         />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Content Pillar</label>
-                        <Input
+                      </td>
+                      <td className="p-3 border-r border-gray-100">
+                        <select
                           value={row.pillar}
                           onChange={(e) => updateBatchingData(row.id, 'pillar', e.target.value)}
-                          placeholder="e.g., Behind the scenes, Tips, Motivation..."
-                          className="w-full"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">CTA</label>
+                          className="w-full border-none bg-transparent p-0 focus:ring-0 text-sm"
+                        >
+                          <option value="">Select pillar...</option>
+                          <option value="Behind the scenes">Behind the scenes</option>
+                          <option value="Tips & advice">Tips & advice</option>
+                          <option value="Motivation">Motivation</option>
+                          <option value="Education">Education</option>
+                          <option value="Personal story">Personal story</option>
+                          <option value="Product feature">Product feature</option>
+                          <option value="Community">Community</option>
+                        </select>
+                      </td>
+                      <td className="p-3 border-r border-gray-100">
+                        <select
+                          value={row.type}
+                          onChange={(e) => updateBatchingData(row.id, 'type', e.target.value)}
+                          className="w-full border-none bg-transparent p-0 focus:ring-0 text-sm"
+                        >
+                          <option value="">Select type...</option>
+                          <option value="Reel">Reel</option>
+                          <option value="Carousel">Carousel</option>
+                          <option value="Photo">Photo</option>
+                          <option value="Story">Story</option>
+                          <option value="IGTV">IGTV</option>
+                          <option value="Live">Live</option>
+                        </select>
+                      </td>
+                      <td className="p-3 border-r border-gray-100">
                         <Input
                           value={row.cta}
                           onChange={(e) => updateBatchingData(row.id, 'cta', e.target.value)}
-                          placeholder="e.g., Save this post, Follow for more..."
-                          className="w-full"
+                          placeholder="Call to action..."
+                          className="border-none bg-transparent p-0 focus:ring-0 text-sm"
                         />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Status</label>
-                        <Input
-                          value={row.status}
-                          onChange={(e) => updateBatchingData(row.id, 'status', e.target.value)}
-                          placeholder="e.g., Draft, Ready, Posted..."
-                          className="w-full"
+                      </td>
+                      <td className="p-3 border-r border-gray-100">
+                        <Textarea
+                          value={row.caption}
+                          onChange={(e) => updateBatchingData(row.id, 'caption', e.target.value)}
+                          placeholder="Notes..."
+                          className="border-none bg-transparent p-0 focus:ring-0 resize-none text-sm"
+                          rows={1}
                         />
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Caption / Notes</label>
-                      <Textarea
-                        value={row.caption}
-                        onChange={(e) => updateBatchingData(row.id, 'caption', e.target.value)}
-                        placeholder="Write your caption ideas, notes, or key points here..."
-                        className="w-full resize-none"
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      </td>
+                      <td className="p-3 text-center">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => deleteBatchingRow(row.id)}
+                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
               
-              <div className="mt-6 text-center">
+              <div className="p-3 bg-gray-50 border-t border-gray-200">
                 <Button
                   onClick={addBatchingRow}
-                  className="bg-coral-500 hover:bg-coral-600 text-white"
+                  variant="outline"
+                  size="sm"
+                  className="text-pink-600 border-pink-200 hover:bg-pink-50"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Post
+                  Add More
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Clean Color Key Section - Time Blocking Style */}
           <Card className="mb-6">
