@@ -78,6 +78,7 @@ export default function SeasonalityTimeline() {
   const [draggedEvent, setDraggedEvent] = useState<TimelineEvent | null>(null);
   const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState('');
+  const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
 
   const [newEvent, setNewEvent] = useState({
     type: '',
@@ -122,6 +123,20 @@ export default function SeasonalityTimeline() {
   useEffect(() => {
     localStorage.setItem('seasonality-timeline-event-types', JSON.stringify(eventTypes));
   }, [eventTypes]);
+
+  // Close color picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (colorPickerOpen && !(event.target as Element).closest('.color-picker-container')) {
+        setColorPickerOpen(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [colorPickerOpen]);
 
   // Sync events to quarter detail pages
   const syncEventsToQuarters = () => {
@@ -184,6 +199,37 @@ export default function SeasonalityTimeline() {
   const cancelEditLabel = () => {
     setEditingTypeId(null);
     setEditingLabel('');
+  };
+
+  // Available color options for the color picker
+  const colorOptions = [
+    'bg-red-500', 'bg-orange-500', 'bg-amber-500', 'bg-yellow-500',
+    'bg-lime-500', 'bg-green-500', 'bg-emerald-500', 'bg-teal-500',
+    'bg-cyan-500', 'bg-sky-500', 'bg-blue-500', 'bg-indigo-500',
+    'bg-violet-500', 'bg-purple-500', 'bg-fuchsia-500', 'bg-pink-500',
+    'bg-rose-500', 'bg-gray-500', 'bg-slate-500', 'bg-zinc-500'
+  ];
+
+  const handleColorChange = (typeValue: string, newColor: string) => {
+    setEventTypes(prev => prev.map(type => 
+      type.value === typeValue 
+        ? { ...type, color: newColor }
+        : type
+    ));
+
+    // Update all existing events with this type to use the new color
+    setEvents(prev => prev.map(event => 
+      event.type === typeValue 
+        ? { ...event, color: newColor }
+        : event
+    ));
+
+    setColorPickerOpen(null);
+    
+    toast({
+      title: "Color updated",
+      description: "Event type color has been changed"
+    });
   };
 
   const addCustomEventType = () => {
@@ -403,8 +449,30 @@ export default function SeasonalityTimeline() {
           <CardContent>
             <div className="flex flex-wrap gap-3 mb-4">
               {eventTypes.map((type) => (
-                <div key={type.value} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-                  <div className={`w-4 h-4 ${type.color} rounded`}></div>
+                <div key={type.value} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 relative">
+                  <div 
+                    className={`w-4 h-4 ${type.color} rounded cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all`}
+                    onClick={() => setColorPickerOpen(colorPickerOpen === type.value ? null : type.value)}
+                  ></div>
+                  
+                  {/* Color Picker Popup */}
+                  {colorPickerOpen === type.value && (
+                    <div className="color-picker-container absolute top-10 left-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                      <div className="grid grid-cols-5 gap-2 mb-2">
+                        {colorOptions.map((color) => (
+                          <div
+                            key={color}
+                            className={`w-6 h-6 ${color} rounded cursor-pointer hover:scale-110 transition-transform ${
+                              type.color === color ? 'ring-2 ring-gray-800' : ''
+                            }`}
+                            onClick={() => handleColorChange(type.value, color)}
+                          ></div>
+                        ))}
+                      </div>
+                      <div className="text-xs text-gray-500 text-center">Click a color to select</div>
+                    </div>
+                  )}
+                  
                   {editingTypeId === type.value ? (
                     <div className="flex items-center gap-2">
                       <Input
