@@ -195,40 +195,28 @@ export default function ResourceLibrary() {
     <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Your Resource Library</h1>
-        <p className="text-gray-600 leading-relaxed mb-6">
+        <p className="text-gray-600 leading-relaxed">
           This is your personal resource hub. You'll find all downloadable PDFs and templates inside your Creative Business Toolkit course. When you come across a resource you'd like to refer back to—whether it's a PDF or a useful link—add it here to keep everything in one place.
         </p>
         
-        <div className="flex gap-3">
-          <input
-            type="file"
-            id="file-upload"
-            className="hidden"
-            accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif"
-            onChange={handleFileUpload}
-          />
-          <Button
-            onClick={() => document.getElementById('file-upload')?.click()}
-            className="flex items-center gap-2 bg-pink-500 hover:bg-pink-600"
-          >
-            <Plus className="w-4 h-4" />
-            Upload PDF or File
-          </Button>
-          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <Link className="w-4 h-4" />
-                Add Website Link
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Website Link</DialogTitle>
-              </DialogHeader>
-              <AddLinkForm onSubmit={handleAddLink} />
-            </DialogContent>
-          </Dialog>
-        </div>
+        {/* Hidden file input for uploads triggered from section buttons */}
+        <input
+          type="file"
+          id="file-upload"
+          className="hidden"
+          accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif"
+          onChange={handleFileUpload}
+        />
+        
+        {/* Hidden dialog for links triggered from section buttons */}
+        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Website Link</DialogTitle>
+            </DialogHeader>
+            <AddLinkForm onSubmit={handleAddLink} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* PDF Files Section */}

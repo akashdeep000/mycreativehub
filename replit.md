@@ -521,6 +521,15 @@ Changelog:
   - Added "Your Resource Library" as 7th main section in navigation and dashboard
   - Implemented inline editing, bulk operations, and download functionality for uploaded files
   - Enhanced user experience with empty states, loading states, and comprehensive error handling
+- July 10, 2025. Enhanced Resource Library with Card-Based Layout and Streamlined UI:
+  - Implemented card-based layout with square aspect ratio matching dashboard styling
+  - Added gradient headers: pink-purple for files, blue-green for website links
+  - Created separate sections for "Uploaded PDFs & Files" and "Favourite Websites & Resources"
+  - Added explanatory text and helper messages for better user guidance
+  - Removed duplicate top-level buttons to eliminate visual redundancy
+  - Integrated section-specific upload/add buttons within empty state cards
+  - Built "Download All PDFs" button for future bulk operations functionality
+  - Enhanced with line-clamp text truncation and improved responsive design
 
 ## User Preferences
 
