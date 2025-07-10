@@ -465,7 +465,7 @@ export default function MonthlyContentCalendar() {
                             />
                             <input
                               type="text"
-                              value={cellData.tagLabel}
+                              value={cellData.tagLabel || ''}
                               onChange={(e) => updateCell(day, { tagLabel: e.target.value })}
                               placeholder="Tag label"
                               className="text-xs font-medium text-gray-700 bg-transparent border-none outline-none focus:ring-0 w-full"

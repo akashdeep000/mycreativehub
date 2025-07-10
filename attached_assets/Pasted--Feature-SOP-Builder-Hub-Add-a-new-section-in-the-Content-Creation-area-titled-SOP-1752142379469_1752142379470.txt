@@ -1,0 +1,55 @@
+// === Feature: SOP Builder Hub ===
+//
+// Add a new section in the Content Creation area titled "SOP Builder".
+// It should appear as a card grid, with initial example SOPs:
+//
+//   • Email Funnel SOP  
+//   • Product Launch SOP  
+//   • Batching Content SOP
+//
+// These cards should be:
+//   - Editable: user can click title to rename.
+//   - Clickable: clicking opens the SOP editor.
+
+// === SOP Editor Component ===
+//
+// Layout when a card is opened:
+//   [Back to SOP Builder] [Clear Checklist Button]
+//
+// Title (editable input)
+//
+// A vertical list of steps:
+//   Step 1 [editable input with placeholder "Example: Write welcome email sequence"]
+//     [ ] Completed [checkbox aligned right]
+//   Step 2 [editable input with placeholder "Example: Design email template"]
+//     [ ] Completed
+//   Step 3 [editable input with placeholder "Example: Set up automation in platform"]
+//     [ ] Completed
+//   ...
+//
+// Functionality Requirements:
+//   - Users can edit all step text.
+//   - Users can check/uncheck each step.
+//   - At the bottom, a "Clear Checklist" button that resets all checkboxes (confirmation optional).
+//   - Autosave state (titles, steps, checked state) to localStorage or backend.
+//   - Ability to add new steps: a blank new step field at bottom or "+ Add Step" button.
+//   - Optional: reorder steps via drag handle.
+
+// === SOP Builder Hub Functionality ===
+//
+//   - Cards for each SOP show title and progress indicator (e.g., “2/5 steps done”).
+//   - "+ Add New SOP" card/button at end (create empty card with default title).
+//   - Persist SOP collection and step data.
+//   - Clicking “Clear Checklist” on hub resets all checkboxes in that SOP.
+
+// === Styling ===
+//
+//   - Follow existing pink/coral Fizz & Flourish aesthetic.
+//   - Cards should have hover/active effects.
+//   - Step list should be clean and easy to scan, matching other form styles.
+
+// === Routing / Structure ===
+//
+//   Add new route `/content/sop-builder` or `/content/sop/:id`.
+//   Update navigation to include “SOP Builder” as a third card underneath "Content Creation System".
+

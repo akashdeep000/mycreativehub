@@ -90,6 +90,18 @@ export default function ContentPlanning() {
     },
     {
       id: 6,
+      name: "SOP Builder",
+      description: "Create and manage Standard Operating Procedures for your content workflow. Track progress and streamline your processes.",
+      icon: FileText,
+      colour: "indigo",
+      bgGradient: "from-indigo-400 to-indigo-500",
+      lastUsed: "Never",
+      isPopular: true,
+      isInternal: true,
+      internalUrl: "/sop-builder"
+    },
+    {
+      id: 7,
       name: "Reel & Carousel Template Pack",
       description: "Create on-brand, scroll-stopping content with customisable Canva templates for Reels and carousels.",
       icon: Play,
@@ -141,7 +153,7 @@ export default function ContentPlanning() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                6 Templates
+                7 Templates
               </Badge>
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 Active

@@ -1,0 +1,216 @@
+import { useState, useEffect } from 'react';
+import { Link } from 'wouter';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
+import { Plus, FileText, CheckCircle, Circle, ArrowLeft } from 'lucide-react';
+
+interface SOPStep {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+interface SOP {
+  id: string;
+  title: string;
+  steps: SOPStep[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const defaultSOPs: SOP[] = [
+  {
+    id: 'email-funnel',
+    title: 'Email Funnel SOP',
+    steps: [
+      { id: '1', text: 'Write welcome email sequence', completed: false },
+      { id: '2', text: 'Design email template', completed: false },
+      { id: '3', text: 'Set up automation in platform', completed: false },
+      { id: '4', text: 'Create lead magnet', completed: false },
+      { id: '5', text: 'Test email sequences', completed: false },
+    ],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 'product-launch',
+    title: 'Product Launch SOP',
+    steps: [
+      { id: '1', text: 'Create launch timeline', completed: false },
+      { id: '2', text: 'Develop marketing assets', completed: false },
+      { id: '3', text: 'Set up sales page', completed: false },
+      { id: '4', text: 'Build email sequences', completed: false },
+      { id: '5', text: 'Plan social media campaign', completed: false },
+      { id: '6', text: 'Execute launch week', completed: false },
+    ],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 'batching-content',
+    title: 'Batching Content SOP',
+    steps: [
+      { id: '1', text: 'Plan content calendar', completed: false },
+      { id: '2', text: 'Set up batching schedule', completed: false },
+      { id: '3', text: 'Create content templates', completed: false },
+      { id: '4', text: 'Batch create visuals', completed: false },
+      { id: '5', text: 'Schedule content', completed: false },
+    ],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
+
+export default function SOPBuilderHub() {
+  const [sops, setSops] = useState<SOP[]>([]);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const savedSOPs = localStorage.getItem('sop-builder-sops');
+    if (savedSOPs) {
+      setSops(JSON.parse(savedSOPs));
+    } else {
+      setSops(defaultSOPs);
+      localStorage.setItem('sop-builder-sops', JSON.stringify(defaultSOPs));
+    }
+  }, []);
+
+  const saveSOPs = (updatedSOPs: SOP[]) => {
+    setSops(updatedSOPs);
+    localStorage.setItem('sop-builder-sops', JSON.stringify(updatedSOPs));
+  };
+
+  const createNewSOP = () => {
+    const newSOP: SOP = {
+      id: `sop-${Date.now()}`,
+      title: 'New SOP',
+      steps: [
+        { id: '1', text: '', completed: false },
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    const updatedSOPs = [...sops, newSOP];
+    saveSOPs(updatedSOPs);
+    
+    toast({
+      title: "New SOP Created",
+      description: "Your new SOP has been created and is ready for editing.",
+    });
+  };
+
+  const updateSOPTitle = (id: string, newTitle: string) => {
+    const updatedSOPs = sops.map(sop => 
+      sop.id === id ? { ...sop, title: newTitle, updatedAt: new Date() } : sop
+    );
+    saveSOPs(updatedSOPs);
+  };
+
+  const clearSOPChecklist = (id: string) => {
+    const updatedSOPs = sops.map(sop => 
+      sop.id === id ? {
+        ...sop,
+        steps: sop.steps.map(step => ({ ...step, completed: false })),
+        updatedAt: new Date()
+      } : sop
+    );
+    saveSOPs(updatedSOPs);
+    
+    toast({
+      title: "Checklist Cleared",
+      description: "All steps have been unchecked for this SOP.",
+    });
+  };
+
+  const getSOPProgress = (sop: SOP) => {
+    const completedSteps = sop.steps.filter(step => step.completed).length;
+    const totalSteps = sop.steps.length;
+    return { completed: completedSteps, total: totalSteps, percentage: totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0 };
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-pink-50 p-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <Link href="/content" className="text-gray-600 hover:text-gray-800">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <h1 className="text-3xl font-bold text-gray-900">SOP Builder Hub</h1>
+          </div>
+          <p className="text-gray-600">Create and manage your Standard Operating Procedures to streamline your workflow</p>
+        </div>
+
+        {/* SOP Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sops.map((sop) => {
+            const progress = getSOPProgress(sop);
+            return (
+              <Card key={sop.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-pink-600" />
+                      <input
+                        type="text"
+                        value={sop.title}
+                        onChange={(e) => updateSOPTitle(sop.id, e.target.value)}
+                        className="font-semibold text-lg bg-transparent border-none outline-none focus:ring-0 text-gray-900"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge variant="outline" className="text-xs">
+                        {progress.completed}/{progress.total} steps
+                      </Badge>
+                      <span className="text-xs text-gray-500">
+                        {Math.round(progress.percentage)}%
+                      </span>
+                    </div>
+                    <Progress value={progress.percentage} className="h-2" />
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="flex gap-2">
+                    <Link href={`/sop/${sop.id}`} className="flex-1">
+                      <Button 
+                        className="w-full bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-white"
+                        size="sm"
+                      >
+                        Open SOP
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => clearSOPChecklist(sop.id)}
+                      className="border-pink-200 text-pink-600 hover:bg-pink-50"
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+
+          {/* Add New SOP Card */}
+          <Card className="border-2 border-dashed border-pink-200 hover:border-pink-300 transition-colors cursor-pointer" onClick={createNewSOP}>
+            <CardContent className="flex flex-col items-center justify-center h-full p-8">
+              <Plus className="h-8 w-8 text-pink-400 mb-3" />
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">Add New SOP</h3>
+              <p className="text-sm text-gray-500 text-center">Create a new Standard Operating Procedure</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}

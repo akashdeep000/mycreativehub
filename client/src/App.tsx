@@ -23,6 +23,8 @@ import ArchivedTemplates from "@/pages/archived-templates";
 import InspirationBoardDetail from "@/pages/inspiration-board-detail";
 import DailyFocusPage from "@/pages/daily-focus";
 import AutomationToolkit from "@/pages/automation-toolkit";
+import SOPBuilderHub from "@/pages/sop-builder-hub";
+import SOPEditor from "@/pages/sop-editor";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -64,6 +66,8 @@ function Router() {
       <Route path="/finance" component={FinanceTracker} />
       <Route path="/daily-focus" component={DailyFocusPage} />
       <Route path="/automation-toolkit" component={AutomationToolkit} />
+      <Route path="/sop-builder" component={SOPBuilderHub} />
+      <Route path="/sop/:id" component={SOPEditor} />
       <Route path="/archived-templates" component={ArchivedTemplates} />
       <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
       <Route path="/inspiration-hub" component={InspirationHub} />
