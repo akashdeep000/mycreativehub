@@ -81,20 +81,6 @@ export default function ContentPlanning() {
       isPopular: true,
       isInternal: true,
       internalUrl: "/reel-carousel-templates"
-    },
-
-
-    {
-      id: 11,
-      name: "Performance Tracking Table",
-      description: "Track which content performs best so you can create more of what works. Monitor engagement, saves, and insights across all platforms.",
-      icon: BarChart3,
-      colour: "purple",
-      bgGradient: "from-purple-400 to-purple-500",
-      lastUsed: "Never",
-      isPopular: true,
-      isInternal: true,
-      internalUrl: "/performance-tracking-table"
     }
   ];
 
@@ -137,7 +123,7 @@ export default function ContentPlanning() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                5 Templates
+                4 Templates
               </Badge>
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 Active
