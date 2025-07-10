@@ -167,7 +167,7 @@ export default function ContentPlanning() {
         </div>
 
         {/* Tips Panel */}
-        <Card className="mt-8 border-pink-100 bg-pink-50">
+        <Card className="mt-8 border-pink-100 bg-white">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-500 rounded-lg flex items-center justify-center">
