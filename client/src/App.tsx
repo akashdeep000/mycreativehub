@@ -13,6 +13,8 @@ import ContentPlanning from "@/pages/content-planning";
 import SocialMediaStrategy from "@/pages/social-media-strategy";
 import ReelCarouselTemplates from "@/pages/reel-carousel-templates";
 import MonthlyContentPlanner from "@/pages/monthly-content-planner";
+import ContentBatchingPlanner from "@/pages/content-batching-planner";
+import MonthlyContentCalendar from "@/pages/monthly-content-calendar";
 import TimeBlocking from "@/pages/time-blocking";
 import FinanceTracker from "@/pages/finance-tracker";
 import InspirationHub from "@/pages/inspiration-hub";
@@ -56,6 +58,8 @@ function Router() {
       <Route path="/social-media-strategy" component={SocialMediaStrategy} />
       <Route path="/reel-carousel-templates" component={ReelCarouselTemplates} />
       <Route path="/monthly-content-planner" component={MonthlyContentPlanner} />
+      <Route path="/content-batching-planner" component={ContentBatchingPlanner} />
+      <Route path="/monthly-content-calendar" component={MonthlyContentCalendar} />
       <Route path="/time-blocking" component={TimeBlocking} />
       <Route path="/finance" component={FinanceTracker} />
       <Route path="/daily-focus" component={DailyFocusPage} />

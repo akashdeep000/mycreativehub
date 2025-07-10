@@ -315,6 +315,15 @@ Changelog:
   - Modal supports ESC key and background click dismissal for accessibility
   - Clear function resets table to 5 empty rows and shows success toast notification
   - Modal styled with Fizz & Flourish aesthetic for brand consistency
+- July 10, 2025. MAJOR REFACTOR: Split Monthly Content Planner into Two Separate Components:
+  - Created standalone Content Batching Planner (/content-batching-planner) with spreadsheet-style table functionality
+  - Created standalone Monthly Content Calendar (/monthly-content-calendar) with visual calendar and color-coded tags
+  - Both components appear as separate cards in Content Creation System dashboard
+  - Content Batching Planner includes: editable dropdowns, custom options, local storage, clear table modal, PDF export
+  - Monthly Content Calendar includes: drag-to-fill calendar, color tag system, notes fields, month navigation, PDF export
+  - Updated routing in App.tsx and content-planning.tsx to support new modular architecture
+  - Enhanced user experience with focused, single-purpose tools instead of combined interface
+  - Maintained all existing functionality while improving navigation and usability
 
 ## User Preferences
 

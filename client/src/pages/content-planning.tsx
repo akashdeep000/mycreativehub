@@ -46,23 +46,27 @@ export default function ContentPlanning() {
     },
     {
       id: 2,
-      name: "Monthly Content Calendar",
-      description: "Plan your content for the entire month with this comprehensive calendar template",
-      icon: Calendar,
-      colour: "blue",
-      bgGradient: "from-blue-400 to-blue-500",
-      lastUsed: "2 days ago",
-      isPopular: true
-    },
-    {
-      id: 3,
       name: "Content Batching Planner",
-      description: "Organise your content creation sessions for maximum efficiency",
+      description: "Map out your content ideas before they hit the calendar. Use this space to brainstorm and organise your posts by pillar, type, CTA, and notes—so planning feels structured, not scattered.",
       icon: Grid3X3,
       colour: "purple",
       bgGradient: "from-purple-400 to-purple-500",
+      lastUsed: "2 days ago",
+      isPopular: true,
+      isInternal: true,
+      internalUrl: "/content-batching-planner"
+    },
+    {
+      id: 3,
+      name: "Monthly Content Calendar",
+      description: "Visually plan your content across the month with colour-coded tags. Great for balancing post types, tracking launches, and staying consistent without the overwhelm.",
+      icon: Calendar,
+      colour: "blue",
+      bgGradient: "from-blue-400 to-blue-500",
       lastUsed: "1 week ago",
-      isPopular: false
+      isPopular: true,
+      isInternal: true,
+      internalUrl: "/monthly-content-calendar"
     },
     {
       id: 4,
@@ -102,11 +106,8 @@ export default function ContentPlanning() {
     if (template.id === 1) {
       // My Social Media Strategy
       setLocation('/social-media-strategy');
-    } else if (template.id === 2) {
-      // Monthly Content Calendar
-      setLocation('/monthly-content-planner');
     } else if (template.isInternal && template.internalUrl) {
-      // Internal templates (like Reel & Carousel Template Pack)
+      // Internal templates (like Content Batching Planner, Monthly Content Calendar, Reel & Carousel Template Pack)
       setLocation(template.internalUrl);
     } else if (template.isExternal && template.externalUrl) {
       // External templates (like Canva template pack)
