@@ -282,59 +282,58 @@ export default function ContentStatusTracker() {
         <Card className="mb-8">
           <CardContent className="p-6">
             <div className="overflow-x-auto">
-              <div className="min-w-full">
+              <div className="min-w-[1200px]">
                 {/* Table Header */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6 p-4 bg-gradient-to-r from-pink-50 to-orange-50 rounded-lg border border-pink-100">
-                  <div className="lg:col-span-3 font-semibold text-gray-700 text-sm uppercase tracking-wide">Content Title</div>
-                  <div className="lg:col-span-2 font-semibold text-gray-700 text-sm uppercase tracking-wide">Type</div>
-                  <div className="lg:col-span-2 font-semibold text-gray-700 text-sm uppercase tracking-wide">Platform</div>
-                  <div className="lg:col-span-2 font-semibold text-gray-700 text-sm uppercase tracking-wide">Status</div>
-                  <div className="lg:col-span-2 font-semibold text-gray-700 text-sm uppercase tracking-wide">Scheduled Date</div>
-                  <div className="lg:col-span-1 font-semibold text-gray-700 text-sm uppercase tracking-wide">Actions</div>
+                <div className="grid grid-cols-12 gap-3 mb-4 p-4 bg-gradient-to-r from-pink-50 to-orange-50 rounded-lg border border-pink-100 sticky top-0 z-10">
+                  <div className="col-span-2 font-semibold text-gray-700 text-sm uppercase tracking-wide">Content Title</div>
+                  <div className="col-span-1 font-semibold text-gray-700 text-sm uppercase tracking-wide">Type</div>
+                  <div className="col-span-1 font-semibold text-gray-700 text-sm uppercase tracking-wide">Platform</div>
+                  <div className="col-span-2 font-semibold text-gray-700 text-sm uppercase tracking-wide">Status</div>
+                  <div className="col-span-2 font-semibold text-gray-700 text-sm uppercase tracking-wide">Scheduled Date</div>
+                  <div className="col-span-3 font-semibold text-gray-700 text-sm uppercase tracking-wide">Notes</div>
+                  <div className="col-span-1 font-semibold text-gray-700 text-sm uppercase tracking-wide text-center">Actions</div>
                 </div>
 
                 {/* Table Rows */}
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {contentItems.map((item, index) => (
-                    <div key={item.id} className={`grid grid-cols-1 lg:grid-cols-12 gap-4 p-6 border-2 rounded-xl transition-all duration-200 hover:shadow-lg ${index % 2 === 0 ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-300'}`}>
+                    <div key={item.id} className={`grid grid-cols-12 gap-3 p-4 border rounded-lg transition-all duration-200 hover:shadow-md ${index % 2 === 0 ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-300'}`}>
                       {/* Content Title */}
-                      <div className="lg:col-span-3 space-y-2">
-                        <label className="block text-sm font-medium text-gray-600 lg:hidden">Content Title</label>
+                      <div className="col-span-2 border-r border-gray-200 pr-3">
                         <Input
                           value={item.title}
                           onChange={(e) => updateItem(item.id, 'title', e.target.value)}
                           placeholder="e.g., Summer Sale Carousel"
-                          className="w-full border-gray-300 focus:border-pink-400 focus:ring-pink-200 h-12 text-base"
+                          className="w-full border-gray-300 focus:border-pink-400 focus:ring-pink-200 h-10 text-sm"
                         />
                       </div>
 
                       {/* Type */}
-                      <div className="lg:col-span-2 space-y-2">
-                        <label className="block text-sm font-medium text-gray-600 lg:hidden">Type</label>
+                      <div className="col-span-1 border-r border-gray-200 pr-3">
                         {addingCustom?.type === 'types' && addingCustom?.itemId === item.id ? (
-                          <div className="flex gap-2">
+                          <div className="flex gap-1">
                             <Input
                               value={customValue}
                               onChange={(e) => setCustomValue(e.target.value)}
                               onKeyDown={handleCustomInput}
-                              placeholder="Enter custom type..."
-                              className="flex-1 border-pink-300 focus:border-pink-400 focus:ring-pink-200 h-12"
+                              placeholder="Custom type..."
+                              className="flex-1 border-pink-300 focus:border-pink-400 focus:ring-pink-200 h-10 text-sm"
                               autoFocus
                             />
                             <Button
                               size="sm"
                               onClick={() => addCustomOption('types', customValue)}
-                              className="bg-green-600 hover:bg-green-700 h-12 px-3"
+                              className="bg-green-600 hover:bg-green-700 h-10 px-1"
                             >
-                              <Check className="h-4 w-4" />
+                              <Check className="h-3 w-3" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => {setAddingCustom(null); setCustomValue('');}}
-                              className="h-12 px-3"
+                              className="h-10 px-1"
                             >
-                              <X className="h-4 w-4" />
+                              <X className="h-3 w-3" />
                             </Button>
                           </div>
                         ) : (
@@ -349,8 +348,8 @@ export default function ContentStatusTracker() {
                               }
                             }}
                           >
-                            <SelectTrigger className="w-full border-gray-300 focus:border-pink-400 focus:ring-pink-200 h-12 text-base">
-                              <SelectValue placeholder="Select type" />
+                            <SelectTrigger className="w-full border-gray-300 focus:border-pink-400 focus:ring-pink-200 h-10 text-sm">
+                              <SelectValue placeholder="Type" />
                             </SelectTrigger>
                             <SelectContent>
                               {typeOptions.map((type) => (
@@ -369,7 +368,7 @@ export default function ContentStatusTracker() {
                                 </>
                               )}
                               <SelectItem value="add_custom" className="text-pink-600 font-medium">
-                                + Add Custom Type
+                                + Add Custom
                               </SelectItem>
                             </SelectContent>
                           </Select>
@@ -377,32 +376,31 @@ export default function ContentStatusTracker() {
                       </div>
 
                       {/* Platform */}
-                      <div className="lg:col-span-2 space-y-2">
-                        <label className="block text-sm font-medium text-gray-600 lg:hidden">Platform</label>
+                      <div className="col-span-1 border-r border-gray-200 pr-3">
                         {addingCustom?.type === 'platforms' && addingCustom?.itemId === item.id ? (
-                          <div className="flex gap-2">
+                          <div className="flex gap-1">
                             <Input
                               value={customValue}
                               onChange={(e) => setCustomValue(e.target.value)}
                               onKeyDown={handleCustomInput}
-                              placeholder="Enter custom platform..."
-                              className="flex-1 border-pink-300 focus:border-pink-400 focus:ring-pink-200 h-12"
+                              placeholder="Custom platform..."
+                              className="flex-1 border-pink-300 focus:border-pink-400 focus:ring-pink-200 h-10 text-sm"
                               autoFocus
                             />
                             <Button
                               size="sm"
                               onClick={() => addCustomOption('platforms', customValue)}
-                              className="bg-green-600 hover:bg-green-700 h-12 px-3"
+                              className="bg-green-600 hover:bg-green-700 h-10 px-1"
                             >
-                              <Check className="h-4 w-4" />
+                              <Check className="h-3 w-3" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => {setAddingCustom(null); setCustomValue('');}}
-                              className="h-12 px-3"
+                              className="h-10 px-1"
                             >
-                              <X className="h-4 w-4" />
+                              <X className="h-3 w-3" />
                             </Button>
                           </div>
                         ) : (
@@ -417,8 +415,8 @@ export default function ContentStatusTracker() {
                               }
                             }}
                           >
-                            <SelectTrigger className="w-full border-gray-300 focus:border-pink-400 focus:ring-pink-200 h-12 text-base">
-                              <SelectValue placeholder="Select platform" />
+                            <SelectTrigger className="w-full border-gray-300 focus:border-pink-400 focus:ring-pink-200 h-10 text-sm">
+                              <SelectValue placeholder="Platform" />
                             </SelectTrigger>
                             <SelectContent>
                               {platformOptions.map((platform) => (
@@ -437,7 +435,7 @@ export default function ContentStatusTracker() {
                                 </>
                               )}
                               <SelectItem value="add_custom" className="text-pink-600 font-medium">
-                                + Add Custom Platform
+                                + Add Custom
                               </SelectItem>
                             </SelectContent>
                           </Select>
@@ -445,59 +443,58 @@ export default function ContentStatusTracker() {
                       </div>
 
                       {/* Status */}
-                      <div className="lg:col-span-2 space-y-2">
-                        <label className="block text-sm font-medium text-gray-600 lg:hidden">Status</label>
-                        <Select
-                          value={item.status}
-                          onValueChange={(value) => updateItem(item.id, 'status', value)}
-                        >
-                          <SelectTrigger className="w-full border-gray-300 focus:border-pink-400 focus:ring-pink-200 h-12 text-base">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {statusOptions.map((status) => (
-                              <SelectItem key={status.value} value={status.value}>
-                                {status.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Badge className={`${getStatusColor(item.status)} text-xs px-3 py-1`}>
-                          {getStatusLabel(item.status)}
-                        </Badge>
+                      <div className="col-span-2 border-r border-gray-200 pr-3">
+                        <div className="space-y-1">
+                          <Select
+                            value={item.status}
+                            onValueChange={(value) => updateItem(item.id, 'status', value)}
+                          >
+                            <SelectTrigger className="w-full border-gray-300 focus:border-pink-400 focus:ring-pink-200 h-10 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {statusOptions.map((status) => (
+                                <SelectItem key={status.value} value={status.value}>
+                                  {status.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Badge className={`${getStatusColor(item.status)} text-xs px-2 py-1 w-fit`}>
+                            {getStatusLabel(item.status)}
+                          </Badge>
+                        </div>
                       </div>
 
                       {/* Scheduled Date */}
-                      <div className="lg:col-span-2 space-y-2">
-                        <label className="block text-sm font-medium text-gray-600 lg:hidden">Scheduled Date</label>
+                      <div className="col-span-2 border-r border-gray-200 pr-3">
                         <Input
                           type="date"
                           value={item.scheduledDate}
                           onChange={(e) => updateItem(item.id, 'scheduledDate', e.target.value)}
-                          className="w-full border-gray-300 focus:border-pink-400 focus:ring-pink-200 h-12 text-base"
+                          className="w-full border-gray-300 focus:border-pink-400 focus:ring-pink-200 h-10 text-sm"
                         />
                       </div>
 
-                      {/* Notes - Full width on mobile, spans remaining columns on desktop */}
-                      <div className="lg:col-span-12 lg:col-start-1 lg:row-start-2 space-y-2 lg:mt-4">
-                        <label className="block text-sm font-medium text-gray-600">Notes</label>
+                      {/* Notes */}
+                      <div className="col-span-3 border-r border-gray-200 pr-3">
                         <Input
                           value={item.notes}
                           onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
                           placeholder="Add notes about this content..."
-                          className="w-full border-gray-300 focus:border-pink-400 focus:ring-pink-200 h-12 text-base"
+                          className="w-full border-gray-300 focus:border-pink-400 focus:ring-pink-200 h-10 text-sm"
                         />
                       </div>
 
                       {/* Actions */}
-                      <div className="lg:col-span-1 flex items-center justify-center lg:justify-end">
+                      <div className="col-span-1 flex items-center justify-center">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => deleteItem(item.id)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 h-12 px-4"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 h-10 px-2"
                         >
-                          <Trash2 className="h-5 w-5" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
