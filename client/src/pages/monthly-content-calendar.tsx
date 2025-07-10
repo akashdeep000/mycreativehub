@@ -77,8 +77,11 @@ export default function MonthlyContentCalendar() {
     
     const days = [];
     
+    // Convert Sunday-based (0) to Monday-based (0=Monday, 6=Sunday)
+    const mondayStartingDay = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1;
+    
     // Add empty cells for days before the first day of the month
-    for (let i = 0; i < startingDayOfWeek; i++) {
+    for (let i = 0; i < mondayStartingDay; i++) {
       days.push(null);
     }
     
@@ -404,7 +407,7 @@ export default function MonthlyContentCalendar() {
             <div id="monthly-calendar" className="bg-white rounded-lg border">
               {/* Day headers */}
               <div className="grid grid-cols-7 border-b">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
                   <div key={day} className="p-3 text-center font-semibold text-gray-600 border-r last:border-r-0">
                     {day}
                   </div>
@@ -415,7 +418,7 @@ export default function MonthlyContentCalendar() {
               <div className="grid grid-cols-7" onMouseUp={handleMouseUp}>
                 {days.map((day, index) => {
                   if (day === null) {
-                    return <div key={index} className="h-24 border-r border-b last:border-r-0" />;
+                    return <div key={`empty-${index}`} className="h-32 border-r border-b last:border-r-0" />;
                   }
                   
                   const cellData = getCellData(day);
@@ -423,34 +426,44 @@ export default function MonthlyContentCalendar() {
                   
                   return (
                     <div
-                      key={day}
-                      className={`h-24 border-r border-b last:border-r-0 p-1 cursor-pointer transition-colors ${
+                      key={`day-${day}`}
+                      className={`h-32 border-r border-b last:border-r-0 p-2 cursor-pointer transition-colors relative ${
                         selectedTagId ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
                       }`}
                       onClick={() => handleCellClick(day)}
                       onMouseDown={() => handleMouseDown(day)}
                       onMouseEnter={() => handleMouseEnter(day)}
                       style={{
-                        backgroundColor: tag ? `${tag.color}20` : 'transparent'
+                        backgroundColor: tag ? `${tag.color}15` : 'transparent'
                       }}
                     >
-                      <div className="flex justify-between items-start h-full">
-                        <span className="text-sm font-medium text-gray-700">{day}</span>
+                      {/* Date number - always visible in top corner */}
+                      <div className="absolute top-2 left-2">
+                        <span className="text-sm font-semibold text-gray-800">{day}</span>
+                      </div>
+                      
+                      {/* Tag label - positioned below date */}
+                      <div className="mt-6 min-h-[20px]">
                         {tag && (
-                          <div
-                            className="w-3 h-3 rounded-full border border-white shadow-sm"
-                            style={{ backgroundColor: tag.color }}
-                          />
+                          <div className="flex items-center gap-1 mb-1">
+                            <div
+                              className="w-3 h-3 rounded-full border border-white shadow-sm"
+                              style={{ backgroundColor: tag.color }}
+                            />
+                            <span className="text-xs font-medium text-gray-700 truncate">
+                              {tag.label}
+                            </span>
+                          </div>
                         )}
                       </div>
                       
-                      {/* Content area */}
-                      <div className="mt-1">
+                      {/* Notes area - positioned below tag */}
+                      <div className="mt-1 flex-1">
                         <Textarea
                           value={cellData.content}
                           onChange={(e) => updateCell(day, { content: e.target.value })}
-                          placeholder="Add notes..."
-                          className="w-full h-12 text-xs border-none bg-transparent p-0 resize-none focus:ring-0"
+                          placeholder={tag ? "" : "Add notes..."}
+                          className="w-full h-14 text-xs border-none bg-transparent p-0 resize-none focus:ring-0 placeholder:text-gray-400"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
