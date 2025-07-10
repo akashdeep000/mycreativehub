@@ -83,18 +83,7 @@ export default function ContentPlanning() {
       internalUrl: "/reel-carousel-templates"
     },
 
-    {
-      id: 10,
-      name: "Content Performance & Strategy Worksheet",
-      description: "Look back before you move forward—use this space to reflect on what's working and set fresh, intentional content goals.",
-      icon: BookOpen,
-      colour: "pink",
-      bgGradient: "from-pink-400 to-pink-500",
-      lastUsed: "Never",
-      isPopular: true,
-      isInternal: true,
-      internalUrl: "/content-performance-strategy"
-    },
+
     {
       id: 11,
       name: "Performance Tracking Table",
@@ -148,7 +137,7 @@ export default function ContentPlanning() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                6 Templates
+                5 Templates
               </Badge>
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 Active
