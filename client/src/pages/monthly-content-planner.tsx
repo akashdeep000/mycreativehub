@@ -9,7 +9,16 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Calendar, Plus, Trash2, Download, Lightbulb, ChevronLeft, ChevronRight, FileText, X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ArrowLeft, Calendar, Plus, Trash2, Download, Lightbulb, ChevronLeft, ChevronRight, FileText, X, RotateCcw } from "lucide-react";
 import { useLocation } from "wouter";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
@@ -87,6 +96,7 @@ export default function MonthlyContentPlanner() {
   const [showCustomTypeInput, setShowCustomTypeInput] = useState<string | null>(null);
   const [customPillarValue, setCustomPillarValue] = useState('');
   const [customTypeValue, setCustomTypeValue] = useState('');
+  const [showClearTableModal, setShowClearTableModal] = useState(false);
 
   // Default options
   const defaultPillars = [
@@ -387,6 +397,22 @@ export default function MonthlyContentPlanner() {
 
   const deleteBatchingRow = (id: string) => {
     setBatchingData(prev => prev.filter(row => row.id !== id));
+  };
+
+  const clearAllBatchingData = () => {
+    setBatchingData([
+      { id: '1', postTitle: '', pillar: '', type: '', caption: '', cta: '', visual: '', status: '' },
+      { id: '2', postTitle: '', pillar: '', type: '', caption: '', cta: '', visual: '', status: '' },
+      { id: '3', postTitle: '', pillar: '', type: '', caption: '', cta: '', visual: '', status: '' },
+      { id: '4', postTitle: '', pillar: '', type: '', caption: '', cta: '', visual: '', status: '' },
+      { id: '5', postTitle: '', pillar: '', type: '', caption: '', cta: '', visual: '', status: '' },
+    ]);
+    setShowClearTableModal(false);
+    toast({
+      title: "Table cleared",
+      description: "All content has been removed from your batching table",
+      duration: 3000,
+    });
   };
 
   // PDF Export function
@@ -701,7 +727,7 @@ export default function MonthlyContentPlanner() {
                 </tbody>
               </table>
               
-              <div className="p-3 bg-gray-50 border-t border-gray-200">
+              <div className="p-3 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
                 <Button
                   onClick={addBatchingRow}
                   variant="outline"
@@ -711,6 +737,41 @@ export default function MonthlyContentPlanner() {
                   <Plus className="h-4 w-4 mr-2" />
                   Add More
                 </Button>
+                <Dialog open={showClearTableModal} onOpenChange={setShowClearTableModal}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-pink-600 border-pink-200 hover:bg-pink-50"
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Clear Table
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Clear All Posts?</DialogTitle>
+                      <DialogDescription>
+                        Are you sure you want to clear all content from your batching table? This action can't be undone.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowClearTableModal(false)}
+                        className="mt-2 sm:mt-0"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={clearAllBatchingData}
+                        className="bg-pink-500 hover:bg-pink-600 text-white"
+                      >
+                        Clear Table
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </div>

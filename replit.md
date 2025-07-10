@@ -308,6 +308,13 @@ Changelog:
   - Added toast notifications for successful custom option additions
   - Escape key cancels custom input mode and returns to dropdown selection
   - Unlimited custom values can be added and persist between table rows and sessions
+- July 10, 2025. Added Clear Table Button with Confirmation Modal:
+  - Added "Clear Table" button positioned right-aligned in table footer with pink ghost button styling
+  - Implemented confirmation modal with "Clear All Posts?" title and warning message
+  - Modal includes "Cancel" (grey outline) and "Clear Table" (pink fill) buttons
+  - Modal supports ESC key and background click dismissal for accessibility
+  - Clear function resets table to 5 empty rows and shows success toast notification
+  - Modal styled with Fizz & Flourish aesthetic for brand consistency
 
 ## User Preferences
 
