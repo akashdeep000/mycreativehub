@@ -5,7 +5,8 @@ import {
   Mail, 
   Rocket, 
   DollarSign, 
-  Users, 
+  Users,
+  FolderOpen,
   LucideIcon 
 } from "lucide-react";
 
@@ -22,6 +23,7 @@ export const navigationItems: NavigationItem[] = [
   { href: "/streamline-workflow", icon: Workflow, label: "Streamline Workflow", moduleKey: "Streamline Your Workflow" },
   { href: "/content", icon: FileText, label: "Content System", moduleKey: "Content Creation System" },
   { href: "/email", icon: Mail, label: "Email Marketing", moduleKey: "Email Marketing" },
+  { href: "/resource-library", icon: FolderOpen, label: "Resource Library", moduleKey: "Your Resource Library" },
   { href: "/launch", icon: Rocket, label: "Product Launch", moduleKey: "Product Launch System" },
   { href: "/finance", icon: DollarSign, label: "Finance", moduleKey: "Financial Management" },
   { href: "/affiliate", icon: Users, label: "Affiliate Hub", moduleKey: "The Affiliate Marketing Hub" },

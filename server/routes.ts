@@ -1229,6 +1229,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Resource Library routes
+  app.get('/api/resource-library', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const items = await storage.getResourceLibraryItems(userId);
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching resource library items:", error);
+      res.status(500).json({ message: "Failed to fetch resource library items" });
+    }
+  });
+
+  app.post('/api/resource-library', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const itemData = {
+        userId,
+        ...req.body
+      };
+      
+      const item = await storage.createResourceLibraryItem(itemData);
+      res.status(201).json(item);
+    } catch (error) {
+      console.error("Error creating resource library item:", error);
+      res.status(500).json({ message: "Failed to create resource library item" });
+    }
+  });
+
+  app.put('/api/resource-library/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const item = await storage.updateResourceLibraryItem(parseInt(id), req.body);
+      res.json(item);
+    } catch (error) {
+      console.error("Error updating resource library item:", error);
+      res.status(500).json({ message: "Failed to update resource library item" });
+    }
+  });
+
+  app.delete('/api/resource-library/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteResourceLibraryItem(parseInt(id));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting resource library item:", error);
+      res.status(500).json({ message: "Failed to delete resource library item" });
+    }
+  });
+
+  app.post('/api/resource-library/reorder', jwtAuth, async (req: any, res) => {
+    try {
+      const { items } = req.body;
+      await storage.updateResourceDisplayOrder(items);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error reordering resource library items:", error);
+      res.status(500).json({ message: "Failed to reorder resource library items" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

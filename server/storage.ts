@@ -16,6 +16,7 @@ import {
   colorPalettes,
   boardLinks,
   socialMediaStrategies,
+  resourceLibrary,
   type User,
   type UpsertUser,
   type ToolkitModule,
@@ -44,6 +45,8 @@ import {
   type InsertBoardLink,
   type SocialMediaStrategy,
   type InsertSocialMediaStrategy,
+  type ResourceLibraryItem,
+  type InsertResourceLibraryItem,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, gte, lte, sql, inArray } from "drizzle-orm";
@@ -138,6 +141,13 @@ export interface IStorage {
   // Social Media Strategy
   getSocialMediaStrategy(userId: string): Promise<SocialMediaStrategy | undefined>;
   upsertSocialMediaStrategy(strategy: InsertSocialMediaStrategy): Promise<SocialMediaStrategy>;
+  
+  // Resource Library
+  getResourceLibraryItems(userId: string): Promise<ResourceLibraryItem[]>;
+  createResourceLibraryItem(item: InsertResourceLibraryItem): Promise<ResourceLibraryItem>;
+  updateResourceLibraryItem(id: number, data: any): Promise<ResourceLibraryItem>;
+  deleteResourceLibraryItem(id: number): Promise<void>;
+  updateResourceDisplayOrder(items: { id: number; displayOrder: number }[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -824,6 +834,50 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return strategy;
+  }
+
+  // Resource Library
+  async getResourceLibraryItems(userId: string): Promise<ResourceLibraryItem[]> {
+    return await db
+      .select()
+      .from(resourceLibrary)
+      .where(eq(resourceLibrary.userId, userId))
+      .orderBy(asc(resourceLibrary.displayOrder));
+  }
+
+  async createResourceLibraryItem(itemData: InsertResourceLibraryItem): Promise<ResourceLibraryItem> {
+    const [item] = await db
+      .insert(resourceLibrary)
+      .values(itemData)
+      .returning();
+    return item;
+  }
+
+  async updateResourceLibraryItem(id: number, data: any): Promise<ResourceLibraryItem> {
+    const [updatedItem] = await db
+      .update(resourceLibrary)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(resourceLibrary.id, id))
+      .returning();
+    return updatedItem;
+  }
+
+  async deleteResourceLibraryItem(id: number): Promise<void> {
+    await db.delete(resourceLibrary)
+      .where(eq(resourceLibrary.id, id));
+  }
+
+  async updateResourceDisplayOrder(items: { id: number; displayOrder: number }[]): Promise<void> {
+    // Update display order for each item
+    for (const item of items) {
+      await db
+        .update(resourceLibrary)
+        .set({ displayOrder: item.displayOrder })
+        .where(eq(resourceLibrary.id, item.id));
+    }
   }
 }
 

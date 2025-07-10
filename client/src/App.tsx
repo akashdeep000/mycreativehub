@@ -30,6 +30,7 @@ import RepurposingToolkit from "@/pages/repurposing-toolkit";
 import ContentPerformanceStrategy from "@/pages/content-performance-strategy";
 import PerformanceTrackingTable from "@/pages/performance-tracking-table";
 import EmailMarketing from "@/pages/email-marketing";
+import ResourceLibrary from "@/pages/resource-library";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -78,6 +79,7 @@ function Router() {
       <Route path="/content-performance-strategy" component={ContentPerformanceStrategy} />
       <Route path="/performance-tracking-table" component={PerformanceTrackingTable} />
       <Route path="/email" component={EmailMarketing} />
+      <Route path="/resource-library" component={ResourceLibrary} />
       <Route path="/archived-templates" component={ArchivedTemplates} />
       <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
       <Route path="/inspiration-hub" component={InspirationHub} />

@@ -432,6 +432,28 @@ export const insertSocialMediaStrategySchema = createInsertSchema(socialMediaStr
   updatedAt: true,
 });
 
+// Resource Library
+export const resourceLibrary = pgTable("resource_library", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: varchar("type").notNull(), // "pdf" or "link"
+  title: varchar("title").notNull(),
+  description: text("description"),
+  url: text("url"), // For external links
+  fileData: text("file_data"), // Base64 encoded file for PDFs
+  fileName: varchar("file_name"), // Original filename for PDFs
+  fileSize: integer("file_size"), // File size in bytes
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertResourceLibrarySchema = createInsertSchema(resourceLibrary).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -461,3 +483,5 @@ export type BoardLink = typeof boardLinks.$inferSelect;
 export type InsertBoardLink = z.infer<typeof insertBoardLinkSchema>;
 export type SocialMediaStrategy = typeof socialMediaStrategies.$inferSelect;
 export type InsertSocialMediaStrategy = z.infer<typeof insertSocialMediaStrategySchema>;
+export type ResourceLibraryItem = typeof resourceLibrary.$inferSelect;
+export type InsertResourceLibraryItem = z.infer<typeof insertResourceLibrarySchema>;
