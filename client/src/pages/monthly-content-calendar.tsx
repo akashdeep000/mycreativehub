@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
-import { ChevronLeft, ChevronRight, Calendar, Lightbulb, Download, Edit3, Trash2, Plus, Palette } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Lightbulb, Download, Edit3, Trash2, Plus, Palette, Check, Video, RefreshCw, TrendingUp } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -20,6 +21,9 @@ interface CalendarCell {
   content: string;
   tagId: string | null;
   tagLabel: string;
+  status: 'idea' | 'in-progress' | 'scheduled' | 'posted' | null;
+  isBatchDay: boolean;
+  batchNote: string;
 }
 
 const defaultColorTags: ColorTag[] = [
@@ -102,7 +106,15 @@ export default function MonthlyContentCalendar() {
 
   const getCellData = (day: number) => {
     const dateKey = getDateKey(day);
-    return calendarData.find(cell => cell.date === dateKey) || { date: dateKey, content: '', tagId: null, tagLabel: '' };
+    return calendarData.find(cell => cell.date === dateKey) || { 
+      date: dateKey, 
+      content: '', 
+      tagId: null, 
+      tagLabel: '', 
+      status: null, 
+      isBatchDay: false, 
+      batchNote: '' 
+    };
   };
 
   const updateCell = (day: number, updates: Partial<CalendarCell>) => {
@@ -114,7 +126,16 @@ export default function MonthlyContentCalendar() {
           cell.date === dateKey ? { ...cell, ...updates } : cell
         );
       } else {
-        return [...prev, { date: dateKey, content: '', tagId: null, tagLabel: '', ...updates }];
+        return [...prev, { 
+          date: dateKey, 
+          content: '', 
+          tagId: null, 
+          tagLabel: '', 
+          status: null, 
+          isBatchDay: false, 
+          batchNote: '', 
+          ...updates 
+        }];
       }
     });
   };
@@ -431,32 +452,67 @@ export default function MonthlyContentCalendar() {
               <div className="grid grid-cols-7" onMouseUp={handleMouseUp}>
                 {days.map((day, index) => {
                   if (day === null) {
-                    return <div key={`empty-${index}`} className="h-32 border-r border-b last:border-r-0" />;
+                    return <div key={`empty-${index}`} className="h-40 border-r border-b last:border-r-0" />;
                   }
                   
                   const cellData = getCellData(day);
                   const tag = cellData.tagId ? colorTags.find(t => t.id === cellData.tagId) : null;
                   
+                  // Determine background color - batch day gets priority
+                  let backgroundColor = 'transparent';
+                  if (cellData.isBatchDay) {
+                    backgroundColor = '#fef3c7'; // Pastel yellow for batch days
+                  } else if (tag) {
+                    backgroundColor = `${tag.color}15`;
+                  }
+                  
                   return (
                     <div
                       key={`day-${day}`}
-                      className={`h-32 border-r border-b last:border-r-0 p-2 cursor-pointer transition-colors relative ${
+                      className={`h-40 border-r border-b last:border-r-0 p-2 cursor-pointer transition-colors relative ${
                         selectedTagId ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
-                      }`}
+                      } ${cellData.isBatchDay ? 'ring-2 ring-yellow-300 ring-opacity-50' : ''}`}
                       onClick={() => handleCellClick(day)}
                       onMouseDown={() => handleMouseDown(day)}
                       onMouseEnter={() => handleMouseEnter(day)}
                       style={{
-                        backgroundColor: tag ? `${tag.color}15` : 'transparent'
+                        backgroundColor
                       }}
                     >
-                      {/* Date number - always visible in top corner */}
-                      <div className="absolute top-2 left-2">
+                      {/* Date number and batch day indicator */}
+                      <div className="absolute top-2 left-2 flex items-center gap-1">
                         <span className="text-sm font-semibold text-gray-800">{day}</span>
+                        {cellData.isBatchDay && (
+                          <div className="flex items-center">
+                            <Video className="w-3 h-3 text-yellow-600" />
+                            <span className="text-xs text-yellow-700 ml-1">🎬</span>
+                          </div>
+                        )}
                       </div>
                       
-                      {/* Tag label - positioned below date, editable */}
-                      <div className="mt-6 min-h-[20px]">
+                      {/* Status indicator - positioned in top right */}
+                      <div className="absolute top-2 right-2">
+                        {cellData.status === 'posted' && (
+                          <Check className="w-4 h-4 text-green-600 bg-green-100 rounded-full p-0.5" />
+                        )}
+                      </div>
+                      
+                      {/* Batch day controls */}
+                      {cellData.isBatchDay && (
+                        <div className="mt-6 mb-2">
+                          <input
+                            type="text"
+                            value={cellData.batchNote}
+                            onChange={(e) => updateCell(day, { batchNote: e.target.value })}
+                            placeholder="Batching goals (e.g., Film 3 reels)"
+                            className="w-full text-xs bg-yellow-50 border border-yellow-200 rounded px-2 py-1 placeholder:text-yellow-600"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Tag label - positioned below batch controls or date */}
+                      <div className={`${cellData.isBatchDay ? 'mt-1' : 'mt-6'} min-h-[20px]`}>
                         {cellData.tagId && (
                           <div className="flex items-center gap-1 mb-1">
                             <div
@@ -475,19 +531,83 @@ export default function MonthlyContentCalendar() {
                         )}
                       </div>
                       
-                      {/* Notes area - positioned below tag, no placeholder by default */}
+                      {/* Status dropdown */}
+                      <div className="mb-1" onClick={(e) => e.stopPropagation()}>
+                        <Select
+                          value={cellData.status || ''}
+                          onValueChange={(value) => updateCell(day, { status: value as 'idea' | 'in-progress' | 'scheduled' | 'posted' })}
+                        >
+                          <SelectTrigger className="h-6 text-xs border-gray-200 bg-white/80">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="idea">Idea 💡</SelectItem>
+                            <SelectItem value="in-progress">In Progress ✍️</SelectItem>
+                            <SelectItem value="scheduled">Scheduled 📆</SelectItem>
+                            <SelectItem value="posted">Posted ✅</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {/* Batch day toggle button */}
+                      <div className="mb-1" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          size="sm"
+                          variant={cellData.isBatchDay ? "default" : "outline"}
+                          onClick={() => updateCell(day, { isBatchDay: !cellData.isBatchDay })}
+                          className={`h-6 text-xs w-full ${cellData.isBatchDay ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : 'text-yellow-700 border-yellow-300 hover:bg-yellow-50'}`}
+                        >
+                          {cellData.isBatchDay ? 'Batching Day 🎬' : 'Mark as Batch Day'}
+                        </Button>
+                      </div>
+                      
+                      {/* Notes area - positioned at bottom */}
                       <div className="mt-1 flex-1">
                         <Textarea
                           value={cellData.content}
                           onChange={(e) => updateCell(day, { content: e.target.value })}
                           placeholder=""
-                          className="w-full h-14 text-xs border-none bg-transparent p-0 resize-none focus:ring-0 placeholder:text-gray-400"
+                          className="w-full h-8 text-xs border-none bg-transparent p-0 resize-none focus:ring-0 placeholder:text-gray-400"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Strategic Tips Bar */}
+        <Card className="mt-6 border-pink-200">
+          <CardHeader className="bg-gradient-to-r from-pink-400 to-pink-500 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <TrendingUp className="h-5 w-5" />
+              Strategic Tips
+            </CardTitle>
+            <CardDescription className="text-pink-100">
+              Smart strategies to maximise your content's impact
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <RefreshCw className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-blue-800 font-medium">
+                    🔁 Don't forget to repurpose! A topic that worked well on Instagram could also become an email, blog, or video.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
+                <TrendingUp className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-green-800 font-medium">
+                    🌟 Create more of what's working. Notice patterns in posts that perform well — and lean into them.
+                  </p>
+                </div>
               </div>
             </div>
           </CardContent>
