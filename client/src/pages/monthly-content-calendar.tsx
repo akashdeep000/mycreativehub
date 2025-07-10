@@ -544,7 +544,10 @@ export default function MonthlyContentCalendar() {
                       {/* Status indicator - positioned in top right */}
                       <div className="absolute top-2 right-2">
                         {cellData.status === 'posted' && (
-                          <Check className="w-4 h-4 text-green-600 bg-green-100 rounded-full p-0.5" />
+                          <div className="relative">
+                            <Check className="w-5 h-5 text-white bg-green-500 rounded-full p-1 border-2 border-white shadow-lg" 
+                                   style={{ filter: 'drop-shadow(0 0 4px rgba(34, 197, 94, 0.6))' }} />
+                          </div>
                         )}
                       </div>
                       
@@ -582,23 +585,25 @@ export default function MonthlyContentCalendar() {
                         )}
                       </div>
                       
-                      {/* Status dropdown */}
-                      <div className="mb-1" onClick={(e) => e.stopPropagation()}>
-                        <Select
-                          value={cellData.status || ''}
-                          onValueChange={(value) => updateCell(day, { status: value as 'idea' | 'in-progress' | 'scheduled' | 'posted' })}
-                        >
-                          <SelectTrigger className="h-6 text-xs border-gray-200 bg-white/80">
-                            <SelectValue placeholder="Status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="idea">Idea 💡</SelectItem>
-                            <SelectItem value="in-progress">In Progress ✍️</SelectItem>
-                            <SelectItem value="scheduled">Scheduled 📆</SelectItem>
-                            <SelectItem value="posted">Posted ✅</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      {/* Status dropdown - only show when a tag is applied */}
+                      {cellData.tagId && (
+                        <div className="mb-1" onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={cellData.status || ''}
+                            onValueChange={(value) => updateCell(day, { status: value as 'idea' | 'in-progress' | 'scheduled' | 'posted' })}
+                          >
+                            <SelectTrigger className="h-6 text-xs border-gray-200 bg-white/80">
+                              <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="idea">Idea 💡</SelectItem>
+                              <SelectItem value="in-progress">In Progress ✍️</SelectItem>
+                              <SelectItem value="scheduled">Scheduled 📆</SelectItem>
+                              <SelectItem value="posted">Posted ✅</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                       
                       {/* Notes area - positioned at bottom */}
                       <div className="mt-1 flex-1">

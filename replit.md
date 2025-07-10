@@ -490,6 +490,14 @@ Changelog:
   - Streamlined calendar cells by removing individual batch buttons while maintaining full functionality
   - Added automatic focus on batch goal input when batch day is activated for quick goal setting
   - Improved visual hierarchy with cleaner, less cluttered calendar interface maintaining all core features
+- July 10, 2025. Improved Monthly Content Calendar Visual Design and UX:
+  - Implemented conditional status dropdown display: only appears after color-coded tag is applied to calendar day
+  - Significantly reduced visual clutter by hiding status dropdowns on inactive/untagged calendar days
+  - Enhanced "Posted" status visual with brighter, bolder green checkmark (bg-green-500 with white border)
+  - Added subtle green glow effect using drop-shadow filter for better visibility and contrast
+  - Increased posted status icon size from w-4 h-4 to w-5 h-5 for improved prominence
+  - Calendar now maintains clean, minimal appearance while preserving full functionality for active content days
+  - Status workflow: apply color tag first, then status dropdown becomes available for content tracking
 
 ## User Preferences
 
