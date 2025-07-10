@@ -77,54 +77,42 @@ export default function EmailMarketing() {
           </div>
         </div>
 
-        {/* Email Marketing Starter Map Card */}
-        <div className="max-w-4xl mx-auto">
-          <Card className="border-pink-100 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
-            <CardHeader className="border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-pink-500 rounded-lg flex items-center justify-center">
+        {/* Email Marketing Tools Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Email Marketing Starter Map Card */}
+          <Card className="group cursor-pointer border-pink-100 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
+            <CardHeader className="bg-gradient-to-br from-pink-400 to-pink-500 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
                   <Mail className="w-6 h-6 text-white" />
                 </div>
-                <div>
-                  <CardTitle className="text-xl font-serif text-gray-800">
-                    Email Marketing Starter Map
-                  </CardTitle>
-                  <CardDescription className="text-gray-600">
-                    Your visual reference for building a simple and powerful email funnel.
-                  </CardDescription>
-                </div>
+                <CardTitle className="text-xl font-serif mb-2">
+                  Email Marketing Starter Map
+                </CardTitle>
+                <CardDescription className="text-pink-100">
+                  Your visual reference for building a simple and powerful email funnel.
+                </CardDescription>
               </div>
             </CardHeader>
             
             <CardContent className="p-6">
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Main Description */}
-                <div className="text-gray-700 leading-relaxed">
+                <div className="text-gray-700 leading-relaxed text-sm">
                   <p>
-                    This starter map gives you a clear visual overview of your email funnel—from lead magnet to welcome email to your mini sequence. Use it as a reference to guide your setup or refresh your existing flow.
+                    This starter map gives you a clear visual overview of your email funnel—from lead magnet to welcome email to your mini sequence.
                   </p>
                 </div>
 
-                {/* Download Section */}
-                <div className="bg-pink-50 p-4 rounded-lg border border-pink-100">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-800 mb-1">Ready to download?</h3>
-                      <p className="text-sm text-gray-600">
-                        Get your visual email funnel reference guide instantly.
-                      </p>
-                    </div>
-                    <Button 
-                      onClick={handleDownload}
-                      className="bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download Guide
-                    </Button>
-                  </div>
-                </div>
-
-
+                {/* Download Button */}
+                <Button 
+                  onClick={handleDownload}
+                  className="w-full bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Guide
+                </Button>
               </div>
             </CardContent>
           </Card>
