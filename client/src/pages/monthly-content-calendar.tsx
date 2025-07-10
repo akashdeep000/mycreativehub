@@ -19,6 +19,7 @@ interface CalendarCell {
   date: string;
   content: string;
   tagId: string | null;
+  tagLabel: string;
 }
 
 const defaultColorTags: ColorTag[] = [
@@ -101,7 +102,7 @@ export default function MonthlyContentCalendar() {
 
   const getCellData = (day: number) => {
     const dateKey = getDateKey(day);
-    return calendarData.find(cell => cell.date === dateKey) || { date: dateKey, content: '', tagId: null };
+    return calendarData.find(cell => cell.date === dateKey) || { date: dateKey, content: '', tagId: null, tagLabel: '' };
   };
 
   const updateCell = (day: number, updates: Partial<CalendarCell>) => {
@@ -113,27 +114,39 @@ export default function MonthlyContentCalendar() {
           cell.date === dateKey ? { ...cell, ...updates } : cell
         );
       } else {
-        return [...prev, { date: dateKey, content: '', tagId: null, ...updates }];
+        return [...prev, { date: dateKey, content: '', tagId: null, tagLabel: '', ...updates }];
       }
     });
   };
 
   const handleCellClick = (day: number) => {
     if (selectedTagId) {
-      updateCell(day, { tagId: selectedTagId });
+      const selectedTag = colorTags.find(tag => tag.id === selectedTagId);
+      updateCell(day, { 
+        tagId: selectedTagId,
+        tagLabel: selectedTag ? selectedTag.label : ''
+      });
     }
   };
 
   const handleMouseDown = (day: number) => {
     if (selectedTagId) {
       setIsDragging(true);
-      updateCell(day, { tagId: selectedTagId });
+      const selectedTag = colorTags.find(tag => tag.id === selectedTagId);
+      updateCell(day, { 
+        tagId: selectedTagId,
+        tagLabel: selectedTag ? selectedTag.label : ''
+      });
     }
   };
 
   const handleMouseEnter = (day: number) => {
     if (isDragging && selectedTagId) {
-      updateCell(day, { tagId: selectedTagId });
+      const selectedTag = colorTags.find(tag => tag.id === selectedTagId);
+      updateCell(day, { 
+        tagId: selectedTagId,
+        tagLabel: selectedTag ? selectedTag.label : ''
+      });
     }
   };
 
@@ -185,7 +198,7 @@ export default function MonthlyContentCalendar() {
   const deleteColorTag = (id: string) => {
     setColorTags(prev => prev.filter(tag => tag.id !== id));
     setCalendarData(prev => prev.map(cell => 
-      cell.tagId === id ? { ...cell, tagId: null } : cell
+      cell.tagId === id ? { ...cell, tagId: null, tagLabel: '' } : cell
     ));
     if (selectedTagId === id) {
       setSelectedTagId(null);
@@ -442,27 +455,32 @@ export default function MonthlyContentCalendar() {
                         <span className="text-sm font-semibold text-gray-800">{day}</span>
                       </div>
                       
-                      {/* Tag label - positioned below date */}
+                      {/* Tag label - positioned below date, editable */}
                       <div className="mt-6 min-h-[20px]">
-                        {tag && (
+                        {cellData.tagId && (
                           <div className="flex items-center gap-1 mb-1">
                             <div
                               className="w-3 h-3 rounded-full border border-white shadow-sm"
-                              style={{ backgroundColor: tag.color }}
+                              style={{ backgroundColor: tag?.color || '#ccc' }}
                             />
-                            <span className="text-xs font-medium text-gray-700 truncate">
-                              {tag.label}
-                            </span>
+                            <input
+                              type="text"
+                              value={cellData.tagLabel}
+                              onChange={(e) => updateCell(day, { tagLabel: e.target.value })}
+                              placeholder="Tag label"
+                              className="text-xs font-medium text-gray-700 bg-transparent border-none outline-none focus:ring-0 w-full"
+                              onClick={(e) => e.stopPropagation()}
+                            />
                           </div>
                         )}
                       </div>
                       
-                      {/* Notes area - positioned below tag */}
+                      {/* Notes area - positioned below tag, no placeholder by default */}
                       <div className="mt-1 flex-1">
                         <Textarea
                           value={cellData.content}
                           onChange={(e) => updateCell(day, { content: e.target.value })}
-                          placeholder={tag ? "" : "Add notes..."}
+                          placeholder=""
                           className="w-full h-14 text-xs border-none bg-transparent p-0 resize-none focus:ring-0 placeholder:text-gray-400"
                           onClick={(e) => e.stopPropagation()}
                         />
