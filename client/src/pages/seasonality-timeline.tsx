@@ -455,19 +455,19 @@ export default function SeasonalityTimeline() {
                   
                   {/* Color Picker Popup */}
                   {colorPickerOpen === type.value && (
-                    <div className="color-picker-container absolute top-10 left-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                      <div className="grid grid-cols-5 gap-2 mb-2">
+                    <div className="color-picker-container absolute top-10 left-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-4 min-w-[180px]">
+                      <div className="grid grid-cols-5 gap-3 mb-3">
                         {colorOptions.map((color) => (
                           <div
                             key={color}
-                            className={`w-6 h-6 ${color} rounded cursor-pointer hover:scale-110 transition-transform ${
-                              type.color === color ? 'ring-2 ring-gray-800' : ''
+                            className={`w-7 h-7 ${color} rounded-md cursor-pointer hover:scale-110 transition-all duration-200 hover:shadow-md ${
+                              type.color === color ? 'ring-2 ring-gray-800 ring-offset-1' : ''
                             }`}
                             onClick={() => handleColorChange(type.value, color)}
                           ></div>
                         ))}
                       </div>
-                      <div className="text-xs text-gray-500 text-center">Click a color to select</div>
+                      <div className="text-xs text-gray-500 text-center font-medium">Click a color to select</div>
                     </div>
                   )}
                   
