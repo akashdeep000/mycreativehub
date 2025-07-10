@@ -378,6 +378,15 @@ Changelog:
   - Created Repurposing Toolkit as 9th template in Content Creation System with emerald gradient styling and Recycle icon
   - Added complete routing support in App.tsx and updated Content Creation System badge to show 9 templates
   - Enhanced user experience with auto-save functionality, toast notifications, and responsive design optimized for mobile devices
+- July 10, 2025. MAJOR REDESIGN: Transformed Repurposing Toolkit to Horizontal Spreadsheet Layout:
+  - Redesigned header with icon placement and consistent visual hierarchy matching other planner tools
+  - Converted to professional table format with 7 columns: Original Content, Platform It Was Posted, New Format Ideas, Visual Assets Needed, Captions or Copy, Publish Date, Status
+  - Replaced complex grid layout with clean HTML table structure for Excel-like user experience
+  - Split Content Library Folder System into standalone card with simplified download button interface
+  - Maintained custom dropdown functionality and localStorage persistence across all fields
+  - Enhanced table with alternating row backgrounds, increased field heights (h-12), and improved visual separation
+  - Positioned controls in footer with "Add More" and "Clear Table" buttons on left, "Export CSV" on right
+  - Updated all data structures to include new captions and publishDate fields with proper auto-save functionality
 
 ## User Preferences
 
