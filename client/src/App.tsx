@@ -31,6 +31,8 @@ import ContentPerformanceStrategy from "@/pages/content-performance-strategy";
 import PerformanceTrackingTable from "@/pages/performance-tracking-table";
 
 import ResourceLibrary from "@/pages/resource-library";
+import ProductLaunch from "@/pages/product-launch";
+import SeasonalityTimeline from "@/pages/seasonality-timeline";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -80,6 +82,8 @@ function Router() {
       <Route path="/performance-tracking-table" component={PerformanceTrackingTable} />
 
       <Route path="/resource-library" component={ResourceLibrary} />
+      <Route path="/launch" component={ProductLaunch} />
+      <Route path="/seasonality-timeline" component={SeasonalityTimeline} />
       <Route path="/archived-templates" component={ArchivedTemplates} />
       <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
       <Route path="/inspiration-hub" component={InspirationHub} />

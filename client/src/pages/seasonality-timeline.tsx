@@ -1,0 +1,462 @@
+import { useState, useRef } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Calendar, 
+  Plus, 
+  Download, 
+  Trash2, 
+  Edit2, 
+  GripVertical,
+  Lightbulb,
+  ArrowLeft,
+  ZoomIn
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+
+interface TimelineEvent {
+  id: string;
+  type: string;
+  date: string;
+  month: number;
+  quarter: number;
+  title: string;
+  notes: string;
+  emoji: string;
+  color: string;
+}
+
+const eventTypes = [
+  { value: 'launch', label: 'Launch', color: 'bg-purple-500', emoji: '🚀' },
+  { value: 'holiday', label: 'Holiday', color: 'bg-red-500', emoji: '🎄' },
+  { value: 'break', label: 'Break', color: 'bg-green-500', emoji: '🌴' },
+  { value: 'promo', label: 'Promo', color: 'bg-orange-500', emoji: '💰' },
+  { value: 'energy-high', label: 'Energy High', color: 'bg-yellow-500', emoji: '⚡' },
+  { value: 'energy-low', label: 'Energy Low', color: 'bg-gray-500', emoji: '😴' },
+  { value: 'personal', label: 'Personal', color: 'bg-pink-500', emoji: '❤️' }
+];
+
+const months = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+const quarters = [
+  { name: 'Q1', months: [1, 2, 3], color: 'from-blue-400 to-cyan-400' },
+  { name: 'Q2', months: [4, 5, 6], color: 'from-green-400 to-emerald-400' },
+  { name: 'Q3', months: [7, 8, 9], color: 'from-orange-400 to-yellow-400' },
+  { name: 'Q4', months: [10, 11, 12], color: 'from-purple-400 to-pink-400' }
+];
+
+const quickSuggestions = [
+  { title: 'Black Friday Promo', type: 'promo', month: 11 },
+  { title: 'New Year Launch', type: 'launch', month: 1 },
+  { title: 'Summer Break', type: 'break', month: 7 },
+  { title: 'Holiday Campaign', type: 'holiday', month: 12 },
+  { title: 'Spring Energy Boost', type: 'energy-high', month: 3 }
+];
+
+export default function SeasonalityTimeline() {
+  const { toast } = useToast();
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedQuarter, setSelectedQuarter] = useState<number | null>(null);
+  const [draggedEvent, setDraggedEvent] = useState<TimelineEvent | null>(null);
+
+  const [newEvent, setNewEvent] = useState({
+    type: '',
+    date: '',
+    title: '',
+    notes: '',
+    emoji: ''
+  });
+
+  const generateId = () => Math.random().toString(36).substr(2, 9);
+
+  const getEventTypeData = (type: string) => {
+    return eventTypes.find(t => t.value === type) || eventTypes[0];
+  };
+
+  const handleAddEvent = () => {
+    if (!newEvent.type || !newEvent.date || !newEvent.title) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in type, date, and title",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const date = new Date(newEvent.date);
+    const month = date.getMonth() + 1;
+    const quarter = Math.ceil(month / 3);
+    const typeData = getEventTypeData(newEvent.type);
+
+    const event: TimelineEvent = {
+      id: generateId(),
+      type: newEvent.type,
+      date: newEvent.date,
+      month,
+      quarter,
+      title: newEvent.title,
+      notes: newEvent.notes,
+      emoji: newEvent.emoji || typeData.emoji,
+      color: typeData.color
+    };
+
+    setEvents(prev => [...prev, event]);
+    setNewEvent({ type: '', date: '', title: '', notes: '', emoji: '' });
+    setIsAddModalOpen(false);
+    
+    toast({
+      title: "Event added",
+      description: `${event.title} added to your timeline`
+    });
+  };
+
+  const handleDeleteEvent = (id: string) => {
+    setEvents(prev => prev.filter(e => e.id !== id));
+    toast({
+      title: "Event deleted",
+      description: "Event removed from timeline"
+    });
+  };
+
+  const handleQuickAdd = (suggestion: any) => {
+    const year = new Date().getFullYear();
+    const date = `${year}-${suggestion.month.toString().padStart(2, '0')}-01`;
+    
+    setNewEvent({
+      type: suggestion.type,
+      date,
+      title: suggestion.title,
+      notes: '',
+      emoji: ''
+    });
+    setIsAddModalOpen(true);
+  };
+
+  const handleDragStart = (e: React.DragEvent, event: TimelineEvent) => {
+    setDraggedEvent(event);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetMonth: number) => {
+    e.preventDefault();
+    
+    if (!draggedEvent) return;
+
+    const quarter = Math.ceil(targetMonth / 3);
+    const updatedEvent = {
+      ...draggedEvent,
+      month: targetMonth,
+      quarter
+    };
+
+    setEvents(prev => prev.map(event => 
+      event.id === draggedEvent.id ? updatedEvent : event
+    ));
+
+    setDraggedEvent(null);
+    
+    toast({
+      title: "Event moved",
+      description: `${draggedEvent.title} moved to ${months[targetMonth - 1]}`
+    });
+  };
+
+  const exportToPDF = async () => {
+    if (!timelineRef.current) return;
+
+    try {
+      const canvas = await html2canvas(timelineRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('l', 'mm', 'a4');
+      const imgWidth = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save(`seasonality-timeline-${new Date().getFullYear()}.pdf`);
+
+      toast({
+        title: "PDF exported",
+        description: "Your timeline has been downloaded"
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "Unable to export PDF",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getEventsForMonth = (month: number) => {
+    return events.filter(event => event.month === month);
+  };
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => window.history.back()}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Product Launch
+          </Button>
+        </div>
+        
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-rose-400 rounded-xl flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Seasonality Timeline {new Date().getFullYear()}</h1>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <p className="text-gray-600">Plan your year with purpose—map your seasonal cycles, launches, and personal flow.</p>
+          <div className="flex gap-2">
+            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-pink-500 hover:bg-pink-600">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Event
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Timeline Event</DialogTitle>
+                </DialogHeader>
+                <AddEventForm 
+                  newEvent={newEvent}
+                  setNewEvent={setNewEvent}
+                  onAdd={handleAddEvent}
+                />
+              </DialogContent>
+            </Dialog>
+            
+            <Button variant="outline" onClick={exportToPDF}>
+              <Download className="w-4 h-4 mr-2" />
+              Export PDF
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Main Timeline */}
+        <div className="lg:col-span-3">
+          <div ref={timelineRef} className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-xl font-semibold mb-6 text-center">
+              Year-at-a-Glance: {new Date().getFullYear()}
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {quarters.map((quarter) => (
+                <div key={quarter.name} className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                  <div className={`bg-gradient-to-r ${quarter.color} text-white p-4 flex items-center justify-between`}>
+                    <h3 className="font-semibold text-lg">{quarter.name}</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-white hover:bg-white/20"
+                      onClick={() => setSelectedQuarter(selectedQuarter === parseInt(quarter.name.slice(1)) ? null : parseInt(quarter.name.slice(1)))}
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="p-4 space-y-4">
+                    {quarter.months.map((monthNum) => (
+                      <div 
+                        key={monthNum}
+                        className="border border-gray-300 rounded-lg p-3 min-h-[100px] bg-gray-50"
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, monthNum)}
+                      >
+                        <h4 className="font-medium text-sm text-gray-700 mb-2">
+                          {months[monthNum - 1]}
+                        </h4>
+                        
+                        <div className="space-y-2">
+                          {getEventsForMonth(monthNum).map((event) => (
+                            <div
+                              key={event.id}
+                              className={`${event.color} text-white text-xs p-2 rounded cursor-move flex items-center gap-2 hover:opacity-80`}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, event)}
+                            >
+                              <GripVertical className="w-3 h-3" />
+                              <span>{event.emoji}</span>
+                              <span className="flex-1 truncate">{event.title}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-white hover:bg-white/20 w-6 h-6 p-0"
+                                onClick={() => handleDeleteEvent(event.id)}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Tips Section */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-yellow-500" />
+                <CardTitle className="text-lg">Planning Tips</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-sm text-gray-600 space-y-2">
+                <p>• Plan launches during your high-energy seasons</p>
+                <p>• Block out rest periods after major launches</p>
+                <p>• Consider industry holidays and trends</p>
+                <p>• Leave buffer time for unexpected opportunities</p>
+                <p>• Review and adjust quarterly</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Color Legend */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Event Types</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {eventTypes.map((type) => (
+                <div key={type.value} className="flex items-center gap-2">
+                  <div className={`w-4 h-4 ${type.color} rounded`}></div>
+                  <span className="text-sm">{type.emoji} {type.label}</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Quick Add Suggestions */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Quick Add</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {quickSuggestions.map((suggestion, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start text-left h-auto p-2"
+                  onClick={() => handleQuickAdd(suggestion)}
+                >
+                  <span className="text-xs truncate">{suggestion.title}</span>
+                </Button>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AddEventForm({ newEvent, setNewEvent, onAdd }: any) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="type">Event Type</Label>
+        <Select value={newEvent.type} onValueChange={(value) => setNewEvent({ ...newEvent, type: value })}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select event type" />
+          </SelectTrigger>
+          <SelectContent>
+            {eventTypes.map((type) => (
+              <SelectItem key={type.value} value={type.value}>
+                {type.emoji} {type.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="date">Date</Label>
+        <Input
+          id="date"
+          type="date"
+          value={newEvent.date}
+          onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="title">Title</Label>
+        <Input
+          id="title"
+          value={newEvent.title}
+          onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+          placeholder="Event title"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="notes">Notes (Optional)</Label>
+        <Textarea
+          id="notes"
+          value={newEvent.notes}
+          onChange={(e) => setNewEvent({ ...newEvent, notes: e.target.value })}
+          placeholder="Additional details..."
+          rows={3}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="emoji">Custom Emoji (Optional)</Label>
+        <Input
+          id="emoji"
+          value={newEvent.emoji}
+          onChange={(e) => setNewEvent({ ...newEvent, emoji: e.target.value })}
+          placeholder="🎯"
+          maxLength={2}
+        />
+      </div>
+
+      <Button onClick={onAdd} className="w-full bg-pink-500 hover:bg-pink-600">
+        Add Event
+      </Button>
+    </div>
+  );
+}
