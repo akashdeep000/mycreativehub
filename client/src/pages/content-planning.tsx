@@ -57,18 +57,6 @@ export default function ContentPlanning() {
       isInternal: true,
       internalUrl: "/monthly-content-calendar"
     },
-    {
-      id: 6,
-      name: "SOP Builder",
-      description: "Create and manage Standard Operating Procedures for your content workflow. Track progress and streamline your processes.",
-      icon: FileText,
-      colour: "indigo",
-      bgGradient: "from-indigo-400 to-indigo-500",
-      lastUsed: "Never",
-      isPopular: true,
-      isInternal: true,
-      internalUrl: "/sop-builder"
-    },
 
     {
       id: 8,
@@ -123,7 +111,7 @@ export default function ContentPlanning() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                4 Templates
+                3 Templates
               </Badge>
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 Active

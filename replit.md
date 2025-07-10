@@ -498,6 +498,12 @@ Changelog:
   - Increased posted status icon size from w-4 h-4 to w-5 h-5 for improved prominence
   - Calendar now maintains clean, minimal appearance while preserving full functionality for active content days
   - Status workflow: apply color tag first, then status dropdown becomes available for content tracking
+- July 10, 2025. Moved SOP Builder from Content Creation System to Streamline Your Workflow:
+  - Removed SOP Builder card from Content Creation System section for better organization
+  - Added SOP Builder as 5th card in Streamline Your Workflow section with indigo-purple gradient styling
+  - Updated Content Creation System template count badge from 4 to 3 templates
+  - SOP Builder now positioned alongside other workflow optimization tools for logical grouping
+  - Maintained all existing SOP Builder functionality and routing while improving section organization
 
 ## User Preferences
 

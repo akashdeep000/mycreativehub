@@ -126,6 +126,17 @@ const workflowTemplates = [
     isExternal: true,
     externalRoute: "/automation-toolkit",
     defaultData: {}
+  },
+  {
+    id: "sop-builder",
+    name: "SOP Builder",
+    description: "Create and manage Standard Operating Procedures for your content workflow. Track progress and streamline your processes.",
+    icon: FileText,
+    colour: "bg-gradient-to-br from-indigo-500 to-purple-500",
+    textColor: "text-white",
+    isExternal: true,
+    externalRoute: "/sop-builder",
+    defaultData: {}
   }
 ];
 
