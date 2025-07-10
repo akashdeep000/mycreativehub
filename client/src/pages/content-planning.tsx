@@ -69,26 +69,6 @@ export default function ContentPlanning() {
       internalUrl: "/monthly-content-calendar"
     },
     {
-      id: 4,
-      name: "Blog Post Planner",
-      description: "Structure your blog posts with this detailed planning template",
-      icon: FileText,
-      colour: "green",
-      bgGradient: "from-green-400 to-green-500",
-      lastUsed: "3 days ago",
-      isPopular: true
-    },
-    {
-      id: 5,
-      name: "Brand Colour Palette",
-      description: "Keep track of your brand colours and visual identity",
-      icon: Palette,
-      colour: "pink",
-      bgGradient: "from-pink-400 to-pink-500",
-      lastUsed: "Never",
-      isPopular: false
-    },
-    {
       id: 6,
       name: "SOP Builder",
       description: "Create and manage Standard Operating Procedures for your content workflow. Track progress and streamline your processes.",
@@ -201,7 +181,7 @@ export default function ContentPlanning() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                11 Templates
+                9 Templates
               </Badge>
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 Active
