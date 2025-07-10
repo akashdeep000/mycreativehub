@@ -44,18 +44,7 @@ export default function ContentPlanning() {
       lastUsed: "Never",
       isPopular: true
     },
-    {
-      id: 2,
-      name: "Content Batching Planner",
-      description: "Map out your content ideas before they hit the calendar. Use this space to brainstorm and organise your posts by pillar, type, CTA, and notes—so planning feels structured, not scattered.",
-      icon: Grid3X3,
-      colour: "purple",
-      bgGradient: "from-purple-400 to-purple-500",
-      lastUsed: "2 days ago",
-      isPopular: true,
-      isInternal: true,
-      internalUrl: "/content-batching-planner"
-    },
+
     {
       id: 3,
       name: "Monthly Content Calendar",
@@ -80,18 +69,7 @@ export default function ContentPlanning() {
       isInternal: true,
       internalUrl: "/sop-builder"
     },
-    {
-      id: 7,
-      name: "Content Status Tracker",
-      description: "Track your content progress from idea to publication with status updates and scheduling.",
-      icon: ClipboardCheck,
-      colour: "teal",
-      bgGradient: "from-teal-400 to-teal-500",
-      lastUsed: "Never",
-      isPopular: true,
-      isInternal: true,
-      internalUrl: "/content-status-tracker"
-    },
+
     {
       id: 8,
       name: "Reel & Carousel Template Pack",
@@ -181,7 +159,7 @@ export default function ContentPlanning() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                9 Templates
+                7 Templates
               </Badge>
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 Active
