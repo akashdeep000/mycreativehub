@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -16,9 +16,12 @@ import {
   GripVertical,
   Lightbulb,
   ArrowLeft,
-  ZoomIn
+  ZoomIn,
+  Check,
+  X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -34,7 +37,7 @@ interface TimelineEvent {
   color: string;
 }
 
-const eventTypes = [
+const defaultEventTypes = [
   { value: 'launch', label: 'Launch', color: 'bg-purple-500', emoji: '🚀' },
   { value: 'holiday', label: 'Holiday', color: 'bg-red-500', emoji: '🎄' },
   { value: 'break', label: 'Break', color: 'bg-green-500', emoji: '🌴' },
@@ -66,11 +69,15 @@ const quickSuggestions = [
 
 export default function SeasonalityTimeline() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const timelineRef = useRef<HTMLDivElement>(null);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [eventTypes, setEventTypes] = useState(defaultEventTypes);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedQuarter, setSelectedQuarter] = useState<number | null>(null);
   const [draggedEvent, setDraggedEvent] = useState<TimelineEvent | null>(null);
+  const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState('');
 
   const [newEvent, setNewEvent] = useState({
     type: '',
@@ -82,8 +89,120 @@ export default function SeasonalityTimeline() {
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
+  // Load events and event types from localStorage on component mount
+  useEffect(() => {
+    const savedEvents = localStorage.getItem('seasonality-timeline-events');
+    const savedEventTypes = localStorage.getItem('seasonality-timeline-event-types');
+    
+    if (savedEvents) {
+      try {
+        setEvents(JSON.parse(savedEvents));
+      } catch (error) {
+        console.error('Error loading events:', error);
+      }
+    }
+    
+    if (savedEventTypes) {
+      try {
+        setEventTypes(JSON.parse(savedEventTypes));
+      } catch (error) {
+        console.error('Error loading event types:', error);
+      }
+    }
+  }, []);
+
+  // Save events to localStorage whenever events change
+  useEffect(() => {
+    localStorage.setItem('seasonality-timeline-events', JSON.stringify(events));
+    // Also sync events to quarter detail pages
+    syncEventsToQuarters();
+  }, [events]);
+
+  // Save event types to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('seasonality-timeline-event-types', JSON.stringify(eventTypes));
+  }, [eventTypes]);
+
+  // Sync events to quarter detail pages
+  const syncEventsToQuarters = () => {
+    // Clear existing quarter events
+    ['q1', 'q2', 'q3', 'q4'].forEach(quarter => {
+      localStorage.removeItem(`quarter-${quarter}-events`);
+    });
+
+    // Group events by quarter and save to respective quarter localStorage
+    events.forEach(event => {
+      const quarterKey = `q${event.quarter}`;
+      const quarterEvents = JSON.parse(localStorage.getItem(`quarter-${quarterKey}-events`) || '[]');
+      
+      // Convert timeline event to quarter event format
+      const quarterEvent = {
+        id: event.id,
+        type: event.type,
+        title: event.title,
+        date: event.date,
+        notes: event.notes,
+        emoji: event.emoji,
+        color: event.color,
+        detailedNotes: '',
+        checklist: [],
+        reminders: []
+      };
+      
+      quarterEvents.push(quarterEvent);
+      localStorage.setItem(`quarter-${quarterKey}-events`, JSON.stringify(quarterEvents));
+    });
+  };
+
   const getEventTypeData = (type: string) => {
     return eventTypes.find(t => t.value === type) || eventTypes[0];
+  };
+
+  const handleEditTypeLabel = (typeValue: string, currentLabel: string) => {
+    setEditingTypeId(typeValue);
+    setEditingLabel(currentLabel);
+  };
+
+  const saveTypeLabel = () => {
+    if (!editingTypeId || !editingLabel.trim()) return;
+    
+    setEventTypes(prev => prev.map(type => 
+      type.value === editingTypeId 
+        ? { ...type, label: editingLabel.trim() }
+        : type
+    ));
+    
+    setEditingTypeId(null);
+    setEditingLabel('');
+    
+    toast({
+      title: "Label updated",
+      description: "Event type label has been saved"
+    });
+  };
+
+  const cancelEditLabel = () => {
+    setEditingTypeId(null);
+    setEditingLabel('');
+  };
+
+  const addCustomEventType = () => {
+    const colors = ['bg-indigo-500', 'bg-teal-500', 'bg-rose-500', 'bg-amber-500', 'bg-cyan-500'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    
+    const newType = {
+      value: `custom-${Date.now()}`,
+      label: 'Custom Type',
+      color: randomColor,
+      emoji: '⭐'
+    };
+    
+    setEventTypes(prev => [...prev, newType]);
+    handleEditTypeLabel(newType.value, newType.label);
+  };
+
+  const navigateToQuarter = (quarterNum: number) => {
+    setLocation(`/seasonality/q${quarterNum}`);
   };
 
   const handleAddEvent = () => {
@@ -236,7 +355,7 @@ export default function SeasonalityTimeline() {
           <h1 className="text-2xl font-bold text-gray-900">Seasonality Timeline {new Date().getFullYear()}</h1>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
           <p className="text-gray-600">Plan your year with purpose—map your seasonal cycles, launches, and personal flow.</p>
           <div className="flex gap-2">
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
@@ -249,11 +368,15 @@ export default function SeasonalityTimeline() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add Timeline Event</DialogTitle>
+                  <DialogDescription>
+                    Create a new event for your timeline. Choose the type, date, and details.
+                  </DialogDescription>
                 </DialogHeader>
                 <AddEventForm 
                   newEvent={newEvent}
                   setNewEvent={setNewEvent}
                   onAdd={handleAddEvent}
+                  eventTypes={eventTypes}
                 />
               </DialogContent>
             </Dialog>
@@ -264,6 +387,64 @@ export default function SeasonalityTimeline() {
             </Button>
           </div>
         </div>
+
+        {/* Quick-Use Summary */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <p className="text-sm text-blue-800">
+            <strong>Quick-Use Guide:</strong> Click 'Add Event' to input your details. Your colour-coded event will appear in your Year-at-a-Glance view. Click the + icon beside a quarter to expand and dive deeper into your plans.
+          </p>
+        </div>
+
+        {/* Color Key - Moved to Top */}
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Event Types & Color Key</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3 mb-4">
+              {eventTypes.map((type) => (
+                <div key={type.value} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                  <div className={`w-4 h-4 ${type.color} rounded`}></div>
+                  {editingTypeId === type.value ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editingLabel}
+                        onChange={(e) => setEditingLabel(e.target.value)}
+                        className="h-6 text-xs w-24"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') saveTypeLabel();
+                          if (e.key === 'Escape') cancelEditLabel();
+                        }}
+                      />
+                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={saveTypeLabel}>
+                        <Check className="w-3 h-3 text-green-600" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={cancelEditLabel}>
+                        <X className="w-3 h-3 text-red-600" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <span 
+                      className="text-sm cursor-pointer hover:text-blue-600"
+                      onClick={() => handleEditTypeLabel(type.value, type.label)}
+                    >
+                      {type.emoji} {type.label}
+                    </span>
+                  )}
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addCustomEventType}
+                className="h-8 text-xs"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Add Label
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -283,9 +464,9 @@ export default function SeasonalityTimeline() {
                       variant="ghost"
                       size="sm"
                       className="text-white hover:bg-white/20"
-                      onClick={() => setSelectedQuarter(selectedQuarter === parseInt(quarter.name.slice(1)) ? null : parseInt(quarter.name.slice(1)))}
+                      onClick={() => navigateToQuarter(parseInt(quarter.name.slice(1)))}
                     >
-                      <ZoomIn className="w-4 h-4" />
+                      <Plus className="w-4 h-4" />
                     </Button>
                   </div>
                   
@@ -353,21 +534,6 @@ export default function SeasonalityTimeline() {
             </CardContent>
           </Card>
 
-          {/* Color Legend */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Event Types</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {eventTypes.map((type) => (
-                <div key={type.value} className="flex items-center gap-2">
-                  <div className={`w-4 h-4 ${type.color} rounded`}></div>
-                  <span className="text-sm">{type.emoji} {type.label}</span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
           {/* Quick Add Suggestions */}
           <Card>
             <CardHeader className="pb-3">
@@ -393,7 +559,7 @@ export default function SeasonalityTimeline() {
   );
 }
 
-function AddEventForm({ newEvent, setNewEvent, onAdd }: any) {
+function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes }: any) {
   return (
     <div className="space-y-4">
       <div>
