@@ -6,7 +6,7 @@ import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Plus, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck, Recycle, BookOpen, BarChart3 } from "lucide-react";
+import { Calendar, Plus, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck, Recycle, BookOpen, BarChart3, Lightbulb } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function ContentPlanning() {
@@ -166,36 +166,44 @@ export default function ContentPlanning() {
           ))}
         </div>
 
-        {/* Getting Started Section */}
-        <Card className="mt-8 border-pink-100 bg-gradient-to-r from-pink-50 to-purple-50">
+        {/* Tips Panel */}
+        <Card className="mt-8 border-pink-100 bg-pink-50">
           <CardContent className="p-6">
-            <h3 className="text-xl font-serif font-semibold text-gray-800 mb-4">
-              Getting Started with Content Planning
-            </h3>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-semibold text-gray-700 mb-2">1. Choose Your Template</h4>
-                <p className="text-gray-600 text-sm mb-4">
-                  Start with the Monthly Content Calendar for a comprehensive overview of your content strategy.
-                </p>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-500 rounded-lg flex items-center justify-center">
+                <Lightbulb className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <h4 className="font-semibold text-gray-700 mb-2">2. Customize Your Plan</h4>
-                <p className="text-gray-600 text-sm mb-4">
-                  Adapt the template to match your brand voice, posting schedule, and content themes.
-                </p>
+              <h3 className="text-xl font-serif font-semibold text-gray-800">
+                Tips for Using This Section
+              </h3>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <span className="text-pink-600 font-semibold">•</span>
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-1">Start with Your Strategy</h4>
+                  <p className="text-gray-600 text-sm">
+                    Begin with a content plan that aligns with your goals — but don't be afraid to revisit and tweak it as your content evolves.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-semibold text-gray-700 mb-2">3. Batch Your Content</h4>
-                <p className="text-gray-600 text-sm mb-4">
-                  Use the batching planner to create multiple pieces of content in focused sessions.
-                </p>
+              <div className="flex items-start gap-3">
+                <span className="text-pink-600 font-semibold">•</span>
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-1">Fill Out Your Monthly Planner</h4>
+                  <p className="text-gray-600 text-sm">
+                    Use the calendar to map out content types, assign post statuses, and mark batching days to stay on track.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-semibold text-gray-700 mb-2">4. Track Your Progress</h4>
-                <p className="text-gray-600 text-sm mb-4">
-                  Monitor your content performance and adjust your strategy based on what works.
-                </p>
+              <div className="flex items-start gap-3">
+                <span className="text-pink-600 font-semibold">•</span>
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-1">Grab the Canva Templates</h4>
+                  <p className="text-gray-600 text-sm">
+                    Once your calendar's filled in, head to the template pack to start creating and batching efficiently.
+                  </p>
+                </div>
               </div>
             </div>
           </CardContent>
