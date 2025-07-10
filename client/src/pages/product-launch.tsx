@@ -20,7 +20,7 @@ export default function ProductLaunch() {
       icon: Calendar,
       gradient: "from-pink-400 to-rose-400",
       route: "/seasonality-timeline",
-      badge: "New"
+      badge: "Popular"
     }
   ];
 
@@ -64,13 +64,14 @@ export default function ProductLaunch() {
         {templates.map((template) => (
           <Card 
             key={template.id}
-            className="group hover:shadow-lg transition-all duration-300 cursor-pointer aspect-square"
+            className="group hover:shadow-lg transition-all duration-300 cursor-pointer aspect-square bg-white"
             onClick={() => handleTemplateClick(template)}
           >
-            <CardHeader className={`pb-4 bg-gradient-to-br ${template.gradient} text-white relative`}>
-              <div className="flex items-center justify-between">
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                  <template.icon className="w-6 h-6" />
+            <CardContent className="p-6 flex flex-col h-full relative">
+              {/* Icon and Badge */}
+              <div className="flex items-start justify-between mb-4">
+                <div className={`w-12 h-12 bg-gradient-to-br ${template.gradient} rounded-xl flex items-center justify-center`}>
+                  <template.icon className="w-5 h-5 text-white" />
                 </div>
                 {template.badge && (
                   <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium">
@@ -78,20 +79,18 @@ export default function ProductLaunch() {
                   </span>
                 )}
               </div>
-              <div>
-                <CardTitle className="text-white text-lg font-semibold leading-tight mb-1">
-                  {template.title}
-                </CardTitle>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="p-4 flex-1 flex flex-col">
+
+              {/* Content */}
               <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-tight">
+                  {template.title}
+                </h3>
                 <p className="text-sm text-gray-600 mb-4 line-clamp-3">
                   {template.subtitle}
                 </p>
               </div>
               
+              {/* Footer */}
               <div className="mt-auto">
                 <p className="text-xs text-gray-500 mb-3">Last used: Never</p>
                 <Button
