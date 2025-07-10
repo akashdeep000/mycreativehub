@@ -80,39 +80,41 @@ export default function EmailMarketing() {
         {/* Email Marketing Tools Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Email Marketing Starter Map Card */}
-          <Card className="group cursor-pointer border-pink-100 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
-            <CardHeader className="bg-gradient-to-br from-pink-400 to-pink-500 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+          <Card className="group cursor-pointer border-pink-100 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] aspect-square">
+            <CardHeader className="bg-gradient-to-br from-pink-400 to-pink-500 text-white relative overflow-hidden h-32">
+              <div className="absolute top-0 right-0 w-12 h-12 bg-white/5 rounded-full -mr-6 -mt-6"></div>
               <div className="relative z-10">
-                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
-                  <Mail className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                  <Mail className="w-5 h-5 text-white" />
                 </div>
-                <CardTitle className="text-xl font-serif mb-2">
+                <CardTitle className="text-lg font-serif mb-1 leading-tight">
                   Email Marketing Starter Map
                 </CardTitle>
-                <CardDescription className="text-pink-100">
-                  Your visual reference for building a simple and powerful email funnel.
+                <CardDescription className="text-pink-100 text-sm">
+                  Visual reference for email funnels
                 </CardDescription>
               </div>
             </CardHeader>
             
-            <CardContent className="p-6">
+            <CardContent className="p-4 flex flex-col justify-between flex-1">
               <div className="space-y-4">
                 {/* Main Description */}
                 <div className="text-gray-700 leading-relaxed text-sm">
                   <p>
-                    This starter map gives you a clear visual overview of your email funnel—from lead magnet to welcome email to your mini sequence.
+                    Clear visual overview of your email funnel—from lead magnet to welcome email to your mini sequence.
                   </p>
                 </div>
 
                 {/* Download Button */}
-                <Button 
-                  onClick={handleDownload}
-                  className="w-full bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Guide
-                </Button>
+                <div className="flex justify-center">
+                  <Button 
+                    onClick={handleDownload}
+                    className="bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-sm"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Guide
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
