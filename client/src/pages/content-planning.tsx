@@ -6,7 +6,7 @@ import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Plus, FileText, Grid3X3, Palette, Target, Play, Image } from "lucide-react";
+import { Calendar, Plus, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function ContentPlanning() {
@@ -102,6 +102,18 @@ export default function ContentPlanning() {
     },
     {
       id: 7,
+      name: "Content Status Tracker",
+      description: "Track your content progress from idea to publication with status updates and scheduling.",
+      icon: ClipboardCheck,
+      colour: "teal",
+      bgGradient: "from-teal-400 to-teal-500",
+      lastUsed: "Never",
+      isPopular: true,
+      isInternal: true,
+      internalUrl: "/content-status-tracker"
+    },
+    {
+      id: 8,
       name: "Reel & Carousel Template Pack",
       description: "Create on-brand, scroll-stopping content with customisable Canva templates for Reels and carousels.",
       icon: Play,
@@ -153,7 +165,7 @@ export default function ContentPlanning() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                7 Templates
+                8 Templates
               </Badge>
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 Active

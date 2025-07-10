@@ -1,0 +1,75 @@
+Objective:
+Create a standalone card in the "Content Creation System" section called “Content Status Tracker”. When clicked, it opens a clean, editable content progress table for users to manage their content pipeline.
+
+🔹 Dashboard Card
+Title: “Content Status Tracker”
+
+Icon: Clipboard with a checkmark or progress bar
+
+Placement: Within the Content Creation System section
+
+Click Behavior: Opens a dedicated view (not a modal) with the full content tracker interface
+
+🔹 Tracker Interface
+Header Section:
+
+Title: "Track Your Content Progress"
+
+Subtext: “Use this tool to monitor where each piece of content sits in your workflow.”
+
+Button: [ + Add New Row ] (aligned top-right)
+
+Main Table Fields (Editable per row):
+
+Column Name	Type	Details
+Content Title	Text input	Short title of content (e.g., "Summer Sale Carousel")
+Type	Dropdown	Options: Reel, Carousel, Blog, Email, Story, Other
+Platform	Dropdown	Options: Instagram, Website, Email, YouTube, Pinterest, Other
+Status	Dropdown	Options (with tags): Idea 💡, In Progress 🔧, Ready to Post ✅, Scheduled 🗓, Posted 📬
+Scheduled Date	Date picker	Optional, user-selectable calendar date
+Notes	Text input	Short notes or reminders
+
+Color Coding:
+
+Each row reflects the status with a subtle background color or tag icon:
+
+💡 Idea – Grey
+
+🔧 In Progress – Orange
+
+✅ Ready to Post – Green
+
+🗓 Scheduled – Blue
+
+📬 Posted – Purple
+
+Row Actions:
+
+[ + Add New Row ] adds a blank new row
+
+[ 🗑️ ] delete row icon next to each entry
+
+Auto-save changes on input
+
+🔹 Footer Controls
+Button: Clear All Rows
+
+Shows a confirmation modal: “Are you sure you want to clear your tracker? This cannot be undone.”
+
+Button: Download Tracker
+
+Options: Export to CSV or PDF for offline printing or archiving
+
+🔹 Functional Requirements
+Fully responsive on mobile and desktop
+
+Data should auto-save using either:
+
+LocalStorage (preferred for MVP)
+
+OR app’s user backend if available
+
+Editable text inputs for each field
+
+All dropdowns and inputs to be fully keyboard and mobile accessible
+
