@@ -481,6 +481,15 @@ Changelog:
   - Added batch day controls with special input for batching goals (e.g., "Film 3 reels")
   - Maintained all existing color tagging, drag-and-drop functionality, and PDF export capabilities
   - Consolidated multiple tool functionalities into single interface to reduce user overwhelm
+- July 10, 2025. Refined Batch Day Selection UX in Monthly Content Calendar:
+  - Moved "Mark as Batch Day" functionality from individual calendar cells to centralized Color Key section
+  - Added "Batch Day ⏳" toggle button in calendar legend with visual mode activation feedback
+  - Implemented click-based batch day selection: click toggle to activate mode, then click calendar days to batch
+  - Enhanced UX with yellow hover states in batch mode and cleaner calendar cell interfaces
+  - Batch days now show soft yellow highlight with small ⏳ icon in corner instead of cluttered buttons
+  - Streamlined calendar cells by removing individual batch buttons while maintaining full functionality
+  - Added automatic focus on batch goal input when batch day is activated for quick goal setting
+  - Improved visual hierarchy with cleaner, less cluttered calendar interface maintaining all core features
 
 ## User Preferences
 

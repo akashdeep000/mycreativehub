@@ -43,6 +43,7 @@ export default function MonthlyContentCalendar() {
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
   const [calendarData, setCalendarData] = useState<CalendarCell[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [batchMode, setBatchMode] = useState(false);
 
   // Load calendar data from localStorage
   useEffect(() => {
@@ -141,7 +142,28 @@ export default function MonthlyContentCalendar() {
   };
 
   const handleCellClick = (day: number) => {
-    if (selectedTagId) {
+    if (batchMode) {
+      // Handle batch day toggle
+      const cellData = getCellData(day);
+      const newBatchState = !cellData.isBatchDay;
+      
+      updateCell(day, { 
+        isBatchDay: newBatchState,
+        batchNote: newBatchState ? cellData.batchNote : ''
+      });
+      
+      // Optionally prompt for batch goal
+      if (newBatchState) {
+        // Focus on the batch note input after a short delay
+        setTimeout(() => {
+          const noteInput = document.querySelector(`[data-day="${day}"] .batch-note-input`) as HTMLInputElement;
+          if (noteInput) {
+            noteInput.focus();
+          }
+        }, 100);
+      }
+    } else if (selectedTagId) {
+      // Handle color tag selection
       const selectedTag = colorTags.find(tag => tag.id === selectedTagId);
       updateCell(day, { 
         tagId: selectedTagId,
@@ -151,7 +173,7 @@ export default function MonthlyContentCalendar() {
   };
 
   const handleMouseDown = (day: number) => {
-    if (selectedTagId) {
+    if (selectedTagId && !batchMode) {
       setIsDragging(true);
       const selectedTag = colorTags.find(tag => tag.id === selectedTagId);
       updateCell(day, { 
@@ -162,7 +184,7 @@ export default function MonthlyContentCalendar() {
   };
 
   const handleMouseEnter = (day: number) => {
-    if (isDragging && selectedTagId) {
+    if (isDragging && selectedTagId && !batchMode) {
       const selectedTag = colorTags.find(tag => tag.id === selectedTagId);
       updateCell(day, { 
         tagId: selectedTagId,
@@ -321,7 +343,7 @@ export default function MonthlyContentCalendar() {
               Color Key
             </CardTitle>
             <CardDescription>
-              Select a color category, then click calendar dates to apply it.
+              Select a color category or batch mode, then click calendar dates to apply.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -404,6 +426,35 @@ export default function MonthlyContentCalendar() {
                   Add Tag
                 </Button>
               )}
+              
+              {/* Batch Day Toggle Button */}
+              <div className="border-l pl-3 ml-3">
+                <Button
+                  onClick={() => {
+                    setBatchMode(!batchMode);
+                    // Clear tag selection when entering batch mode
+                    if (!batchMode) setSelectedTagId(null);
+                  }}
+                  variant={batchMode ? "default" : "outline"}
+                  size="sm"
+                  className={`${
+                    batchMode 
+                      ? 'bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-500' 
+                      : 'text-yellow-700 border-yellow-300 hover:bg-yellow-50'
+                  }`}
+                >
+                  {batchMode ? (
+                    <>
+                      <Video className="h-3 w-3 mr-1" />
+                      Batch Mode Active ⏳
+                    </>
+                  ) : (
+                    <>
+                      ⏳ Batch Day
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -469,8 +520,9 @@ export default function MonthlyContentCalendar() {
                   return (
                     <div
                       key={`day-${day}`}
-                      className={`h-40 border-r border-b last:border-r-0 p-2 cursor-pointer transition-colors relative ${
-                        selectedTagId ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
+                      data-day={day}
+                      className={`h-32 border-r border-b last:border-r-0 p-2 cursor-pointer transition-colors relative ${
+                        batchMode ? 'hover:bg-yellow-50' : selectedTagId ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
                       } ${cellData.isBatchDay ? 'ring-2 ring-yellow-300 ring-opacity-50' : ''}`}
                       onClick={() => handleCellClick(day)}
                       onMouseDown={() => handleMouseDown(day)}
@@ -484,8 +536,7 @@ export default function MonthlyContentCalendar() {
                         <span className="text-sm font-semibold text-gray-800">{day}</span>
                         {cellData.isBatchDay && (
                           <div className="flex items-center">
-                            <Video className="w-3 h-3 text-yellow-600" />
-                            <span className="text-xs text-yellow-700 ml-1">🎬</span>
+                            <span className="text-xs">⏳</span>
                           </div>
                         )}
                       </div>
@@ -504,8 +555,8 @@ export default function MonthlyContentCalendar() {
                             type="text"
                             value={cellData.batchNote}
                             onChange={(e) => updateCell(day, { batchNote: e.target.value })}
-                            placeholder="Batching goals (e.g., Film 3 reels)"
-                            className="w-full text-xs bg-yellow-50 border border-yellow-200 rounded px-2 py-1 placeholder:text-yellow-600"
+                            placeholder="Film 3 reels"
+                            className="batch-note-input w-full text-xs bg-yellow-50 border border-yellow-200 rounded px-2 py-1 placeholder:text-yellow-600"
                             onClick={(e) => e.stopPropagation()}
                           />
                         </div>
@@ -547,18 +598,6 @@ export default function MonthlyContentCalendar() {
                             <SelectItem value="posted">Posted ✅</SelectItem>
                           </SelectContent>
                         </Select>
-                      </div>
-                      
-                      {/* Batch day toggle button */}
-                      <div className="mb-1" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          size="sm"
-                          variant={cellData.isBatchDay ? "default" : "outline"}
-                          onClick={() => updateCell(day, { isBatchDay: !cellData.isBatchDay })}
-                          className={`h-6 text-xs w-full ${cellData.isBatchDay ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : 'text-yellow-700 border-yellow-300 hover:bg-yellow-50'}`}
-                        >
-                          {cellData.isBatchDay ? 'Batching Day 🎬' : 'Mark as Batch Day'}
-                        </Button>
                       </div>
                       
                       {/* Notes area - positioned at bottom */}
