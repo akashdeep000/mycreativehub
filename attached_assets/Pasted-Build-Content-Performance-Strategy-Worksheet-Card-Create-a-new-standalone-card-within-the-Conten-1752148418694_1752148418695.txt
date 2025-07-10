@@ -1,0 +1,57 @@
+Build "Content Performance & Strategy Worksheet" Card
+Create a new standalone card within the Content Creation System called Content Performance & Strategy Worksheet with the following structure and functionality:
+
+🪪 Card Header
+Title: Reflect & Refine: Strategy Worksheet
+
+Subtitle: "Look back before you move forward—use this space to reflect on what’s working and set fresh, intentional content goals."
+
+Add pink notebook icon to the left of the title (to match card icon style in other sections)
+
+📝 Content Area
+Create a vertical form layout with six editable prompt blocks. Each block should include:
+
+A bold section title
+
+A short description prompt beneath the title
+
+A multiline text input with placeholder examples
+
+🧾 Fields & Prompts
+Content That Felt Good
+"What content types felt aligned or easy to create?"
+Placeholder: e.g., Behind-the-scenes stories, carousel tips, messy Monday reel
+
+Content That Performed Well
+"What content got high engagement or responses?"
+Placeholder: e.g., Story replies on personal post, save-heavy tip carousel
+
+What Didn’t Land?
+"What fell flat or didn’t feel right to create?"
+Placeholder: e.g., Email promo felt pushy, static post got no interaction
+
+Audience Reactions
+"What messages, DMs, or comments gave you clues?"
+Placeholder: e.g., Lots of replies saying ‘this is so me!’ on reel
+
+Strategy Shifts to Try
+"What small changes will you make going forward?"
+Placeholder: e.g., Add more personality to carousels, batch real-life clips weekly
+
+Next Check-In Date
+"When will you revisit this worksheet?"
+Placeholder: e.g., 1st of each month
+
+📎 Footer Buttons (aligned right or center-bottom)
+Download as PDF (saves completed worksheet as a printable PDF)
+
+Clear All Fields (with confirmation modal: “Are you sure you want to clear your reflection worksheet?”)
+
+🎨 Styling
+Match styling to other cards: soft gradient header, white card body, rounded corners, pink accent buttons
+
+Ensure all inputs are accessible and responsive
+
+Use clear spacing between sections to avoid visual clutter
+
+Include auto-save to localStorage if possible

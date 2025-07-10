@@ -6,7 +6,7 @@ import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Plus, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck, Recycle } from "lucide-react";
+import { Calendar, Plus, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck, Recycle, BookOpen } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function ContentPlanning() {
@@ -135,6 +135,18 @@ export default function ContentPlanning() {
       isPopular: true,
       isInternal: true,
       internalUrl: "/repurposing-toolkit"
+    },
+    {
+      id: 10,
+      name: "Content Performance & Strategy Worksheet",
+      description: "Look back before you move forward—use this space to reflect on what's working and set fresh, intentional content goals.",
+      icon: BookOpen,
+      colour: "pink",
+      bgGradient: "from-pink-400 to-pink-500",
+      lastUsed: "Never",
+      isPopular: true,
+      isInternal: true,
+      internalUrl: "/content-performance-strategy"
     }
   ];
 
@@ -177,7 +189,7 @@ export default function ContentPlanning() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                9 Templates
+                10 Templates
               </Badge>
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 Active
