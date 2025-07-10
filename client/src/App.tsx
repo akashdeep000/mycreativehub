@@ -26,6 +26,7 @@ import AutomationToolkit from "@/pages/automation-toolkit";
 import SOPBuilderHub from "@/pages/sop-builder-hub";
 import SOPEditor from "@/pages/sop-editor";
 import ContentStatusTracker from "@/pages/content-status-tracker";
+import RepurposingToolkit from "@/pages/repurposing-toolkit";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -70,6 +71,7 @@ function Router() {
       <Route path="/sop-builder" component={SOPBuilderHub} />
       <Route path="/sop/:id" component={SOPEditor} />
       <Route path="/content-status-tracker" component={ContentStatusTracker} />
+      <Route path="/repurposing-toolkit" component={RepurposingToolkit} />
       <Route path="/archived-templates" component={ArchivedTemplates} />
       <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
       <Route path="/inspiration-hub" component={InspirationHub} />

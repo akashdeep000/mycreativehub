@@ -1,0 +1,93 @@
+Build "Repurposing Toolkit" Section with Planner Table & Folder System
+Goal: Create a new standalone card in the Content Creation System for Unit Two, Section Four called “Repurposing Toolkit”. This card will contain two tools:
+
+A Repurposing Planner Table (editable spreadsheet)
+
+A Content Library Folder System (visual layout + downloadable zip)
+
+✨ Features to Implement:
+1. 🧠 Repurposing Planner Table
+A lightweight horizontal table (spreadsheet-style) for brainstorming how to repurpose content.
+
+UI Layout:
+
+Clean 7-column table with headings:
+
+Original Content
+
+Platform It Was Posted
+
+New Format Ideas
+
+Repurpose Platform
+
+Visual Assets Needed
+
+Status
+
+Actions
+
+Features:
+
+Each row is editable inline
+
+Dropdowns for Platforms, Formats, and Status
+
+Include "+ Add Custom" field for each dropdown (enter with Enter/escape logic)
+
+Status options: Idea 💡 / In Progress ⏳ / Ready ✅ / Posted 📬
+
+Add Row button (+ pink style)
+
+Clear Table button with confirmation modal
+
+Export to CSV / PDF
+
+Responsive design with alternating row colors, mobile-friendly input spacing
+
+Sticky headers for column clarity
+
+Fizz & Flourish styling: pink-orange gradients for headers, rounded borders, soft shadows
+
+2. 📁 Content Library Folder System
+Goal: Display a pre-organised folder layout users can download and use to save reusable assets.
+
+Design:
+
+Vertical list layout styled like a digital folder explorer
+
+Sample structure:
+
+css
+Copy
+Edit
+📁 Content Library
+   ├── 📂 B-Roll
+   ├── 📂 Reels
+   ├── 📂 Product Photos
+   ├── 📂 Canva Templates
+   ├── 📂 Quotes & Captions
+   └── 📂 Misc.
+Features:
+
+“Download Folder System” button linking to a .zip (placeholder for now)
+
+Editable input below for “+ Add Custom Folder” field (for brainstorming)
+
+Short prompts for each folder (tooltip or light label) to guide usage
+
+Gradient background block for styling and visual cohesion
+
+📝 Section Description (top of card)
+pgsql
+Copy
+Edit
+Use this toolkit to make your past content work harder for you. First, log your reusable content into the Repurposing Planner to explore new formats and platforms. Then, organise your visuals and footage using the downloadable folder system—so your best assets are always ready to go.
+Bottom of card:
+
+✅ Export Planner
+
+📁 Download Full Toolkit (.zip)
+
+♻️ Clear All Rows
+
