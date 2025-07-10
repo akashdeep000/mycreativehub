@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FolderOpen, Plus, Trash2, GripVertical, FileText, Link, Download, Edit2, X, Check } from 'lucide-react';
+import { FolderOpen, Plus, Trash2, GripVertical, FileText, Link, Download, Edit2, X, Check, ExternalLink, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -188,16 +188,18 @@ export default function ResourceLibrary() {
     );
   }
 
+  const fileItems = items.filter((item: ResourceLibraryItem) => item.type === 'file');
+  const linkItems = items.filter((item: ResourceLibraryItem) => item.type === 'link');
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Your Resource Library</h1>
-          <p className="text-gray-600 mt-1">
-            Store and organize your important files and links in one place
-          </p>
-        </div>
-        <div className="flex gap-2">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">Your Resource Library</h1>
+        <p className="text-gray-600 leading-relaxed mb-6">
+          This is your personal resource hub. You'll find all downloadable PDFs and templates inside your Creative Business Toolkit course. When you come across a resource you'd like to refer back to—whether it's a PDF or a useful link—add it here to keep everything in one place.
+        </p>
+        
+        <div className="flex gap-3">
           <input
             type="file"
             id="file-upload"
@@ -206,23 +208,22 @@ export default function ResourceLibrary() {
             onChange={handleFileUpload}
           />
           <Button
-            variant="outline"
             onClick={() => document.getElementById('file-upload')?.click()}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-pink-500 hover:bg-pink-600"
           >
-            <FileText className="w-4 h-4" />
-            Upload File
+            <Plus className="w-4 h-4" />
+            Upload PDF or File
           </Button>
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
-              <Button className="flex items-center gap-2 bg-pink-500 hover:bg-pink-600">
-                <Plus className="w-4 h-4" />
-                Add Link
+              <Button variant="outline" className="flex items-center gap-2">
+                <Link className="w-4 h-4" />
+                Add Website Link
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add New Link</DialogTitle>
+                <DialogTitle>Add New Website Link</DialogTitle>
               </DialogHeader>
               <AddLinkForm onSubmit={handleAddLink} />
             </DialogContent>
@@ -230,133 +231,249 @@ export default function ResourceLibrary() {
         </div>
       </div>
 
-      {items.length === 0 ? (
-        <Card className="text-center py-12">
-          <CardContent>
-            <FolderOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Your library is empty</h3>
-            <p className="text-gray-600 mb-4">
-              Start building your resource collection by uploading files or adding links
-            </p>
-            <div className="flex justify-center gap-2">
+      {/* PDF Files Section */}
+      <div className="mb-12">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Uploaded PDFs & Files</h2>
+        {fileItems.length === 0 ? (
+          <Card className="text-center py-8 border-dashed border-2 border-gray-300">
+            <CardContent>
+              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600 mb-4">No files uploaded yet</p>
               <Button
                 variant="outline"
                 onClick={() => document.getElementById('file-upload')?.click()}
+                className="bg-pink-50 hover:bg-pink-100 text-pink-700 border-pink-300"
               >
-                Upload First File
+                Upload Your First File
               </Button>
-              <Button onClick={() => setIsAddModalOpen(true)}>
-                Add First Link
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {fileItems.map((item: ResourceLibraryItem) => (
+              <ResourceCard
+                key={item.id}
+                item={item}
+                onEdit={setEditingItem}
+                onDelete={(id) => deleteItemMutation.mutate(id)}
+                onUpdate={(id, data) => updateItemMutation.mutate({ id, data })}
+                draggedItem={draggedItem}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                editingItem={editingItem}
+                onCancelEdit={() => setEditingItem(null)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Website Links Section */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Favourite Websites & Resources</h2>
+        <p className="text-gray-600 mb-4">
+          Have websites or tools you visit regularly? Add them here so they're easy to access.
+        </p>
+        {linkItems.length === 0 ? (
+          <Card className="text-center py-8 border-dashed border-2 border-gray-300">
+            <CardContent>
+              <Link className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600 mb-4">No links saved yet</p>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddModalOpen(true)}
+                className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300"
+              >
+                Add Your First Link
               </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4">
-          {items.map((item: ResourceLibraryItem) => (
-            <Card
-              key={item.id}
-              className={`transition-all duration-200 hover:shadow-md ${
-                draggedItem?.id === item.id ? 'opacity-50' : ''
-              }`}
-              draggable
-              onDragStart={(e) => handleDragStart(e, item)}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, item)}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {linkItems.map((item: ResourceLibraryItem) => (
+              <ResourceCard
+                key={item.id}
+                item={item}
+                onEdit={setEditingItem}
+                onDelete={(id) => deleteItemMutation.mutate(id)}
+                onUpdate={(id, data) => updateItemMutation.mutate({ id, data })}
+                draggedItem={draggedItem}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                editingItem={editingItem}
+                onCancelEdit={() => setEditingItem(null)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Download All PDFs Button */}
+      {fileItems.length > 0 && (
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <div className="text-center">
+            <Button
+              variant="outline"
+              size="lg"
+              className="bg-gradient-to-r from-pink-50 to-purple-50 hover:from-pink-100 hover:to-purple-100 text-gray-700 border-gray-300"
+              onClick={() => {
+                toast({
+                  title: "Coming Soon",
+                  description: "Bulk PDF download feature will be available shortly",
+                });
+              }}
             >
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="flex items-center gap-2 mt-1">
-                      <GripVertical className="w-4 h-4 text-gray-400 cursor-move" />
-                      <div className={`p-2 rounded-full ${getTypeColor(item.type)}`}>
-                        {getTypeIcon(item.type)}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      {editingItem?.id === item.id ? (
-                        <EditItemForm
-                          item={item}
-                          onSave={(data) => updateItemMutation.mutate({ id: item.id, data })}
-                          onCancel={() => setEditingItem(null)}
-                        />
-                      ) : (
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-medium text-gray-900">{item.title}</h3>
-                            <Badge variant="secondary" className={getTypeColor(item.type)}>
-                              {item.type}
-                            </Badge>
-                          </div>
-                          {item.description && (
-                            <p className="text-sm text-gray-600 mb-2">{item.description}</p>
-                          )}
-                          {item.tags && item.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-2">
-                              {item.tags.map((tag, index) => (
-                                <Badge key={index} variant="outline" className="text-xs">
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                          {item.type === 'link' && item.url && (
-                            <a
-                              href={item.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-blue-600 hover:text-blue-800 underline"
-                            >
-                              {item.url}
-                            </a>
-                          )}
-                          {item.type === 'file' && item.fileName && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <span>File: {item.fileName}</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  if (item.fileData) {
-                                    const link = document.createElement('a');
-                                    link.href = item.fileData;
-                                    link.download = item.fileName || 'download';
-                                    link.click();
-                                  }
-                                }}
-                              >
-                                <Download className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingItem(item)}
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteItemMutation.mutate(item.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+              <Archive className="w-5 h-5 mr-2" />
+              Download All PDFs into Organised Folders for Your Desktop
+            </Button>
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+function ResourceCard({ 
+  item, 
+  onEdit, 
+  onDelete, 
+  onUpdate, 
+  draggedItem, 
+  onDragStart, 
+  onDragOver, 
+  onDrop, 
+  editingItem, 
+  onCancelEdit 
+}: {
+  item: ResourceLibraryItem;
+  onEdit: (item: ResourceLibraryItem) => void;
+  onDelete: (id: number) => void;
+  onUpdate: (id: number, data: any) => void;
+  draggedItem: ResourceLibraryItem | null;
+  onDragStart: (e: React.DragEvent, item: ResourceLibraryItem) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent, item: ResourceLibraryItem) => void;
+  editingItem: ResourceLibraryItem | null;
+  onCancelEdit: () => void;
+}) {
+  const isFile = item.type === 'file';
+  const isLink = item.type === 'link';
+  const isEditing = editingItem?.id === item.id;
+
+  const handleOpenFile = () => {
+    if (item.fileData) {
+      const link = document.createElement('a');
+      link.href = item.fileData;
+      link.download = item.fileName || 'download';
+      link.click();
+    }
+  };
+
+  const handleOpenLink = () => {
+    if (item.url) {
+      window.open(item.url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  return (
+    <Card
+      className={`transition-all duration-200 hover:shadow-lg cursor-move aspect-square ${
+        draggedItem?.id === item.id ? 'opacity-50' : ''
+      }`}
+      draggable
+      onDragStart={(e) => onDragStart(e, item)}
+      onDragOver={onDragOver}
+      onDrop={(e) => onDrop(e, item)}
+    >
+      <CardHeader className={`pb-4 ${isFile ? 'bg-gradient-to-br from-pink-400 to-purple-400' : 'bg-gradient-to-br from-blue-400 to-green-400'} text-white relative`}>
+        <div className="flex items-center justify-between">
+          <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">
+            {isFile ? <FileText className="w-6 h-6" /> : <Link className="w-6 h-6" />}
+          </div>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onEdit(item)}
+              className="text-white hover:bg-white/20 w-8 h-8 p-0"
+            >
+              <Edit2 className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(item.id)}
+              className="text-white hover:bg-white/20 w-8 h-8 p-0"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+        <GripVertical className="w-4 h-4 absolute top-2 left-2 text-white/60" />
+      </CardHeader>
+      
+      <CardContent className="p-4 flex-1 flex flex-col">
+        {isEditing ? (
+          <EditItemForm
+            item={item}
+            onSave={(data) => onUpdate(item.id, data)}
+            onCancel={onCancelEdit}
+          />
+        ) : (
+          <>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{item.title}</h3>
+              {item.description && (
+                <p className="text-sm text-gray-600 mb-3 line-clamp-3">{item.description}</p>
+              )}
+              {item.tags && item.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {item.tags.slice(0, 3).map((tag, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                  {item.tags.length > 3 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{item.tags.length - 3}
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-auto">
+              {isFile ? (
+                <Button
+                  onClick={handleOpenFile}
+                  className="w-full bg-pink-500 hover:bg-pink-600 text-white"
+                  size="sm"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Open PDF
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  {item.url && (
+                    <p className="text-xs text-gray-500 truncate">{item.url}</p>
+                  )}
+                  <Button
+                    onClick={handleOpenLink}
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                    size="sm"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Visit Website
+                  </Button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
