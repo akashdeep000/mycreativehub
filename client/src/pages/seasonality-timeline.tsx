@@ -16,9 +16,7 @@ import {
   GripVertical,
   Lightbulb,
   ArrowLeft,
-  ZoomIn,
-  Check,
-  X
+  ZoomIn
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
@@ -474,23 +472,17 @@ export default function SeasonalityTimeline() {
                   )}
                   
                   {editingTypeId === type.value ? (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={editingLabel}
-                        onChange={(e) => setEditingLabel(e.target.value)}
-                        className="h-6 text-xs w-24"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') saveTypeLabel();
-                          if (e.key === 'Escape') cancelEditLabel();
-                        }}
-                      />
-                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={saveTypeLabel}>
-                        <Check className="w-3 h-3 text-green-600" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={cancelEditLabel}>
-                        <X className="w-3 h-3 text-red-600" />
-                      </Button>
-                    </div>
+                    <Input
+                      value={editingLabel}
+                      onChange={(e) => setEditingLabel(e.target.value)}
+                      className="h-6 text-xs w-24"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveTypeLabel();
+                        if (e.key === 'Escape') cancelEditLabel();
+                      }}
+                      onBlur={saveTypeLabel}
+                      autoFocus
+                    />
                   ) : (
                     <span 
                       className="text-sm cursor-pointer hover:text-blue-600"

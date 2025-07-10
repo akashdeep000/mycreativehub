@@ -560,6 +560,13 @@ Changelog:
   - Added click-outside detection to close color picker when clicking elsewhere
   - Integrated with localStorage persistence to maintain custom color selections across sessions
   - Enhanced user experience with visual feedback, toast notifications, and smooth transitions
+- July 10, 2025. Streamlined Editing Interaction for Event Type Labels:
+  - Removed check/cross button icons from event type label editing interface for cleaner UX
+  - Simplified editing interaction to use Enter key to save changes and Escape key to cancel
+  - Added onBlur auto-save functionality when clicking outside the input field
+  - Added autoFocus to input field for immediate editing when activated
+  - Removed unused Check and X icon imports to clean up codebase
+  - Enhanced user experience with minimal, keyboard-driven editing consistent with toolkit standards
 
 ## User Preferences
 
