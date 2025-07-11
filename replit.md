@@ -575,6 +575,11 @@ Changelog:
   - Improved visual feedback with rounded-md corners and enhanced hover effects with shadow
   - Added ring-offset-1 for better selection highlighting and visual clarity
   - Standardized padding (p-4) and margins (mb-3) throughout color picker interface
+- July 11, 2025. Removed Email Marketing Module:
+  - Deleted Email Marketing module from database (toolkit_modules table)
+  - Removed email-marketing.tsx page file from client/src/pages/
+  - Cleaned up navigation to remove email marketing references from both sidebar and dashboard
+  - Streamlined toolkit sections to focus on core business planning functionality
 
 ## User Preferences
 
