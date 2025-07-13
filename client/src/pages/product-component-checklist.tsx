@@ -390,11 +390,7 @@ export default function ProductComponentChecklist() {
           <div className="text-center py-12">
             <CheckSquare className="w-16 h-16 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No products yet</h3>
-            <p className="text-gray-600 mb-4">Create your first product to get started</p>
-            <Button onClick={createNewProduct} className="bg-blue-500 hover:bg-blue-600 text-white">
-              <Plus className="w-4 h-4 mr-2" />
-              Add New Product
-            </Button>
+            <p className="text-gray-600">Create your first product to get started using the button above</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
