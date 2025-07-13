@@ -36,6 +36,7 @@ import SeasonalityTimeline from "@/pages/seasonality-timeline";
 import QuarterDetail from "@/pages/quarter-detail";
 import ProductComponentChecklist from "@/pages/product-component-checklist";
 import ProfitCalculator from "@/pages/profit-calculator";
+import PreLaunchTimelinePlanner from "@/pages/pre-launch-timeline-planner";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -90,6 +91,7 @@ function Router() {
       <Route path="/seasonality/:quarter" component={QuarterDetail} />
       <Route path="/product-component-checklist" component={ProductComponentChecklist} />
       <Route path="/profit-calculator" component={ProfitCalculator} />
+      <Route path="/pre-launch-timeline-planner" component={PreLaunchTimelinePlanner} />
       <Route path="/archived-templates" component={ArchivedTemplates} />
       <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
       <Route path="/inspiration-hub" component={InspirationHub} />

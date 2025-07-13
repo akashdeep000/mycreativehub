@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Rocket, Calendar, TrendingUp, Target, Lightbulb, CheckSquare, Calculator } from 'lucide-react';
+import { Rocket, Calendar, TrendingUp, Target, Lightbulb, CheckSquare, Calculator, Clock } from 'lucide-react';
 import { useLocation } from 'wouter';
 
 export default function ProductLaunch() {
@@ -24,6 +24,15 @@ export default function ProductLaunch() {
     },
     {
       id: 2,
+      title: "Pre-Launch Timeline Planner",
+      subtitle: "Map out your 2–4 week pre-launch timeline with drag-and-drop content planning.",
+      icon: Clock,
+      gradient: "from-purple-400 to-pink-400",
+      route: "/pre-launch-timeline-planner",
+      badge: "New"
+    },
+    {
+      id: 3,
       title: "Profit Calculator",
       subtitle: "Calculate costs, profits, and margins with color-coded margin strength indicators.",
       icon: Calculator,
