@@ -1,0 +1,634 @@
+import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import Sidebar from '@/components/layout/sidebar';
+import MobileNav from '@/components/layout/mobile-nav';
+import { 
+  Calculator, 
+  ArrowLeft, 
+  Plus, 
+  Trash2, 
+  Edit3,
+  Save,
+  X,
+  Download,
+  Eye,
+  Upload
+} from 'lucide-react';
+
+interface Component {
+  id: string;
+  name: string;
+  costPerUnit: number;
+  quantity: number;
+  totalCost: number;
+}
+
+interface ProfitCalculation {
+  id: string;
+  name: string;
+  components: Component[];
+  totalCost: number;
+  sellingPrice: number;
+  profitPerUnit: number;
+  profitMargin: number;
+  marginStrength: 'strong' | 'moderate' | 'low';
+  lastModified: string;
+}
+
+const MARGIN_CONFIG = {
+  strong: { 
+    label: '✅ Strong Margin', 
+    color: 'bg-green-100 text-green-800 border-green-300',
+    cellColor: 'bg-green-50'
+  },
+  moderate: { 
+    label: '⚠️ Moderate Margin', 
+    color: 'bg-amber-100 text-amber-800 border-amber-300',
+    cellColor: 'bg-amber-50'
+  },
+  low: { 
+    label: '❌ Low Margin', 
+    color: 'bg-red-100 text-red-800 border-red-300',
+    cellColor: 'bg-red-50'
+  }
+};
+
+export default function ProfitCalculator() {
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [calculations, setCalculations] = useState<ProfitCalculation[]>([]);
+  const [selectedCalculation, setSelectedCalculation] = useState<ProfitCalculation | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingName, setEditingName] = useState('');
+  const [pasteText, setPasteText] = useState('');
+
+  // Load calculations from localStorage on component mount
+  useEffect(() => {
+    const savedCalculations = localStorage.getItem('profitCalculations');
+    if (savedCalculations) {
+      try {
+        setCalculations(JSON.parse(savedCalculations));
+      } catch (error) {
+        console.error('Failed to parse saved calculations:', error);
+      }
+    }
+  }, []);
+
+  // Save calculations to localStorage whenever calculations change
+  useEffect(() => {
+    localStorage.setItem('profitCalculations', JSON.stringify(calculations));
+  }, [calculations]);
+
+  const generateId = () => Math.random().toString(36).substring(2, 9);
+
+  const getMarginStrength = (margin: number): 'strong' | 'moderate' | 'low' => {
+    if (margin >= 70) return 'strong';
+    if (margin >= 40) return 'moderate';
+    return 'low';
+  };
+
+  const calculateTotals = (components: Component[], sellingPrice: number) => {
+    const totalCost = components.reduce((sum, comp) => sum + comp.totalCost, 0);
+    const profitPerUnit = sellingPrice - totalCost;
+    const profitMargin = sellingPrice > 0 ? (profitPerUnit / sellingPrice) * 100 : 0;
+    const marginStrength = getMarginStrength(profitMargin);
+    
+    return { totalCost, profitPerUnit, profitMargin, marginStrength };
+  };
+
+  const createNewCalculation = () => {
+    const newCalculation: ProfitCalculation = {
+      id: generateId(),
+      name: 'New Calculation',
+      components: [
+        { id: generateId(), name: '', costPerUnit: 0, quantity: 0, totalCost: 0 }
+      ],
+      totalCost: 0,
+      sellingPrice: 0,
+      profitPerUnit: 0,
+      profitMargin: 0,
+      marginStrength: 'low',
+      lastModified: new Date().toISOString()
+    };
+    setCalculations(prev => [...prev, newCalculation]);
+    setSelectedCalculation(newCalculation);
+    setIsEditing(true);
+    setEditingName(newCalculation.name);
+  };
+
+  const deleteCalculation = (calculationId: string) => {
+    setCalculations(prev => prev.filter(c => c.id !== calculationId));
+    if (selectedCalculation?.id === calculationId) {
+      setSelectedCalculation(null);
+    }
+    toast({
+      title: "Calculation deleted",
+      description: "Calculation has been removed from your library.",
+    });
+  };
+
+  const updateCalculation = (updatedCalculation: ProfitCalculation) => {
+    setCalculations(prev => prev.map(c => 
+      c.id === updatedCalculation.id 
+        ? { ...updatedCalculation, lastModified: new Date().toISOString() }
+        : c
+    ));
+    setSelectedCalculation(updatedCalculation);
+  };
+
+  const addComponent = () => {
+    if (!selectedCalculation) return;
+    
+    const newComponent: Component = {
+      id: generateId(),
+      name: '',
+      costPerUnit: 0,
+      quantity: 0,
+      totalCost: 0
+    };
+    
+    const updatedCalculation = {
+      ...selectedCalculation,
+      components: [...selectedCalculation.components, newComponent]
+    };
+    
+    updateCalculation(updatedCalculation);
+  };
+
+  const updateComponent = (componentId: string, field: keyof Component, value: string | number) => {
+    if (!selectedCalculation) return;
+    
+    const updatedComponents = selectedCalculation.components.map(c => {
+      if (c.id === componentId) {
+        const updated = { ...c, [field]: value };
+        if (field === 'costPerUnit' || field === 'quantity') {
+          updated.totalCost = updated.costPerUnit * updated.quantity;
+        }
+        return updated;
+      }
+      return c;
+    });
+    
+    const { totalCost, profitPerUnit, profitMargin, marginStrength } = calculateTotals(
+      updatedComponents, 
+      selectedCalculation.sellingPrice
+    );
+    
+    const updatedCalculation = {
+      ...selectedCalculation,
+      components: updatedComponents,
+      totalCost,
+      profitPerUnit,
+      profitMargin,
+      marginStrength
+    };
+    
+    updateCalculation(updatedCalculation);
+  };
+
+  const updateSellingPrice = (price: number) => {
+    if (!selectedCalculation) return;
+    
+    const { totalCost, profitPerUnit, profitMargin, marginStrength } = calculateTotals(
+      selectedCalculation.components, 
+      price
+    );
+    
+    const updatedCalculation = {
+      ...selectedCalculation,
+      sellingPrice: price,
+      totalCost,
+      profitPerUnit,
+      profitMargin,
+      marginStrength
+    };
+    
+    updateCalculation(updatedCalculation);
+  };
+
+  const deleteComponent = (componentId: string) => {
+    if (!selectedCalculation) return;
+    
+    const updatedComponents = selectedCalculation.components.filter(c => c.id !== componentId);
+    const { totalCost, profitPerUnit, profitMargin, marginStrength } = calculateTotals(
+      updatedComponents, 
+      selectedCalculation.sellingPrice
+    );
+    
+    const updatedCalculation = {
+      ...selectedCalculation,
+      components: updatedComponents,
+      totalCost,
+      profitPerUnit,
+      profitMargin,
+      marginStrength
+    };
+    
+    updateCalculation(updatedCalculation);
+  };
+
+  const handlePaste = () => {
+    if (!pasteText.trim() || !selectedCalculation) return;
+    
+    const lines = pasteText.trim().split('\n');
+    const newComponents: Component[] = [];
+    
+    lines.forEach(line => {
+      const cleanLine = line.trim();
+      if (cleanLine && !cleanLine.includes('=')) {
+        // Parse lines like "1. Item name (Qty: 2) - notes"
+        const match = cleanLine.match(/^(\d+\.)?\s*(.+?)(?:\s*\(Qty:\s*([^)]+)\))?(?:\s*-\s*(.+))?$/);
+        if (match) {
+          const [, , name, qty] = match;
+          const quantity = qty ? parseFloat(qty) || 1 : 1;
+          
+          newComponents.push({
+            id: generateId(),
+            name: name.trim(),
+            costPerUnit: 0,
+            quantity,
+            totalCost: 0
+          });
+        }
+      }
+    });
+    
+    if (newComponents.length > 0) {
+      const updatedCalculation = {
+        ...selectedCalculation,
+        components: newComponents
+      };
+      updateCalculation(updatedCalculation);
+      setPasteText('');
+      toast({
+        title: "Components pasted",
+        description: `${newComponents.length} components added to your calculation.`,
+      });
+    }
+  };
+
+  const handleNameSave = () => {
+    if (!selectedCalculation || !editingName.trim()) return;
+    
+    const updatedCalculation = {
+      ...selectedCalculation,
+      name: editingName.trim()
+    };
+    
+    updateCalculation(updatedCalculation);
+    setIsEditing(false);
+  };
+
+  const handleNameCancel = () => {
+    setEditingName(selectedCalculation?.name || '');
+    setIsEditing(false);
+  };
+
+  const exportToPDF = () => {
+    // Placeholder for PDF export functionality
+    toast({
+      title: "Export feature",
+      description: "PDF export functionality would be implemented here.",
+    });
+  };
+
+  if (selectedCalculation) {
+    return (
+      <div className="min-h-screen flex flex-col lg:flex-row bg-white">
+        <Sidebar />
+        <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
+          {/* Header */}
+          <div className="mb-6">
+            <Button
+              variant="ghost"
+              onClick={() => setSelectedCalculation(null)}
+              className="mb-4 text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Calculations
+            </Button>
+            
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-teal-400 rounded-xl flex items-center justify-center">
+                <Calculator className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                {isEditing ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      className="text-2xl font-bold border-none p-0 focus-visible:ring-0"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleNameSave();
+                        if (e.key === 'Escape') handleNameCancel();
+                      }}
+                      onBlur={handleNameSave}
+                      autoFocus
+                    />
+                    <Button size="sm" variant="ghost" onClick={handleNameSave}>
+                      <Save className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={handleNameCancel}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-gray-900">{selectedCalculation.name}</h1>
+                    <Button size="sm" variant="ghost" onClick={() => { setIsEditing(true); setEditingName(selectedCalculation.name); }}>
+                      <Edit3 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Paste Area */}
+          <div className="mb-6">
+            <Card className="bg-gray-50 border-gray-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg text-gray-900">Paste Component List</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <Textarea
+                    value={pasteText}
+                    onChange={(e) => setPasteText(e.target.value)}
+                    placeholder="Paste your component list here from the Product Component Checklist..."
+                    className="min-h-[120px] border-gray-300"
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={handlePaste} variant="outline" size="sm">
+                      <Upload className="w-4 h-4 mr-2" />
+                      Parse & Add Components
+                    </Button>
+                    <Button onClick={() => setPasteText('')} variant="ghost" size="sm">
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Components Table */}
+          <div className="bg-white rounded-lg border mb-6">
+            <div className="p-4 border-b bg-gray-50">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Components & Costs</h3>
+                <Button onClick={addComponent} size="sm">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Component
+                </Button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left p-4 font-medium text-gray-700">Component Name</th>
+                    <th className="text-left p-4 font-medium text-gray-700">Cost per Unit</th>
+                    <th className="text-left p-4 font-medium text-gray-700">Quantity</th>
+                    <th className="text-left p-4 font-medium text-gray-700">Total Cost</th>
+                    <th className="text-left p-4 font-medium text-gray-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedCalculation.components.map((component, index) => (
+                    <tr key={component.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      <td className="p-4">
+                        <Input
+                          value={component.name}
+                          onChange={(e) => updateComponent(component.id, 'name', e.target.value)}
+                          placeholder="Component name"
+                          className="border-gray-300"
+                        />
+                      </td>
+                      <td className="p-4">
+                        <Input
+                          type="number"
+                          value={component.costPerUnit}
+                          onChange={(e) => updateComponent(component.id, 'costPerUnit', parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                          className="border-gray-300"
+                          step="0.01"
+                        />
+                      </td>
+                      <td className="p-4">
+                        <Input
+                          type="number"
+                          value={component.quantity}
+                          onChange={(e) => updateComponent(component.id, 'quantity', parseFloat(e.target.value) || 0)}
+                          placeholder="1"
+                          className="border-gray-300"
+                          step="0.01"
+                        />
+                      </td>
+                      <td className="p-4">
+                        <div className="font-medium text-gray-900">
+                          ${component.totalCost.toFixed(2)}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteComponent(component.id)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Pricing & Profit Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg text-gray-900">Pricing Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Total Cost to Produce
+                  </label>
+                  <div className="text-2xl font-bold text-gray-900">
+                    ${selectedCalculation.totalCost.toFixed(2)}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Desired Selling Price
+                  </label>
+                  <Input
+                    type="number"
+                    value={selectedCalculation.sellingPrice}
+                    onChange={(e) => updateSellingPrice(parseFloat(e.target.value) || 0)}
+                    placeholder="0.00"
+                    className="border-gray-300 text-lg"
+                    step="0.01"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg text-gray-900">Profit Analysis</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Profit per Unit
+                  </label>
+                  <div className="text-2xl font-bold text-gray-900">
+                    ${selectedCalculation.profitPerUnit.toFixed(2)}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Profit Margin (%)
+                  </label>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {selectedCalculation.profitMargin.toFixed(1)}%
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Margin Strength
+                  </label>
+                  <div className={`inline-flex items-center px-3 py-2 rounded-lg border ${MARGIN_CONFIG[selectedCalculation.marginStrength].color}`}>
+                    <span className="font-medium">
+                      {MARGIN_CONFIG[selectedCalculation.marginStrength].label}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Export Button */}
+          <div className="mt-6 flex justify-end">
+            <Button onClick={exportToPDF} variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Export to PDF
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
+      <Sidebar />
+      <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-teal-400 rounded-xl flex items-center justify-center">
+              <Calculator className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Profit Calculator</h1>
+              <p className="text-gray-600">Calculate costs, profits, and margins with color-coded indicators</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Instructions */}
+        <div className="mb-8">
+          <Card className="bg-green-50 border-green-200">
+            <CardContent className="p-6">
+              <p className="text-sm text-green-800 leading-relaxed">
+                Paste your product components here, enter your costs, and let the calculator do the rest. 
+                You'll see exactly how much it costs to produce each item, how much profit you're making, 
+                and whether your price is aligned with your goals. Tweak your numbers to test different scenarios.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Add New Calculation Button */}
+        <div className="mb-6">
+          <Button onClick={createNewCalculation} className="bg-green-500 hover:bg-green-600 text-white">
+            <Plus className="w-4 h-4 mr-2" />
+            New Calculation
+          </Button>
+        </div>
+
+        {/* Calculations Grid */}
+        {calculations.length === 0 ? (
+          <div className="text-center py-12">
+            <Calculator className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No calculations yet</h3>
+            <p className="text-gray-600">Create your first profit calculation to get started using the button above</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {calculations.map((calculation) => (
+              <Card key={calculation.id} className="group hover:shadow-lg transition-all duration-300">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <CardTitle className="text-lg text-gray-900 leading-tight">
+                      {calculation.name}
+                    </CardTitle>
+                    <div className={`px-2 py-1 rounded text-xs font-medium ${MARGIN_CONFIG[calculation.marginStrength].color}`}>
+                      {MARGIN_CONFIG[calculation.marginStrength].label}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
+                    <div className="text-sm text-gray-600">
+                      {calculation.components.length} component{calculation.components.length !== 1 ? 's' : ''}
+                    </div>
+                    <div className="text-sm font-medium text-gray-900">
+                      Profit Margin: {calculation.profitMargin.toFixed(1)}%
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Last modified: {new Date(calculation.lastModified).toLocaleDateString()}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedCalculation(calculation)}
+                        className="flex-1"
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Open
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteCalculation(calculation.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

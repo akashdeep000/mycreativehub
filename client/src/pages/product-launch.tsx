@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Rocket, Calendar, TrendingUp, Target, Lightbulb, CheckSquare } from 'lucide-react';
+import { Rocket, Calendar, TrendingUp, Target, Lightbulb, CheckSquare, Calculator } from 'lucide-react';
 import { useLocation } from 'wouter';
 
 export default function ProductLaunch() {
@@ -29,6 +29,15 @@ export default function ProductLaunch() {
       icon: CheckSquare,
       gradient: "from-blue-400 to-indigo-400",
       route: "/product-component-checklist",
+      badge: "New"
+    },
+    {
+      id: 3,
+      title: "Profit Calculator",
+      subtitle: "Calculate costs, profits, and margins with color-coded margin strength indicators.",
+      icon: Calculator,
+      gradient: "from-green-400 to-teal-400",
+      route: "/profit-calculator",
       badge: "New"
     }
   ];
