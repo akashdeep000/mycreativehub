@@ -633,7 +633,7 @@ Changelog:
   - Implemented weekly grid layout with toggleable timeline length (2, 3, or 4 weeks)
   - Added 7 pre-filled content type buttons: Teaser Post, Behind-the-Scenes, Story Moment, Countdown Post, Value Email, Product Preview, Collab or Promo
   - Built custom content block creation with emoji support and personalized titles
-  - Integrated status tracking system with Draft/Scheduled toggles for each content block
+  - Integrated status tracking system with In Progress/Scheduled/Completed toggles for each content block
   - Added week-specific notes sections for goals and reminders
   - Implemented localStorage auto-save functionality for session persistence
   - Created PDF export feature using html2canvas and jsPDF for offline planning

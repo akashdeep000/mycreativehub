@@ -17,7 +17,7 @@ interface ContentBlock {
   type: string;
   title: string;
   isCustom: boolean;
-  status: 'draft' | 'scheduled';
+  status: 'in progress' | 'scheduled' | 'completed';
   emoji: string;
   notes?: string;
 }
@@ -109,7 +109,7 @@ export default function PreLaunchTimelinePlanner() {
           type: contentType,
           title: contentType,
           isCustom,
-          status: 'draft',
+          status: 'in progress',
           emoji,
         };
         return { ...week, content: [...week.content, newContent] };
@@ -142,7 +142,7 @@ export default function PreLaunchTimelinePlanner() {
     });
   };
 
-  const updateContentStatus = (weekNumber: number, contentId: string, status: 'draft' | 'scheduled') => {
+  const updateContentStatus = (weekNumber: number, contentId: string, status: 'in progress' | 'scheduled' | 'completed') => {
     const weeks = timelineData.weeks.map(week => {
       if (week.weekNumber === weekNumber) {
         return {
@@ -419,13 +419,14 @@ export default function PreLaunchTimelinePlanner() {
                                 <span className="text-sm">{content.emoji}</span>
                                 <span className="font-medium text-sm">{content.title}</span>
                               </div>
-                              <Select value={content.status} onValueChange={(value: 'draft' | 'scheduled') => updateContentStatus(week.weekNumber, content.id, value)}>
+                              <Select value={content.status} onValueChange={(value: 'in progress' | 'scheduled' | 'completed') => updateContentStatus(week.weekNumber, content.id, value)}>
                                 <SelectTrigger className="w-full h-6 text-xs">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="draft">Draft</SelectItem>
+                                  <SelectItem value="in progress">In Progress</SelectItem>
                                   <SelectItem value="scheduled">Scheduled</SelectItem>
+                                  <SelectItem value="completed">Completed</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
