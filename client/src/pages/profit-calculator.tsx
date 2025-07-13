@@ -468,33 +468,7 @@ export default function ProfitCalculator() {
             </div>
           </div>
 
-          {/* Paste Area */}
-          <div className="mb-6">
-            <Card className="bg-gray-50 border-gray-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg text-gray-900">Paste Component List</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <Textarea
-                    value={pasteText}
-                    onChange={(e) => setPasteText(e.target.value)}
-                    placeholder="Paste your component list here from the Product Component Checklist..."
-                    className="min-h-[120px] border-gray-300"
-                  />
-                  <div className="flex gap-2">
-                    <Button onClick={handlePaste} variant="outline" size="sm">
-                      <Upload className="w-4 h-4 mr-2" />
-                      Parse & Add Components
-                    </Button>
-                    <Button onClick={() => setPasteText('')} variant="ghost" size="sm">
-                      Clear
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+
 
           {/* Components Table */}
           <div className="bg-white rounded-lg border mb-6">
