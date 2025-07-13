@@ -369,9 +369,9 @@ export default function ProductComponentChecklist() {
             <CardContent className="p-6">
               <p className="text-sm text-blue-800 leading-relaxed">
                 Start building your product library by creating a new card for each item you plan to launch. 
-                Within each product, list every component involved—from materials to packaging. When you're 
+                Within each product, list every component involved, from materials to packaging. When you're 
                 ready to price it, click 'Copy List' and paste it into the Profit Calculator to start working 
-                on your pricing strategy.
+                on your pricing strategy. Save each product to refer back to and tweak.
               </p>
             </CardContent>
           </Card>
