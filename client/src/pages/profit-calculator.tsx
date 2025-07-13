@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
@@ -18,7 +19,9 @@ import {
   X,
   Download,
   Eye,
-  Upload
+  Upload,
+  Archive,
+  FileText
 } from 'lucide-react';
 
 interface Component {
@@ -39,6 +42,17 @@ interface ProfitCalculation {
   profitMargin: number;
   marginStrength: 'strong' | 'moderate' | 'low';
   lastModified: string;
+}
+
+interface PricingLibraryEntry {
+  id: string;
+  productName: string;
+  totalCost: number;
+  sellingPrice: number;
+  profitPerUnit: number;
+  profitMargin: number;
+  marginStrength: 'strong' | 'moderate' | 'low';
+  dateAdded: string;
 }
 
 const MARGIN_CONFIG = {
@@ -67,15 +81,27 @@ export default function ProfitCalculator() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingName, setEditingName] = useState('');
   const [pasteText, setPasteText] = useState('');
+  const [pricingLibrary, setPricingLibrary] = useState<PricingLibraryEntry[]>([]);
+  const [activeTab, setActiveTab] = useState('calculator');
 
-  // Load calculations from localStorage on component mount
+  // Load calculations and pricing library from localStorage on component mount
   useEffect(() => {
     const savedCalculations = localStorage.getItem('profitCalculations');
+    const savedPricingLibrary = localStorage.getItem('pricingLibrary');
+    
     if (savedCalculations) {
       try {
         setCalculations(JSON.parse(savedCalculations));
       } catch (error) {
         console.error('Failed to parse saved calculations:', error);
+      }
+    }
+    
+    if (savedPricingLibrary) {
+      try {
+        setPricingLibrary(JSON.parse(savedPricingLibrary));
+      } catch (error) {
+        console.error('Failed to parse saved pricing library:', error);
       }
     }
   }, []);
@@ -84,6 +110,11 @@ export default function ProfitCalculator() {
   useEffect(() => {
     localStorage.setItem('profitCalculations', JSON.stringify(calculations));
   }, [calculations]);
+
+  // Save pricing library to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('pricingLibrary', JSON.stringify(pricingLibrary));
+  }, [pricingLibrary]);
 
   const generateId = () => Math.random().toString(36).substring(2, 9);
 
@@ -290,11 +321,97 @@ export default function ProfitCalculator() {
     setIsEditing(false);
   };
 
-  const exportToPDF = () => {
-    // Placeholder for PDF export functionality
+  const saveToLibrary = () => {
+    if (!selectedCalculation) return;
+    
+    const libraryEntry: PricingLibraryEntry = {
+      id: generateId(),
+      productName: selectedCalculation.name,
+      totalCost: selectedCalculation.totalCost,
+      sellingPrice: selectedCalculation.sellingPrice,
+      profitPerUnit: selectedCalculation.profitPerUnit,
+      profitMargin: selectedCalculation.profitMargin,
+      marginStrength: selectedCalculation.marginStrength,
+      dateAdded: new Date().toISOString()
+    };
+    
+    // Check if product already exists in library
+    const existingIndex = pricingLibrary.findIndex(entry => entry.productName === selectedCalculation.name);
+    
+    if (existingIndex !== -1) {
+      // Update existing entry
+      const updatedLibrary = [...pricingLibrary];
+      updatedLibrary[existingIndex] = libraryEntry;
+      setPricingLibrary(updatedLibrary);
+      toast({
+        title: "Product updated",
+        description: `${selectedCalculation.name} has been updated in your pricing library.`,
+      });
+    } else {
+      // Add new entry
+      setPricingLibrary(prev => [...prev, libraryEntry]);
+      toast({
+        title: "Saved to library",
+        description: `${selectedCalculation.name} has been added to your pricing library.`,
+      });
+    }
+  };
+
+  const deleteFromLibrary = (id: string) => {
+    const entry = pricingLibrary.find(e => e.id === id);
+    setPricingLibrary(prev => prev.filter(e => e.id !== id));
     toast({
-      title: "Export feature",
-      description: "PDF export functionality would be implemented here.",
+      title: "Removed from library",
+      description: `${entry?.productName} has been removed from your pricing library.`,
+    });
+  };
+
+  const exportLibraryToCSV = () => {
+    if (pricingLibrary.length === 0) {
+      toast({
+        title: "No data to export",
+        description: "Add some products to your pricing library first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const headers = [
+      'Product Name',
+      'Total Cost',
+      'Selling Price', 
+      'Profit per Unit',
+      'Profit Margin %',
+      'Margin Strength',
+      'Date Added'
+    ];
+
+    const csvContent = [
+      headers.join(','),
+      ...pricingLibrary.map(entry => [
+        `"${entry.productName}"`,
+        entry.totalCost.toFixed(2),
+        entry.sellingPrice.toFixed(2),
+        entry.profitPerUnit.toFixed(2),
+        entry.profitMargin.toFixed(1),
+        `"${MARGIN_CONFIG[entry.marginStrength].label}"`,
+        new Date(entry.dateAdded).toLocaleDateString()
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `pricing-library-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "Export complete",
+      description: "Your pricing library has been downloaded as a CSV file.",
     });
   };
 
@@ -521,11 +638,15 @@ export default function ProfitCalculator() {
             </Card>
           </div>
 
-          {/* Export Button */}
-          <div className="mt-6 flex justify-end">
-            <Button onClick={exportToPDF} variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Export to PDF
+          {/* Action Buttons */}
+          <div className="mt-6 flex justify-end gap-3">
+            <Button onClick={saveToLibrary} className="bg-green-500 hover:bg-green-600 text-white">
+              <Archive className="w-4 h-4 mr-2" />
+              Save to Pricing Library
+            </Button>
+            <Button onClick={() => setActiveTab('library')} variant="outline">
+              <FileText className="w-4 h-4 mr-2" />
+              View Library
             </Button>
           </div>
         </div>
@@ -550,84 +671,162 @@ export default function ProfitCalculator() {
           </div>
         </div>
 
-        {/* Instructions */}
-        <div className="mb-8">
-          <Card className="bg-green-50 border-green-200">
-            <CardContent className="p-6">
-              <p className="text-sm text-green-800 leading-relaxed">
-                Paste your product components here, enter your costs, and let the calculator do the rest. 
-                You'll see exactly how much it costs to produce each item, how much profit you're making, 
-                and whether your price is aligned with your goals. Tweak your numbers to test different scenarios.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Tab Navigation */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsTrigger value="calculator">Calculator</TabsTrigger>
+            <TabsTrigger value="library">Pricing Library ({pricingLibrary.length})</TabsTrigger>
+          </TabsList>
 
-        {/* Add New Calculation Button */}
-        <div className="mb-6">
-          <Button onClick={createNewCalculation} className="bg-green-500 hover:bg-green-600 text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            New Calculation
-          </Button>
-        </div>
-
-        {/* Calculations Grid */}
-        {calculations.length === 0 ? (
-          <div className="text-center py-12">
-            <Calculator className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No calculations yet</h3>
-            <p className="text-gray-600">Create your first profit calculation to get started using the button above</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {calculations.map((calculation) => (
-              <Card key={calculation.id} className="group hover:shadow-lg transition-all duration-300">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg text-gray-900 leading-tight">
-                      {calculation.name}
-                    </CardTitle>
-                    <div className={`px-2 py-1 rounded text-xs font-medium ${MARGIN_CONFIG[calculation.marginStrength].color}`}>
-                      {MARGIN_CONFIG[calculation.marginStrength].label}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
-                    <div className="text-sm text-gray-600">
-                      {calculation.components.length} component{calculation.components.length !== 1 ? 's' : ''}
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">
-                      Profit Margin: {calculation.profitMargin.toFixed(1)}%
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Last modified: {new Date(calculation.lastModified).toLocaleDateString()}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedCalculation(calculation)}
-                        className="flex-1"
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Open
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteCalculation(calculation.id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
+          <TabsContent value="calculator">
+            <div className="space-y-6">
+              {/* Instructions */}
+              <Card className="bg-green-50 border-green-200">
+                <CardContent className="p-6">
+                  <p className="text-sm text-green-800 leading-relaxed">
+                    Paste your product components here, enter your costs, and let the calculator do the rest. 
+                    You'll see exactly how much it costs to produce each item, how much profit you're making, 
+                    and whether your price is aligned with your goals. Tweak your numbers to test different scenarios.
+                  </p>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
+
+              {/* Add New Calculation Button */}
+              <div className="mb-6">
+                <Button onClick={createNewCalculation} className="bg-green-500 hover:bg-green-600 text-white">
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Calculation
+                </Button>
+              </div>
+
+              {/* Calculations Grid */}
+              {calculations.length === 0 ? (
+                <div className="text-center py-12">
+                  <Calculator className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No calculations yet</h3>
+                  <p className="text-gray-600">Create your first profit calculation to get started using the button above</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {calculations.map((calculation) => (
+                    <Card key={calculation.id} className="group hover:shadow-lg transition-all duration-300">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <CardTitle className="text-lg text-gray-900 leading-tight">
+                            {calculation.name}
+                          </CardTitle>
+                          <div className={`px-2 py-1 rounded text-xs font-medium ${MARGIN_CONFIG[calculation.marginStrength].color}`}>
+                            {MARGIN_CONFIG[calculation.marginStrength].label}
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="space-y-3">
+                          <div className="text-sm text-gray-600">
+                            {calculation.components.length} component{calculation.components.length !== 1 ? 's' : ''}
+                          </div>
+                          <div className="text-sm font-medium text-gray-900">
+                            Profit Margin: {calculation.profitMargin.toFixed(1)}%
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Last modified: {new Date(calculation.lastModified).toLocaleDateString()}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedCalculation(calculation)}
+                              className="flex-1"
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              Open
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteCalculation(calculation.id)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="library">
+            <div className="space-y-6">
+              {/* Export Button */}
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-900">Saved Pricing Library</h3>
+                <Button onClick={exportLibraryToCSV} className="bg-green-500 hover:bg-green-600 text-white">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Full Pricing Report
+                </Button>
+              </div>
+
+              {/* Pricing Library Table */}
+              {pricingLibrary.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileText className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No saved products yet</h3>
+                  <p className="text-gray-600">Complete profit calculations and save them to build your pricing library</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-lg border overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-gray-50">
+                          <th className="text-left p-4 font-medium text-gray-700">Product Name</th>
+                          <th className="text-left p-4 font-medium text-gray-700">Total Cost</th>
+                          <th className="text-left p-4 font-medium text-gray-700">Selling Price</th>
+                          <th className="text-left p-4 font-medium text-gray-700">Profit per Unit</th>
+                          <th className="text-left p-4 font-medium text-gray-700">Profit Margin %</th>
+                          <th className="text-left p-4 font-medium text-gray-700">Margin Strength</th>
+                          <th className="text-left p-4 font-medium text-gray-700">Date Added</th>
+                          <th className="text-left p-4 font-medium text-gray-700">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pricingLibrary.map((entry, index) => (
+                          <tr key={entry.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            <td className="p-4 font-medium text-gray-900">{entry.productName}</td>
+                            <td className="p-4 text-gray-900">${entry.totalCost.toFixed(2)}</td>
+                            <td className="p-4 text-gray-900">${entry.sellingPrice.toFixed(2)}</td>
+                            <td className="p-4 text-gray-900">${entry.profitPerUnit.toFixed(2)}</td>
+                            <td className="p-4 text-gray-900">{entry.profitMargin.toFixed(1)}%</td>
+                            <td className={`p-4 ${MARGIN_CONFIG[entry.marginStrength].cellColor}`}>
+                              <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${MARGIN_CONFIG[entry.marginStrength].color}`}>
+                                {MARGIN_CONFIG[entry.marginStrength].label}
+                              </div>
+                            </td>
+                            <td className="p-4 text-gray-600">{new Date(entry.dateAdded).toLocaleDateString()}</td>
+                            <td className="p-4">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => deleteFromLibrary(entry.id)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

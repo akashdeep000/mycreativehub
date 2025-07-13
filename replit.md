@@ -602,6 +602,16 @@ Changelog:
   - Implemented comprehensive auto-save with localStorage persistence
   - Built Excel-like table interface with add/remove rows and real-time calculations
   - Enhanced Product Launch System with third card featuring Calculator icon and green-teal gradient
+- July 13, 2025. Added Centralized Pricing Library Feature:
+  - Created comprehensive tab system within Profit Calculator separating calculation workspace from pricing library
+  - Implemented "Save to Pricing Library" functionality with automatic product data capture
+  - Built centralized pricing library with horizontal spreadsheet layout displaying all saved products
+  - Added complete product tracking: Product Name, Total Cost, Selling Price, Profit per Unit, Profit Margin %, Margin Strength, Date Added
+  - Integrated CSV export functionality "Download Full Pricing Report" with properly formatted headers
+  - Created comprehensive library management with delete functionality and empty state handling
+  - Added automatic duplicate detection - updates existing products when re-saved instead of creating duplicates
+  - Enhanced user experience with toast notifications for all save, update, and delete actions
+  - Implemented tab counter showing number of saved products in library for quick reference
 
 ## User Preferences
 
