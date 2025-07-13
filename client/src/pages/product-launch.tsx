@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Rocket, Calendar, TrendingUp, Target, Lightbulb } from 'lucide-react';
+import { Rocket, Calendar, TrendingUp, Target, Lightbulb, CheckSquare } from 'lucide-react';
 import { useLocation } from 'wouter';
 
 export default function ProductLaunch() {
@@ -21,6 +21,15 @@ export default function ProductLaunch() {
       gradient: "from-pink-400 to-rose-400",
       route: "/seasonality-timeline",
       badge: "Popular"
+    },
+    {
+      id: 2,
+      title: "Product Component Checklist",
+      subtitle: "Create and manage a library of product ideas with detailed component breakdowns.",
+      icon: CheckSquare,
+      gradient: "from-blue-400 to-indigo-400",
+      route: "/product-component-checklist",
+      badge: "New"
     }
   ];
 
