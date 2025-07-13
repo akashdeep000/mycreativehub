@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
@@ -42,6 +43,7 @@ interface ProfitCalculation {
   profitMargin: number;
   marginStrength: 'strong' | 'moderate' | 'low';
   lastModified: string;
+  currency: string;
 }
 
 interface PricingLibraryEntry {
@@ -72,6 +74,39 @@ const MARGIN_CONFIG = {
     cellColor: 'bg-red-50'
   }
 };
+
+const POPULAR_CURRENCIES = [
+  { code: 'USD', name: 'US Dollar', symbol: '$' },
+  { code: 'EUR', name: 'Euro', symbol: '€' },
+  { code: 'GBP', name: 'British Pound', symbol: '£' },
+  { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
+  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
+  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
+  { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF' },
+  { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
+  { code: 'SEK', name: 'Swedish Krona', symbol: 'kr' },
+  { code: 'NZD', name: 'New Zealand Dollar', symbol: 'NZ$' },
+  { code: 'NOK', name: 'Norwegian Krone', symbol: 'kr' },
+  { code: 'DKK', name: 'Danish Krone', symbol: 'kr' },
+  { code: 'PLN', name: 'Polish Zloty', symbol: 'zł' },
+  { code: 'CZK', name: 'Czech Koruna', symbol: 'Kč' },
+  { code: 'HUF', name: 'Hungarian Forint', symbol: 'Ft' },
+  { code: 'RUB', name: 'Russian Ruble', symbol: '₽' },
+  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
+  { code: 'MXN', name: 'Mexican Peso', symbol: 'MX$' },
+  { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
+  { code: 'KRW', name: 'South Korean Won', symbol: '₩' },
+  { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' },
+  { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$' },
+  { code: 'THB', name: 'Thai Baht', symbol: '฿' },
+  { code: 'ZAR', name: 'South African Rand', symbol: 'R' },
+  { code: 'TRY', name: 'Turkish Lira', symbol: '₺' },
+  { code: 'ILS', name: 'Israeli Shekel', symbol: '₪' },
+  { code: 'AED', name: 'UAE Dirham', symbol: 'AED' },
+  { code: 'SAR', name: 'Saudi Riyal', symbol: 'SR' },
+  { code: 'EGP', name: 'Egyptian Pound', symbol: 'E£' },
+  { code: 'PKR', name: 'Pakistani Rupee', symbol: 'Rs' }
+];
 
 export default function ProfitCalculator() {
   const [, setLocation] = useLocation();
@@ -124,6 +159,22 @@ export default function ProfitCalculator() {
     return 'low';
   };
 
+  const getCurrencySymbol = (currencyCode: string): string => {
+    const currency = POPULAR_CURRENCIES.find(c => c.code === currencyCode);
+    return currency ? currency.symbol : currencyCode;
+  };
+
+  const handleCurrencyChange = (newCurrency: string) => {
+    if (!selectedCalculation) return;
+    
+    const updatedCalculation = {
+      ...selectedCalculation,
+      currency: newCurrency
+    };
+    
+    updateCalculation(updatedCalculation);
+  };
+
   const calculateTotals = (components: Component[], sellingPrice: number) => {
     const totalCost = components.reduce((sum, comp) => sum + comp.totalCost, 0);
     const profitPerUnit = sellingPrice - totalCost;
@@ -145,7 +196,8 @@ export default function ProfitCalculator() {
       profitPerUnit: 0,
       profitMargin: 0,
       marginStrength: 'low',
-      lastModified: new Date().toISOString()
+      lastModified: new Date().toISOString(),
+      currency: 'USD'
     };
     setCalculations(prev => [...prev, newCalculation]);
     setSelectedCalculation(newCalculation);
@@ -473,12 +525,27 @@ export default function ProfitCalculator() {
           {/* Components Table */}
           <div className="bg-white rounded-lg border mb-6">
             <div className="p-4 border-b bg-gray-50">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Components & Costs</h3>
                 <Button onClick={addComponent} size="sm">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Component
                 </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">Currency:</label>
+                <Select value={selectedCalculation.currency} onValueChange={handleCurrencyChange}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {POPULAR_CURRENCIES.map((currency) => (
+                      <SelectItem key={currency.code} value={currency.code}>
+                        {currency.code} - {currency.name} ({currency.symbol})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -487,9 +554,9 @@ export default function ProfitCalculator() {
                 <thead>
                   <tr className="border-b bg-gray-50">
                     <th className="text-left p-4 font-medium text-gray-700">Component Name</th>
-                    <th className="text-left p-4 font-medium text-gray-700">Cost per Unit</th>
+                    <th className="text-left p-4 font-medium text-gray-700">Cost per Unit ({getCurrencySymbol(selectedCalculation.currency)})</th>
                     <th className="text-left p-4 font-medium text-gray-700">Quantity</th>
-                    <th className="text-left p-4 font-medium text-gray-700">Total Cost</th>
+                    <th className="text-left p-4 font-medium text-gray-700">Total Cost ({getCurrencySymbol(selectedCalculation.currency)})</th>
                     <th className="text-left p-4 font-medium text-gray-700">Actions</th>
                   </tr>
                 </thead>
@@ -526,7 +593,7 @@ export default function ProfitCalculator() {
                       </td>
                       <td className="p-4">
                         <div className="font-medium text-gray-900">
-                          ${component.totalCost.toFixed(2)}
+                          {getCurrencySymbol(selectedCalculation.currency)}{component.totalCost.toFixed(2)}
                         </div>
                       </td>
                       <td className="p-4">
@@ -558,12 +625,12 @@ export default function ProfitCalculator() {
                     Total Cost to Produce
                   </label>
                   <div className="text-2xl font-bold text-gray-900">
-                    ${selectedCalculation.totalCost.toFixed(2)}
+                    {getCurrencySymbol(selectedCalculation.currency)}{selectedCalculation.totalCost.toFixed(2)}
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Desired Selling Price
+                    Desired Selling Price ({getCurrencySymbol(selectedCalculation.currency)})
                   </label>
                   <Input
                     type="number"
@@ -587,7 +654,7 @@ export default function ProfitCalculator() {
                     Profit per Unit
                   </label>
                   <div className="text-2xl font-bold text-gray-900">
-                    ${selectedCalculation.profitPerUnit.toFixed(2)}
+                    {getCurrencySymbol(selectedCalculation.currency)}{selectedCalculation.profitPerUnit.toFixed(2)}
                   </div>
                 </div>
                 <div>
