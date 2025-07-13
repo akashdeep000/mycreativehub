@@ -618,6 +618,16 @@ Changelog:
   - Confirmed database user queries and password comparison functions are operational
   - Updated test user credentials: megan.hd@outlook.com / password123
   - Authentication system now fully functional for accessing dashboard and all features
+- July 13, 2025. Added Currency Selection to Profit Calculator:
+  - Implemented currency selection dropdown in Components & Costs section with 30 popular currencies
+  - Added type-ahead functionality for quick currency search (e.g., typing "GBP" jumps to British Pound)
+  - Updated all monetary displays to show correct currency symbols dynamically
+  - Integrated auto-save functionality with localStorage persistence
+  - Enhanced table headers and pricing sections to display selected currency symbols
+- July 13, 2025. Removed Product Component Checklist from Product Launch System:
+  - Removed "Product Component Checklist" card from The Product Launch Kit per user request
+  - Product Launch System now contains 2 focused tools: Seasonality Timeline and Profit Calculator
+  - Maintained all existing functionality while streamlining the interface
 
 ## User Preferences
 

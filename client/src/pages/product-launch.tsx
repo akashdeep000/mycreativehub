@@ -24,15 +24,6 @@ export default function ProductLaunch() {
     },
     {
       id: 2,
-      title: "Product Component Checklist",
-      subtitle: "Create and manage a library of product ideas with detailed component breakdowns.",
-      icon: CheckSquare,
-      gradient: "from-blue-400 to-indigo-400",
-      route: "/product-component-checklist",
-      badge: "New"
-    },
-    {
-      id: 3,
       title: "Profit Calculator",
       subtitle: "Calculate costs, profits, and margins with color-coded margin strength indicators.",
       icon: Calculator,
