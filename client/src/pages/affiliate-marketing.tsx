@@ -72,9 +72,12 @@ export default function AffiliateMarketing() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (linkData: InsertAffiliateLink) => {
+    mutationFn: async (linkData: Omit<InsertAffiliateLink, 'userId'>) => {
       return await apiRequest('/api/affiliate-links', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(linkData),
       });
     },
@@ -111,6 +114,9 @@ export default function AffiliateMarketing() {
     mutationFn: async ({ id, data }: { id: number; data: Partial<AffiliateLink> }) => {
       return await apiRequest(`/api/affiliate-links/${id}`, {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(data),
       });
     },
@@ -191,7 +197,7 @@ export default function AffiliateMarketing() {
     setErrors({});
   };
 
-  const validateForm = (data: InsertAffiliateLink) => {
+  const validateForm = (data: Omit<InsertAffiliateLink, 'userId'> | InsertAffiliateLink) => {
     const newErrors: Record<string, string> = {};
     
     if (!data.productName.trim()) {
@@ -212,7 +218,8 @@ export default function AffiliateMarketing() {
 
   const handleSubmit = () => {
     if (!validateForm(newLink)) return;
-    createMutation.mutate(newLink);
+    const { userId, ...linkData } = newLink;
+    createMutation.mutate(linkData);
   };
 
   const handleUpdate = (link: AffiliateLink) => {
