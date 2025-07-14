@@ -532,7 +532,7 @@ export default function LaunchGrowthPlan() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+              <div className="text-sm text-gray-600">
                 <div>
                   <h4 className="font-medium text-gray-900 mb-2">Best Practices</h4>
                   <ul className="space-y-1">
@@ -540,15 +540,6 @@ export default function LaunchGrowthPlan() {
                     <li>• Be specific and actionable in your insights</li>
                     <li>• Include both positive and negative feedback</li>
                     <li>• Review previous plans before your next launch</li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Key Questions to Consider</h4>
-                  <ul className="space-y-1">
-                    <li>• What surprised you most about this launch?</li>
-                    <li>• Which marketing channels performed best?</li>
-                    <li>• What would you do differently with more time/budget?</li>
-                    <li>• How can you improve the customer experience?</li>
                   </ul>
                 </div>
               </div>
