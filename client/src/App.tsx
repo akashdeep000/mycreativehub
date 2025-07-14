@@ -37,7 +37,7 @@ import QuarterDetail from "@/pages/quarter-detail";
 import ProductComponentChecklist from "@/pages/product-component-checklist";
 import ProfitCalculator from "@/pages/profit-calculator";
 import PreLaunchTimelinePlanner from "@/pages/pre-launch-timeline-planner";
-import LaunchGrowthPlan from "@/pages/launch-growth-plan";
+import LaunchGrowthPlan from "@/pages/launch-growth-plan-test";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -94,7 +94,6 @@ function Router() {
       <Route path="/profit-calculator" component={ProfitCalculator} />
       <Route path="/pre-launch-timeline-planner" component={PreLaunchTimelinePlanner} />
       <Route path="/launch-growth-plan" component={LaunchGrowthPlan} />
-      <Route path="/test-page" component={() => <div>Test Page Works</div>} />
       <Route path="/archived-templates" component={ArchivedTemplates} />
       <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
       <Route path="/inspiration-hub" component={InspirationHub} />
