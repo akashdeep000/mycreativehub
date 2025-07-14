@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import type { WorkflowTemplateInstance } from "@shared/schema";
@@ -96,10 +96,7 @@ export default function ArchivedTemplates() {
 
   const restoreTemplateMutation = useMutation({
     mutationFn: async (templateId: number) => {
-      const response = await fetch(`/api/workflow-templates/${templateId}/restore`, {
-        method: "POST",
-      });
-      if (!response.ok) throw new Error(`${response.status}: ${response.statusText}`);
+      const response = await apiRequest("POST", `/api/workflow-templates/${templateId}/restore`);
       return response.json();
     },
     onSuccess: () => {
@@ -114,10 +111,8 @@ export default function ArchivedTemplates() {
 
   const deleteTemplateMutation = useMutation({
     mutationFn: async (templateId: number) => {
-      const response = await fetch(`/api/workflow-templates/${templateId}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error(`${response.status}: ${response.statusText}`);
+      const response = await apiRequest("DELETE", `/api/workflow-templates/${templateId}`);
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workflow-templates/archived"] });
@@ -130,12 +125,8 @@ export default function ArchivedTemplates() {
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (templateIds: number[]) => {
-      const response = await fetch("/api/workflow-templates/bulk-delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateIds }),
-      });
-      if (!response.ok) throw new Error(`${response.status}: ${response.statusText}`);
+      const response = await apiRequest("POST", "/api/workflow-templates/bulk-delete", { templateIds });
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workflow-templates/archived"] });

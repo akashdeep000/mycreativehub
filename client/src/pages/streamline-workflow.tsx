@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Sidebar from "@/components/layout/sidebar";
@@ -159,12 +159,7 @@ export default function StreamlineWorkflow() {
   // Create template mutation
   const createTemplateMutation = useMutation({
     mutationFn: async (templateData: any) => {
-      const response = await fetch("/api/workflow-templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(templateData),
-      });
-      if (!response.ok) throw new Error(`${response.status}: ${response.statusText}`);
+      const response = await apiRequest("POST", "/api/workflow-templates", templateData);
       return response.json();
     },
     onSuccess: () => {
@@ -175,10 +170,7 @@ export default function StreamlineWorkflow() {
   // Archive template mutation
   const archiveTemplateMutation = useMutation({
     mutationFn: async (templateId: number) => {
-      const response = await fetch(`/api/workflow-templates/${templateId}/archive`, {
-        method: "PATCH",
-      });
-      if (!response.ok) throw new Error(`${response.status}: ${response.statusText}`);
+      const response = await apiRequest("PATCH", `/api/workflow-templates/${templateId}/archive`);
       return response.json();
     },
     onSuccess: () => {
