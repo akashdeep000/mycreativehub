@@ -548,17 +548,17 @@ export default function AffiliateMarketing() {
                   <tr key={link.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">{link.productName}</div>
-                      {link.trackingCode && (
-                        <div className="text-xs text-gray-500">Code: {link.trackingCode}</div>
+                      {link.affiliateCode && (
+                        <div className="text-xs text-gray-500">Code: {link.affiliateCode}</div>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-900">{link.company}</td>
+                    <td className="px-4 py-3 text-gray-900">{link.companyName}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => copyToClipboard(link.affiliateLink, link.id)}
+                          onClick={() => copyToClipboard(link.trackingLink, link.id)}
                           className="p-1 h-8 w-8"
                         >
                           {copiedId === link.id ? (
@@ -570,7 +570,7 @@ export default function AffiliateMarketing() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => window.open(link.affiliateLink, '_blank')}
+                          onClick={() => window.open(link.trackingLink, '_blank')}
                           className="p-1 h-8 w-8"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -581,14 +581,14 @@ export default function AffiliateMarketing() {
                     <td className="px-4 py-3 text-gray-900">{link.cookieLength || '-'}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {link.contentChannels.slice(0, 2).map(channel => (
+                        {link.contentChannel ? link.contentChannel.split(', ').slice(0, 2).map(channel => (
                           <Badge key={channel} variant="outline" className="text-xs">
                             {channel}
                           </Badge>
-                        ))}
-                        {link.contentChannels.length > 2 && (
+                        )) : null}
+                        {link.contentChannel && link.contentChannel.split(', ').length > 2 && (
                           <Badge variant="outline" className="text-xs">
-                            +{link.contentChannels.length - 2}
+                            +{link.contentChannel.split(', ').length - 2}
                           </Badge>
                         )}
                       </div>
@@ -603,7 +603,13 @@ export default function AffiliateMarketing() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => setEditingLink(link)}
+                          onClick={() => setEditingLink({
+                            ...link,
+                            company: link.companyName,
+                            affiliateLink: link.trackingLink,
+                            trackingCode: link.affiliateCode,
+                            contentChannels: link.contentChannel ? link.contentChannel.split(', ') : []
+                          })}
                           className="p-1 h-8 w-8"
                         >
                           <Edit className="w-4 h-4" />

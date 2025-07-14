@@ -1305,9 +1305,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/affiliate-links', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      
+      // Map frontend fields to database schema
       const linkData = {
         userId,
-        ...req.body
+        productName: req.body.productName,
+        companyName: req.body.company, // frontend sends 'company', db expects 'companyName'
+        trackingLink: req.body.affiliateLink, // frontend sends 'affiliateLink', db expects 'trackingLink'
+        affiliateCode: req.body.trackingCode, // frontend sends 'trackingCode', db expects 'affiliateCode'
+        commissionRate: req.body.commissionRate,
+        cookieLength: req.body.cookieLength,
+        contentChannel: req.body.contentChannels?.join(', '), // frontend sends array, db expects string
+        notes: req.body.notes,
+        status: req.body.status
       };
       
       const link = await storage.createAffiliateLink(linkData);
@@ -1321,7 +1331,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/affiliate-links/:id', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const link = await storage.updateAffiliateLink(parseInt(id), req.body);
+      
+      // Map frontend fields to database schema
+      const updateData = {
+        productName: req.body.productName,
+        companyName: req.body.company, // frontend sends 'company', db expects 'companyName'
+        trackingLink: req.body.affiliateLink, // frontend sends 'affiliateLink', db expects 'trackingLink'
+        affiliateCode: req.body.trackingCode, // frontend sends 'trackingCode', db expects 'affiliateCode'
+        commissionRate: req.body.commissionRate,
+        cookieLength: req.body.cookieLength,
+        contentChannel: req.body.contentChannels?.join(', '), // frontend sends array, db expects string
+        notes: req.body.notes,
+        status: req.body.status
+      };
+      
+      const link = await storage.updateAffiliateLink(parseInt(id), updateData);
       res.json(link);
     } catch (error) {
       console.error("Error updating affiliate link:", error);
