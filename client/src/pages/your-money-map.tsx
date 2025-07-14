@@ -103,7 +103,7 @@ interface MonthlySnapshot {
 export default function YourMoneyMap() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState('budget');
+  const [activeTab, setActiveTab] = useState('goals');
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [currency, setCurrency] = useState('USD');
 
@@ -546,7 +546,7 @@ export default function YourMoneyMap() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-green-100 text-green-700">
-                4 Sections
+                3 Sections
               </Badge>
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                 Financial Planning
@@ -585,144 +585,138 @@ export default function YourMoneyMap() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="budget">Budget Planner</TabsTrigger>
-            <TabsTrigger value="tracker">Income & Expenses</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="goals">Goals</TabsTrigger>
+            <TabsTrigger value="tracker">Income & Expenses</TabsTrigger>
             <TabsTrigger value="savings">Savings</TabsTrigger>
           </TabsList>
 
-          {/* Budget Planner Tab */}
-          <TabsContent value="budget" className="space-y-6">
+          {/* Goals Tab */}
+          <TabsContent value="goals" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Income Section */}
+              {/* Goals List */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-green-500" />
-                    Expected Income
+                    <Target className="w-5 h-5 text-blue-500" />
+                    Business Goals
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {budgetItems.filter(item => item.type === 'income').map((item) => (
-                    <div key={item.id} className="flex gap-2">
-                      <Input
-                        placeholder="Income source"
-                        value={item.category}
-                        onChange={(e) => updateBudgetItem(item.id, 'category', e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Amount"
-                        value={item.amount || ''}
-                        onChange={(e) => updateBudgetItem(item.id, 'amount', parseFloat(e.target.value) || 0)}
-                        className="w-32"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteBudgetItem(item.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                  {goals.map((goal) => (
+                    <div key={goal.id} className="border rounded-lg p-4">
+                      <div className="flex gap-2 mb-2">
+                        <Input
+                          placeholder="Goal title"
+                          value={goal.title}
+                          onChange={(e) => updateGoal(goal.id, 'title', e.target.value)}
+                          className="flex-1"
+                        />
+                        <Select value={goal.type} onValueChange={(value) => updateGoal(goal.id, 'type', value)}>
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="quarterly">Quarterly</SelectItem>
+                            <SelectItem value="yearly">Yearly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteGoal(goal.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 mb-2">
+                        <Input
+                          type="number"
+                          placeholder="Target amount"
+                          value={goal.targetAmount || ''}
+                          onChange={(e) => updateGoal(goal.id, 'targetAmount', parseFloat(e.target.value) || 0)}
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Current amount"
+                          value={goal.currentAmount || ''}
+                          onChange={(e) => updateGoal(goal.id, 'currentAmount', parseFloat(e.target.value) || 0)}
+                        />
+                        <Input
+                          type="date"
+                          value={goal.deadline}
+                          onChange={(e) => updateGoal(goal.id, 'deadline', e.target.value)}
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Progress 
+                          value={goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0} 
+                          className="flex-1"
+                        />
+                        <Badge variant={goal.status === 'on-track' ? 'default' : goal.status === 'ahead' ? 'secondary' : 'destructive'}>
+                          {goal.status}
+                        </Badge>
+                      </div>
                     </div>
                   ))}
                   <Button 
                     variant="outline" 
-                    onClick={() => addBudgetItem('income')}
+                    onClick={addGoal}
                     className="w-full"
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Income Source
+                    Add Goal
                   </Button>
                 </CardContent>
               </Card>
 
-              {/* Expenses Section */}
+              {/* Goals Summary */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingDown className="w-5 h-5 text-red-500" />
-                    Expected Expenses
-                  </CardTitle>
+                  <CardTitle>Goals Summary</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {budgetItems.filter(item => item.type === 'expense').map((item) => (
-                    <div key={item.id} className="flex gap-2">
-                      <Input
-                        placeholder="Expense category"
-                        value={item.category}
-                        onChange={(e) => updateBudgetItem(item.id, 'category', e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Amount"
-                        value={item.amount || ''}
-                        onChange={(e) => updateBudgetItem(item.id, 'amount', parseFloat(e.target.value) || 0)}
-                        className="w-32"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteBudgetItem(item.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {goals.length}
+                      </div>
+                      <div className="text-sm text-gray-600">Total Goals</div>
                     </div>
-                  ))}
-                  <Button 
-                    variant="outline" 
-                    onClick={() => addBudgetItem('expense')}
-                    className="w-full"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Expense Category
-                  </Button>
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">
+                        {goals.filter(g => g.status === 'on-track' || g.status === 'ahead').length}
+                      </div>
+                      <div className="text-sm text-gray-600">On Track</div>
+                    </div>
+                    <div className="text-center p-4 bg-orange-50 rounded-lg">
+                      <div className="text-2xl font-bold text-orange-600">
+                        {formatCurrency(goals.reduce((sum, goal) => sum + goal.targetAmount, 0))}
+                      </div>
+                      <div className="text-sm text-gray-600">Total Target</div>
+                    </div>
+                    <div className="text-center p-4 bg-purple-50 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {formatCurrency(goals.reduce((sum, goal) => sum + goal.currentAmount, 0))}
+                      </div>
+                      <div className="text-sm text-gray-600">Current Total</div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Budget Summary */}
+            {/* Goal Notes */}
             <Card>
               <CardHeader>
-                <CardTitle>Budget Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">
-                      {formatCurrency(getBudgetTotals().income)}
-                    </div>
-                    <div className="text-sm text-gray-600">Total Income</div>
-                  </div>
-                  <div className="text-center p-4 bg-red-50 rounded-lg">
-                    <div className="text-2xl font-bold text-red-600">
-                      {formatCurrency(getBudgetTotals().expenses)}
-                    </div>
-                    <div className="text-sm text-gray-600">Total Expenses</div>
-                  </div>
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className={`text-2xl font-bold ${getBudgetTotals().profit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                      {formatCurrency(getBudgetTotals().profit)}
-                    </div>
-                    <div className="text-sm text-gray-600">Net Profit</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Budget Notes */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Budget Notes</CardTitle>
+                <CardTitle>Goal Notes</CardTitle>
               </CardHeader>
               <CardContent>
                 <Textarea
-                  placeholder="Add notes about your budget planning..."
-                  value={budgetNotes}
-                  onChange={(e) => setBudgetNotes(e.target.value)}
+                  placeholder="Add notes about your goals and progress..."
+                  value={goalNotes}
+                  onChange={(e) => setGoalNotes(e.target.value)}
                   rows={3}
                 />
               </CardContent>
@@ -732,12 +726,12 @@ export default function YourMoneyMap() {
           {/* Income & Expense Tracker Tab */}
           <TabsContent value="tracker" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Actual Income */}
+              {/* Income */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-green-500" />
-                    Actual Income
+                    Income
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -751,7 +745,7 @@ export default function YourMoneyMap() {
                       />
                       <Input
                         type="number"
-                        placeholder="Actual amount"
+                        placeholder="Amount"
                         value={item.actualAmount || ''}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'actualAmount', parseFloat(e.target.value) || 0)}
                         className="w-32"
@@ -776,12 +770,12 @@ export default function YourMoneyMap() {
                 </CardContent>
               </Card>
 
-              {/* Actual Expenses */}
+              {/* Expenses */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingDown className="w-5 h-5 text-red-500" />
-                    Actual Expenses
+                    Expenses
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -795,7 +789,7 @@ export default function YourMoneyMap() {
                       />
                       <Input
                         type="number"
-                        placeholder="Actual amount"
+                        placeholder="Amount"
                         value={item.actualAmount || ''}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'actualAmount', parseFloat(e.target.value) || 0)}
                         className="w-32"

@@ -676,6 +676,13 @@ Changelog:
   - Designed mobile-friendly interface with responsive grid layouts and clean visual hierarchy
   - Added comprehensive toast notifications for all snapshot operations (save, delete, export)
   - Created detailed breakdown view showing income sources, expenses, goals progress, and savings goals with currency formatting
+- July 14, 2025. Streamlined "Your Money Map" Interface:
+  - Removed Budget Planner tab per user request to focus on core financial tracking
+  - Reordered tabs: Goals → Income & Expenses → Savings for better workflow
+  - Changed "Actual Income" to "Income" and "Actual Expenses" to "Expenses" for cleaner terminology
+  - Updated badge count from "4 Sections" to "3 Sections" to reflect tab removal
+  - Goals tab now appears first, emphasizing target-setting before tracking actual performance
+  - Simplified interface reduces cognitive load while maintaining all essential financial tracking functionality
 
 ## User Preferences
 
