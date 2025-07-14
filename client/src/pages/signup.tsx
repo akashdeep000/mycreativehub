@@ -86,9 +86,10 @@ export default function SignUp() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: name === "email" ? value.toLowerCase() : value
     });
   };
 
