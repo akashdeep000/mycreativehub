@@ -756,27 +756,29 @@ export default function YourMoneyMap() {
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Goals List */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="w-5 h-5 text-blue-500" />
-                    Business Goals
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+            {/* Financial Goals */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Financial Goals</span>
+                  <Button onClick={addGoal} className="flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Add Goal
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
                   {goals.map((goal) => (
-                    <div key={goal.id} className="border rounded-lg p-4">
-                      <div className="flex gap-2 mb-2">
+                    <div key={goal.id} className="p-4 border rounded-lg space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Input
                           placeholder="Goal title"
                           value={goal.title}
                           onChange={(e) => updateGoal(goal.id, 'title', e.target.value)}
-                          className="flex-1"
                         />
                         <Select value={goal.type} onValueChange={(value) => updateGoal(goal.id, 'type', value)}>
-                          <SelectTrigger className="w-32">
+                          <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -785,15 +787,17 @@ export default function YourMoneyMap() {
                             <SelectItem value="yearly">Yearly</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteGoal(goal.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="space-y-1">
+                          <label className="text-sm font-medium text-gray-700">Achieve Goal By</label>
+                          <Input
+                            type="date"
+                            value={goal.deadline}
+                            onChange={(e) => updateGoal(goal.id, 'deadline', e.target.value)}
+                          />
+                        </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-2 mb-2">
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
                           type="number"
                           placeholder="Target amount"
@@ -806,69 +810,84 @@ export default function YourMoneyMap() {
                           value={goal.currentAmount || ''}
                           onChange={(e) => updateGoal(goal.id, 'currentAmount', parseFloat(e.target.value) || 0)}
                         />
-                        <Input
-                          type="date"
-                          value={goal.deadline}
-                          onChange={(e) => updateGoal(goal.id, 'deadline', e.target.value)}
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Progress</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">
+                              {goal.targetAmount > 0 ? Math.round((goal.currentAmount / goal.targetAmount) * 100) : 0}%
+                            </span>
+                            <div className="flex items-center gap-1">
+                              {goal.status === 'ahead' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                              {goal.status === 'on-track' && <Target className="w-4 h-4 text-blue-500" />}
+                              {goal.status === 'behind' && <AlertCircle className="w-4 h-4 text-red-500" />}
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                goal.status === 'ahead' ? 'bg-green-100 text-green-700' :
+                                goal.status === 'on-track' ? 'bg-blue-100 text-blue-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                {goal.status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <Progress 
+                          value={goal.targetAmount > 0 ? Math.min((goal.currentAmount / goal.targetAmount) * 100, 100) : 0} 
+                          className="h-2"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Progress 
-                          value={goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0} 
-                          className="flex-1"
-                        />
-                        <Badge variant={goal.status === 'on-track' ? 'default' : goal.status === 'ahead' ? 'secondary' : 'destructive'}>
-                          {goal.status}
-                        </Badge>
+                      
+                      <div className="flex justify-end">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteGoal(goal.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                   ))}
-                  <Button 
-                    variant="outline" 
-                    onClick={addGoal}
-                    className="w-full"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Goal
-                  </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </CardContent>
+            </Card>
 
-              {/* Goals Summary */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Goals Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {goals.length}
-                      </div>
-                      <div className="text-sm text-gray-600">Total Goals</div>
+            {/* Goals Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Goals Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {goals.length}
                     </div>
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">
-                        {goals.filter(g => g.status === 'on-track' || g.status === 'ahead').length}
-                      </div>
-                      <div className="text-sm text-gray-600">On Track</div>
-                    </div>
-                    <div className="text-center p-4 bg-orange-50 rounded-lg">
-                      <div className="text-2xl font-bold text-orange-600">
-                        {formatCurrency(goals.reduce((sum, goal) => sum + goal.targetAmount, 0))}
-                      </div>
-                      <div className="text-sm text-gray-600">Total Target</div>
-                    </div>
-                    <div className="text-center p-4 bg-purple-50 rounded-lg">
-                      <div className="text-2xl font-bold text-purple-600">
-                        {formatCurrency(goals.reduce((sum, goal) => sum + goal.currentAmount, 0))}
-                      </div>
-                      <div className="text-sm text-gray-600">Current Total</div>
-                    </div>
+                    <div className="text-sm text-gray-600">Total Goals</div>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
+                      {goals.filter(g => g.status === 'on-track' || g.status === 'ahead').length}
+                    </div>
+                    <div className="text-sm text-gray-600">On Track</div>
+                  </div>
+                  <div className="text-center p-4 bg-orange-50 rounded-lg">
+                    <div className="text-2xl font-bold text-orange-600">
+                      {formatCurrency(goals.reduce((sum, goal) => sum + goal.targetAmount, 0))}
+                    </div>
+                    <div className="text-sm text-gray-600">Total Target</div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {formatCurrency(goals.reduce((sum, goal) => sum + goal.currentAmount, 0))}
+                    </div>
+                    <div className="text-sm text-gray-600">Current Total</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Goal Notes */}
             <Card>
@@ -1116,117 +1135,7 @@ export default function YourMoneyMap() {
 
 
 
-          {/* Goal Tracker Tab */}
-          <TabsContent value="goals" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Financial Goals</span>
-                  <Button onClick={addGoal} className="flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Add Goal
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {goals.map((goal) => (
-                    <div key={goal.id} className="p-4 border rounded-lg space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Input
-                          placeholder="Goal title"
-                          value={goal.title}
-                          onChange={(e) => updateGoal(goal.id, 'title', e.target.value)}
-                        />
-                        <Select value={goal.type} onValueChange={(value) => updateGoal(goal.id, 'type', value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="monthly">Monthly</SelectItem>
-                            <SelectItem value="quarterly">Quarterly</SelectItem>
-                            <SelectItem value="yearly">Yearly</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="date"
-                          value={goal.deadline}
-                          onChange={(e) => updateGoal(goal.id, 'deadline', e.target.value)}
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                          type="number"
-                          placeholder="Target amount"
-                          value={goal.targetAmount || ''}
-                          onChange={(e) => updateGoal(goal.id, 'targetAmount', parseFloat(e.target.value) || 0)}
-                        />
-                        <Input
-                          type="number"
-                          placeholder="Current amount"
-                          value={goal.currentAmount || ''}
-                          onChange={(e) => updateGoal(goal.id, 'currentAmount', parseFloat(e.target.value) || 0)}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Progress</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">
-                              {goal.targetAmount > 0 ? Math.round((goal.currentAmount / goal.targetAmount) * 100) : 0}%
-                            </span>
-                            <div className="flex items-center gap-1">
-                              {goal.status === 'ahead' && <CheckCircle className="w-4 h-4 text-green-500" />}
-                              {goal.status === 'on-track' && <Target className="w-4 h-4 text-blue-500" />}
-                              {goal.status === 'behind' && <AlertCircle className="w-4 h-4 text-red-500" />}
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                goal.status === 'ahead' ? 'bg-green-100 text-green-700' :
-                                goal.status === 'on-track' ? 'bg-blue-100 text-blue-700' :
-                                'bg-red-100 text-red-700'
-                              }`}>
-                                {goal.status}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <Progress 
-                          value={goal.targetAmount > 0 ? Math.min((goal.currentAmount / goal.targetAmount) * 100, 100) : 0} 
-                          className="h-2"
-                        />
-                      </div>
-                      
-                      <div className="flex justify-end">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteGoal(goal.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Goal Notes */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Goal Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  placeholder="Add notes about your financial goals and progress..."
-                  value={goalNotes}
-                  onChange={(e) => setGoalNotes(e.target.value)}
-                  rows={3}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* Savings Tracker Tab */}
           <TabsContent value="savings" className="space-y-6">
