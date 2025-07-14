@@ -270,11 +270,7 @@ export default function LaunchGrowthPlan() {
                 <FileText className="w-5 h-5 text-blue-500 mt-1 flex-shrink-0" />
                 <div>
                   <p className="text-gray-700 leading-relaxed">
-                    <strong>Download your Post-Launch Playbook as a PDF from your course</strong> to reflect on what worked (and what didn't). 
-                    If you'd like to keep it handy, upload it to your Resource Library.
-                  </p>
-                  <p className="text-gray-700 leading-relaxed mt-2">
-                    Then, use the interactive Launch Growth Plan below to pull out your key insights and decisions for next time.
+                    Use the interactive Launch Growth Plan below to pull key insights from your recent launch, in order to make improvements next time.
                   </p>
                 </div>
               </div>
@@ -290,16 +286,14 @@ export default function LaunchGrowthPlan() {
               </span>
             </div>
             
-            <div className="flex gap-2">
-              <Button onClick={exportSelectedPlans} variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Export Completed Plans
-              </Button>
-              <Button onClick={openAddModal} size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                New Growth Plan
-              </Button>
-            </div>
+            {growthPlans.length > 0 && (
+              <div className="flex gap-2">
+                <Button onClick={exportSelectedPlans} variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Completed Plans
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Growth Plans Grid */}
@@ -313,7 +307,7 @@ export default function LaunchGrowthPlan() {
                 </p>
                 <Button onClick={openAddModal}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Create First Growth Plan
+                  New Growth Plan
                 </Button>
               </div>
             ) : (
@@ -391,6 +385,16 @@ export default function LaunchGrowthPlan() {
               ))
             )}
           </div>
+
+          {/* Add New Growth Plan Button - shown when there are existing plans */}
+          {growthPlans.length > 0 && (
+            <div className="flex justify-center mt-6">
+              <Button onClick={openAddModal} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add New Growth Plan
+              </Button>
+            </div>
+          )}
 
           {/* Add/Edit Modal */}
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
