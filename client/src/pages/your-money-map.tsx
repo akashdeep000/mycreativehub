@@ -38,20 +38,11 @@ interface BudgetItem {
 interface IncomeExpenseItem {
   id: string;
   category: string;
-  budgetAmount: number;
   actualAmount: number;
   type: 'income' | 'expense';
 }
 
-interface ProfitabilityItem {
-  id: string;
-  category: string;
-  amount: number;
-  type: 'income' | 'expense';
-  isHidden: boolean;
-  action: 'repeat' | 'adjust' | 'none';
-  notes: string;
-}
+
 
 interface Goal {
   id: string;
@@ -90,9 +81,7 @@ export default function YourMoneyMap() {
   const [personalPayAmount, setPersonalPayAmount] = useState(0);
   const [trackerNotes, setTrackerNotes] = useState('');
 
-  // Profitability Review State
-  const [profitabilityItems, setProfitabilityItems] = useState<ProfitabilityItem[]>([]);
-  const [profitabilityNotes, setProfitabilityNotes] = useState('');
+
 
   // Goal Tracker State
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -114,8 +103,6 @@ export default function YourMoneyMap() {
         setTaxPercentage(parsed.taxPercentage || 25);
         setPersonalPayAmount(parsed.personalPayAmount || 0);
         setTrackerNotes(parsed.trackerNotes || '');
-        setProfitabilityItems(parsed.profitabilityItems || []);
-        setProfitabilityNotes(parsed.profitabilityNotes || '');
         setGoals(parsed.goals || []);
         setGoalNotes(parsed.goalNotes || '');
         setSavingsGoals(parsed.savingsGoals || []);
@@ -137,8 +124,6 @@ export default function YourMoneyMap() {
       taxPercentage,
       personalPayAmount,
       trackerNotes,
-      profitabilityItems,
-      profitabilityNotes,
       goals,
       goalNotes,
       savingsGoals,
@@ -147,7 +132,7 @@ export default function YourMoneyMap() {
       currency
     };
     localStorage.setItem('your-money-map-data', JSON.stringify(dataToSave));
-  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, personalPayAmount, trackerNotes, profitabilityItems, profitabilityNotes, goals, goalNotes, savingsGoals, savingsNotes, selectedPeriod, currency]);
+  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, personalPayAmount, trackerNotes, goals, goalNotes, savingsGoals, savingsNotes, selectedPeriod, currency]);
 
   // Authentication check
   useEffect(() => {
@@ -180,8 +165,9 @@ export default function YourMoneyMap() {
     return symbols[currencyCode] || currencyCode;
   };
 
-  const formatCurrency = (amount: number) => {
-    return `${getCurrencySymbol(currency)}${amount.toLocaleString()}`;
+  const formatCurrency = (amount: number | undefined) => {
+    const validAmount = amount || 0;
+    return `${getCurrencySymbol(currency)}${validAmount.toLocaleString()}`;
   };
 
   // Budget Planner Functions
@@ -216,7 +202,6 @@ export default function YourMoneyMap() {
     const newItem: IncomeExpenseItem = {
       id: Date.now().toString(),
       category: '',
-      budgetAmount: 0,
       actualAmount: 0,
       type
     };
@@ -237,9 +222,7 @@ export default function YourMoneyMap() {
     const incomeItems = incomeExpenseItems.filter(item => item.type === 'income');
     const expenseItems = incomeExpenseItems.filter(item => item.type === 'expense');
     
-    const budgetIncome = incomeItems.reduce((sum, item) => sum + item.budgetAmount, 0);
     const actualIncome = incomeItems.reduce((sum, item) => sum + item.actualAmount, 0);
-    const budgetExpenses = expenseItems.reduce((sum, item) => sum + item.budgetAmount, 0);
     const actualExpenses = expenseItems.reduce((sum, item) => sum + item.actualAmount, 0);
     
     const actualProfit = actualIncome - actualExpenses;
@@ -249,11 +232,8 @@ export default function YourMoneyMap() {
     const profitMargin = actualIncome > 0 ? (actualProfit / actualIncome) * 100 : 0;
     
     return {
-      budgetIncome,
       actualIncome,
-      budgetExpenses,
       actualExpenses,
-      budgetProfit: budgetIncome - budgetExpenses,
       actualProfit,
       taxAmount,
       afterTaxProfit,
@@ -262,45 +242,7 @@ export default function YourMoneyMap() {
     };
   };
 
-  // Profitability Review Functions
-  const addProfitabilityItem = (type: 'income' | 'expense') => {
-    const newItem: ProfitabilityItem = {
-      id: Date.now().toString(),
-      category: '',
-      amount: 0,
-      type,
-      isHidden: false,
-      action: 'none',
-      notes: ''
-    };
-    setProfitabilityItems([...profitabilityItems, newItem]);
-  };
 
-  const updateProfitabilityItem = (id: string, field: string, value: any) => {
-    setProfitabilityItems(profitabilityItems.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ));
-  };
-
-  const deleteProfitabilityItem = (id: string) => {
-    setProfitabilityItems(profitabilityItems.filter(item => item.id !== id));
-  };
-
-  const getProfitabilityTotals = () => {
-    const income = profitabilityItems.filter(item => item.type === 'income').reduce((sum, item) => sum + item.amount, 0);
-    const visibleExpenses = profitabilityItems.filter(item => item.type === 'expense' && !item.isHidden).reduce((sum, item) => sum + item.amount, 0);
-    const hiddenExpenses = profitabilityItems.filter(item => item.type === 'expense' && item.isHidden).reduce((sum, item) => sum + item.amount, 0);
-    const totalExpenses = visibleExpenses + hiddenExpenses;
-    
-    return {
-      income,
-      visibleExpenses,
-      hiddenExpenses,
-      totalExpenses,
-      profitWithoutHidden: income - visibleExpenses,
-      actualProfit: income - totalExpenses
-    };
-  };
 
   // Goal Tracker Functions
   const addGoal = () => {
@@ -375,7 +317,6 @@ export default function YourMoneyMap() {
   const exportToCSV = () => {
     const budgetTotals = getBudgetTotals();
     const trackerTotals = getTrackerTotals();
-    const profitabilityTotals = getProfitabilityTotals();
     
     let csvContent = "Your Money Map - Financial Dashboard Export\n\n";
     
@@ -394,10 +335,9 @@ export default function YourMoneyMap() {
     
     // Income & Expense Tracker
     csvContent += "INCOME & EXPENSE TRACKER\n";
-    csvContent += "Category,Type,Budget Amount,Actual Amount,Variance\n";
+    csvContent += "Category,Type,Actual Amount\n";
     incomeExpenseItems.forEach(item => {
-      const variance = item.actualAmount - item.budgetAmount;
-      csvContent += `${item.category},${item.type},${item.budgetAmount},${item.actualAmount},${variance}\n`;
+      csvContent += `${item.category},${item.type},${item.actualAmount}\n`;
     });
     csvContent += `\nTracker Summary:\n`;
     csvContent += `Actual Income,${trackerTotals.actualIncome}\n`;
@@ -461,7 +401,7 @@ export default function YourMoneyMap() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-green-100 text-green-700">
-                5 Sections
+                4 Sections
               </Badge>
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                 Financial Planning
@@ -500,10 +440,9 @@ export default function YourMoneyMap() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="budget">Budget Planner</TabsTrigger>
             <TabsTrigger value="tracker">Income & Expenses</TabsTrigger>
-            <TabsTrigger value="profitability">Profitability</TabsTrigger>
             <TabsTrigger value="goals">Goals</TabsTrigger>
             <TabsTrigger value="savings">Savings</TabsTrigger>
           </TabsList>
@@ -658,23 +597,19 @@ export default function YourMoneyMap() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {incomeExpenseItems.filter(item => item.type === 'income').map((item) => (
-                    <div key={item.id} className="grid grid-cols-4 gap-2">
+                    <div key={item.id} className="flex gap-2">
                       <Input
                         placeholder="Income source"
                         value={item.category}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'category', e.target.value)}
+                        className="flex-1"
                       />
                       <Input
                         type="number"
-                        placeholder="Budget"
-                        value={item.budgetAmount || ''}
-                        onChange={(e) => updateIncomeExpenseItem(item.id, 'budgetAmount', parseFloat(e.target.value) || 0)}
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Actual"
+                        placeholder="Actual amount"
                         value={item.actualAmount || ''}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'actualAmount', parseFloat(e.target.value) || 0)}
+                        className="w-32"
                       />
                       <Button
                         variant="outline"
@@ -706,23 +641,19 @@ export default function YourMoneyMap() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {incomeExpenseItems.filter(item => item.type === 'expense').map((item) => (
-                    <div key={item.id} className="grid grid-cols-4 gap-2">
+                    <div key={item.id} className="flex gap-2">
                       <Input
                         placeholder="Expense category"
                         value={item.category}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'category', e.target.value)}
+                        className="flex-1"
                       />
                       <Input
                         type="number"
-                        placeholder="Budget"
-                        value={item.budgetAmount || ''}
-                        onChange={(e) => updateIncomeExpenseItem(item.id, 'budgetAmount', parseFloat(e.target.value) || 0)}
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Actual"
+                        placeholder="Actual amount"
                         value={item.actualAmount || ''}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'actualAmount', parseFloat(e.target.value) || 0)}
+                        className="w-32"
                       />
                       <Button
                         variant="outline"
@@ -832,67 +763,7 @@ export default function YourMoneyMap() {
               </CardContent>
             </Card>
 
-            {/* Comparison Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Budget vs Actual Comparison</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Income</span>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm text-green-600">Budget: {formatCurrency(getTrackerTotals().budgetIncome)}</span>
-                      <span className="text-sm text-green-800">Actual: {formatCurrency(getTrackerTotals().actualIncome)}</span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-green-200 h-4 rounded-full relative">
-                      <div 
-                        className="bg-green-500 h-4 rounded-full"
-                        style={{ width: '100%' }}
-                      />
-                    </div>
-                    <div className="bg-green-200 h-4 rounded-full relative">
-                      <div 
-                        className="bg-green-700 h-4 rounded-full"
-                        style={{ 
-                          width: getTrackerTotals().budgetIncome > 0 
-                            ? `${Math.min((getTrackerTotals().actualIncome / getTrackerTotals().budgetIncome) * 100, 100)}%`
-                            : '0%'
-                        }}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Expenses</span>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm text-red-600">Budget: {formatCurrency(getTrackerTotals().budgetExpenses)}</span>
-                      <span className="text-sm text-red-800">Actual: {formatCurrency(getTrackerTotals().actualExpenses)}</span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-red-200 h-4 rounded-full relative">
-                      <div 
-                        className="bg-red-500 h-4 rounded-full"
-                        style={{ width: '100%' }}
-                      />
-                    </div>
-                    <div className="bg-red-200 h-4 rounded-full relative">
-                      <div 
-                        className="bg-red-700 h-4 rounded-full"
-                        style={{ 
-                          width: getTrackerTotals().budgetExpenses > 0 
-                            ? `${Math.min((getTrackerTotals().actualExpenses / getTrackerTotals().budgetExpenses) * 100, 100)}%`
-                            : '0%'
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+
 
             {/* Tracker Notes */}
             <Card>
@@ -910,154 +781,7 @@ export default function YourMoneyMap() {
             </Card>
           </TabsContent>
 
-          {/* Profitability Review Tab */}
-          <TabsContent value="profitability" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Profitability Analysis</CardTitle>
-                <CardDescription>
-                  Review your income and expenses to identify hidden costs and optimization opportunities
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => addProfitabilityItem('income')}
-                      className="flex items-center gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add Income Item
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => addProfitabilityItem('expense')}
-                      className="flex items-center gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add Expense Item
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {profitabilityItems.map((item) => (
-                      <div key={item.id} className="grid grid-cols-1 md:grid-cols-6 gap-2 p-4 border rounded-lg">
-                        <Input
-                          placeholder="Category"
-                          value={item.category}
-                          onChange={(e) => updateProfitabilityItem(item.id, 'category', e.target.value)}
-                        />
-                        <Input
-                          type="number"
-                          placeholder="Amount"
-                          value={item.amount || ''}
-                          onChange={(e) => updateProfitabilityItem(item.id, 'amount', parseFloat(e.target.value) || 0)}
-                        />
-                        <Select value={item.type} onValueChange={(value) => updateProfitabilityItem(item.id, 'type', value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="income">Income</SelectItem>
-                            <SelectItem value="expense">Expense</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={item.isHidden}
-                            onChange={(e) => updateProfitabilityItem(item.id, 'isHidden', e.target.checked)}
-                          />
-                          <span className="text-sm">Hidden Cost</span>
-                        </div>
-                        <Select value={item.action} onValueChange={(value) => updateProfitabilityItem(item.id, 'action', value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">No Action</SelectItem>
-                            <SelectItem value="repeat">Repeat</SelectItem>
-                            <SelectItem value="adjust">Adjust</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteProfitabilityItem(item.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Profitability Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Profitability Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-xl font-bold text-green-600">
-                      {formatCurrency(getProfitabilityTotals().income)}
-                    </div>
-                    <div className="text-sm text-gray-600">Total Income</div>
-                  </div>
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-xl font-bold text-blue-600">
-                      {formatCurrency(getProfitabilityTotals().visibleExpenses)}
-                    </div>
-                    <div className="text-sm text-gray-600">Visible Expenses</div>
-                  </div>
-                  <div className="text-center p-4 bg-orange-50 rounded-lg">
-                    <div className="text-xl font-bold text-orange-600">
-                      {formatCurrency(getProfitabilityTotals().hiddenExpenses)}
-                    </div>
-                    <div className="text-sm text-gray-600">Hidden Costs</div>
-                  </div>
-                  <div className="text-center p-4 bg-purple-50 rounded-lg">
-                    <div className={`text-xl font-bold ${getProfitabilityTotals().actualProfit >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
-                      {formatCurrency(getProfitabilityTotals().actualProfit)}
-                    </div>
-                    <div className="text-sm text-gray-600">True Profit</div>
-                  </div>
-                </div>
-                
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                  <h4 className="font-semibold mb-2">Hidden Cost Impact</h4>
-                  <p className="text-sm text-gray-600">
-                    Without hidden costs: {formatCurrency(getProfitabilityTotals().profitWithoutHidden)}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    With hidden costs: {formatCurrency(getProfitabilityTotals().actualProfit)}
-                  </p>
-                  <p className="text-sm font-semibold text-orange-600">
-                    Hidden cost impact: {formatCurrency(getProfitabilityTotals().hiddenExpenses)}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Profitability Notes */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Profitability Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  placeholder="Add notes about your profitability analysis and action items..."
-                  value={profitabilityNotes}
-                  onChange={(e) => setProfitabilityNotes(e.target.value)}
-                  rows={3}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* Goal Tracker Tab */}
           <TabsContent value="goals" className="space-y-6">
