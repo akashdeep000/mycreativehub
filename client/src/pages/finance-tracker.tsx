@@ -62,19 +62,13 @@ export default function FinanceTracker() {
             </div>
           </div>
           
-          <div className="flex justify-between items-center">
-            <div className="flex gap-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-700">
-                1 Dashboard
-              </Badge>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                Financial
-              </Badge>
-            </div>
-            <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
-              <Plus className="w-4 h-4 mr-2" />
-              New Tracker
-            </Button>
+          <div className="flex gap-2">
+            <Badge variant="secondary" className="bg-green-100 text-green-700">
+              1 Dashboard
+            </Badge>
+            <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+              Financial
+            </Badge>
           </div>
         </div>
 
