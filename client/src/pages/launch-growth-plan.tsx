@@ -240,13 +240,13 @@ export default function LaunchGrowthPlan() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-gray-50">
       <Sidebar />
       
-      <div className="ml-64 p-8">
+      <div className="ml-64 p-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <Button
                 variant="ghost"
@@ -264,8 +264,8 @@ export default function LaunchGrowthPlan() {
           </div>
 
           {/* Intro Text */}
-          <Card className="mb-8">
-            <CardContent className="pt-6">
+          <Card className="mb-6">
+            <CardContent className="pt-4">
               <div className="flex items-start gap-3">
                 <FileText className="w-5 h-5 text-blue-500 mt-1 flex-shrink-0" />
                 <div>
@@ -282,7 +282,7 @@ export default function LaunchGrowthPlan() {
           </Card>
 
           {/* Controls */}
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-green-500" />
               <span className="text-sm text-gray-600">
