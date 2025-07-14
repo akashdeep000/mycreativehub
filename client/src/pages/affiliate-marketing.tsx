@@ -317,7 +317,7 @@ export default function AffiliateMarketing() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+          <div className="w-12 h-12 bg-pink-500 rounded-lg flex items-center justify-center">
             <Link className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -328,10 +328,12 @@ export default function AffiliateMarketing() {
         
         <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-pink-600 mt-0.5 flex-shrink-0" />
+            <div className="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <Link className="w-4 h-4 text-white" />
+            </div>
             <div>
-              <h3 className="font-semibold text-pink-900 mb-1">Track Your Affiliate Success</h3>
-              <p className="text-pink-800 text-sm">
+              <h3 className="font-semibold text-gray-900 mb-1">Track Your Affiliate Success</h3>
+              <p className="text-gray-700 text-sm">
                 Keep all your affiliate links organized in one place. Track commissions, cookie lengths, and performance across different content channels.
               </p>
             </div>
@@ -365,7 +367,7 @@ export default function AffiliateMarketing() {
         </Select>
         <Button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+          className="bg-pink-500 hover:bg-pink-600 text-white rounded-md"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Link
@@ -459,8 +461,8 @@ export default function AffiliateMarketing() {
                     key={channel}
                     variant={newLink.contentChannels.includes(channel) ? "default" : "outline"}
                     className={`cursor-pointer ${newLink.contentChannels.includes(channel) 
-                      ? 'bg-purple-500 text-white' 
-                      : 'border-gray-300 hover:border-purple-500'}`}
+                      ? 'bg-pink-500 text-white' 
+                      : 'border-gray-300 hover:border-pink-500'}`}
                     onClick={() => toggleContentChannel(channel)}
                   >
                     {channel}
@@ -500,7 +502,7 @@ export default function AffiliateMarketing() {
               <Button
                 onClick={handleSubmit}
                 disabled={createMutation.isPending}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                className="bg-pink-500 hover:bg-pink-600 text-white rounded-md"
               >
                 {createMutation.isPending ? 'Adding...' : 'Add Link'}
               </Button>
@@ -522,16 +524,16 @@ export default function AffiliateMarketing() {
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium">Product</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Company</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Link</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Commission</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Cookie</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Channels</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Product</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Company</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Link</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Commission</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Cookie</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Channels</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -694,8 +696,8 @@ export default function AffiliateMarketing() {
                       key={channel}
                       variant={editingLink.contentChannels.includes(channel) ? "default" : "outline"}
                       className={`cursor-pointer ${editingLink.contentChannels.includes(channel) 
-                        ? 'bg-purple-500 text-white' 
-                        : 'border-gray-300 hover:border-purple-500'}`}
+                        ? 'bg-pink-500 text-white' 
+                        : 'border-gray-300 hover:border-pink-500'}`}
                       onClick={() => toggleContentChannel(channel, true)}
                     >
                       {channel}
@@ -734,7 +736,7 @@ export default function AffiliateMarketing() {
                 <Button
                   onClick={() => handleUpdate(editingLink)}
                   disabled={updateMutation.isPending}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                  className="bg-pink-500 hover:bg-pink-600 text-white rounded-md"
                 >
                   {updateMutation.isPending ? 'Updating...' : 'Update Link'}
                 </Button>

@@ -690,6 +690,15 @@ Changelog:
   - Restricted blue save section to Income & Expenses tab only - goals and savings can be modified without saving
   - Removed Export CSV button from header and relocated to Monthly Records section
   - Users can now only export CSV data after saving monthly snapshots, creating better data integrity workflow
+- July 14, 2025. Updated Affiliate Link Hub Design to Match Dashboard Aesthetic:
+  - Removed pink-to-purple gradient backgrounds and replaced with clean neutral colors
+  - Updated "Track Your Affiliate Success" callout box to use soft pink background with clean icon styling
+  - Changed "Add Link" button to solid pink color (bg-pink-500) with rounded corners matching other dashboard buttons
+  - Updated table headers to use clean gray background (bg-gray-50) with font-semibold styling instead of gradients
+  - Fixed authentication issue where userId was being sent in request body instead of extracted from JWT token
+  - Added proper Content-Type headers for all API requests to ensure proper data handling
+  - Updated content channel badges to use consistent pink styling throughout add and edit forms
+  - Maintained responsive design and functionality while improving visual cohesion with dashboard theme
 
 ## User Preferences
 
