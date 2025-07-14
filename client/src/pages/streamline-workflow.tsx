@@ -33,17 +33,6 @@ import TimeBlockingPlanner from "@/components/workflow/time-blocking-planner";
 // Template configuration with pre-built data
 const workflowTemplates = [
   {
-    id: "daily-prioritisation",
-    name: "Daily Prioritisation",
-    description: "Plan your day with Must/Should/Could priorities and focus blocks",
-    icon: CheckSquare,
-    colour: "bg-gradient-to-br from-green-500 to-emerald-500",
-    textColor: "text-white",
-    isExternal: true, // This will route to a different page
-    externalRoute: "/daily-focus",
-    defaultData: {}
-  },
-  {
     id: "inspiration",
     name: "Creative Inspiration Hub",
     description: "Store moodboards, colour palettes, and reference links",
