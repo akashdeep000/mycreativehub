@@ -33,7 +33,9 @@ import {
   Save,
   Eye,
   EyeOff,
-  Archive
+  Archive,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
 interface BudgetItem {
@@ -106,6 +108,10 @@ export default function YourMoneyMap() {
   const [activeTab, setActiveTab] = useState('goals');
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [currency, setCurrency] = useState('USD');
+  
+  // Period navigation state
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [drafts, setDrafts] = useState<{[key: string]: any}>({});
 
   // Budget Planner State
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
@@ -132,34 +138,49 @@ export default function YourMoneyMap() {
   const [showMonthlyRecords, setShowMonthlyRecords] = useState(false);
   const [expandedSnapshots, setExpandedSnapshots] = useState<Set<string>>(new Set());
 
-  // Load data from localStorage on component mount
-  useEffect(() => {
-    const savedData = localStorage.getItem('your-money-map-data');
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        setBudgetItems(parsed.budgetItems || []);
-        setBudgetNotes(parsed.budgetNotes || '');
-        setIncomeExpenseItems(parsed.incomeExpenseItems || []);
-        setTaxPercentage(parsed.taxPercentage || 25);
-        setPersonalPayAmount(parsed.personalPayAmount || 0);
-        setTrackerNotes(parsed.trackerNotes || '');
-        setGoals(parsed.goals || []);
-        setGoalNotes(parsed.goalNotes || '');
-        setSavingsGoals(parsed.savingsGoals || []);
-        setSavingsNotes(parsed.savingsNotes || '');
-        setSelectedPeriod(parsed.selectedPeriod || 'monthly');
-        setCurrency(parsed.currency || 'USD');
-        setMonthlySnapshots(parsed.monthlySnapshots || []);
-      } catch (error) {
-        console.error('Error loading saved data:', error);
+  // Helper functions for period navigation
+  const getCurrentPeriodKey = () => {
+    if (selectedPeriod === 'monthly') {
+      return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    } else {
+      const quarter = Math.floor(currentDate.getMonth() / 3) + 1;
+      return `${currentDate.getFullYear()}-Q${quarter}`;
+    }
+  };
+
+  const getCurrentPeriodLabel = () => {
+    if (selectedPeriod === 'monthly') {
+      return `📅 ${currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+    } else {
+      const quarter = Math.floor(currentDate.getMonth() / 3) + 1;
+      const quarterMonths = [
+        'Jan–Mar', 'Apr–Jun', 'Jul–Sep', 'Oct–Dec'
+      ];
+      return `📘 Q${quarter}: ${quarterMonths[quarter - 1]} ${currentDate.getFullYear()}`;
+    }
+  };
+
+  const navigatePeriod = (direction: 'prev' | 'next') => {
+    const newDate = new Date(currentDate);
+    if (selectedPeriod === 'monthly') {
+      if (direction === 'prev') {
+        newDate.setMonth(newDate.getMonth() - 1);
+      } else {
+        newDate.setMonth(newDate.getMonth() + 1);
+      }
+    } else {
+      if (direction === 'prev') {
+        newDate.setMonth(newDate.getMonth() - 3);
+      } else {
+        newDate.setMonth(newDate.getMonth() + 3);
       }
     }
-  }, []);
+    setCurrentDate(newDate);
+  };
 
-  // Save data to localStorage whenever state changes
-  useEffect(() => {
-    const dataToSave = {
+  const saveDraftForCurrentPeriod = () => {
+    const periodKey = getCurrentPeriodKey();
+    const currentData = {
       budgetItems,
       budgetNotes,
       incomeExpenseItems,
@@ -171,11 +192,92 @@ export default function YourMoneyMap() {
       savingsGoals,
       savingsNotes,
       selectedPeriod,
+      currency
+    };
+    
+    const newDrafts = { ...drafts, [periodKey]: currentData };
+    setDrafts(newDrafts);
+    localStorage.setItem('your-money-map-drafts', JSON.stringify(newDrafts));
+  };
+
+  const loadDraftForCurrentPeriod = () => {
+    const periodKey = getCurrentPeriodKey();
+    const savedDrafts = localStorage.getItem('your-money-map-drafts');
+    
+    if (savedDrafts) {
+      try {
+        const parsedDrafts = JSON.parse(savedDrafts);
+        setDrafts(parsedDrafts);
+        
+        if (parsedDrafts[periodKey]) {
+          const draft = parsedDrafts[periodKey];
+          setBudgetItems(draft.budgetItems || []);
+          setBudgetNotes(draft.budgetNotes || '');
+          setIncomeExpenseItems(draft.incomeExpenseItems || []);
+          setTaxPercentage(draft.taxPercentage || 25);
+          setPersonalPayAmount(draft.personalPayAmount || 0);
+          setTrackerNotes(draft.trackerNotes || '');
+          setGoals(draft.goals || []);
+          setGoalNotes(draft.goalNotes || '');
+          setSavingsGoals(draft.savingsGoals || []);
+          setSavingsNotes(draft.savingsNotes || '');
+          return true;
+        }
+      } catch (error) {
+        console.error('Error loading drafts:', error);
+      }
+    }
+    return false;
+  };
+
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('your-money-map-data');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        setSelectedPeriod(parsed.selectedPeriod || 'monthly');
+        setCurrency(parsed.currency || 'USD');
+        setMonthlySnapshots(parsed.monthlySnapshots || []);
+        setCurrentDate(parsed.currentDate ? new Date(parsed.currentDate) : new Date());
+      } catch (error) {
+        console.error('Error loading saved data:', error);
+      }
+    }
+  }, []);
+
+  // Load draft for current period when period changes
+  useEffect(() => {
+    if (!loadDraftForCurrentPeriod()) {
+      // Reset to empty state if no draft exists
+      setBudgetItems([]);
+      setBudgetNotes('');
+      setIncomeExpenseItems([]);
+      setTaxPercentage(25);
+      setPersonalPayAmount(0);
+      setTrackerNotes('');
+      setGoals([]);
+      setGoalNotes('');
+      setSavingsGoals([]);
+      setSavingsNotes('');
+    }
+  }, [currentDate, selectedPeriod]);
+
+  // Save data to localStorage whenever state changes
+  useEffect(() => {
+    const dataToSave = {
+      selectedPeriod,
       currency,
-      monthlySnapshots
+      monthlySnapshots,
+      currentDate: currentDate.toISOString()
     };
     localStorage.setItem('your-money-map-data', JSON.stringify(dataToSave));
-  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, personalPayAmount, trackerNotes, goals, goalNotes, savingsGoals, savingsNotes, selectedPeriod, currency, monthlySnapshots]);
+  }, [selectedPeriod, currency, monthlySnapshots, currentDate]);
+
+  // Auto-save draft when data changes
+  useEffect(() => {
+    saveDraftForCurrentPeriod();
+  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, personalPayAmount, trackerNotes, goals, goalNotes, savingsGoals, savingsNotes]);
 
   // Authentication check
   useEffect(() => {
@@ -427,12 +529,15 @@ export default function YourMoneyMap() {
   // Monthly Snapshot Functions
   const saveMonthlySnapshot = () => {
     const now = new Date();
-    const monthYear = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+    const periodLabel = selectedPeriod === 'monthly' 
+      ? currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      : getCurrentPeriodLabel().replace('📘 ', '');
+    
     const trackerTotals = getTrackerTotals();
     
     const snapshot: MonthlySnapshot = {
       id: Date.now().toString(),
-      monthYear,
+      monthYear: periodLabel,
       savedDate: now.toISOString(),
       currency,
       budgetItems: [...budgetItems],
@@ -462,8 +567,8 @@ export default function YourMoneyMap() {
     setMonthlySnapshots(updatedSnapshots);
     
     toast({
-      title: "Monthly Snapshot Saved",
-      description: `${monthYear} financial data has been saved successfully`,
+      title: "Snapshot Saved",
+      description: `${periodLabel} financial data has been saved successfully`,
     });
   };
 
@@ -543,14 +648,30 @@ export default function YourMoneyMap() {
             </div>
           </div>
           
-          <div className="flex justify-between items-center">
-            <div className="flex gap-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-700">
-                3 Sections
-              </Badge>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                Financial Planning
-              </Badge>
+          {/* Period Navigation */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigatePeriod('prev')}
+                  className="h-8 px-2"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <div className="text-lg font-semibold text-gray-800 min-w-[200px] text-center">
+                  {getCurrentPeriodLabel()}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigatePeriod('next')}
+                  className="h-8 px-2"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
             <div className="flex gap-2">
               <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
@@ -581,6 +702,17 @@ export default function YourMoneyMap() {
               </Button>
             </div>
           </div>
+          
+          <div className="flex justify-between items-center">
+            <div className="flex gap-2">
+              <Badge variant="secondary" className="bg-green-100 text-green-700">
+                3 Sections
+              </Badge>
+              <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                Financial Planning
+              </Badge>
+            </div>
+          </div>
         </div>
 
         {/* Main Tabs */}
@@ -593,6 +725,37 @@ export default function YourMoneyMap() {
 
           {/* Goals Tab */}
           <TabsContent value="goals" className="space-y-6">
+            {/* Save Button */}
+            <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Save className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Save your progress for {selectedPeriod === 'monthly' ? 'this month' : 'this quarter'}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Creates a permanent record for taxes and tracking
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={saveMonthlySnapshot}
+                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    💾 Save {selectedPeriod === 'monthly' 
+                      ? currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                      : getCurrentPeriodLabel().replace('📘 ', '')
+                    }
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Goals List */}
               <Card>
@@ -846,6 +1009,37 @@ export default function YourMoneyMap() {
               </CardContent>
             </Card>
 
+            {/* Save Button */}
+            <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Save className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Save your progress for {selectedPeriod === 'monthly' ? 'this month' : 'this quarter'}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Creates a permanent record for taxes and tracking
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={saveMonthlySnapshot}
+                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    💾 Save {selectedPeriod === 'monthly' 
+                      ? currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                      : getCurrentPeriodLabel().replace('📘 ', '')
+                    }
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Tracker Summary */}
             <Card>
               <CardHeader>
@@ -1036,6 +1230,37 @@ export default function YourMoneyMap() {
 
           {/* Savings Tracker Tab */}
           <TabsContent value="savings" className="space-y-6">
+            {/* Save Button */}
+            <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Save className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Save your progress for {selectedPeriod === 'monthly' ? 'this month' : 'this quarter'}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Creates a permanent record for taxes and tracking
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={saveMonthlySnapshot}
+                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    💾 Save {selectedPeriod === 'monthly' 
+                      ? currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                      : getCurrentPeriodLabel().replace('📘 ', '')
+                    }
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -1183,32 +1408,6 @@ export default function YourMoneyMap() {
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Monthly Snapshot Save Section */}
-        <Card className="mt-8 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <Save className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">💡</span>
-                  <p className="text-sm text-gray-700">
-                    Don't forget to save your monthly snapshot! It's a lifesaver when it's time to do your taxes—and helps you track your business growth over time.
-                  </p>
-                </div>
-                <Button 
-                  onClick={saveMonthlySnapshot}
-                  className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Save This Month
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Monthly Records Section */}
         <Card className="mt-6">
