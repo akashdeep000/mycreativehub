@@ -17,6 +17,7 @@ import ContentBatchingPlanner from "@/pages/content-batching-planner";
 import MonthlyContentCalendar from "@/pages/monthly-content-calendar";
 import TimeBlocking from "@/pages/time-blocking";
 import FinanceTracker from "@/pages/finance-tracker";
+import YourMoneyMap from "@/pages/your-money-map";
 import InspirationHub from "@/pages/inspiration-hub";
 import StreamlineWorkflow from "@/pages/streamline-workflow";
 import ArchivedTemplates from "@/pages/archived-templates";
@@ -77,6 +78,7 @@ function Router() {
       <Route path="/monthly-content-calendar" component={MonthlyContentCalendar} />
       <Route path="/time-blocking" component={TimeBlocking} />
       <Route path="/finance" component={FinanceTracker} />
+      <Route path="/your-money-map" component={YourMoneyMap} />
       <Route path="/daily-focus" component={DailyFocusPage} />
       <Route path="/automation-toolkit" component={AutomationToolkit} />
       <Route path="/sop-builder" component={SOPBuilderHub} />

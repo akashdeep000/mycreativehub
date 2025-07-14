@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Plus, DollarSign, PieChart, Calculator, Receipt } from "lucide-react";
+import { Link } from "wouter";
 
 export default function FinanceTracker() {
   const { toast } = useToast();
@@ -34,48 +35,13 @@ export default function FinanceTracker() {
   const templates = [
     {
       id: 1,
-      name: "Monthly Budget Tracker",
-      description: "Track your monthly income and expenses with detailed categorization",
-      icon: DollarSign,
-      color: "green",
-      lastUsed: "Yesterday",
-      isPopular: true
-    },
-    {
-      id: 2,
-      name: "Revenue Goals Planner",
-      description: "Set and track your revenue goals with milestone tracking",
+      name: "Your Money Map",
+      description: "Complete financial dashboard with budget planning, income tracking, profitability analysis, goals, and savings tracking",
       icon: TrendingUp,
       color: "blue",
-      lastUsed: "1 week ago",
-      isPopular: true
-    },
-    {
-      id: 3,
-      name: "Expense Categories",
-      description: "Organize your business expenses by category for better insights",
-      icon: PieChart,
-      color: "purple",
-      lastUsed: "3 days ago",
-      isPopular: false
-    },
-    {
-      id: 4,
-      name: "Tax Preparation Sheet",
-      description: "Keep track of tax-deductible expenses and important documents",
-      icon: Calculator,
-      color: "orange",
-      lastUsed: "2 weeks ago",
-      isPopular: false
-    },
-    {
-      id: 5,
-      name: "Invoice Tracker",
-      description: "Monitor your sent invoices and payment status",
-      icon: Receipt,
-      color: "indigo",
-      lastUsed: "5 days ago",
-      isPopular: true
+      lastUsed: "Never",
+      isPopular: true,
+      route: "/your-money-map"
     }
   ];
 
@@ -99,7 +65,7 @@ export default function FinanceTracker() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-green-100 text-green-700">
-                6 Trackers
+                1 Dashboard
               </Badge>
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                 Financial
@@ -115,30 +81,32 @@ export default function FinanceTracker() {
         {/* Templates Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {templates.map((template) => (
-            <Card key={template.id} className="border-pink-100 hover:shadow-md transition-shadow cursor-pointer group">
-              <CardHeader>
-                <div className="flex items-center justify-between mb-3">
-                  <div className={`w-10 h-10 bg-gradient-to-br from-${template.color}-400 to-${template.color}-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                    <template.icon className="w-5 h-5 text-white" />
+            <Link key={template.id} href={template.route}>
+              <Card className="border-pink-100 hover:shadow-md transition-shadow cursor-pointer group">
+                <CardHeader>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className={`w-10 h-10 bg-gradient-to-br from-${template.color}-400 to-${template.color}-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                      <template.icon className="w-5 h-5 text-white" />
+                    </div>
+                    {template.isPopular && (
+                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs">
+                        Popular
+                      </Badge>
+                    )}
                   </div>
-                  {template.isPopular && (
-                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs">
-                      Popular
-                    </Badge>
-                  )}
-                </div>
-                <CardTitle className="text-lg font-serif">{template.name}</CardTitle>
-                <CardDescription>{template.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <span>Last used: {template.lastUsed}</span>
-                  <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
-                    Open
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                  <CardTitle className="text-lg font-serif">{template.name}</CardTitle>
+                  <CardDescription>{template.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <span>Last used: {template.lastUsed}</span>
+                    <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
+                      Open
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
 
