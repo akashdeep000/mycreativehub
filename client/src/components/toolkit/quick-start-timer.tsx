@@ -215,19 +215,7 @@ export default function QuickStartTimer() {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-purple-200">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setLocation("/daily-focus")}
-                  className="w-full border-purple-200 hover:bg-purple-50"
-                >
-                  <ArrowRight className="w-4 h-4 mr-2" />
-                  Take me to my full prioritisation system
-                </Button>
-                <p className="text-xs text-gray-500 mt-2 text-center">
-                  Want to plan your full day? Head here to sort out your Must / Should / Could list.
-                </p>
-              </div>
+
             </>
           ) : (
             <div className="space-y-4">
