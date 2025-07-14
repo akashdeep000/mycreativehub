@@ -37,12 +37,16 @@ export default function AffiliateMarketing() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [editingLink, setEditingLink] = useState<AffiliateLink | null>(null);
+  const [customChannels, setCustomChannels] = useState<string[]>([]);
+  const [newCustomChannel, setNewCustomChannel] = useState('');
+  const [showCustomChannelInput, setShowCustomChannelInput] = useState(false);
   const [newLink, setNewLink] = useState<InsertAffiliateLink>({
     userId: '',
     productName: '',
     company: '',
     affiliateLink: '',
     trackingCode: '',
+    discountCode: '',
     commissionRate: '',
     cookieLength: '',
     contentChannels: [],
@@ -188,6 +192,7 @@ export default function AffiliateMarketing() {
       company: '',
       affiliateLink: '',
       trackingCode: '',
+      discountCode: '',
       commissionRate: '',
       cookieLength: '',
       contentChannels: [],
@@ -195,6 +200,36 @@ export default function AffiliateMarketing() {
       notes: ''
     });
     setErrors({});
+  };
+
+  const toggleContentChannel = (channel: string, isEditing: boolean = false) => {
+    if (isEditing && editingLink) {
+      const channels = editingLink.contentChannels.includes(channel)
+        ? editingLink.contentChannels.filter(c => c !== channel)
+        : [...editingLink.contentChannels, channel];
+      setEditingLink({...editingLink, contentChannels: channels});
+    } else {
+      const channels = newLink.contentChannels.includes(channel)
+        ? newLink.contentChannels.filter(c => c !== channel)
+        : [...newLink.contentChannels, channel];
+      setNewLink({...newLink, contentChannels: channels});
+    }
+  };
+
+  const addCustomChannel = () => {
+    if (newCustomChannel.trim() && !customChannels.includes(newCustomChannel.trim())) {
+      setCustomChannels([...customChannels, newCustomChannel.trim()]);
+      setNewCustomChannel('');
+      setShowCustomChannelInput(false);
+      toast({
+        title: "Success",
+        description: "Custom channel added successfully!",
+      });
+    }
+  };
+
+  const getAllChannels = () => {
+    return [...CONTENT_CHANNELS, ...customChannels];
   };
 
   const validateForm = (data: Omit<InsertAffiliateLink, 'userId'> | InsertAffiliateLink) => {
@@ -289,19 +324,7 @@ export default function AffiliateMarketing() {
     return statusOption ? statusOption.color : 'bg-gray-100 text-gray-800';
   };
 
-  const toggleContentChannel = (channel: string, isEditing: boolean = false) => {
-    if (isEditing && editingLink) {
-      const updatedChannels = editingLink.contentChannels.includes(channel)
-        ? editingLink.contentChannels.filter(c => c !== channel)
-        : [...editingLink.contentChannels, channel];
-      setEditingLink({ ...editingLink, contentChannels: updatedChannels });
-    } else {
-      const updatedChannels = newLink.contentChannels.includes(channel)
-        ? newLink.contentChannels.filter(c => c !== channel)
-        : [...newLink.contentChannels, channel];
-      setNewLink({ ...newLink, contentChannels: updatedChannels });
-    }
-  };
+
 
   if (isLoading) {
     return (
@@ -426,6 +449,15 @@ export default function AffiliateMarketing() {
               {errors.affiliateLink && <p className="text-red-500 text-xs mt-1">{errors.affiliateLink}</p>}
             </div>
 
+            <div>
+              <label className="block text-sm font-medium mb-1">Discount Code/Coupon</label>
+              <Input
+                value={newLink.discountCode}
+                onChange={(e) => setNewLink({...newLink, discountCode: e.target.value})}
+                placeholder="e.g., SAVE20, WELCOME10"
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Tracking Code</label>
@@ -455,8 +487,8 @@ export default function AffiliateMarketing() {
 
             <div>
               <label className="block text-sm font-medium mb-2">Content Channels</label>
-              <div className="flex flex-wrap gap-2">
-                {CONTENT_CHANNELS.map(channel => (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {getAllChannels().map(channel => (
                   <Badge
                     key={channel}
                     variant={newLink.contentChannels.includes(channel) ? "default" : "outline"}
@@ -468,7 +500,51 @@ export default function AffiliateMarketing() {
                     {channel}
                   </Badge>
                 ))}
+                {!showCustomChannelInput && (
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer border-pink-500 text-pink-500 hover:bg-pink-50"
+                    onClick={() => setShowCustomChannelInput(true)}
+                  >
+                    + Add Custom Channel
+                  </Badge>
+                )}
               </div>
+              {showCustomChannelInput && (
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    value={newCustomChannel}
+                    onChange={(e) => setNewCustomChannel(e.target.value)}
+                    placeholder="Enter custom channel name"
+                    className="flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        addCustomChannel();
+                      } else if (e.key === 'Escape') {
+                        setShowCustomChannelInput(false);
+                        setNewCustomChannel('');
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={addCustomChannel}
+                    className="bg-pink-500 hover:bg-pink-600 text-white"
+                    size="sm"
+                  >
+                    Add
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowCustomChannelInput(false);
+                      setNewCustomChannel('');
+                    }}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -670,6 +746,15 @@ export default function AffiliateMarketing() {
                 {errors.affiliateLink && <p className="text-red-500 text-xs mt-1">{errors.affiliateLink}</p>}
               </div>
 
+              <div>
+                <label className="block text-sm font-medium mb-1">Discount Code/Coupon</label>
+                <Input
+                  value={editingLink.discountCode || ''}
+                  onChange={(e) => setEditingLink({...editingLink, discountCode: e.target.value})}
+                  placeholder="e.g., SAVE20, WELCOME10"
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Tracking Code</label>
@@ -696,8 +781,8 @@ export default function AffiliateMarketing() {
 
               <div>
                 <label className="block text-sm font-medium mb-2">Content Channels</label>
-                <div className="flex flex-wrap gap-2">
-                  {CONTENT_CHANNELS.map(channel => (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {getAllChannels().map(channel => (
                     <Badge
                       key={channel}
                       variant={editingLink.contentChannels.includes(channel) ? "default" : "outline"}
@@ -709,7 +794,51 @@ export default function AffiliateMarketing() {
                       {channel}
                     </Badge>
                   ))}
+                  {!showCustomChannelInput && (
+                    <Badge
+                      variant="outline"
+                      className="cursor-pointer border-pink-500 text-pink-500 hover:bg-pink-50"
+                      onClick={() => setShowCustomChannelInput(true)}
+                    >
+                      + Add Custom Channel
+                    </Badge>
+                  )}
                 </div>
+                {showCustomChannelInput && (
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      value={newCustomChannel}
+                      onChange={(e) => setNewCustomChannel(e.target.value)}
+                      placeholder="Enter custom channel name"
+                      className="flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          addCustomChannel();
+                        } else if (e.key === 'Escape') {
+                          setShowCustomChannelInput(false);
+                          setNewCustomChannel('');
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={addCustomChannel}
+                      className="bg-pink-500 hover:bg-pink-600 text-white"
+                      size="sm"
+                    >
+                      Add
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setShowCustomChannelInput(false);
+                        setNewCustomChannel('');
+                      }}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

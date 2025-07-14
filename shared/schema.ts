@@ -456,6 +456,7 @@ export const affiliateLinks = pgTable("affiliate_links", {
   companyName: varchar("company_name").notNull(),
   trackingLink: text("tracking_link"),
   affiliateCode: varchar("affiliate_code"),
+  discountCode: varchar("discount_code"), // Discount code/coupon for users
   commissionRate: varchar("commission_rate"), // Stored as string to handle "5%" or "5-10%" formats
   cookieLength: varchar("cookie_length"), // e.g., "30 days", "60 days", "lifetime"
   contentChannel: varchar("content_channel"), // Blog, Instagram, Newsletter, etc.

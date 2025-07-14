@@ -1313,6 +1313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         companyName: req.body.company, // frontend sends 'company', db expects 'companyName'
         trackingLink: req.body.affiliateLink, // frontend sends 'affiliateLink', db expects 'trackingLink'
         affiliateCode: req.body.trackingCode, // frontend sends 'trackingCode', db expects 'affiliateCode'
+        discountCode: req.body.discountCode,
         commissionRate: req.body.commissionRate,
         cookieLength: req.body.cookieLength,
         contentChannel: req.body.contentChannels?.join(', '), // frontend sends array, db expects string
@@ -1338,6 +1339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         companyName: req.body.company, // frontend sends 'company', db expects 'companyName'
         trackingLink: req.body.affiliateLink, // frontend sends 'affiliateLink', db expects 'trackingLink'
         affiliateCode: req.body.trackingCode, // frontend sends 'trackingCode', db expects 'affiliateCode'
+        discountCode: req.body.discountCode,
         commissionRate: req.body.commissionRate,
         cookieLength: req.body.cookieLength,
         contentChannel: req.body.contentChannels?.join(', '), // frontend sends array, db expects string
