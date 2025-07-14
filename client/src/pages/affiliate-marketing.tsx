@@ -351,8 +351,8 @@ export default function AffiliateMarketing() {
         
         <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
-              <Link className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <Check className="w-4 h-4 text-white" />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 mb-1">Track Your Affiliate Success</h3>
