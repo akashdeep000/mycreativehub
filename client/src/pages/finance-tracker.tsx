@@ -6,7 +6,7 @@ import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Plus, DollarSign, PieChart, Calculator, Receipt } from "lucide-react";
+import { TrendingUp, Plus, DollarSign, PieChart, Calculator, Receipt, Banknote } from "lucide-react";
 import { Link } from "wouter";
 
 export default function FinanceTracker() {
@@ -37,7 +37,7 @@ export default function FinanceTracker() {
       id: 1,
       name: "Your Money Map",
       description: "Complete financial dashboard with budget planning, income tracking, profitability analysis, goals, and savings tracking",
-      icon: TrendingUp,
+      icon: Banknote,
       color: "blue",
       lastUsed: "Never",
       isPopular: true,
