@@ -663,6 +663,19 @@ Changelog:
   - Updated Finance Tracker section to feature single "Your Money Map" card with comprehensive description
   - Added complete routing and navigation integration with existing finance section
   - Removed Profitability Review tab and simplified Income & Expense Tracker to avoid duplication with Budget Planner
+- July 14, 2025. Enhanced "Your Money Map" with Monthly Snapshot System:
+  - Added comprehensive monthly snapshot saving functionality with "Save This Month" button
+  - Implemented encouraging reminder note: "Don't forget to save your monthly snapshot! It's a lifesaver when it's time to do your taxes—and helps you track your business growth over time."
+  - Created collapsible "Monthly Records" section with expandable/collapsible view
+  - Built detailed snapshot records including: Month + Year, saved date, currency, complete financial summary
+  - Added comprehensive summary cards: Total Income, Total Expenses, Profit, Tax Set Aside, Personal Pay, Available for Savings, Profit Margin
+  - Implemented "View Details" toggle for full breakdown of income sources, expenses, goals, and savings goals
+  - Added individual CSV export functionality for each monthly snapshot with properly formatted data
+  - Integrated delete functionality for removing unwanted snapshots with confirmation
+  - Enhanced with localStorage persistence for all monthly snapshot data
+  - Designed mobile-friendly interface with responsive grid layouts and clean visual hierarchy
+  - Added comprehensive toast notifications for all snapshot operations (save, delete, export)
+  - Created detailed breakdown view showing income sources, expenses, goals progress, and savings goals with currency formatting
 
 ## User Preferences
 

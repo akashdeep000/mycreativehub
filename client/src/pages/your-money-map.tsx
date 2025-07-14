@@ -25,7 +25,15 @@ import {
   CheckCircle,
   AlertCircle,
   TrendingDown,
-  BarChart3
+  BarChart3,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Save,
+  Eye,
+  EyeOff,
+  Archive
 } from "lucide-react";
 
 interface BudgetItem {
@@ -64,6 +72,34 @@ interface SavingsGoal {
   priority: 'high' | 'medium' | 'low';
 }
 
+interface MonthlySnapshot {
+  id: string;
+  monthYear: string;
+  savedDate: string;
+  currency: string;
+  budgetItems: BudgetItem[];
+  incomeExpenseItems: IncomeExpenseItem[];
+  taxPercentage: number;
+  personalPayAmount: number;
+  goals: Goal[];
+  savingsGoals: SavingsGoal[];
+  summary: {
+    totalIncome: number;
+    totalExpenses: number;
+    profit: number;
+    taxSetAside: number;
+    personalPay: number;
+    profitMargin: number;
+    availableForSavings: number;
+  };
+  notes: {
+    budget: string;
+    tracker: string;
+    goals: string;
+    savings: string;
+  };
+}
+
 export default function YourMoneyMap() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
@@ -91,6 +127,11 @@ export default function YourMoneyMap() {
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
   const [savingsNotes, setSavingsNotes] = useState('');
 
+  // Monthly Snapshots State
+  const [monthlySnapshots, setMonthlySnapshots] = useState<MonthlySnapshot[]>([]);
+  const [showMonthlyRecords, setShowMonthlyRecords] = useState(false);
+  const [expandedSnapshots, setExpandedSnapshots] = useState<Set<string>>(new Set());
+
   // Load data from localStorage on component mount
   useEffect(() => {
     const savedData = localStorage.getItem('your-money-map-data');
@@ -109,6 +150,7 @@ export default function YourMoneyMap() {
         setSavingsNotes(parsed.savingsNotes || '');
         setSelectedPeriod(parsed.selectedPeriod || 'monthly');
         setCurrency(parsed.currency || 'USD');
+        setMonthlySnapshots(parsed.monthlySnapshots || []);
       } catch (error) {
         console.error('Error loading saved data:', error);
       }
@@ -129,10 +171,11 @@ export default function YourMoneyMap() {
       savingsGoals,
       savingsNotes,
       selectedPeriod,
-      currency
+      currency,
+      monthlySnapshots
     };
     localStorage.setItem('your-money-map-data', JSON.stringify(dataToSave));
-  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, personalPayAmount, trackerNotes, goals, goalNotes, savingsGoals, savingsNotes, selectedPeriod, currency]);
+  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, personalPayAmount, trackerNotes, goals, goalNotes, savingsGoals, savingsNotes, selectedPeriod, currency, monthlySnapshots]);
 
   // Authentication check
   useEffect(() => {
@@ -378,6 +421,108 @@ export default function YourMoneyMap() {
     toast({
       title: "Export Successful",
       description: "Your Money Map data has been exported to CSV",
+    });
+  };
+
+  // Monthly Snapshot Functions
+  const saveMonthlySnapshot = () => {
+    const now = new Date();
+    const monthYear = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+    const trackerTotals = getTrackerTotals();
+    
+    const snapshot: MonthlySnapshot = {
+      id: Date.now().toString(),
+      monthYear,
+      savedDate: now.toISOString(),
+      currency,
+      budgetItems: [...budgetItems],
+      incomeExpenseItems: [...incomeExpenseItems],
+      taxPercentage,
+      personalPayAmount,
+      goals: [...goals],
+      savingsGoals: [...savingsGoals],
+      summary: {
+        totalIncome: trackerTotals.actualIncome,
+        totalExpenses: trackerTotals.actualExpenses,
+        profit: trackerTotals.actualProfit,
+        taxSetAside: trackerTotals.taxAmount,
+        personalPay: personalPayAmount,
+        profitMargin: trackerTotals.profitMargin,
+        availableForSavings: trackerTotals.availableForSavings,
+      },
+      notes: {
+        budget: budgetNotes,
+        tracker: trackerNotes,
+        goals: goalNotes,
+        savings: savingsNotes,
+      },
+    };
+    
+    const updatedSnapshots = [...monthlySnapshots, snapshot];
+    setMonthlySnapshots(updatedSnapshots);
+    
+    toast({
+      title: "Monthly Snapshot Saved",
+      description: `${monthYear} financial data has been saved successfully`,
+    });
+  };
+
+  const deleteMonthlySnapshot = (id: string) => {
+    const updatedSnapshots = monthlySnapshots.filter(snapshot => snapshot.id !== id);
+    setMonthlySnapshots(updatedSnapshots);
+    
+    toast({
+      title: "Snapshot Deleted",
+      description: "Monthly snapshot has been removed",
+    });
+  };
+
+  const toggleSnapshotExpansion = (id: string) => {
+    const newExpanded = new Set(expandedSnapshots);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedSnapshots(newExpanded);
+  };
+
+  const exportSnapshotToCSV = (snapshot: MonthlySnapshot) => {
+    let csvContent = `MONTHLY SNAPSHOT - ${snapshot.monthYear}\n`;
+    csvContent += `Saved Date: ${new Date(snapshot.savedDate).toLocaleDateString()}\n`;
+    csvContent += `Currency: ${snapshot.currency}\n\n`;
+    
+    // Summary
+    csvContent += "FINANCIAL SUMMARY\n";
+    csvContent += "Metric,Amount\n";
+    csvContent += `Total Income,${snapshot.summary.totalIncome}\n`;
+    csvContent += `Total Expenses,${snapshot.summary.totalExpenses}\n`;
+    csvContent += `Profit,${snapshot.summary.profit}\n`;
+    csvContent += `Tax Set Aside,${snapshot.summary.taxSetAside}\n`;
+    csvContent += `Personal Pay,${snapshot.summary.personalPay}\n`;
+    csvContent += `Available for Savings,${snapshot.summary.availableForSavings}\n`;
+    csvContent += `Profit Margin,${snapshot.summary.profitMargin.toFixed(2)}%\n\n`;
+    
+    // Income & Expenses
+    csvContent += "INCOME & EXPENSES\n";
+    csvContent += "Category,Type,Amount\n";
+    snapshot.incomeExpenseItems.forEach(item => {
+      csvContent += `${item.category},${item.type},${item.actualAmount}\n`;
+    });
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `monthly-snapshot-${snapshot.monthYear.replace(' ', '-')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Export Successful",
+      description: `${snapshot.monthYear} snapshot exported to CSV`,
     });
   };
 
@@ -1044,6 +1189,243 @@ export default function YourMoneyMap() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Monthly Snapshot Save Section */}
+        <Card className="mt-8 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <Save className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">💡</span>
+                  <p className="text-sm text-gray-700">
+                    Don't forget to save your monthly snapshot! It's a lifesaver when it's time to do your taxes—and helps you track your business growth over time.
+                  </p>
+                </div>
+                <Button 
+                  onClick={saveMonthlySnapshot}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save This Month
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Monthly Records Section */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Archive className="w-5 h-5 text-gray-600" />
+                Monthly Records
+                <Badge variant="secondary" className="ml-2">
+                  {monthlySnapshots.length} Saved
+                </Badge>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMonthlyRecords(!showMonthlyRecords)}
+              >
+                {showMonthlyRecords ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          
+          {showMonthlyRecords && (
+            <CardContent>
+              {monthlySnapshots.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                  <p>No monthly snapshots saved yet</p>
+                  <p className="text-sm">Save your first monthly snapshot to get started!</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {monthlySnapshots.map((snapshot) => (
+                    <div key={snapshot.id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="font-semibold text-lg">{snapshot.monthYear}</h3>
+                          <p className="text-sm text-gray-600">
+                            Saved on {new Date(snapshot.savedDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleSnapshotExpansion(snapshot.id)}
+                          >
+                            {expandedSnapshots.has(snapshot.id) ? (
+                              <>
+                                <EyeOff className="w-4 h-4 mr-2" />
+                                Hide Details
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="w-4 h-4 mr-2" />
+                                View Details
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => exportSnapshotToCSV(snapshot)}
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Export CSV
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteMonthlySnapshot(snapshot.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Summary Cards */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div className="text-center p-3 bg-green-50 rounded-lg">
+                          <div className="text-lg font-bold text-green-600">
+                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.totalIncome.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-600">Total Income</div>
+                        </div>
+                        <div className="text-center p-3 bg-red-50 rounded-lg">
+                          <div className="text-lg font-bold text-red-600">
+                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.totalExpenses.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-600">Total Expenses</div>
+                        </div>
+                        <div className="text-center p-3 bg-blue-50 rounded-lg">
+                          <div className={`text-lg font-bold ${snapshot.summary.profit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.profit.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-600">Profit</div>
+                        </div>
+                        <div className="text-center p-3 bg-purple-50 rounded-lg">
+                          <div className="text-lg font-bold text-purple-600">
+                            {snapshot.summary.profitMargin.toFixed(1)}%
+                          </div>
+                          <div className="text-xs text-gray-600">Profit Margin</div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="text-center p-3 bg-orange-50 rounded-lg">
+                          <div className="text-sm font-bold text-orange-600">
+                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.taxSetAside.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-600">Tax Set Aside</div>
+                        </div>
+                        <div className="text-center p-3 bg-indigo-50 rounded-lg">
+                          <div className="text-sm font-bold text-indigo-600">
+                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.personalPay.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-600">Personal Pay</div>
+                        </div>
+                        <div className="text-center p-3 bg-teal-50 rounded-lg">
+                          <div className="text-sm font-bold text-teal-600">
+                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.availableForSavings.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-600">Available for Savings</div>
+                        </div>
+                      </div>
+
+                      {/* Detailed Breakdown */}
+                      {expandedSnapshots.has(snapshot.id) && (
+                        <div className="mt-6 pt-4 border-t">
+                          <h4 className="font-semibold mb-4">Detailed Breakdown</h4>
+                          
+                          {/* Income & Expenses Detail */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <h5 className="font-medium mb-3 text-green-600">Income Sources</h5>
+                              <div className="space-y-2">
+                                {snapshot.incomeExpenseItems.filter(item => item.type === 'income').map((item, index) => (
+                                  <div key={index} className="flex justify-between text-sm">
+                                    <span>{item.category}</span>
+                                    <span className="font-medium">
+                                      {getCurrencySymbol(snapshot.currency)}{item.actualAmount.toLocaleString()}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <h5 className="font-medium mb-3 text-red-600">Expenses</h5>
+                              <div className="space-y-2">
+                                {snapshot.incomeExpenseItems.filter(item => item.type === 'expense').map((item, index) => (
+                                  <div key={index} className="flex justify-between text-sm">
+                                    <span>{item.category}</span>
+                                    <span className="font-medium">
+                                      {getCurrencySymbol(snapshot.currency)}{item.actualAmount.toLocaleString()}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Goals & Savings Summary */}
+                          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <h5 className="font-medium mb-3 text-blue-600">Goals ({snapshot.goals.length})</h5>
+                              <div className="space-y-2">
+                                {snapshot.goals.map((goal, index) => (
+                                  <div key={index} className="text-sm">
+                                    <div className="flex justify-between">
+                                      <span>{goal.title}</span>
+                                      <span className="font-medium">{goal.status}</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {getCurrencySymbol(snapshot.currency)}{goal.currentAmount.toLocaleString()} / {getCurrencySymbol(snapshot.currency)}{goal.targetAmount.toLocaleString()}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <h5 className="font-medium mb-3 text-purple-600">Savings Goals ({snapshot.savingsGoals.length})</h5>
+                              <div className="space-y-2">
+                                {snapshot.savingsGoals.map((goal, index) => (
+                                  <div key={index} className="text-sm">
+                                    <div className="flex justify-between">
+                                      <span>{goal.title}</span>
+                                      <span className="font-medium">{goal.priority}</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {getCurrencySymbol(snapshot.currency)}{goal.currentAmount.toLocaleString()} / {getCurrencySymbol(snapshot.currency)}{goal.targetAmount.toLocaleString()}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          )}
+        </Card>
       </div>
 
       <MobileNav />
