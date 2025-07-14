@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Rocket, Calendar, TrendingUp, Target, Lightbulb, CheckSquare, Calculator, Clock } from 'lucide-react';
+import { Rocket, Calendar, TrendingUp, Target, Lightbulb, CheckSquare, Calculator, Clock, BarChart3 } from 'lucide-react';
 import { useLocation } from 'wouter';
 
 export default function ProductLaunch() {
@@ -38,6 +38,15 @@ export default function ProductLaunch() {
       icon: Calculator,
       gradient: "from-green-400 to-teal-400",
       route: "/profit-calculator",
+      badge: "New"
+    },
+    {
+      id: 4,
+      title: "Launch Growth Plan",
+      subtitle: "Capture key insights and plan improvements for your next launch with interactive planning.",
+      icon: BarChart3,
+      gradient: "from-blue-400 to-indigo-400",
+      route: "/launch-growth-plan",
       badge: "New"
     }
   ];
