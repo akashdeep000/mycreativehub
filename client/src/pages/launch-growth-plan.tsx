@@ -240,7 +240,7 @@ export default function LaunchGrowthPlan() {
   };
 
   return (
-    <div className="bg-gray-50">
+    <div className="bg-gray-50 min-h-screen">
       <Sidebar />
       
       <div className="ml-64 p-6">
