@@ -1290,6 +1290,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Affiliate Links routes
+  app.get('/api/affiliate-links', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const links = await storage.getAffiliateLinks(userId);
+      res.json(links);
+    } catch (error) {
+      console.error("Error fetching affiliate links:", error);
+      res.status(500).json({ message: "Failed to fetch affiliate links" });
+    }
+  });
+
+  app.post('/api/affiliate-links', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const linkData = {
+        userId,
+        ...req.body
+      };
+      
+      const link = await storage.createAffiliateLink(linkData);
+      res.status(201).json(link);
+    } catch (error) {
+      console.error("Error creating affiliate link:", error);
+      res.status(500).json({ message: "Failed to create affiliate link" });
+    }
+  });
+
+  app.put('/api/affiliate-links/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const link = await storage.updateAffiliateLink(parseInt(id), req.body);
+      res.json(link);
+    } catch (error) {
+      console.error("Error updating affiliate link:", error);
+      res.status(500).json({ message: "Failed to update affiliate link" });
+    }
+  });
+
+  app.delete('/api/affiliate-links/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteAffiliateLink(parseInt(id));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting affiliate link:", error);
+      res.status(500).json({ message: "Failed to delete affiliate link" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

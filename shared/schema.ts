@@ -448,7 +448,30 @@ export const resourceLibrary = pgTable("resource_library", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Affiliate Link Tracker
+export const affiliateLinks = pgTable("affiliate_links", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  productName: varchar("product_name").notNull(),
+  companyName: varchar("company_name").notNull(),
+  trackingLink: text("tracking_link"),
+  affiliateCode: varchar("affiliate_code"),
+  commissionRate: varchar("commission_rate"), // Stored as string to handle "5%" or "5-10%" formats
+  cookieLength: varchar("cookie_length"), // e.g., "30 days", "60 days", "lifetime"
+  contentChannel: varchar("content_channel"), // Blog, Instagram, Newsletter, etc.
+  notes: text("notes"),
+  status: varchar("status").notNull().default("active"), // active, expired, pending
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertResourceLibrarySchema = createInsertSchema(resourceLibrary).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAffiliateLinkSchema = createInsertSchema(affiliateLinks).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -485,3 +508,5 @@ export type SocialMediaStrategy = typeof socialMediaStrategies.$inferSelect;
 export type InsertSocialMediaStrategy = z.infer<typeof insertSocialMediaStrategySchema>;
 export type ResourceLibraryItem = typeof resourceLibrary.$inferSelect;
 export type InsertResourceLibraryItem = z.infer<typeof insertResourceLibrarySchema>;
+export type AffiliateLink = typeof affiliateLinks.$inferSelect;
+export type InsertAffiliateLink = z.infer<typeof insertAffiliateLinkSchema>;

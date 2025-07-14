@@ -24,7 +24,7 @@ export const navigationItems: NavigationItem[] = [
   { href: "/resource-library", icon: FolderOpen, label: "Resource Library", moduleKey: "Your Resource Library" },
   { href: "/launch", icon: Rocket, label: "Product Launch", moduleKey: "Product Launch System" },
   { href: "/finance", icon: TrendingUp, label: "Finance", moduleKey: "Financial Management" },
-  { href: "/affiliate", icon: Users, label: "Affiliate Hub", moduleKey: "The Affiliate Marketing Hub" },
+  { href: "/affiliate-marketing", icon: Users, label: "Affiliate Hub", moduleKey: "The Affiliate Marketing Hub" },
 ];
 
 // Create route mapping from navigation items

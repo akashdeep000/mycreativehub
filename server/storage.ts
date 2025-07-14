@@ -17,6 +17,7 @@ import {
   boardLinks,
   socialMediaStrategies,
   resourceLibrary,
+  affiliateLinks,
   type User,
   type UpsertUser,
   type ToolkitModule,
@@ -47,6 +48,8 @@ import {
   type InsertSocialMediaStrategy,
   type ResourceLibraryItem,
   type InsertResourceLibraryItem,
+  type AffiliateLink,
+  type InsertAffiliateLink,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, gte, lte, sql, inArray } from "drizzle-orm";
@@ -148,6 +151,12 @@ export interface IStorage {
   updateResourceLibraryItem(id: number, data: any): Promise<ResourceLibraryItem>;
   deleteResourceLibraryItem(id: number): Promise<void>;
   updateResourceDisplayOrder(items: { id: number; displayOrder: number }[]): Promise<void>;
+  
+  // Affiliate Links
+  getAffiliateLinks(userId: string): Promise<AffiliateLink[]>;
+  createAffiliateLink(link: InsertAffiliateLink): Promise<AffiliateLink>;
+  updateAffiliateLink(id: number, data: any): Promise<AffiliateLink>;
+  deleteAffiliateLink(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -878,6 +887,40 @@ export class DatabaseStorage implements IStorage {
         .set({ displayOrder: item.displayOrder })
         .where(eq(resourceLibrary.id, item.id));
     }
+  }
+
+  // Affiliate Links
+  async getAffiliateLinks(userId: string): Promise<AffiliateLink[]> {
+    return await db
+      .select()
+      .from(affiliateLinks)
+      .where(eq(affiliateLinks.userId, userId))
+      .orderBy(desc(affiliateLinks.createdAt));
+  }
+
+  async createAffiliateLink(linkData: InsertAffiliateLink): Promise<AffiliateLink> {
+    const [link] = await db
+      .insert(affiliateLinks)
+      .values(linkData)
+      .returning();
+    return link;
+  }
+
+  async updateAffiliateLink(id: number, data: any): Promise<AffiliateLink> {
+    const [updatedLink] = await db
+      .update(affiliateLinks)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(affiliateLinks.id, id))
+      .returning();
+    return updatedLink;
+  }
+
+  async deleteAffiliateLink(id: number): Promise<void> {
+    await db.delete(affiliateLinks)
+      .where(eq(affiliateLinks.id, id));
   }
 }
 
