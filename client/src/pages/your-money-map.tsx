@@ -696,10 +696,6 @@ export default function YourMoneyMap() {
                   <SelectItem value="AUD">AUD</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={exportToCSV} className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600">
-                <Download className="w-4 h-4 mr-2" />
-                Export CSV
-              </Button>
             </div>
           </div>
           
@@ -725,36 +721,6 @@ export default function YourMoneyMap() {
 
           {/* Goals Tab */}
           <TabsContent value="goals" className="space-y-6">
-            {/* Save Button */}
-            <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Save className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">
-                        Save your progress for {selectedPeriod === 'monthly' ? 'this month' : 'this quarter'}
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        Creates a permanent record for taxes and tracking
-                      </p>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={saveMonthlySnapshot}
-                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    💾 Save {selectedPeriod === 'monthly' 
-                      ? currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-                      : getCurrentPeriodLabel().replace('📘 ', '')
-                    }
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Financial Goals */}
             <Card>
@@ -1139,36 +1105,6 @@ export default function YourMoneyMap() {
 
           {/* Savings Tracker Tab */}
           <TabsContent value="savings" className="space-y-6">
-            {/* Save Button */}
-            <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Save className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">
-                        Save your progress for {selectedPeriod === 'monthly' ? 'this month' : 'this quarter'}
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        Creates a permanent record for taxes and tracking
-                      </p>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={saveMonthlySnapshot}
-                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    💾 Save {selectedPeriod === 'monthly' 
-                      ? currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-                      : getCurrentPeriodLabel().replace('📘 ', '')
-                    }
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
 
             <Card>
               <CardHeader>
@@ -1329,17 +1265,30 @@ export default function YourMoneyMap() {
                   {monthlySnapshots.length} Saved
                 </Badge>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowMonthlyRecords(!showMonthlyRecords)}
-              >
-                {showMonthlyRecords ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
+              <div className="flex items-center gap-2">
+                {monthlySnapshots.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={exportToCSV}
+                    className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export CSV
+                  </Button>
                 )}
-              </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowMonthlyRecords(!showMonthlyRecords)}
+                >
+                  {showMonthlyRecords ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
           

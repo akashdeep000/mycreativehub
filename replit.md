@@ -683,6 +683,13 @@ Changelog:
   - Updated badge count from "4 Sections" to "3 Sections" to reflect tab removal
   - Goals tab now appears first, emphasizing target-setting before tracking actual performance
   - Simplified interface reduces cognitive load while maintaining all essential financial tracking functionality
+- July 14, 2025. Refined Goals Tab Structure and Save/Export Functionality:
+  - Removed duplicate Business Goals section, keeping only Financial Goals with preferred layout
+  - Repositioned Financial Goals at top of Goals tab with "Achieve Goal By" date field labeling
+  - Goals Summary section now positioned below Financial Goals for better workflow
+  - Restricted blue save section to Income & Expenses tab only - goals and savings can be modified without saving
+  - Removed Export CSV button from header and relocated to Monthly Records section
+  - Users can now only export CSV data after saving monthly snapshots, creating better data integrity workflow
 
 ## User Preferences
 
