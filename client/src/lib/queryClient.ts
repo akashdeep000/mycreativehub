@@ -8,15 +8,18 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  method: string,
   url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const headers: Record<string, string> = {};
-  
-  if (data) {
-    headers["Content-Type"] = "application/json";
+  options?: {
+    method?: string;
+    headers?: Record<string, string>;
+    body?: string;
   }
+): Promise<Response> {
+  const headers: Record<string, string> = {
+    ...options?.headers,
+  };
+  
+  const method = options?.method || 'GET';
   
   // Add JWT token from localStorage if available
   const token = localStorage.getItem('authToken');
@@ -38,7 +41,7 @@ export async function apiRequest(
   const res = await fetch(url, {
     method,
     headers,
-    body: data ? JSON.stringify(data) : undefined,
+    body: options?.body,
     credentials: "include",
   });
 
