@@ -8,7 +8,7 @@ import {
   FileText, 
   Mail, 
   Rocket,
-  DollarSign,
+  TrendingUp,
   Users,
   LucideIcon
 } from "lucide-react";
@@ -33,7 +33,7 @@ const iconMap: Record<string, LucideIcon> = {
   "FileText": FileText,
   "Mail": Mail,
   "Rocket": Rocket,
-  "DollarSign": DollarSign,
+  "TrendingUp": TrendingUp,
   "Users": Users,
 };
 

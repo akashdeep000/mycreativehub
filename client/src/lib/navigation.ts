@@ -3,7 +3,7 @@ import {
   Workflow, 
   FileText, 
   Rocket, 
-  DollarSign, 
+  TrendingUp, 
   Users,
   FolderOpen,
   LucideIcon 
@@ -23,7 +23,7 @@ export const navigationItems: NavigationItem[] = [
   { href: "/content", icon: FileText, label: "Content System", moduleKey: "Content Creation System" },
   { href: "/resource-library", icon: FolderOpen, label: "Resource Library", moduleKey: "Your Resource Library" },
   { href: "/launch", icon: Rocket, label: "Product Launch", moduleKey: "Product Launch System" },
-  { href: "/finance", icon: DollarSign, label: "Finance", moduleKey: "Financial Management" },
+  { href: "/finance", icon: TrendingUp, label: "Finance", moduleKey: "Financial Management" },
   { href: "/affiliate", icon: Users, label: "Affiliate Hub", moduleKey: "The Affiliate Marketing Hub" },
 ];
 
