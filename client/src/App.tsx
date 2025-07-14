@@ -94,6 +94,7 @@ function Router() {
       <Route path="/profit-calculator" component={ProfitCalculator} />
       <Route path="/pre-launch-timeline-planner" component={PreLaunchTimelinePlanner} />
       <Route path="/launch-growth-plan" component={LaunchGrowthPlan} />
+      <Route path="/test-page" component={() => <div>Test Page Works</div>} />
       <Route path="/archived-templates" component={ArchivedTemplates} />
       <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
       <Route path="/inspiration-hub" component={InspirationHub} />
