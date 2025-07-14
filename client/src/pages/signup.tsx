@@ -49,7 +49,7 @@ export default function SignUp() {
         body: JSON.stringify({
           firstName: formData.firstName,
           lastName: formData.lastName,
-          email: formData.email,
+          email: formData.email.toLowerCase(),
           password: formData.password,
         }),
       });
@@ -89,7 +89,7 @@ export default function SignUp() {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: name === "email" ? value.toLowerCase() : value
+      [name]: value
     });
   };
 

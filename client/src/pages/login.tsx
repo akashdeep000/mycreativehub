@@ -37,7 +37,7 @@ export default function Login() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          email: formData.email,
+          email: formData.email.toLowerCase(),
           password: formData.password,
           staySignedIn: formData.staySignedIn
         }),
@@ -107,7 +107,7 @@ export default function Login() {
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: type === "checkbox" ? checked : (name === "email" ? value.toLowerCase() : value)
+      [name]: type === "checkbox" ? checked : value
     });
   };
 
