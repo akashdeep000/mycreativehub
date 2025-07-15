@@ -713,6 +713,7 @@ Changelog:
   - Updated template count from 9 to 1 and changed badge text from "9 Templates" to "1 System"
   - Fixed hardcoded name reference in toolkit card component to match new database name
   - Added "Streamline Your Workflow" to hardcoded logic to show "4 Systems" instead of "12 Templates"
+  - Added "Your Resource Library" to hardcoded logic to show "1 System" instead of "New"
   - Improved visual consistency between dashboard and content section pages
 
 ## User Preferences
