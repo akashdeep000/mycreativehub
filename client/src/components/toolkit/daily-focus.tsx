@@ -220,7 +220,14 @@ export default function DailyFocus() {
                 placeholder="Enter new task..."
                 value={newTask.task}
                 onChange={(e) => setNewTask({ ...newTask, task: e.target.value })}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (newTask.task.trim()) {
+                      handleAddTask();
+                    }
+                  }
+                }}
               />
               <div className="flex gap-2">
                 <select
@@ -268,12 +275,16 @@ export default function DailyFocus() {
                 {/* Existing tasks */}
                 {tasksByPriority[priority].map((task) => (
                   <div key={task.id} className="flex items-center space-x-3">
-                    <Checkbox
-                      checked={Boolean(task.completed)}
-                      onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
-                      className={config.checkboxColor}
-                    />
-                    <span className={`${config.textColor} ${task.completed ? 'line-through opacity-70' : ''} text-sm flex-1`}>
+                    <div className="flex items-center justify-center w-5 h-5 relative z-10">
+                      <Checkbox
+                        checked={Boolean(task.completed)}
+                        onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
+                        className={`${config.checkboxColor} pointer-events-auto cursor-pointer`}
+                        style={{ pointerEvents: 'auto' }}
+                      />
+                    </div>
+                    <span className={`${config.textColor} ${task.completed ? 'line-through opacity-70' : ''} text-sm flex-1 cursor-pointer`}
+                          onClick={() => handleTaskToggle(task.id, !task.completed)}>
                       {task.task}
                     </span>
                     {isEditing && (
@@ -301,9 +312,13 @@ export default function DailyFocus() {
                     placeholder={config.placeholder}
                     value={inlineInputs[priority] || ""}
                     onChange={(e) => handleInputChange(priority, e.target.value)}
-                    onKeyPress={(e) => {
+                    onKeyDown={(e) => {
                       if (e.key === 'Enter') {
-                        handleInlineTaskSubmit(priority, inlineInputs[priority] || "");
+                        e.preventDefault();
+                        const task = inlineInputs[priority] || "";
+                        if (task.trim()) {
+                          handleInlineTaskSubmit(priority, task);
+                        }
                       }
                     }}
                     className="flex-1 p-2 text-sm border-none bg-transparent text-black placeholder-gray-500 italic focus:outline-none focus:ring-0 focus:not-italic focus:border-b-2 focus:border-gray-300 border-b border-transparent transition-all"
