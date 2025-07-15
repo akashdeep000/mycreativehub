@@ -28,10 +28,12 @@ export default function DailyFocus() {
 
   const { data: tasks = [], isLoading } = useQuery<DailyFocusTask[]>({
     queryKey: ["/api/daily-focus", today],
-    retry: false,
-    onSuccess: (data) => {
-      console.log('Tasks fetched from API:', data);
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/daily-focus/${today}`);
+      console.log('Tasks fetched from API:', response);
+      return response;
     },
+    retry: false,
   });
 
   const updateTaskMutation = useMutation({
@@ -84,11 +86,6 @@ export default function DailyFocus() {
       // Clear the specific inline input for this priority
       console.log('Clearing input for priority:', taskData.priority);
       setInlineInputs(prev => ({ ...prev, [taskData.priority]: "" }));
-      // Show success message
-      toast({
-        title: "Task added!",
-        description: `Added "${taskData.task}" to your ${taskData.priority} do list`,
-      });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -171,9 +168,9 @@ export default function DailyFocus() {
   };
 
   const tasksByPriority = {
-    must: tasks.filter(t => t.priority === "must"),
-    should: tasks.filter(t => t.priority === "should"),
-    could: tasks.filter(t => t.priority === "could"),
+    must: Array.isArray(tasks) ? tasks.filter(t => t.priority === "must") : [],
+    should: Array.isArray(tasks) ? tasks.filter(t => t.priority === "should") : [],
+    could: Array.isArray(tasks) ? tasks.filter(t => t.priority === "could") : [],
   };
   
   console.log('Current tasks:', tasks);
