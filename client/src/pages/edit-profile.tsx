@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,7 +12,7 @@ import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowLeft, Camera, User, Mail, Lock, Palette, Save } from "lucide-react";
+import { ArrowLeft, Camera, User, Mail, Lock, Save } from "lucide-react";
 import { useLocation } from "wouter";
 
 const profileSchema = z.object({
@@ -40,7 +39,6 @@ export default function EditProfile() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   const profileForm = useForm<ProfileFormData>({
@@ -345,33 +343,7 @@ export default function EditProfile() {
           </CardContent>
         </Card>
 
-        {/* Preferences */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Palette className="w-5 h-5" />
-              Preferences
-            </CardTitle>
-            <CardDescription>
-              Customize your app experience
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="dark-mode">Dark Mode</Label>
-                <p className="text-sm text-gray-500">
-                  Toggle between light and dark themes
-                </p>
-              </div>
-              <Switch
-                id="dark-mode"
-                checked={isDarkMode}
-                onCheckedChange={setIsDarkMode}
-              />
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
     </div>
   );
