@@ -8,7 +8,6 @@ import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import ToolkitCard from "@/components/toolkit/toolkit-card";
 import DailyFocus from "@/components/toolkit/daily-focus";
-import RecentActivity from "@/components/toolkit/recent-activity";
 import StatsCard from "@/components/toolkit/stats-card";
 import QuickStartTimer from "@/components/toolkit/quick-start-timer";
 import { Button } from "@/components/ui/button";
@@ -133,10 +132,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="mb-8">
-          <RecentActivity />
-        </div>
+
       </div>
 
       {/* Mobile Navigation */}
