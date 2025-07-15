@@ -66,12 +66,15 @@ export default function DailyFocus() {
         ...taskData,
         date: new Date().toISOString(),
       });
+      return taskData; // Return the task data for use in onSuccess
     },
-    onSuccess: () => {
+    onSuccess: (taskData) => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
       queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
       setNewTask({ task: "", priority: "must" });
       setIsAddingTask(false);
+      // Clear the specific inline input for this priority
+      setInlineInputs(prev => ({ ...prev, [taskData.priority]: "" }));
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -135,8 +138,7 @@ export default function DailyFocus() {
         task: task.trim(), 
         priority: priority as "must" | "should" | "could" 
       });
-      setInlineInputs(prev => ({ ...prev, [priority]: "" }));
-      setShowInputs(prev => ({ ...prev, [priority]: true }));
+      // Don't clear the input here - let the mutation's onSuccess handle it
     }
   };
 
@@ -275,14 +277,17 @@ export default function DailyFocus() {
                 {/* Existing tasks */}
                 {tasksByPriority[priority].map((task) => (
                   <div key={task.id} className="flex items-center space-x-3">
-                    <div className="flex items-center justify-center w-5 h-5 relative z-10">
-                      <Checkbox
-                        checked={Boolean(task.completed)}
-                        onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
-                        className={`${config.checkboxColor} pointer-events-auto cursor-pointer`}
-                        style={{ pointerEvents: 'auto' }}
-                      />
-                    </div>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(task.completed)}
+                      onChange={(e) => handleTaskToggle(task.id, e.target.checked)}
+                      className="w-4 h-4 cursor-pointer rounded border-gray-300 focus:ring-2 focus:ring-offset-2"
+                      style={{
+                        accentColor: priority === 'must' ? '#ff2e23' : priority === 'should' ? '#3cd473' : '#f97f25',
+                        pointerEvents: 'auto',
+                        zIndex: 10
+                      }}
+                    />
                     <span className={`${config.textColor} ${task.completed ? 'line-through opacity-70' : ''} text-sm flex-1 cursor-pointer`}
                           onClick={() => handleTaskToggle(task.id, !task.completed)}>
                       {task.task}
@@ -315,6 +320,7 @@ export default function DailyFocus() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
+                        e.stopPropagation();
                         const task = inlineInputs[priority] || "";
                         if (task.trim()) {
                           handleInlineTaskSubmit(priority, task);
