@@ -6,7 +6,7 @@ import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Plus, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck, Recycle, BookOpen, BarChart3, Lightbulb } from "lucide-react";
+import { Calendar, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck, Recycle, BookOpen, BarChart3, Lightbulb } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function ContentPlanning() {
@@ -108,19 +108,13 @@ export default function ContentPlanning() {
             </div>
           </div>
           
-          <div className="flex justify-between items-center">
-            <div className="flex gap-2">
-              <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                3 Systems
-              </Badge>
-              <Badge variant="secondary" className="bg-green-100 text-green-700">
-                Active
-              </Badge>
-            </div>
-            <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              New Template
-            </Button>
+          <div className="flex gap-2">
+            <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+              3 Systems
+            </Badge>
+            <Badge variant="secondary" className="bg-green-100 text-green-700">
+              Active
+            </Badge>
           </div>
         </div>
 
