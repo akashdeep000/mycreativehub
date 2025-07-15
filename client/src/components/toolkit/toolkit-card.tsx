@@ -79,6 +79,7 @@ export default function ToolkitCard({ module }: ToolkitCardProps) {
             {module.name === "Content Creation System" ? "3 Systems" : 
              module.name === "Product Launch System" ? "4 Systems" :
              module.name === "The Affiliate Link Hub" ? "1 System" :
+             module.name === "Streamline Your Workflow" ? "4 Systems" :
              module.templateCount > 0 ? `${module.templateCount} Templates` : "New"}
           </Badge>
         </div>
