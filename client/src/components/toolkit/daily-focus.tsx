@@ -62,18 +62,22 @@ export default function DailyFocus() {
 
   const addTaskMutation = useMutation({
     mutationFn: async (taskData: { task: string; priority: string }) => {
+      console.log('Mutation function called with:', taskData);
       await apiRequest("POST", "/api/daily-focus", {
         ...taskData,
         date: new Date().toISOString(),
       });
+      console.log('API request completed successfully');
       return taskData; // Return the task data for use in onSuccess
     },
     onSuccess: (taskData) => {
+      console.log('Mutation onSuccess called with:', taskData);
       queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
       queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
       setNewTask({ task: "", priority: "must" });
       setIsAddingTask(false);
       // Clear the specific inline input for this priority
+      console.log('Clearing input for priority:', taskData.priority);
       setInlineInputs(prev => ({ ...prev, [taskData.priority]: "" }));
     },
     onError: (error) => {
@@ -133,12 +137,16 @@ export default function DailyFocus() {
   };
 
   const handleInlineTaskSubmit = (priority: string, task: string) => {
+    console.log('handleInlineTaskSubmit called with:', { priority, task });
     if (task.trim()) {
+      console.log('Task is valid, calling mutation...');
       addTaskMutation.mutate({ 
         task: task.trim(), 
         priority: priority as "must" | "should" | "could" 
       });
       // Don't clear the input here - let the mutation's onSuccess handle it
+    } else {
+      console.log('Task is empty, not submitting');
     }
   };
 
@@ -307,11 +315,13 @@ export default function DailyFocus() {
 
                 {/* Inline task input */}
                 <div className="flex items-center space-x-3">
-                  {inlineInputs[priority] ? (
-                    <Checkbox className="opacity-50" disabled />
-                  ) : (
-                    <Edit3 className="w-4 h-4 text-gray-400" />
-                  )}
+                  <div className="w-4 h-4 flex items-center justify-center">
+                    {inlineInputs[priority] ? (
+                      <div className="w-3 h-3 border border-gray-300 rounded opacity-50"></div>
+                    ) : (
+                      <Edit3 className="w-4 h-4 text-gray-400" />
+                    )}
+                  </div>
                   <input
                     type="text"
                     placeholder={config.placeholder}
@@ -322,7 +332,9 @@ export default function DailyFocus() {
                         e.preventDefault();
                         e.stopPropagation();
                         const task = inlineInputs[priority] || "";
+                        console.log('Enter pressed, task:', task, 'priority:', priority);
                         if (task.trim()) {
+                          console.log('Submitting task:', task.trim());
                           handleInlineTaskSubmit(priority, task);
                         }
                       }
