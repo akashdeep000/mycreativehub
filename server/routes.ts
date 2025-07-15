@@ -443,6 +443,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const task = await storage.updateDailyFocusTask(taskId, completed);
       
+      // Log task completion for stats tracking
+      if (completed) {
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+        const categoryMap = {
+          'must': 'Must Do',
+          'should': 'Should Do', 
+          'could': 'Could Do'
+        };
+        
+        try {
+          await storage.logTaskCompletion({
+            userId,
+            taskId: task.id,
+            category: categoryMap[task.priority as keyof typeof categoryMap],
+            dateCompleted: today
+          });
+        } catch (error) {
+          // Ignore duplicate errors - task already logged for this date
+          console.log('Task completion already logged for this date');
+        }
+      }
+      
       // Log activity
       await storage.createActivityLog({
         userId,
@@ -460,6 +482,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating daily focus task:", error);
       res.status(500).json({ message: "Failed to update daily focus task" });
+    }
+  });
+
+  // Clear daily tasks
+  app.delete('/api/daily-focus/:date', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const date = new Date(req.params.date);
+      
+      await storage.clearDailyFocusTasks(userId, date);
+      
+      // Log activity
+      await storage.createActivityLog({
+        userId,
+        action: 'tasks_cleared',
+        description: 'Cleared daily checklist',
+        metadata: { date: req.params.date },
+      });
+      
+      res.json({ message: 'Daily tasks cleared successfully' });
+    } catch (error) {
+      console.error("Error clearing daily tasks:", error);
+      res.status(500).json({ message: "Failed to clear daily tasks" });
+    }
+  });
+
+  // Get monthly task completions
+  app.get('/api/task-completions/:year/:month', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      const completions = await storage.getMonthlyTaskCompletions(userId, year, month);
+      res.json({ completions });
+    } catch (error) {
+      console.error("Error fetching monthly task completions:", error);
+      res.status(500).json({ message: "Failed to fetch monthly task completions" });
     }
   });
 
@@ -481,7 +541,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const stats = await storage.getUserStats(userId);
-      res.json(stats || { completedTasks: 0, focusHours: 0, daysShowedUp: 0 });
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1;
+      
+      // Get monthly task completions from log
+      const monthlyCompletions = await storage.getMonthlyTaskCompletions(userId, currentYear, currentMonth);
+      
+      // Override completedTasks with monthly data
+      const updatedStats = {
+        ...(stats || { completedTasks: 0, focusHours: 0, daysShowedUp: 0 }),
+        completedTasks: monthlyCompletions
+      };
+      
+      res.json(updatedStats);
     } catch (error) {
       console.error("Error fetching user stats:", error);
       res.status(500).json({ message: "Failed to fetch user stats" });

@@ -96,7 +96,7 @@ export default function Dashboard() {
           <StatsCard
             title="Tasks Completed"
             value={stats?.completedTasks || 0}
-            subtitle="This Week"
+            subtitle="This Month"
             colour="green"
             icon="check"
           />

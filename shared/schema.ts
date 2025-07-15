@@ -74,6 +74,18 @@ export const dailyFocusTasks = pgTable("daily_focus_tasks", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Task completion log for stats tracking
+export const taskCompletionLog = pgTable("task_completion_log", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  taskId: integer("task_id").notNull().references(() => dailyFocusTasks.id),
+  category: varchar("category").notNull(), // 'Must Do', 'Should Do', 'Could Do'
+  dateCompleted: varchar("date_completed").notNull(), // YYYY-MM-DD format
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  uniqueTaskDate: uniqueIndex("unique_task_date").on(table.taskId, table.dateCompleted),
+}));
+
 // Activity log
 export const activityLog = pgTable("activity_log", {
   id: serial("id").primaryKey(),
@@ -366,6 +378,11 @@ export const insertDailyFocusTaskSchema = createInsertSchema(dailyFocusTasks).om
   updatedAt: true,
 });
 
+export const insertTaskCompletionLogSchema = createInsertSchema(taskCompletionLog).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertActivityLogSchema = createInsertSchema(activityLog).omit({
   id: true,
   createdAt: true,
@@ -486,6 +503,8 @@ export type ToolkitModule = typeof toolkitModules.$inferSelect;
 export type UserToolkitData = typeof userToolkitData.$inferSelect;
 export type DailyFocusTask = typeof dailyFocusTasks.$inferSelect;
 export type InsertDailyFocusTask = z.infer<typeof insertDailyFocusTaskSchema>;
+export type TaskCompletionLog = typeof taskCompletionLog.$inferSelect;
+export type InsertTaskCompletionLog = z.infer<typeof insertTaskCompletionLogSchema>;
 export type ActivityLog = typeof activityLog.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
 export type UserStats = typeof userStats.$inferSelect;

@@ -3,6 +3,7 @@ import {
   toolkitModules,
   userToolkitData,
   dailyFocusTasks,
+  taskCompletionLog,
   activityLog,
   userStats,
   templates,
@@ -24,6 +25,8 @@ import {
   type UserToolkitData,
   type DailyFocusTask,
   type InsertDailyFocusTask,
+  type TaskCompletionLog,
+  type InsertTaskCompletionLog,
   type ActivityLog,
   type InsertActivityLog,
   type UserStats,
@@ -71,6 +74,11 @@ export interface IStorage {
   getDailyFocusTasks(userId: string, date: Date): Promise<DailyFocusTask[]>;
   createDailyFocusTask(task: InsertDailyFocusTask): Promise<DailyFocusTask>;
   updateDailyFocusTask(id: number, completed: boolean): Promise<DailyFocusTask>;
+  clearDailyFocusTasks(userId: string, date: Date): Promise<void>;
+  
+  // Task completion log
+  logTaskCompletion(log: InsertTaskCompletionLog): Promise<TaskCompletionLog>;
+  getMonthlyTaskCompletions(userId: string, year: number, month: number): Promise<number>;
   
   // Activity log
   getRecentActivity(userId: string, limit: number): Promise<ActivityLog[]>;
@@ -264,6 +272,50 @@ export class DatabaseStorage implements IStorage {
       .where(eq(dailyFocusTasks.id, id))
       .returning();
     return result;
+  }
+
+  async clearDailyFocusTasks(userId: string, date: Date): Promise<void> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    await db
+      .delete(dailyFocusTasks)
+      .where(
+        and(
+          eq(dailyFocusTasks.userId, userId),
+          gte(dailyFocusTasks.date, startOfDay),
+          lte(dailyFocusTasks.date, endOfDay)
+        )
+      );
+  }
+
+  async logTaskCompletion(log: InsertTaskCompletionLog): Promise<TaskCompletionLog> {
+    const [result] = await db
+      .insert(taskCompletionLog)
+      .values(log)
+      .onConflictDoNothing()
+      .returning();
+    return result;
+  }
+
+  async getMonthlyTaskCompletions(userId: string, year: number, month: number): Promise<number> {
+    const startOfMonth = `${year}-${month.toString().padStart(2, '0')}-01`;
+    const endOfMonth = `${year}-${month.toString().padStart(2, '0')}-31`;
+    
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(taskCompletionLog)
+      .where(
+        and(
+          eq(taskCompletionLog.userId, userId),
+          gte(taskCompletionLog.dateCompleted, startOfMonth),
+          lte(taskCompletionLog.dateCompleted, endOfMonth)
+        )
+      );
+    
+    return result?.count || 0;
   }
 
   async getRecentActivity(userId: string, limit: number = 10): Promise<ActivityLog[]> {

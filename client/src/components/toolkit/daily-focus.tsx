@@ -93,6 +93,38 @@ export default function DailyFocus() {
     },
   });
 
+  const clearDailyTasksMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/daily-focus/${today}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
+      toast({
+        title: "Success",
+        description: "Daily checklist cleared successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to clear daily checklist",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleTaskToggle = (id: number, completed: boolean) => {
     updateTaskMutation.mutate({ id, completed });
   };
@@ -297,6 +329,25 @@ export default function DailyFocus() {
           </Card>
         ))}
         </div>
+        
+        {/* Clear Today's Checklist Button */}
+        {(tasks.length > 0) && (
+          <div className="flex justify-center mt-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (confirm('Are you sure you want to clear today\'s checklist? This will remove all tasks but keep your completion stats.')) {
+                  clearDailyTasksMutation.mutate();
+                }
+              }}
+              disabled={clearDailyTasksMutation.isPending}
+              className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 hover:border-red-400 text-sm"
+            >
+              {clearDailyTasksMutation.isPending ? 'Clearing...' : 'Clear Today\'s Checklist'}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
