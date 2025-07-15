@@ -112,9 +112,6 @@ export default function ContentPlanning() {
             <Badge variant="secondary" className="bg-blue-100 text-blue-700">
               3 Systems
             </Badge>
-            <Badge variant="secondary" className="bg-green-100 text-green-700">
-              Active
-            </Badge>
           </div>
         </div>
 
