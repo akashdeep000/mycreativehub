@@ -709,6 +709,7 @@ Changelog:
   - Updated Affiliate Marketing Hub card badge from "9 Templates" to "1 System"
   - Updated Affiliate Marketing Hub card icon from "Users" to "Link" to match the section's internal icon
   - Added Link icon to toolkit card component's icon mapping to properly render the chain/link symbol
+  - Changed card title from "The Affiliate Marketing Hub" to "The Affiliate Link Hub" for better clarity
   - Improved visual consistency between dashboard and content section pages
 
 ## User Preferences
