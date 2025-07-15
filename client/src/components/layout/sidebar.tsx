@@ -50,6 +50,21 @@ export default function Sidebar() {
               </p>
             </div>
           </div>
+          
+          {/* Edit Profile Button */}
+          <div className="mt-3 pt-3 border-t border-pink-200">
+            <button 
+              onClick={() => setLocation('/edit-profile')}
+              className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                location === '/edit-profile'
+                  ? "bg-pink-200 text-pink-700 font-medium"
+                  : "text-gray-600 hover:bg-pink-100"
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              <span className="text-sm">Edit Profile</span>
+            </button>
+          </div>
         </div>
 
         {/* Navigation Menu */}
@@ -85,19 +100,8 @@ export default function Sidebar() {
           </button>
         </div>
 
-        {/* Settings and Logout */}
-        <div className="border-t border-pink-200 pt-6 space-y-2">
-          <button 
-            onClick={() => setLocation('/edit-profile')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colors ${
-              location === '/edit-profile'
-                ? "bg-pink-100 text-pink-600 font-medium"
-                : "text-gray-600 hover:bg-gray-50"
-            }`}
-          >
-            <Settings className="w-5 h-5" />
-            <span className="text-sm">Edit Profile</span>
-          </button>
+        {/* Logout */}
+        <div className="border-t border-pink-200 pt-6">
           <button 
             onClick={async () => {
               try {
