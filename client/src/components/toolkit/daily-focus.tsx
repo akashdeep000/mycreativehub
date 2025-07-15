@@ -29,6 +29,9 @@ export default function DailyFocus() {
   const { data: tasks = [], isLoading } = useQuery<DailyFocusTask[]>({
     queryKey: ["/api/daily-focus", today],
     retry: false,
+    onSuccess: (data) => {
+      console.log('Tasks fetched from API:', data);
+    },
   });
 
   const updateTaskMutation = useMutation({
@@ -72,13 +75,20 @@ export default function DailyFocus() {
     },
     onSuccess: (taskData) => {
       console.log('Mutation onSuccess called with:', taskData);
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      // Force refetch of tasks instead of just invalidating
+      queryClient.refetchQueries({ queryKey: ["/api/daily-focus", today] });
       queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       setNewTask({ task: "", priority: "must" });
       setIsAddingTask(false);
       // Clear the specific inline input for this priority
       console.log('Clearing input for priority:', taskData.priority);
       setInlineInputs(prev => ({ ...prev, [taskData.priority]: "" }));
+      // Show success message
+      toast({
+        title: "Task added!",
+        description: `Added "${taskData.task}" to your ${taskData.priority} do list`,
+      });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -165,6 +175,9 @@ export default function DailyFocus() {
     should: tasks.filter(t => t.priority === "should"),
     could: tasks.filter(t => t.priority === "could"),
   };
+  
+  console.log('Current tasks:', tasks);
+  console.log('Tasks by priority:', tasksByPriority);
 
   const priorityConfig = {
     must: { 
