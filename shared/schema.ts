@@ -376,6 +376,8 @@ export const insertDailyFocusTaskSchema = createInsertSchema(dailyFocusTasks).om
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  date: z.string().transform((val) => new Date(val))
 });
 
 export const insertTaskCompletionLogSchema = createInsertSchema(taskCompletionLog).omit({
