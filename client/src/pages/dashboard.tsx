@@ -21,16 +21,21 @@ export default function Dashboard() {
   const { data: stats } = useQuery<UserStats>({
     queryKey: ["/api/stats"],
     retry: false,
+    enabled: !!user, // Only run when user is authenticated
   });
 
   const { data: toolkitModules = [] } = useQuery<any[]>({
     queryKey: ["/api/toolkit-modules"],
     retry: false,
+    enabled: !!user, // Only run when user is authenticated
   });
 
-  // Redirect to login if not authenticated
+  // Redirect to login if not authenticated - with improved logic
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    // Only redirect if we're definitely not loading and definitely not authenticated
+    // Also check if there's a token in localStorage - if there is, don't redirect yet
+    const token = localStorage.getItem('authToken');
+    if (!isLoading && !isAuthenticated && !token) {
       toast({
         title: "Unauthorized",
         description: "You are logged out. Logging in again...",
