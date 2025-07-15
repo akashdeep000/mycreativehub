@@ -297,6 +297,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user business title
+  app.patch('/api/auth/user/business-title', jwtAuth, async (req: any, res) => {
+    try {
+      const { businessTitle } = req.body;
+      const userId = req.user.id;
+      
+      if (!businessTitle || typeof businessTitle !== 'string') {
+        return res.status(400).json({ message: "Valid business title is required" });
+      }
+      
+      // Update the user's business title
+      const updatedUser = await storage.updateUser(userId, { businessTitle: businessTitle.trim() });
+      
+      console.log(`Updated business title for user ${userId}: ${businessTitle}`);
+      
+      // Return updated user (without password)
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating business title:", error);
+      res.status(500).json({ message: "Failed to update business title" });
+    }
+  });
+
   // Toolkit modules
   app.get('/api/toolkit/modules', jwtAuth, async (req, res) => {
     try {

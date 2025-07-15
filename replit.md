@@ -720,6 +720,16 @@ Changelog:
   - Implemented global scroll-to-top functionality for route changes to fix page loading position issue
   - Added ScrollToTop component using Wouter's useLocation hook for smooth user experience
   - Improved visual consistency between dashboard and content section pages
+- July 15, 2025. Added Editable Business Title Feature:
+  - Added businessTitle field to users database schema with default value "Creative Business Owner"
+  - Created API endpoint PATCH /api/auth/user/business-title for updating user business title
+  - Added updateUser method to storage interface for partial user updates
+  - Implemented editable business title in sidebar with inline editing functionality
+  - Added edit icon (✏️) that appears on hover to indicate editable field
+  - Integrated auto-save with database persistence and React Query cache updates
+  - Added proper error handling and toast notifications for user feedback
+  - Users can click subtitle to edit, use Enter to save, or Escape to cancel
+  - Business title persists across sessions and defaults to "Creative Business Owner" if not set
 
 ## User Preferences
 

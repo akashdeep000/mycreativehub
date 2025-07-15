@@ -33,6 +33,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  businessTitle: varchar("business_title").default("Creative Business Owner"),
   password: varchar("password"), // For custom auth
   authProvider: varchar("auth_provider").default("custom"), // "replit" or "custom"
   createdAt: timestamp("created_at").defaultNow(),
