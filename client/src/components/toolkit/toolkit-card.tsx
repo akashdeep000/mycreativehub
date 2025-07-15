@@ -75,6 +75,7 @@ export default function ToolkitCard({ module }: ToolkitCardProps) {
             className={`text-xs ${badgeColorMap[module.color]}`}
           >
             {module.name === "Content Creation System" ? "3 Systems" : 
+             module.name === "Product Launch System" ? "4 Systems" :
              module.templateCount > 0 ? `${module.templateCount} Templates` : "New"}
           </Badge>
         </div>
