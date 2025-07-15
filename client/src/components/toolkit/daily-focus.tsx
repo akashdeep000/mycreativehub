@@ -38,7 +38,13 @@ export default function DailyFocus() {
 
   const updateTaskMutation = useMutation({
     mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
-      await apiRequest("PATCH", `/api/daily-focus/${id}`, { completed });
+      await apiRequest(`/api/daily-focus/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ completed }),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
@@ -68,9 +74,15 @@ export default function DailyFocus() {
   const addTaskMutation = useMutation({
     mutationFn: async (taskData: { task: string; priority: string }) => {
       console.log('Mutation function called with:', taskData);
-      await apiRequest("POST", "/api/daily-focus", {
-        ...taskData,
-        date: new Date().toISOString(),
+      const response = await apiRequest("/api/daily-focus", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...taskData,
+          date: new Date().toISOString(),
+        }),
       });
       console.log('API request completed successfully');
       return taskData; // Return the task data for use in onSuccess
@@ -109,7 +121,12 @@ export default function DailyFocus() {
 
   const clearDailyTasksMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("DELETE", `/api/daily-focus/${today}`);
+      await apiRequest(`/api/daily-focus/${today}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
