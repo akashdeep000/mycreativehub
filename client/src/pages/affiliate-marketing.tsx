@@ -344,7 +344,7 @@ export default function AffiliateMarketing() {
             <Link className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Affiliate Link Hub</h1>
+            <h1 className="text-3xl font-bold text-gray-900">The Affiliate Link Hub</h1>
             <p className="text-gray-600">Manage and track your affiliate partnerships</p>
           </div>
         </div>
@@ -363,7 +363,6 @@ export default function AffiliateMarketing() {
           </div>
         </div>
       </div>
-
       {/* Controls */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="flex-1 relative">
@@ -406,7 +405,6 @@ export default function AffiliateMarketing() {
           </Button>
         )}
       </div>
-
       {/* Add New Link Form */}
       {showAddForm && (
         <Card className="mb-6">
@@ -595,7 +593,6 @@ export default function AffiliateMarketing() {
           </CardContent>
         </Card>
       )}
-
       {/* Affiliate Links Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
@@ -708,7 +705,6 @@ export default function AffiliateMarketing() {
           </table>
         </div>
       </div>
-
       {/* Edit Link Modal */}
       {editingLink && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
