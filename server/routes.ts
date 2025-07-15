@@ -403,7 +403,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const date = new Date(req.params.date);
+      console.log(`Fetching daily focus tasks for userId: ${userId}, date: ${req.params.date}`);
+      console.log(`Parsed date object: ${date}`);
+      
       const tasks = await storage.getDailyFocusTasks(userId, date);
+      console.log(`Retrieved ${tasks.length} tasks:`, tasks);
+      
       res.json(tasks);
     } catch (error) {
       console.error("Error fetching daily focus tasks:", error);
@@ -414,11 +419,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/daily-focus', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      console.log(`Creating daily focus task for userId: ${userId}`);
+      console.log(`Request body:`, req.body);
+      
       const taskData = insertDailyFocusTaskSchema.parse({
         ...req.body,
         userId,
       });
+      console.log(`Parsed task data:`, taskData);
+      
       const task = await storage.createDailyFocusTask(taskData);
+      console.log(`Created task:`, task);
       
       // Log activity
       await storage.createActivityLog({
