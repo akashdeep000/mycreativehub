@@ -127,18 +127,12 @@ export default function ContentPlanning() {
                   <div className={`w-10 h-10 bg-gradient-to-br ${template.bgGradient} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
                     <template.icon className="w-5 h-5 text-white" />
                   </div>
-                  {template.isPopular && (
-                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs">
-                      Popular
-                    </Badge>
-                  )}
                 </div>
                 <CardTitle className="text-lg font-serif">{template.name}</CardTitle>
                 <CardDescription>{template.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <span>Last used: {template.lastUsed}</span>
+                <div className="flex items-center justify-end text-sm text-gray-500">
                   <Button 
                     variant="ghost" 
                     size="sm" 
