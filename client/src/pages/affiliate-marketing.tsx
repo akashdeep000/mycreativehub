@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, ExternalLink, Copy, Check, Plus, Trash2, Edit, Search, Download, AlertCircle } from 'lucide-react';
+import BackToDashboard from '@/components/BackToDashboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -339,6 +340,7 @@ export default function AffiliateMarketing() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
+        <BackToDashboard />
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 bg-pink-500 rounded-lg flex items-center justify-center">
             <Link className="w-6 h-6 text-white" />

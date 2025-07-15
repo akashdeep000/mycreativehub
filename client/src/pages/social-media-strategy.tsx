@@ -6,6 +6,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
+import BackToDashboard from "@/components/BackToDashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -198,6 +199,7 @@ Generated on: ${new Date().toLocaleDateString()}
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
+            <BackToDashboard />
             <Link href="/content-planning">
               <Button variant="outline" size="sm">
                 <ArrowLeft className="w-4 h-4 mr-2" />

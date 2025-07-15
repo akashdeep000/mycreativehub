@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Rocket, Calendar, TrendingUp, Target, Lightbulb, CheckSquare, Calculator, Clock, BarChart3 } from 'lucide-react';
 import { useLocation } from 'wouter';
+import BackToDashboard from '@/components/BackToDashboard';
 
 export default function ProductLaunch() {
   const [, setLocation] = useLocation();
@@ -54,6 +55,7 @@ export default function ProductLaunch() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-8">
+        <BackToDashboard />
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center">
             <Rocket className="w-5 h-5 text-white" />

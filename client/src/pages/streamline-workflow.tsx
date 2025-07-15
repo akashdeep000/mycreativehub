@@ -7,6 +7,7 @@ import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
+import BackToDashboard from "@/components/BackToDashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -346,6 +347,7 @@ export default function StreamlineWorkflow() {
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="mb-8">
+              <BackToDashboard />
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Streamline Your Workflow</h1>
               <p className="text-gray-600">
                 Pre-built templates to organise your creative business processes

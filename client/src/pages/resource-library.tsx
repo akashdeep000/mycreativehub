@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FolderOpen, Plus, Trash2, GripVertical, FileText, Link, Download, Edit2, X, Check, ExternalLink, Archive, BookOpen } from 'lucide-react';
+import BackToDashboard from '@/components/BackToDashboard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -194,6 +195,7 @@ export default function ResourceLibrary() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-8">
+        <BackToDashboard />
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
             <BookOpen className="w-5 h-5 text-white" />
