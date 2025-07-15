@@ -100,10 +100,10 @@ export default function ContentPlanning() {
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-white" />
+              <FileText className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-serif font-semibold text-gray-800">Content Planning</h1>
+              <h1 className="text-3xl font-serif font-semibold text-gray-800">Content Creation System</h1>
               <p className="text-gray-600">Organize your content creation workflow</p>
             </div>
           </div>
@@ -111,7 +111,7 @@ export default function ContentPlanning() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                3 Templates
+                3 Systems
               </Badge>
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 Active

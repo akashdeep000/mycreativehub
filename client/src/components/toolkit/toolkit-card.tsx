@@ -75,17 +75,20 @@ export default function ToolkitCard({ module }: ToolkitCardProps) {
             variant="secondary" 
             className={`text-xs ${badgeColorMap[module.color]}`}
           >
-            {module.templateCount > 0 ? `${module.templateCount} Templates` : "New"}
+            {module.name === "Content Creation System" ? "3 Systems" : 
+             module.templateCount > 0 ? `${module.templateCount} Templates` : "New"}
           </Badge>
         </div>
         <CardTitle className="text-lg font-serif">{module.name}</CardTitle>
         <p className="text-gray-600 text-sm">{module.description}</p>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center text-sm text-gray-500">
-          <Clock className="w-4 h-4 mr-2" />
-          <span>{module.lastUsed}</span>
-        </div>
+        {module.name !== "Content Creation System" && (
+          <div className="flex items-center text-sm text-gray-500">
+            <Clock className="w-4 h-4 mr-2" />
+            <span>{module.lastUsed}</span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
