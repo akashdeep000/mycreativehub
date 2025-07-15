@@ -61,10 +61,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
+    <div className="min-h-screen bg-white">
       <Sidebar />
       
-      <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
+      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         {/* Welcome Header */}
         <div className="mb-8">
           <h2 className="text-3xl lg:text-4xl font-serif font-semibold text-gray-800 mb-2">
@@ -121,7 +121,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg p-6 mb-8">
           <h3 className="text-2xl font-serif font-semibold text-gray-800 mb-6">Your Creative Toolkit</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {(toolkitModules as any[]).map((module: any) => (
               <ToolkitCard key={module.id} module={{
                 ...module,

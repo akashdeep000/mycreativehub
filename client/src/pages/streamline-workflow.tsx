@@ -340,12 +340,11 @@ export default function StreamlineWorkflow() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <MobileNav />
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <MobileNav />
+      <div className="lg:ml-64 max-w-full overflow-x-hidden">
+        <main className="px-4 sm:px-6 lg:px-8 py-6">
             <div className="mb-8">
               <BackToDashboard />
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Streamline Your Workflow</h1>
@@ -415,7 +414,6 @@ export default function StreamlineWorkflow() {
                 </div>
               )}
             </div>
-          </div>
         </main>
       </div>
     </div>

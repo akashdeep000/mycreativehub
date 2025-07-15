@@ -179,9 +179,9 @@ Generated on: ${new Date().toLocaleDateString()}
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col lg:flex-row bg-rose-50">
+      <div className="min-h-screen bg-rose-50">
         <Sidebar />
-        <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
+        <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
           <div className="flex items-center justify-center h-64">
             <div className="text-gray-500">Loading your strategy...</div>
           </div>
@@ -191,11 +191,11 @@ Generated on: ${new Date().toLocaleDateString()}
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-rose-50">
+    <div className="min-h-screen bg-rose-50">
       <Sidebar />
       <MobileNav />
       
-      <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
+      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">

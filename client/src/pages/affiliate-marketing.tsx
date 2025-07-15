@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, ExternalLink, Copy, Check, Plus, Trash2, Edit, Search, Download, AlertCircle } from 'lucide-react';
 import BackToDashboard from '@/components/BackToDashboard';
+import Sidebar from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -329,16 +330,21 @@ export default function AffiliateMarketing() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+      <div className="min-h-screen bg-rose-50">
+        <Sidebar />
+        <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-rose-50">
+      <Sidebar />
+      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
       <div className="mb-8">
         <BackToDashboard />
         <div className="flex items-center gap-3 mb-4">
@@ -884,6 +890,7 @@ export default function AffiliateMarketing() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FolderOpen, Plus, Trash2, GripVertical, FileText, Link, Download, Edit2, X, Check, ExternalLink, Archive, BookOpen } from 'lucide-react';
 import BackToDashboard from '@/components/BackToDashboard';
+import Sidebar from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -176,13 +177,16 @@ export default function ResourceLibrary() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-300 rounded w-64 mb-4"></div>
-          <div className="grid gap-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-20 bg-gray-300 rounded"></div>
-            ))}
+      <div className="min-h-screen bg-rose-50">
+        <Sidebar />
+        <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-300 rounded w-64 mb-4"></div>
+            <div className="grid gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-20 bg-gray-300 rounded"></div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -193,7 +197,9 @@ export default function ResourceLibrary() {
   const linkItems = items.filter((item: ResourceLibraryItem) => item.type === 'link');
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="min-h-screen bg-rose-50">
+      <Sidebar />
+      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
       <div className="mb-8">
         <BackToDashboard />
         <div className="flex items-center gap-3 mb-4">
@@ -326,6 +332,7 @@ export default function ResourceLibrary() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

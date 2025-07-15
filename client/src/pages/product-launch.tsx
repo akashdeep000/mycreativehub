@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Rocket, Calendar, TrendingUp, Target, Lightbulb, CheckSquare, Calculator, Clock, BarChart3 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import BackToDashboard from '@/components/BackToDashboard';
+import Sidebar from '@/components/layout/sidebar';
 
 export default function ProductLaunch() {
   const [, setLocation] = useLocation();
@@ -53,7 +54,9 @@ export default function ProductLaunch() {
   ];
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="min-h-screen bg-rose-50">
+      <Sidebar />
+      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
       <div className="mb-8">
         <BackToDashboard />
         <div className="flex items-center gap-3 mb-4">
@@ -132,6 +135,7 @@ export default function ProductLaunch() {
             </CardContent>
           </Card>
         ))}
+      </div>
       </div>
     </div>
   );
