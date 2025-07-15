@@ -136,7 +136,7 @@ export default function EditProfile() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setLocation('/dashboard')}
+          onClick={() => setLocation('/')}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
