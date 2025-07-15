@@ -717,6 +717,8 @@ Changelog:
   - Updated Resource Library description from "organize" to "organise" (British spelling)
   - Updated Affiliate Link Hub description to focus on storing affiliate links, discount codes and tracking numbers
   - Removed Recent Activity feature from main dashboard page to streamline interface
+  - Implemented global scroll-to-top functionality for route changes to fix page loading position issue
+  - Added ScrollToTop component using Wouter's useLocation hook for smooth user experience
   - Improved visual consistency between dashboard and content section pages
 
 ## User Preferences
