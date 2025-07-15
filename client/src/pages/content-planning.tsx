@@ -94,7 +94,6 @@ export default function ContentPlanning() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-rose-50">
       <Sidebar />
-      
       <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
         {/* Header */}
         <div className="mb-8">
@@ -104,7 +103,7 @@ export default function ContentPlanning() {
             </div>
             <div>
               <h1 className="text-3xl font-serif font-semibold text-gray-800">Content Creation System</h1>
-              <p className="text-gray-600">Organize your content creation workflow</p>
+              <p className="text-gray-600">Organise your content creation workflow</p>
             </div>
           </div>
           
@@ -200,7 +199,6 @@ export default function ContentPlanning() {
           </CardContent>
         </Card>
       </div>
-
       <MobileNav />
     </div>
   );
