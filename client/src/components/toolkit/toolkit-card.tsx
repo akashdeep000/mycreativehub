@@ -1,9 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import { 
   Calendar, 
-  Clock, 
   Workflow, 
   FileText, 
   Mail, 
@@ -82,14 +81,7 @@ export default function ToolkitCard({ module }: ToolkitCardProps) {
         <CardTitle className="text-lg font-serif">{module.name}</CardTitle>
         <p className="text-gray-600 text-sm">{module.description}</p>
       </CardHeader>
-      <CardContent>
-        {module.name !== "Content Creation System" && (
-          <div className="flex items-center text-sm text-gray-500">
-            <Clock className="w-4 h-4 mr-2" />
-            <span>{module.lastUsed}</span>
-          </div>
-        )}
-      </CardContent>
+      
     </Card>
   );
 }
