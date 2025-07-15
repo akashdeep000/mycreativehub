@@ -9,6 +9,7 @@ import {
   Rocket,
   TrendingUp,
   Users,
+  Link,
   LucideIcon
 } from "lucide-react";
 
@@ -34,6 +35,7 @@ const iconMap: Record<string, LucideIcon> = {
   "Rocket": Rocket,
   "TrendingUp": TrendingUp,
   "Users": Users,
+  "Link": Link,
 };
 
 const colorMap: Record<string, string> = {
