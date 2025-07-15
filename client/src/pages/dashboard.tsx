@@ -73,7 +73,7 @@ export default function Dashboard() {
         {/* Welcome Header */}
         <div className="mb-8">
           <h2 className="text-3xl lg:text-4xl font-serif font-semibold text-gray-800 mb-2">
-            Good morning, {user?.firstName || "Creative!"}
+            Hey {user?.firstName || "Creative"}!
           </h2>
           <p className="text-gray-600 text-lg">Ready to build your creative empire today?</p>
         </div>
