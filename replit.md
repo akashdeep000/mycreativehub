@@ -707,6 +707,7 @@ Changelog:
   - Updated badge count in content page from "3 Templates" to "3 Systems"
   - Updated Product Launch System card badge from "8 Templates" to "4 Systems"
   - Updated Affiliate Marketing Hub card badge from "9 Templates" to "1 System"
+  - Updated Affiliate Marketing Hub card icon from "Users" to "Link" to match the section's internal icon
   - Improved visual consistency between dashboard and content section pages
 
 ## User Preferences
