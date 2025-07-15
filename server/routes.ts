@@ -321,6 +321,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user profile
+  app.patch('/api/auth/user/profile', jwtAuth, async (req: any, res) => {
+    try {
+      const { firstName, lastName, businessTitle } = req.body;
+      const userId = req.user.id;
+      
+      if (!firstName || !lastName || !businessTitle) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+      
+      // Update the user's profile
+      const updatedUser = await storage.updateUser(userId, { 
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        businessTitle: businessTitle.trim() 
+      });
+      
+      console.log(`Updated profile for user ${userId}: ${firstName} ${lastName}, ${businessTitle}`);
+      
+      // Return updated user (without password)
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Update user password
+  app.patch('/api/auth/user/password', jwtAuth, async (req: any, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const userId = req.user.id;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current password and new password are required" });
+      }
+      
+      // Get current user to verify password
+      const currentUser = await storage.getUserById(userId);
+      if (!currentUser || !currentUser.password) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Verify current password
+      const isValidPassword = await comparePassword(currentPassword, currentUser.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Current password is incorrect" });
+      }
+      
+      // Hash new password
+      const hashedNewPassword = await hashPassword(newPassword);
+      
+      // Update the user's password
+      const updatedUser = await storage.updateUser(userId, { password: hashedNewPassword });
+      
+      console.log(`Updated password for user ${userId}`);
+      
+      // Return success message (don't send back user data for security)
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error updating password:", error);
+      res.status(500).json({ message: "Failed to update password" });
+    }
+  });
+
   // Toolkit modules
   app.get('/api/toolkit/modules', jwtAuth, async (req, res) => {
     try {

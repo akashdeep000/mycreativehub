@@ -730,6 +730,19 @@ Changelog:
   - Added proper error handling and toast notifications for user feedback
   - Users can click subtitle to edit, use Enter to save, or Escape to cancel
   - Business title persists across sessions and defaults to "Creative Business Owner" if not set
+- July 15, 2025. Built Comprehensive Edit Profile Page:
+  - Created dedicated Edit Profile page (/edit-profile) with full user settings management
+  - Implemented profile photo upload with drag-and-drop functionality and avatar preview
+  - Added comprehensive Basic Information section with First Name, Last Name, Business Title, and Email fields
+  - Built secure password update functionality with current password verification
+  - Created API endpoints: PATCH /api/auth/user/profile and PATCH /api/auth/user/password
+  - Added theme preferences section with dark mode toggle (placeholder for future implementation)
+  - Integrated form validation using React Hook Form with Zod schemas
+  - Enhanced sidebar with "Edit Profile" button replacing inline business title editing
+  - Added proper error handling, loading states, and success notifications
+  - Implemented responsive design with card-based layout and clean navigation
+  - Email field is view-only for security reasons with explanatory text
+  - All profile changes persist to database and update user session in real-time
 
 ## User Preferences
 
