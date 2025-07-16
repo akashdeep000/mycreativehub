@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, X, Play, Pause, Square } from "lucide-react";
+import { Clock, X, Play, Pause, Square, Minimize2, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -32,6 +32,7 @@ export default function GlobalTimer({
   onComplete
 }: GlobalTimerProps) {
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -209,7 +210,9 @@ export default function GlobalTimer({
   return (
     <>
       {/* Floating Timer */}
-      <div className="fixed top-4 right-4 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 min-w-[280px]">
+      <div className={`fixed top-4 right-4 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg transition-all duration-300 ${
+        isMinimized ? 'p-2 min-w-[160px]' : 'p-4 min-w-[280px]'
+      }`}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -217,68 +220,98 @@ export default function GlobalTimer({
             </div>
             <span className="font-medium text-sm">Focus Timer</span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-6 w-6 p-0"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-        
-        <div className="space-y-3">
-          <div className="text-center">
-            <div className="text-2xl font-mono font-bold text-gray-900 dark:text-white">
-              {formatTime(timeLeft)}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
-              {currentTask}
-            </div>
-          </div>
-          
-          {/* Progress Bar */}
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div 
-              className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-1000"
-              style={{ width: `${progressPercentage}%` }}
-            />
-          </div>
-          
-          <div className="flex justify-center gap-2">
-            {isRunning ? (
-              <Button
-                onClick={onPause}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Pause className="w-4 h-4" />
-                Pause
-              </Button>
-            ) : (
-              <Button
-                onClick={onResume}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Play className="w-4 h-4" />
-                Resume
-              </Button>
-            )}
-            
+          <div className="flex items-center gap-1">
             <Button
-              onClick={onStop}
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="flex items-center gap-2"
+              onClick={() => setIsMinimized(!isMinimized)}
+              className="h-6 w-6 p-0"
             >
-              <Square className="w-4 h-4" />
-              Stop
+              {isMinimized ? (
+                <Maximize2 className="w-4 h-4" />
+              ) : (
+                <Minimize2 className="w-4 h-4" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-6 w-6 p-0"
+            >
+              <X className="w-4 h-4" />
             </Button>
           </div>
         </div>
+        
+        {isMinimized ? (
+          /* Minimized View */
+          <div className="text-center">
+            <div className="text-lg font-mono font-bold text-gray-900 dark:text-white">
+              {formatTime(timeLeft)}
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-1">
+              <div 
+                className="bg-gradient-to-r from-blue-500 to-purple-600 h-1 rounded-full transition-all duration-1000"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+          </div>
+        ) : (
+          /* Maximized View */
+          <div className="space-y-3">
+            <div className="text-center">
+              <div className="text-2xl font-mono font-bold text-gray-900 dark:text-white">
+                {formatTime(timeLeft)}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                {currentTask}
+              </div>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div 
+                className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-1000"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+            
+            <div className="flex justify-center gap-2">
+              {isRunning ? (
+                <Button
+                  onClick={onPause}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Pause className="w-4 h-4" />
+                  Pause
+                </Button>
+              ) : (
+                <Button
+                  onClick={onResume}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Play className="w-4 h-4" />
+                  Resume
+                </Button>
+              )}
+              
+              <Button
+                onClick={onStop}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Square className="w-4 h-4" />
+                Stop
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Completion Dialog */}
