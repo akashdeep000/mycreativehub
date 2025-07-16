@@ -201,7 +201,18 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const hideTimer = useCallback(() => {
+    // When hiding the timer (X button), we should stop it completely
+    setIsRunning(false);
+    setTimeLeft(0);
+    setTotalTime(0);
+    setCurrentTask("");
     setIsVisible(false);
+    
+    if (workerRef.current) {
+      workerRef.current.postMessage({ type: 'STOP_TIMER' });
+    }
+    
+    localStorage.removeItem('global-timer');
   }, []);
 
   const completeTimer = useCallback(() => {

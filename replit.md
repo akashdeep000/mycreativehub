@@ -807,6 +807,14 @@ Changelog:
   - Added proper alarm stopping functionality and completion dialog state management
   - USER CONFIRMED: Timer system working correctly with cross-page persistence and alarm functionality
   - Enhanced with browser notifications for background completion and proper user experience
+- July 16, 2025. Enhanced Timer with Minimize/Maximize Functionality:
+  - Added minimize/maximize buttons to floating timer popup with Minimize2/Maximize2 icons
+  - Implemented responsive timer states: minimized view (160px width) shows only countdown and thin progress bar
+  - Maximized view (280px width) displays full timer details, task name, and control buttons
+  - Added smooth CSS transitions between minimized and maximized states
+  - Fixed timer close behavior: X button now completely stops and resets timer instead of just hiding
+  - Quick Focus Timer card immediately returns to original input form when floating timer is closed
+  - Timer remains visible across all browser tabs in both minimized and maximized modes
 
 ## User Preferences
 
