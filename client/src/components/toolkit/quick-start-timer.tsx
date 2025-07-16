@@ -72,7 +72,6 @@ export default function QuickStartTimer() {
         setTimeLeft((prevTime) => {
           if (prevTime <= 1) {
             setIsRunning(false);
-            console.log("Timer completed - calling handleSessionComplete");
             handleSessionComplete();
             return 0;
           }
@@ -119,7 +118,6 @@ export default function QuickStartTimer() {
 
   // Helper function to create digital chime alarm sound
   const createAlarmSound = () => {
-    console.log("Creating alarm sound...");
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
@@ -142,10 +140,7 @@ export default function QuickStartTimer() {
       oscillator.onended = () => {
         audioContext.close();
       };
-      
-      console.log("Alarm sound created successfully");
     } catch (e) {
-      console.error("Web Audio API failed:", e);
       // Fallback to simple beep sound
       try {
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -166,17 +161,14 @@ export default function QuickStartTimer() {
         oscillator.onended = () => {
           audioContext.close();
         };
-        
-        console.log("Fallback beep sound created");
       } catch (fallbackError) {
-        console.error("Fallback sound also failed:", fallbackError);
+        // Silent fallback - no error logging needed
       }
     }
   };
 
   // Helper function to start alarm (repeating for 5 seconds)
   const startAlarm = () => {
-    console.log("Starting alarm...");
     if (alarmIntervalRef.current) {
       clearInterval(alarmIntervalRef.current);
     }
@@ -203,7 +195,6 @@ export default function QuickStartTimer() {
   };
 
   const handleSessionComplete = () => {
-    console.log("Timer completed - handleSessionComplete called");
     const completedMinutes = Math.floor((totalTime - timeLeft) / 60);
     if (completedMinutes > 0) {
       logFocusMutation.mutate({ 
@@ -213,7 +204,6 @@ export default function QuickStartTimer() {
     }
 
     // Start digital chime alarm (repeating for 5 seconds)
-    console.log("About to start alarm...");
     startAlarm();
 
     // Send enhanced browser notification
@@ -520,7 +510,10 @@ export default function QuickStartTimer() {
           
           <div className="flex flex-col gap-2 mt-4">
             <Button 
-              onClick={stopAlarm}
+              onClick={() => {
+                stopAlarm();
+                setShowCompleteDialog(false);
+              }}
               className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
             >
               <Square className="w-4 h-4 mr-2" />
