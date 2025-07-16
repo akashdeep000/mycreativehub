@@ -22,7 +22,7 @@ export async function apiRequest(
   const method = options?.method || 'GET';
   
   // Add JWT token from localStorage if available
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('token');
   console.log("Frontend API - Token check:", {
     tokenExists: !!token,
     tokenLength: token?.length || 0,
@@ -46,6 +46,11 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
+  
+  // Return the parsed JSON response, not the raw response
+  if (res.headers.get('content-type')?.includes('application/json')) {
+    return await res.json();
+  }
   return res;
 }
 
@@ -58,7 +63,7 @@ export const getQueryFn: <T>(options: {
     const headers: Record<string, string> = {};
     
     // Add JWT token from localStorage if available
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token');
     console.log("Frontend Query - Token check:", {
       tokenExists: !!token,
       tokenLength: token?.length || 0,

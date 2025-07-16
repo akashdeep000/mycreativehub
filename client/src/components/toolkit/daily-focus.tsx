@@ -39,7 +39,7 @@ export default function DailyFocus() {
   const today = new Date().toISOString().split('T')[0];
   console.log('Today date for API calls:', today);
 
-  const { data: tasks = [], isLoading, error } = useQuery({
+  const { data: tasks = [], isLoading, error, refetch } = useQuery({
     queryKey: ["/api/daily-focus", today],
     queryFn: async () => {
       console.log('Fetching tasks for date:', today);
@@ -47,17 +47,27 @@ export default function DailyFocus() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`
+          "Authorization": `Bearer ${localStorage.getItem('token')}`,
+          "Cache-Control": "no-cache",
+          "Pragma": "no-cache"
         },
       });
       console.log('Tasks fetched from API:', response);
-      // The backend is returning the correct array, but React Query might be caching an old response
-      return Array.isArray(response) ? response : [];
+      console.log('Response type:', typeof response);
+      console.log('Is array:', Array.isArray(response));
+      // Force return as array - the backend returns an array but React Query might be caching {}
+      if (Array.isArray(response)) {
+        return response;
+      } else {
+        console.warn('API returned non-array response:', response);
+        return [];
+      }
     },
     // Force refetch on every visit to ensure fresh data
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 0,
+    cacheTime: 0, // Don't cache at all
   });
 
   console.log('Current tasks:', tasks);
@@ -88,12 +98,14 @@ export default function DailyFocus() {
       console.log('Task created:', response);
       return response;
     },
-    onSuccess: () => {
-      // Force refetch the tasks to update the UI
+    onSuccess: async () => {
+      // Clear cache completely and force refetch
+      queryClient.removeQueries({ queryKey: ["/api/daily-focus", today] });
       queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
-      queryClient.refetchQueries({ queryKey: ["/api/daily-focus", today] });
       queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      // Force immediate refetch
+      await refetch();
     },
     onError: (error) => {
       console.error('Error creating task:', error);
