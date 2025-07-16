@@ -158,13 +158,16 @@ export default function DailyFocus() {
 
   const updateTaskMutation = useMutation({
     mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
-      await apiRequest(`/api/daily-focus/${id}`, {
+      console.log('Updating task:', { id, completed });
+      const response = await apiRequest(`/api/daily-focus/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ completed }),
       });
+      console.log('Task updated successfully:', response);
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
@@ -173,9 +176,19 @@ export default function DailyFocus() {
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
     },
     onError: (error) => {
+      console.error('Error updating task:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        name: error?.name,
+        stack: error?.stack,
+        tokenExists: !!localStorage.getItem('token'),
+        tokenLength: localStorage.getItem('token')?.length || 0
+      });
+      
       if (isUnauthorizedError(error)) {
+        console.log('Detected unauthorized error - redirecting to login');
         toast({
-          title: "Unauthorized",
+          title: "Unauthorized", 
           description: "You are logged out. Logging in again...",
           variant: "destructive",
         });
