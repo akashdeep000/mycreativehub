@@ -589,9 +589,11 @@ export default function DailyFocus() {
     <>
       {/* Title and Pro Tip Section */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Target className="w-6 h-6 text-blue-600" />
-          <h2 className="text-xl font-semibold text-gray-800">Today's Focus</h2>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+            <Target className="w-4 h-4 text-white" />
+          </div>
+          <h2 className="text-2xl font-serif font-semibold text-gray-800">Today's Focus</h2>
         </div>
         <p className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
           <span className="font-medium">Pro Tip:</span> Set yourself up for success! Add your tasks the night before so you can start your workday with clarity.
