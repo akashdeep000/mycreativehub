@@ -154,6 +154,28 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     setIsRunning(true);
     setIsVisible(true);
     
+    // Initialize audio context with user interaction
+    try {
+      if (typeof window !== 'undefined' && window.AudioContext) {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        console.log("Audio context initialized on timer start:", audioContext.state);
+        
+        // Resume if suspended
+        if (audioContext.state === 'suspended') {
+          audioContext.resume().then(() => {
+            console.log("Audio context resumed successfully");
+          }).catch(err => {
+            console.log("Audio context resume failed:", err);
+          });
+        }
+        
+        // Store globally for alarm usage
+        (window as any).globalAudioContext = audioContext;
+      }
+    } catch (e) {
+      console.log("Audio context initialization failed:", e);
+    }
+    
     // Start Web Worker timer
     if (workerRef.current) {
       workerRef.current.postMessage({

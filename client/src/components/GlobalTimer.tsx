@@ -74,18 +74,33 @@ export default function GlobalTimer({
     
     const playDigitalChime = async () => {
       try {
-        // Create or get audio context
-        if (!audioContextRef.current) {
-          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        // Try to use globally stored audio context first
+        let audioContext = (window as any).globalAudioContext;
+        
+        // If no global context, try to use the ref
+        if (!audioContext) {
+          audioContext = audioContextRef.current;
         }
         
-        const audioContext = audioContextRef.current;
+        // If still no context, create new one
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          audioContextRef.current = audioContext;
+        }
+        
         console.log("Audio context state:", audioContext.state);
         
         // Resume audio context if suspended
         if (audioContext.state === 'suspended') {
           console.log("Resuming suspended audio context");
           await audioContext.resume();
+          console.log("Audio context resumed, new state:", audioContext.state);
+        }
+        
+        // Verify audio context is ready
+        if (audioContext.state !== 'running') {
+          console.log("Audio context not running, trying fallback");
+          throw new Error("Audio context not ready");
         }
         
         // Create digital chime sound function
@@ -124,31 +139,86 @@ export default function GlobalTimer({
     };
     
     const playFallbackAlarm = () => {
-      try {
-        // Create a simple beep sound as fallback
-        const beepSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+L2xnkpBSl+zPLZgTIGJHzU9U3fOgzZjnLZPNKcEYLmIZAFNGjPCZ3rUgQNBCJVKKUJkEFhIOKQBJZaSA6zWVbRTgpEBQSGPCqGKTARFAFKjAQBELUYz1a2b1bR3+7XW1vD0ZpHCBJMCDhEAIvAAgOBfBCoGGWGtRjyXHvs9YTIiEIAI1gGDgQAQ4YrAXRLCAIgpQP/');
-        beepSound.volume = 0.3;
+      console.log("=== FALLBACK ALARM TRIGGERED ===");
+      
+      // Try multiple fallback methods
+      const fallbackMethods = [
+        // Method 1: HTML5 Audio with base64 data
+        () => {
+          console.log("Trying HTML5 Audio fallback");
+          const beepSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+L2xnkpBSl+zPLZgTIGJHzU9U3fOgzZjnLZPNKcEYLmIZAFNGjPCZ3rUgQNBCJVKKUJkEFhIOKQBJZaSA6zWVbRTgpEBQSGPCqGKTARFAFKjAQBELUYz1a2b1bR3+7XW1vD0ZpHCBJMCDhEAIvAAgOBfBCoGGWGtRjyXHvs9YTIiEIAI1gGDgQAQ4YrAXRLCAIgpQP/');
+          beepSound.volume = 0.3;
+          
+          // Play the beep 5 times
+          let playCount = 0;
+          const playBeep = () => {
+            if (playCount < 5) {
+              beepSound.currentTime = 0;
+              beepSound.play().then(() => {
+                playCount++;
+                console.log(`HTML5 Audio beep ${playCount}/5 played`);
+                if (playCount < 5) {
+                  setTimeout(playBeep, 800);
+                }
+              }).catch(err => {
+                console.log("HTML5 Audio beep failed:", err);
+                throw err;
+              });
+            }
+          };
+          
+          playBeep();
+        },
         
-        // Play the beep 5 times
-        let playCount = 0;
-        const playBeep = () => {
-          if (playCount < 5) {
-            beepSound.currentTime = 0;
-            beepSound.play().then(() => {
-              playCount++;
-              console.log(`Fallback beep ${playCount}/5 played`);
-              setTimeout(playBeep, 800);
-            }).catch(err => {
-              console.log("Fallback beep failed:", err);
-            });
+        // Method 2: Simple Web Audio API beep
+        () => {
+          console.log("Trying simple Web Audio API beep");
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          
+          const playSimpleBeep = (i: number) => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+            
+            console.log(`Simple beep ${i + 1}/5 played`);
+          };
+          
+          for (let i = 0; i < 5; i++) {
+            setTimeout(() => playSimpleBeep(i), i * 800);
           }
-        };
-        
-        playBeep();
-        
-      } catch (fallbackError) {
-        console.log("All audio methods failed:", fallbackError);
-      }
+        }
+      ];
+      
+      // Try fallback methods sequentially
+      let methodIndex = 0;
+      const tryNextMethod = () => {
+        if (methodIndex < fallbackMethods.length) {
+          try {
+            fallbackMethods[methodIndex]();
+            console.log(`Fallback method ${methodIndex + 1} succeeded`);
+          } catch (err) {
+            console.log(`Fallback method ${methodIndex + 1} failed:`, err);
+            methodIndex++;
+            tryNextMethod();
+          }
+        } else {
+          console.log("All fallback methods failed");
+        }
+      };
+      
+      tryNextMethod();
     };
     
     // Start the alarm
