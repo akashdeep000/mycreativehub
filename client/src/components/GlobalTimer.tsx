@@ -37,6 +37,9 @@ export default function GlobalTimer({
   const queryClient = useQueryClient();
   const audioContextRef = useRef<AudioContext | null>(null);
   const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const activeOscillatorsRef = useRef<OscillatorNode[]>([]);
+  const alarmTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fallbackTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
 
   // Initialize audio context and notifications
@@ -103,6 +106,9 @@ export default function GlobalTimer({
           throw new Error("Audio context not ready");
         }
         
+        // Clear any existing oscillators
+        activeOscillatorsRef.current = [];
+        
         // Create digital chime sound function
         const createChime = (frequency: number, startTime: number, duration: number) => {
           const oscillator = audioContext.createOscillator();
@@ -121,6 +127,16 @@ export default function GlobalTimer({
           
           oscillator.start(startTime);
           oscillator.stop(startTime + duration);
+          
+          // Track oscillator for potential early stopping
+          activeOscillatorsRef.current.push(oscillator);
+          
+          // Remove from tracking when it ends naturally
+          oscillator.onended = () => {
+            activeOscillatorsRef.current = activeOscillatorsRef.current.filter(osc => osc !== oscillator);
+          };
+          
+          return oscillator;
         };
         
         // Play 5 chimes with 800Hz frequency
@@ -132,6 +148,13 @@ export default function GlobalTimer({
         
         console.log("Digital chime sequence started successfully");
         
+        // Set timeout to clear oscillator tracking after all chimes complete
+        // Each chime is 0.6s duration, with 0.8s intervals, so 5 chimes = 4*0.8 + 0.6 = 3.8s
+        alarmTimeoutRef.current = setTimeout(() => {
+          console.log("Alarm sequence completed - clearing oscillator tracking");
+          activeOscillatorsRef.current = [];
+        }, 4500); // 4.5 seconds to be safe
+        
       } catch (error) {
         console.log("Web Audio API failed, trying fallback:", error);
         playFallbackAlarm();
@@ -140,6 +163,9 @@ export default function GlobalTimer({
     
     const playFallbackAlarm = () => {
       console.log("=== FALLBACK ALARM TRIGGERED ===");
+      
+      // Clear any existing fallback timeouts
+      fallbackTimeoutsRef.current = [];
       
       // Try multiple fallback methods
       const fallbackMethods = [
@@ -158,7 +184,8 @@ export default function GlobalTimer({
                 playCount++;
                 console.log(`HTML5 Audio beep ${playCount}/5 played`);
                 if (playCount < 5) {
-                  setTimeout(playBeep, 800);
+                  const timeoutId = setTimeout(playBeep, 800);
+                  fallbackTimeoutsRef.current.push(timeoutId);
                 }
               }).catch(err => {
                 console.log("HTML5 Audio beep failed:", err);
@@ -196,7 +223,8 @@ export default function GlobalTimer({
           };
           
           for (let i = 0; i < 5; i++) {
-            setTimeout(() => playSimpleBeep(i), i * 800);
+            const timeoutId = setTimeout(() => playSimpleBeep(i), i * 800);
+            fallbackTimeoutsRef.current.push(timeoutId);
           }
         }
       ];
@@ -284,11 +312,43 @@ export default function GlobalTimer({
   };
 
   const stopAlarm = () => {
-    // Stop any audio oscillators or alarm sounds
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
+    console.log("=== STOPPING ALARM ===");
+    
+    // Stop all active oscillators immediately
+    activeOscillatorsRef.current.forEach(oscillator => {
+      try {
+        oscillator.stop();
+        console.log("Stopped oscillator");
+      } catch (e) {
+        // Oscillator might already be stopped, ignore error
+        console.log("Oscillator already stopped");
+      }
+    });
+    
+    // Clear oscillator tracking
+    activeOscillatorsRef.current = [];
+    
+    // Clear alarm timeout
+    if (alarmTimeoutRef.current) {
+      clearTimeout(alarmTimeoutRef.current);
+      alarmTimeoutRef.current = null;
+      console.log("Cleared alarm timeout");
     }
+    
+    // Clear all fallback timeouts
+    fallbackTimeoutsRef.current.forEach(timeoutId => {
+      clearTimeout(timeoutId);
+      console.log("Cleared fallback timeout");
+    });
+    fallbackTimeoutsRef.current = [];
+    
+    // Clear notification timeout
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current);
+      notificationTimeoutRef.current = null;
+    }
+    
+    console.log("Alarm stopped successfully");
   };
 
   const handleStopAlarm = () => {
