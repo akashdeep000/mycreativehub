@@ -496,6 +496,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete individual daily task
+  app.delete('/api/daily-focus/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const taskId = parseInt(req.params.id);
+      
+      // Check if task exists and belongs to user
+      const task = await storage.getDailyFocusTask(taskId);
+      if (!task) {
+        return res.status(404).json({ message: 'Task not found' });
+      }
+      
+      if (task.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      await storage.deleteDailyFocusTask(taskId);
+      
+      // Log activity
+      await storage.createActivityLog({
+        userId,
+        action: 'task_deleted',
+        description: `Deleted task: ${task.task}`,
+        metadata: { taskId, priority: task.priority },
+      });
+      
+      res.json({ message: 'Task deleted successfully' });
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      res.status(500).json({ message: "Failed to delete task" });
+    }
+  });
+
   // Clear daily tasks
   app.delete('/api/daily-focus/:date', jwtAuth, async (req: any, res) => {
     try {

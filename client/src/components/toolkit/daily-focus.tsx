@@ -233,6 +233,50 @@ export default function DailyFocus() {
     },
   });
 
+  const clearPriorityTasksMutation = useMutation({
+    mutationFn: async (priority: "must" | "should" | "could") => {
+      // Get all tasks for this priority
+      const tasksToDelete = tasksByPriority[priority];
+      
+      // Delete each task individually
+      for (const task of tasksToDelete) {
+        await apiRequest(`/api/daily-focus/${task.id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem('token')}`
+          },
+        });
+      }
+    },
+    onSuccess: (_, priority) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
+      toast({
+        title: "Success",
+        description: `${priority === "must" ? "Must do" : priority === "should" ? "Should do" : "Could do"} tasks cleared successfully`,
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to clear tasks",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleTaskToggle = (id: number, completed: boolean) => {
     updateTaskMutation.mutate({ id, completed });
   };
@@ -256,6 +300,10 @@ export default function DailyFocus() {
   const handleClearDailyTasks = () => {
     clearDailyTasksMutation.mutate();
     setShowClearConfirmation(false);
+  };
+
+  const handleClearPriorityTasks = (priority: "must" | "should" | "could") => {
+    clearPriorityTasksMutation.mutate(priority);
   };
 
   if (isLoading) {
@@ -332,6 +380,15 @@ export default function DailyFocus() {
                 className="border-red-300 focus:border-red-500"
               />
             </form>
+            {tasksByPriority.must.length > 0 && (
+              <button
+                onClick={() => handleClearPriorityTasks("must")}
+                className="text-xs text-gray-400 hover:text-gray-600 mt-2 transition-colors"
+                disabled={clearPriorityTasksMutation.isPending}
+              >
+                Clear List
+              </button>
+            )}
           </div>
         </div>
 
@@ -362,6 +419,15 @@ export default function DailyFocus() {
                 className="border-green-300 focus:border-green-500"
               />
             </form>
+            {tasksByPriority.should.length > 0 && (
+              <button
+                onClick={() => handleClearPriorityTasks("should")}
+                className="text-xs text-gray-400 hover:text-gray-600 mt-2 transition-colors"
+                disabled={clearPriorityTasksMutation.isPending}
+              >
+                Clear List
+              </button>
+            )}
           </div>
         </div>
 
@@ -392,6 +458,15 @@ export default function DailyFocus() {
                 className="border-yellow-300 focus:border-yellow-500"
               />
             </form>
+            {tasksByPriority.could.length > 0 && (
+              <button
+                onClick={() => handleClearPriorityTasks("could")}
+                className="text-xs text-gray-400 hover:text-gray-600 mt-2 transition-colors"
+                disabled={clearPriorityTasksMutation.isPending}
+              >
+                Clear List
+              </button>
+            )}
           </div>
         </div>
       </div>

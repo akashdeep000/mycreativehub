@@ -72,8 +72,10 @@ export interface IStorage {
   
   // Daily focus tasks
   getDailyFocusTasks(userId: string, date: Date): Promise<DailyFocusTask[]>;
+  getDailyFocusTask(id: number): Promise<DailyFocusTask | undefined>;
   createDailyFocusTask(task: InsertDailyFocusTask): Promise<DailyFocusTask>;
   updateDailyFocusTask(id: number, completed: boolean): Promise<DailyFocusTask>;
+  deleteDailyFocusTask(id: number): Promise<void>;
   clearDailyFocusTasks(userId: string, date: Date): Promise<void>;
   
   // Task completion log
@@ -265,6 +267,15 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async getDailyFocusTask(id: number): Promise<DailyFocusTask | undefined> {
+    const [result] = await db
+      .select()
+      .from(dailyFocusTasks)
+      .where(eq(dailyFocusTasks.id, id))
+      .limit(1);
+    return result;
+  }
+
   async updateDailyFocusTask(id: number, completed: boolean): Promise<DailyFocusTask> {
     const [result] = await db
       .update(dailyFocusTasks)
@@ -272,6 +283,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(dailyFocusTasks.id, id))
       .returning();
     return result;
+  }
+
+  async deleteDailyFocusTask(id: number): Promise<void> {
+    await db
+      .delete(dailyFocusTasks)
+      .where(eq(dailyFocusTasks.id, id));
   }
 
   async clearDailyFocusTasks(userId: string, date: Date): Promise<void> {
