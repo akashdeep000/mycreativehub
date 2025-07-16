@@ -120,20 +120,21 @@ export default function QuickStartTimer() {
   const createAlarmSound = () => {
     console.log("Creating alarm sound...");
     
-    // Try HTML5 Audio first (most reliable)
+    // Try HTML5 Audio first (most reliable) - create pleasant chime
     try {
+      // Create pleasant chime using HTML5 audio with improved tone
       const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmAcBSuKy+9+LgIIAQAAAJu7LKhMCwEwgA0n8YbqAIQGPQHGiHgAACgcNHBNFgKhAIHMgA0AAAAA');
-      audio.volume = 0.9;
+      audio.volume = 0.6; // Softer volume for pleasant chime
       audio.play().then(() => {
-        console.log("HTML5 Audio alarm played successfully");
+        console.log("HTML5 Audio chime played successfully");
       }).catch(() => {
-        console.log("HTML5 Audio failed, trying Web Audio API");
+        console.log("HTML5 Audio failed, trying Web Audio API chime");
         // Fallback to Web Audio API
         tryWebAudioAlarm();
       });
       return;
     } catch (e) {
-      console.log("HTML5 Audio creation failed, trying Web Audio API");
+      console.log("HTML5 Audio creation failed, trying Web Audio API chime");
       tryWebAudioAlarm();
     }
     
@@ -156,26 +157,40 @@ export default function QuickStartTimer() {
     }
     
     function playWebAudioAlarm(audioContext: AudioContext) {
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      // Simple, loud alarm sound
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.type = 'square';
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.9, audioContext.currentTime + 0.02);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.4);
-      
-      oscillator.onended = () => {
-        audioContext.close();
-        console.log("Web Audio alarm completed");
+      // Create digital chime sound with multiple oscillators for harmonious tone
+      const createChimeNote = (frequency: number, startTime: number, duration: number) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Use sine wave for pleasant chime tone
+        oscillator.frequency.setValueAtTime(frequency, startTime);
+        oscillator.type = 'sine';
+        
+        // Create bell-like envelope
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
+        
+        return oscillator;
       };
+      
+      // Create pleasant chime progression: C5-E5-G5 (musical chord)
+      const now = audioContext.currentTime;
+      createChimeNote(523.25, now, 0.8); // C5
+      createChimeNote(659.25, now + 0.1, 0.9); // E5
+      createChimeNote(783.99, now + 0.2, 1.0); // G5
+      
+      // Clean up after all notes complete
+      setTimeout(() => {
+        audioContext.close();
+        console.log("Digital chime completed");
+      }, 1200);
     }
   };
 
