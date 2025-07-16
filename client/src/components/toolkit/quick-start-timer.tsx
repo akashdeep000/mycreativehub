@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -71,6 +71,7 @@ export default function QuickStartTimer() {
       interval = setInterval(() => {
         setTimeLeft((prevTime) => {
           if (prevTime <= 1) {
+            console.log("Timer reached 0, stopping and completing session");
             setIsRunning(false);
             handleSessionComplete();
             return 0;
@@ -81,7 +82,7 @@ export default function QuickStartTimer() {
     }
 
     return () => clearInterval(interval);
-  }, [isRunning, timeLeft]);
+  }, [isRunning, timeLeft, handleSessionComplete]);
 
   // Initialize notification permissions
   useEffect(() => {
@@ -184,42 +185,52 @@ export default function QuickStartTimer() {
   };
 
   // Helper function to start alarm (repeating for 5 seconds)
-  const startAlarm = () => {
+  const startAlarm = useCallback(() => {
+    console.log("=== START ALARM CALLED ===");
+    
     if (alarmIntervalRef.current) {
+      console.log("Clearing existing alarm interval");
       clearInterval(alarmIntervalRef.current);
     }
     
     // Play alarm sound immediately
+    console.log("Playing initial alarm sound...");
     try {
       createAlarmSound();
     } catch (e) {
-      console.log("First alarm sound failed, retrying...");
+      console.log("First alarm sound failed, retrying...", e);
     }
     
     // Set up repeating alarm with multiple attempts
+    console.log("Setting up repeating alarm interval...");
     alarmIntervalRef.current = setInterval(() => {
+      console.log("Repeating alarm sound...");
       try {
         createAlarmSound();
       } catch (e) {
-        console.log("Alarm sound failed during repeat");
+        console.log("Alarm sound failed during repeat", e);
       }
     }, 800); // Play every 800ms for alarm effect
     
     // Stop alarm after 5 seconds
     setTimeout(() => {
+      console.log("Stopping alarm after 5 seconds");
       stopAlarm();
     }, 5000);
-  };
+  }, []);
 
   // Helper function to stop alarm
-  const stopAlarm = () => {
+  const stopAlarm = useCallback(() => {
     if (alarmIntervalRef.current) {
       clearInterval(alarmIntervalRef.current);
       alarmIntervalRef.current = null;
     }
-  };
+  }, []);
 
-  const handleSessionComplete = () => {
+  const handleSessionComplete = useCallback(() => {
+    console.log("=== SESSION COMPLETE ===");
+    console.log("Timer has finished, starting alarm...");
+    
     const completedMinutes = Math.floor((totalTime - timeLeft) / 60);
     if (completedMinutes > 0) {
       logFocusMutation.mutate({ 
@@ -229,6 +240,7 @@ export default function QuickStartTimer() {
     }
 
     // Start the repeating alarm immediately
+    console.log("Calling startAlarm()...");
     startAlarm();
 
     // Send enhanced browser notification
@@ -277,7 +289,7 @@ export default function QuickStartTimer() {
         });
       }, 3000); // 3 second delay before restarting
     }
-  };
+  }, [totalTime, timeLeft, currentTask, logFocusMutation, notificationPermission, repeatMode, selectedMinutes, customTime, startAlarm, stopAlarm]);
 
   const handleStart = () => {
     if (!task.trim()) {
