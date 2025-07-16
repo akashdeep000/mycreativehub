@@ -59,19 +59,24 @@ export default function GlobalTimer({
 
   // Handle timer completion
   useEffect(() => {
-    if (timeLeft === 0 && isRunning && currentTask) {
+    if (timeLeft === 0 && totalTime > 0 && currentTask && isVisible) {
       console.log("Timer completed - triggering completion");
       setShowCompleteDialog(true);
       playAlarmSound();
       showNotification();
       onComplete();
     }
-  }, [timeLeft, isRunning, currentTask, onComplete]);
+  }, [timeLeft, totalTime, currentTask, isVisible, onComplete]);
 
   const playAlarmSound = useCallback(() => {
-    if (!audioContextRef.current) return;
+    console.log("Playing alarm sound");
     
     try {
+      // First try to create a new audio context if needed
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      
       const audioContext = audioContextRef.current;
       if (audioContext.state === 'suspended') {
         audioContext.resume();
@@ -98,17 +103,25 @@ export default function GlobalTimer({
       
       // Play 5 chimes with 800Hz frequency
       const now = audioContext.currentTime;
+      console.log("Starting chime sequence");
       for (let i = 0; i < 5; i++) {
         playChime(800, now + i * 0.8, 0.6);
       }
       
       // Auto-stop after 4 seconds
       setTimeout(() => {
-        // Alarm stops automatically
+        console.log("Alarm sequence complete");
       }, 4000);
       
     } catch (e) {
       console.log("Audio playback failed:", e);
+      // Fallback to simple beep
+      try {
+        const beepSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+L2xnkpBSl+zPLZgTIGJHzU9U3fOgzZjnLZPNKcEYLmIZAFNGjPCZ3rUgQNBCJVKKUJkEFhIOKQBJZaSA6zWVbRTgpEBQSGPCqGKTARFAFKjAQBELUYz1a2b1bR3+7XW1vD0ZpHCBJMCDhEAIvAAgOBfBCoGGWGtRjyXHvs9YTIiEIAI1gGDgQAQ4YrAXRLCAIgpQP/');
+        beepSound.play();
+      } catch (beepError) {
+        console.log("Fallback beep also failed:", beepError);
+      }
     }
   }, []);
 
@@ -136,9 +149,13 @@ export default function GlobalTimer({
 
   const logFocusMutation = useMutation({
     mutationFn: async (data: { minutes: number; taskDescription: string }) => {
-      return await apiRequest("/api/focus-logs", {
+      return await apiRequest("/api/focus/log", {
         method: "POST",
-        body: data,
+        body: {
+          minutes: data.minutes,
+          sessionType: "focus",
+          taskDescription: data.taskDescription
+        },
       });
     },
     onSuccess: () => {
@@ -155,6 +172,7 @@ export default function GlobalTimer({
       });
     }
     
+    stopAlarm();
     setShowCompleteDialog(false);
     onStop();
     
@@ -164,7 +182,16 @@ export default function GlobalTimer({
     });
   };
 
+  const stopAlarm = () => {
+    // Stop any audio oscillators or alarm sounds
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+  };
+
   const handleStopAlarm = () => {
+    stopAlarm();
     setShowCompleteDialog(false);
     onStop();
   };

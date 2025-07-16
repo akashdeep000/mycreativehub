@@ -59,6 +59,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
               console.log("Timer completed in background worker");
               setIsRunning(false);
               setTimeLeft(0);
+              // Timer completion will be handled by the GlobalTimer component
               break;
               
             case 'TIMER_STOPPED':
