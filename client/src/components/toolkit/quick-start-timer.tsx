@@ -18,6 +18,7 @@ export default function QuickStartTimer() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   
   // All state variables
   const [task, setTask] = useState("");
@@ -64,66 +65,119 @@ export default function QuickStartTimer() {
   const createAlarmSound = useCallback(() => {
     console.log("Creating alarm sound...");
     
-    // Use Web Audio API for reliable digital chime
+    // Use pre-initialized audio context or create new one
+    let audioContext = audioContextRef.current;
+    
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      // Create audio context if not available
+      if (!audioContext) {
+        console.log("Creating new audio context...");
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        audioContext = new AudioContext();
+        audioContextRef.current = audioContext;
+      }
       
-      // Resume audio context if suspended
+      console.log("Audio context state:", audioContext.state);
+      
+      const playSound = () => {
+        console.log("Playing soft digital chime...");
+        
+        // Create oscillator and gain node
+        const oscillator = audioContext!.createOscillator();
+        const gainNode = audioContext!.createGain();
+        
+        // Connect nodes
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext!.destination);
+        
+        // Configure sound - soft 800Hz triangle wave
+        oscillator.frequency.setValueAtTime(800, audioContext!.currentTime);
+        oscillator.type = 'triangle';
+        
+        // Volume envelope - start at 0, ramp up, then fade out
+        gainNode.gain.setValueAtTime(0, audioContext!.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.2, audioContext!.currentTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext!.currentTime + 0.8);
+        
+        // Play the sound
+        oscillator.start(audioContext!.currentTime);
+        oscillator.stop(audioContext!.currentTime + 0.8);
+        
+        console.log("Digital chime started successfully");
+        
+        // Clean up when done
+        oscillator.onended = () => {
+          console.log("Digital chime completed");
+        };
+      };
+      
+      // Resume audio context if suspended, then play
       if (audioContext.state === 'suspended') {
+        console.log("Resuming suspended audio context...");
         audioContext.resume().then(() => {
-          playDigitalChime(audioContext);
+          console.log("Audio context resumed");
+          playSound();
+        }).catch(e => {
+          console.log("Failed to resume audio context:", e);
         });
       } else {
-        playDigitalChime(audioContext);
+        playSound();
       }
       
-      function playDigitalChime(context: AudioContext) {
-        console.log("Playing digital chime with Web Audio API...");
-        
-        // Create a pleasant digital chime sound
-        const oscillator = context.createOscillator();
-        const gainNode = context.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(context.destination);
-        
-        // Set frequency to 800Hz for soft chime
-        oscillator.frequency.setValueAtTime(800, context.currentTime);
-        oscillator.type = 'triangle'; // Triangle wave for softer sound
-        
-        // Create gentle envelope
-        gainNode.gain.setValueAtTime(0, context.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.15, context.currentTime + 0.1); // Quick attack
-        gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 1.2); // Slow decay
-        
-        // Start and stop the oscillator
-        oscillator.start(context.currentTime);
-        oscillator.stop(context.currentTime + 1.2);
-        
-        oscillator.onended = () => {
-          context.close();
-          console.log("Digital chime completed successfully");
-        };
-      }
     } catch (e) {
       console.log("Web Audio API failed:", e);
-      // Fallback to simple beep
+      
+      // Fallback: Try to create a simple beep using data URL
       try {
-        const context = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator = context.createOscillator();
-        const gainNode = context.createGain();
+        console.log("Trying fallback audio method...");
+        const audio = new Audio();
         
-        oscillator.connect(gainNode);
-        gainNode.connect(context.destination);
+        // Create a simple beep tone as data URL
+        const sampleRate = 44100;
+        const duration = 0.3;
+        const frequency = 800;
+        const samples = sampleRate * duration;
+        const buffer = new ArrayBuffer(44 + samples * 2);
+        const view = new DataView(buffer);
         
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-        gainNode.gain.value = 0.1;
+        // WAV header
+        const writeString = (offset: number, string: string) => {
+          for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+          }
+        };
         
-        oscillator.start();
-        oscillator.stop(context.currentTime + 0.5);
+        writeString(0, 'RIFF');
+        view.setUint32(4, 36 + samples * 2, true);
+        writeString(8, 'WAVE');
+        writeString(12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeString(36, 'data');
+        view.setUint32(40, samples * 2, true);
         
-        console.log("Fallback beep played");
+        // Generate tone
+        for (let i = 0; i < samples; i++) {
+          const sample = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.1 * (1 - i / samples);
+          view.setInt16(44 + i * 2, sample * 32767, true);
+        }
+        
+        const blob = new Blob([buffer], { type: 'audio/wav' });
+        const url = URL.createObjectURL(blob);
+        
+        audio.src = url;
+        audio.play().then(() => {
+          console.log("Fallback beep played successfully");
+          URL.revokeObjectURL(url);
+        }).catch(err => {
+          console.log("Fallback audio failed:", err);
+        });
+        
       } catch (fallbackError) {
         console.log("All audio methods failed:", fallbackError);
       }
@@ -291,6 +345,18 @@ export default function QuickStartTimer() {
         variant: "destructive",
       });
       return;
+    }
+
+    // Initialize audio context with user interaction
+    try {
+      if (!audioContextRef.current) {
+        console.log("Initializing audio context...");
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        audioContextRef.current = new AudioContext();
+        console.log("Audio context initialized:", audioContextRef.current.state);
+      }
+    } catch (e) {
+      console.log("Failed to initialize audio context:", e);
     }
 
     let minutes;
