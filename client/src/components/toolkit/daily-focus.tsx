@@ -316,15 +316,26 @@ export default function DailyFocus() {
         },
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
-      queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
-      toast({
-        title: "Success",
-        description: "Task deleted successfully",
+    onMutate: async (taskId) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["/api/daily-focus", today] });
+
+      // Snapshot the previous value
+      const previousTasks = queryClient.getQueryData(["/api/daily-focus", today]);
+
+      // Optimistically update to remove the task
+      queryClient.setQueryData(["/api/daily-focus", today], (old: any) => {
+        if (!old) return old;
+        return old.filter((task: any) => task.id !== taskId);
       });
+
+      // Return a context with the previous data
+      return { previousTasks };
     },
-    onError: (error) => {
+    onError: (error, taskId, context) => {
+      // If the mutation fails, use the context to roll back
+      queryClient.setQueryData(["/api/daily-focus", today], context?.previousTasks);
+      
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -341,6 +352,11 @@ export default function DailyFocus() {
         description: "Failed to delete task",
         variant: "destructive",
       });
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure we have the latest data
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
     },
   });
 
