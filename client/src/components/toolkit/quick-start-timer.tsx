@@ -64,67 +64,82 @@ export default function QuickStartTimer() {
   const createAlarmSound = useCallback(() => {
     console.log("Creating alarm sound...");
     
-    // Try HTML5 Audio first (most reliable) - create soft digital chime
+    // Use Web Audio API for reliable digital chime
     try {
-      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmAcBSuKy+9+LgIIAQAAAJu7LKhMCwEwgA0n8YbqAIQGPQHGiHgAACgcNHBNFgKhAIHMgA0AAAAA');
-      audio.volume = 0.3;
-      audio.play().then(() => {
-        console.log("HTML5 Audio soft chime played successfully");
-      }).catch(() => {
-        console.log("HTML5 Audio failed, trying Web Audio API chime");
-        tryWebAudioAlarm();
-      });
-      return;
-    } catch (e) {
-      console.log("HTML5 Audio creation failed, trying Web Audio API chime");
-      tryWebAudioAlarm();
-    }
-    
-    function tryWebAudioAlarm() {
-      try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        
-        if (audioContext.state === 'suspended') {
-          audioContext.resume().then(() => {
-            playWebAudioAlarm(audioContext);
-          });
-        } else {
-          playWebAudioAlarm(audioContext);
-        }
-      } catch (e) {
-        console.log("Web Audio API failed completely");
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      // Resume audio context if suspended
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+          playDigitalChime(audioContext);
+        });
+      } else {
+        playDigitalChime(audioContext);
       }
-    }
-    
-    function playWebAudioAlarm(audioContext: AudioContext) {
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
       
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.type = 'triangle';
-      
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.1);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.2);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 1.2);
-      
-      oscillator.onended = () => {
-        audioContext.close();
-        console.log("Soft digital chime completed");
-      };
+      function playDigitalChime(context: AudioContext) {
+        console.log("Playing digital chime with Web Audio API...");
+        
+        // Create a pleasant digital chime sound
+        const oscillator = context.createOscillator();
+        const gainNode = context.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+        
+        // Set frequency to 800Hz for soft chime
+        oscillator.frequency.setValueAtTime(800, context.currentTime);
+        oscillator.type = 'triangle'; // Triangle wave for softer sound
+        
+        // Create gentle envelope
+        gainNode.gain.setValueAtTime(0, context.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.15, context.currentTime + 0.1); // Quick attack
+        gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 1.2); // Slow decay
+        
+        // Start and stop the oscillator
+        oscillator.start(context.currentTime);
+        oscillator.stop(context.currentTime + 1.2);
+        
+        oscillator.onended = () => {
+          context.close();
+          console.log("Digital chime completed successfully");
+        };
+      }
+    } catch (e) {
+      console.log("Web Audio API failed:", e);
+      // Fallback to simple beep
+      try {
+        const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = context.createOscillator();
+        const gainNode = context.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.1;
+        
+        oscillator.start();
+        oscillator.stop(context.currentTime + 0.5);
+        
+        console.log("Fallback beep played");
+      } catch (fallbackError) {
+        console.log("All audio methods failed:", fallbackError);
+      }
     }
   }, []);
 
   // Helper function to stop alarm
   const stopAlarm = useCallback(() => {
+    console.log("=== STOP ALARM CALLED ===");
     if (alarmIntervalRef.current) {
+      console.log("Clearing alarm interval");
       clearInterval(alarmIntervalRef.current);
       alarmIntervalRef.current = null;
+      console.log("Alarm interval cleared");
+    } else {
+      console.log("No alarm interval to clear");
     }
   }, []);
 
