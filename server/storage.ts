@@ -285,6 +285,15 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async updateDailyFocusTaskText(id: number, task: string): Promise<DailyFocusTask> {
+    const [result] = await db
+      .update(dailyFocusTasks)
+      .set({ task, updatedAt: new Date() })
+      .where(eq(dailyFocusTasks.id, id))
+      .returning();
+    return result;
+  }
+
   async deleteDailyFocusTask(id: number): Promise<void> {
     // First delete any task completion logs for this task
     await db

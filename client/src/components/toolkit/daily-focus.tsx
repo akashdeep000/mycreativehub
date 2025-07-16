@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Edit2 } from "lucide-react";
 
 interface DailyFocusTask {
   id: number;
@@ -33,6 +34,8 @@ export default function DailyFocus() {
     could: "",
   });
   const [showClearConfirmation, setShowClearConfirmation] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [editingTaskText, setEditingTaskText] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -444,6 +447,110 @@ export default function DailyFocus() {
     deleteTaskMutation.mutate(taskId);
   };
 
+  const editTaskMutation = useMutation({
+    mutationFn: async ({ taskId, newText }: { taskId: number; newText: string }) => {
+      console.log('Editing task:', taskId, 'with text:', newText);
+      const response = await apiRequest(`/api/daily-focus/${taskId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ task: newText }),
+      });
+      const data = await response.json();
+      console.log('Task edited successfully:', data);
+      return data;
+    },
+    onMutate: async ({ taskId, newText }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["/api/daily-focus", today] });
+
+      // Snapshot the previous value
+      const previousTasks = queryClient.getQueryData(["/api/daily-focus", today]);
+
+      // Optimistically update the task
+      queryClient.setQueryData(["/api/daily-focus", today], (old: any) => {
+        if (!old) return old;
+        return old.map((task: any) => 
+          task.id === taskId ? { ...task, task: newText } : task
+        );
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousTasks };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      setEditingTaskId(null);
+      setEditingTaskText("");
+    },
+    onError: (error, { taskId }, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousTasks) {
+        queryClient.setQueryData(["/api/daily-focus", today], context.previousTasks);
+      }
+      
+      console.error('Error editing task:', error);
+      
+      if (isUnauthorizedError(error)) {
+        console.log('Detected unauthorized error - redirecting to login');
+        toast({
+          title: "Unauthorized", 
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to edit task",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure we have the latest data
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+    },
+  });
+
+  const handleEditTask = (taskId: number, currentText: string) => {
+    setEditingTaskId(taskId);
+    setEditingTaskText(currentText);
+  };
+
+  const handleSaveEdit = (taskId: number) => {
+    if (editingTaskText.trim()) {
+      editTaskMutation.mutate({ taskId, newText: editingTaskText.trim() });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTaskId(null);
+    setEditingTaskText("");
+  };
+
+  const handleEditBlur = (e: React.FocusEvent, taskId: number) => {
+    // Don't cancel edit if clicking on edit or delete button
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (relatedTarget && (relatedTarget.closest('button') || relatedTarget.tagName === 'BUTTON')) {
+      return;
+    }
+    handleCancelEdit();
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent, taskId: number) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSaveEdit(taskId);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      handleCancelEdit();
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -494,12 +601,31 @@ export default function DailyFocus() {
                   checked={task.completed}
                   onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
                 />
-                <span className={`flex-1 ${task.completed ? "line-through text-gray-500" : "text-gray-700"}`}>
-                  {task.task}
-                </span>
+                {editingTaskId === task.id ? (
+                  <Input
+                    value={editingTaskText}
+                    onChange={(e) => setEditingTaskText(e.target.value)}
+                    onKeyDown={(e) => handleEditKeyDown(e, task.id)}
+                    onBlur={(e) => handleEditBlur(e, task.id)}
+                    className="flex-1 border-red-300 focus:border-red-500"
+                    autoFocus
+                  />
+                ) : (
+                  <span className={`flex-1 ${task.completed ? "line-through text-gray-500" : "text-gray-700"}`}>
+                    {task.task}
+                  </span>
+                )}
+                <button
+                  onClick={() => handleEditTask(task.id, task.task)}
+                  className="text-gray-400 hover:text-blue-500 transition-colors duration-200 p-1"
+                  disabled={editTaskMutation.isPending}
+                  title="Edit task"
+                >
+                  <Edit2 className="w-3 h-3" />
+                </button>
                 <button
                   onClick={() => handleDeleteTask(task.id)}
-                  className="text-gray-400 hover:text-red-500 transition-colors duration-200 text-lg font-bold leading-none ml-2"
+                  className="text-gray-400 hover:text-red-500 transition-colors duration-200 text-lg font-bold leading-none"
                   disabled={deleteTaskMutation.isPending}
                   title="Delete task"
                 >
@@ -541,12 +667,31 @@ export default function DailyFocus() {
                   checked={task.completed}
                   onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
                 />
-                <span className={`flex-1 ${task.completed ? "line-through text-gray-500" : "text-gray-700"}`}>
-                  {task.task}
-                </span>
+                {editingTaskId === task.id ? (
+                  <Input
+                    value={editingTaskText}
+                    onChange={(e) => setEditingTaskText(e.target.value)}
+                    onKeyDown={(e) => handleEditKeyDown(e, task.id)}
+                    onBlur={(e) => handleEditBlur(e, task.id)}
+                    className="flex-1 border-green-300 focus:border-green-500"
+                    autoFocus
+                  />
+                ) : (
+                  <span className={`flex-1 ${task.completed ? "line-through text-gray-500" : "text-gray-700"}`}>
+                    {task.task}
+                  </span>
+                )}
+                <button
+                  onClick={() => handleEditTask(task.id, task.task)}
+                  className="text-gray-400 hover:text-blue-500 transition-colors duration-200 p-1"
+                  disabled={editTaskMutation.isPending}
+                  title="Edit task"
+                >
+                  <Edit2 className="w-3 h-3" />
+                </button>
                 <button
                   onClick={() => handleDeleteTask(task.id)}
-                  className="text-gray-400 hover:text-red-500 transition-colors duration-200 text-lg font-bold leading-none ml-2"
+                  className="text-gray-400 hover:text-red-500 transition-colors duration-200 text-lg font-bold leading-none"
                   disabled={deleteTaskMutation.isPending}
                   title="Delete task"
                 >
@@ -588,12 +733,31 @@ export default function DailyFocus() {
                   checked={task.completed}
                   onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
                 />
-                <span className={`flex-1 ${task.completed ? "line-through text-gray-500" : "text-gray-700"}`}>
-                  {task.task}
-                </span>
+                {editingTaskId === task.id ? (
+                  <Input
+                    value={editingTaskText}
+                    onChange={(e) => setEditingTaskText(e.target.value)}
+                    onKeyDown={(e) => handleEditKeyDown(e, task.id)}
+                    onBlur={(e) => handleEditBlur(e, task.id)}
+                    className="flex-1 border-yellow-300 focus:border-yellow-500"
+                    autoFocus
+                  />
+                ) : (
+                  <span className={`flex-1 ${task.completed ? "line-through text-gray-500" : "text-gray-700"}`}>
+                    {task.task}
+                  </span>
+                )}
+                <button
+                  onClick={() => handleEditTask(task.id, task.task)}
+                  className="text-gray-400 hover:text-blue-500 transition-colors duration-200 p-1"
+                  disabled={editTaskMutation.isPending}
+                  title="Edit task"
+                >
+                  <Edit2 className="w-3 h-3" />
+                </button>
                 <button
                   onClick={() => handleDeleteTask(task.id)}
-                  className="text-gray-400 hover:text-red-500 transition-colors duration-200 text-lg font-bold leading-none ml-2"
+                  className="text-gray-400 hover:text-red-500 transition-colors duration-200 text-lg font-bold leading-none"
                   disabled={deleteTaskMutation.isPending}
                   title="Delete task"
                 >

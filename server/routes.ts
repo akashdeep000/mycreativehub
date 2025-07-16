@@ -522,6 +522,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Edit task text (PUT)
+  app.put('/api/daily-focus/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const taskId = parseInt(req.params.id);
+      const { task } = req.body;
+      
+      // Check if task exists and belongs to user
+      const existingTask = await storage.getDailyFocusTask(taskId);
+      if (!existingTask) {
+        return res.status(404).json({ message: 'Task not found' });
+      }
+      
+      if (existingTask.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      const updatedTask = await storage.updateDailyFocusTaskText(taskId, task);
+      
+      // Log activity
+      await storage.createActivityLog({
+        userId,
+        action: 'task_edited',
+        description: `Edited task: ${task}`,
+        metadata: { taskId: updatedTask.id, priority: updatedTask.priority },
+      });
+      
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error editing daily focus task:", error);
+      res.status(500).json({ message: "Failed to edit daily focus task" });
+    }
+  });
+
   // Delete individual daily task
   app.delete('/api/daily-focus/:id', jwtAuth, async (req: any, res) => {
     try {
