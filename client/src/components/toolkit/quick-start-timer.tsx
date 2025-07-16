@@ -118,51 +118,64 @@ export default function QuickStartTimer() {
 
   // Helper function to create digital chime alarm sound
   const createAlarmSound = () => {
+    console.log("Creating alarm sound...");
+    
+    // Try HTML5 Audio first (most reliable)
     try {
-      // Create audio context and ensure it's resumed (required for user interaction)
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      
-      // Resume audio context if it's suspended
-      if (audioContext.state === 'suspended') {
-        audioContext.resume();
+      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmAcBSuKy+9+LgIIAQAAAJu7LKhMCwEwgA0n8YbqAIQGPQHGiHgAACgcNHBNFgKhAIHMgA0AAAAA');
+      audio.volume = 0.9;
+      audio.play().then(() => {
+        console.log("HTML5 Audio alarm played successfully");
+      }).catch(() => {
+        console.log("HTML5 Audio failed, trying Web Audio API");
+        // Fallback to Web Audio API
+        tryWebAudioAlarm();
+      });
+      return;
+    } catch (e) {
+      console.log("HTML5 Audio creation failed, trying Web Audio API");
+      tryWebAudioAlarm();
+    }
+    
+    function tryWebAudioAlarm() {
+      try {
+        // Create audio context and ensure it's resumed (required for user interaction)
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        
+        // Resume audio context if it's suspended
+        if (audioContext.state === 'suspended') {
+          audioContext.resume().then(() => {
+            playWebAudioAlarm(audioContext);
+          });
+        } else {
+          playWebAudioAlarm(audioContext);
+        }
+      } catch (e) {
+        console.log("Web Audio API failed completely");
       }
-      
+    }
+    
+    function playWebAudioAlarm(audioContext: AudioContext) {
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
       
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
       
-      // Simple but effective alarm tone - alternating between two frequencies
+      // Simple, loud alarm sound
       oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.3);
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.6);
-      
       oscillator.type = 'square';
       gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.7, audioContext.currentTime + 0.02);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+      gainNode.gain.linearRampToValueAtTime(0.9, audioContext.currentTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
       
       oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.8);
+      oscillator.stop(audioContext.currentTime + 0.4);
       
       oscillator.onended = () => {
         audioContext.close();
+        console.log("Web Audio alarm completed");
       };
-      
-    } catch (e) {
-      // Fallback to notification sound if Web Audio API fails
-      try {
-        // Create a brief notification beep using HTML5 audio
-        const audioData = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmAcBSuKy+9+LgIIAQAAAJu7LKhMCwEwgA0n8YbqAIQGPQHGiHgAACgcNHBNFgKhAIHMgA0AAAAA";
-        const audio = new Audio(audioData);
-        audio.volume = 0.7;
-        audio.play().catch(() => {
-          // Silent fallback if audio fails
-        });
-      } catch (fallbackError) {
-        // Silent fallback
-      }
     }
   };
 
@@ -172,11 +185,20 @@ export default function QuickStartTimer() {
       clearInterval(alarmIntervalRef.current);
     }
     
-    createAlarmSound(); // Play immediately
-    
-    // Set up repeating alarm
-    alarmIntervalRef.current = setInterval(() => {
+    // Play alarm sound immediately
+    try {
       createAlarmSound();
+    } catch (e) {
+      console.log("First alarm sound failed, retrying...");
+    }
+    
+    // Set up repeating alarm with multiple attempts
+    alarmIntervalRef.current = setInterval(() => {
+      try {
+        createAlarmSound();
+      } catch (e) {
+        console.log("Alarm sound failed during repeat");
+      }
     }, 800); // Play every 800ms for alarm effect
     
     // Stop alarm after 5 seconds
@@ -202,7 +224,7 @@ export default function QuickStartTimer() {
       });
     }
 
-    // Start digital chime alarm (repeating for 5 seconds)
+    // Start the repeating alarm immediately
     startAlarm();
 
     // Send enhanced browser notification
@@ -228,7 +250,10 @@ export default function QuickStartTimer() {
       });
     }
 
-    setShowCompleteDialog(true);
+    // Show dialog after a brief delay to ensure alarm plays first
+    setTimeout(() => {
+      setShowCompleteDialog(true);
+    }, 100);
     
     // Auto-restart if repeat mode is enabled
     if (repeatMode) {
@@ -453,6 +478,17 @@ export default function QuickStartTimer() {
                     )}
                   </div>
 
+                  {/* Test Alarm Button */}
+                  <Button 
+                    onClick={createAlarmSound}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs border-purple-200 hover:bg-purple-50"
+                  >
+                    <Volume2 className="w-3 h-3 mr-1" />
+                    Test Alarm Sound
+                  </Button>
+
 
                 </div>
               </div>
@@ -527,7 +563,7 @@ export default function QuickStartTimer() {
               className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
             >
               <Square className="w-4 h-4 mr-2" />
-              Stop Alarm
+              Stop Alarm & Close
             </Button>
             
             <Button 
