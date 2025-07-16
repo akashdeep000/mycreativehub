@@ -73,9 +73,9 @@ export default function DailyFocus() {
   console.log('Current tasks:', tasks);
 
   const tasksByPriority: TasksByPriority = {
-    must: tasks.filter?.((task: DailyFocusTask) => task.priority === "must") || [],
-    should: tasks.filter?.((task: DailyFocusTask) => task.priority === "should") || [],
-    could: tasks.filter?.((task: DailyFocusTask) => task.priority === "could") || [],
+    must: tasks?.filter?.((task: DailyFocusTask) => task.priority === "must") || [],
+    should: tasks?.filter?.((task: DailyFocusTask) => task.priority === "should") || [],
+    could: tasks?.filter?.((task: DailyFocusTask) => task.priority === "could") || [],
   };
 
   console.log('Tasks by priority:', tasksByPriority);
@@ -376,20 +376,10 @@ export default function DailyFocus() {
     );
   }
 
+  // Handle error by showing empty task lists instead of error state
   if (error) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="text-center text-red-600">Error loading tasks</div>
-        </div>
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div className="text-center text-red-600">Error loading tasks</div>
-        </div>
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <div className="text-center text-red-600">Error loading tasks</div>
-        </div>
-      </div>
-    );
+    console.error("Error loading tasks:", error);
+    // Don't return error state, let the component render normally with empty tasks
   }
 
   return (
@@ -403,7 +393,7 @@ export default function DailyFocus() {
           </div>
           <div className="space-y-2">
             {tasksByPriority.must.map((task) => (
-              <div key={task.id} className="flex items-center gap-2 group">
+              <div key={task.id} className="flex items-center gap-2">
                 <Checkbox
                   checked={task.completed}
                   onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
@@ -413,7 +403,7 @@ export default function DailyFocus() {
                 </span>
                 <button
                   onClick={() => handleDeleteTask(task.id)}
-                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all duration-200 text-lg font-bold leading-none"
+                  className="text-gray-400 hover:text-red-500 transition-colors duration-200 text-lg font-bold leading-none ml-2"
                   disabled={deleteTaskMutation.isPending}
                   title="Delete task"
                 >
@@ -450,7 +440,7 @@ export default function DailyFocus() {
           </div>
           <div className="space-y-2">
             {tasksByPriority.should.map((task) => (
-              <div key={task.id} className="flex items-center gap-2 group">
+              <div key={task.id} className="flex items-center gap-2">
                 <Checkbox
                   checked={task.completed}
                   onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
@@ -460,7 +450,7 @@ export default function DailyFocus() {
                 </span>
                 <button
                   onClick={() => handleDeleteTask(task.id)}
-                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all duration-200 text-lg font-bold leading-none"
+                  className="text-gray-400 hover:text-red-500 transition-colors duration-200 text-lg font-bold leading-none ml-2"
                   disabled={deleteTaskMutation.isPending}
                   title="Delete task"
                 >
@@ -497,7 +487,7 @@ export default function DailyFocus() {
           </div>
           <div className="space-y-2">
             {tasksByPriority.could.map((task) => (
-              <div key={task.id} className="flex items-center gap-2 group">
+              <div key={task.id} className="flex items-center gap-2">
                 <Checkbox
                   checked={task.completed}
                   onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
@@ -507,7 +497,7 @@ export default function DailyFocus() {
                 </span>
                 <button
                   onClick={() => handleDeleteTask(task.id)}
-                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all duration-200 text-lg font-bold leading-none"
+                  className="text-gray-400 hover:text-red-500 transition-colors duration-200 text-lg font-bold leading-none ml-2"
                   disabled={deleteTaskMutation.isPending}
                   title="Delete task"
                 >
