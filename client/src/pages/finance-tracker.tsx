@@ -46,7 +46,7 @@ export default function FinanceTracker() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-rose-50">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
       <Sidebar />
       
       <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
@@ -76,7 +76,7 @@ export default function FinanceTracker() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {templates.map((template) => (
             <Link key={template.id} href={template.route}>
-              <Card className="border-pink-100 hover:shadow-md transition-shadow cursor-pointer group">
+              <Card className="border-0 shadow-md hover:shadow-lg transition-shadow cursor-pointer group bg-white">
                 <CardHeader>
                   <div className="flex items-center justify-between mb-3">
                     <div className={`w-10 h-10 bg-gradient-to-br from-${template.color}-400 to-${template.color}-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
@@ -105,7 +105,7 @@ export default function FinanceTracker() {
         </div>
 
         {/* Financial Tips */}
-        <Card className="mt-8 border-pink-100 bg-gradient-to-r from-green-50 to-blue-50">
+        <Card className="mt-8 border-0 shadow-md bg-white">
           <CardContent className="p-6">
             <h3 className="text-xl font-serif font-semibold text-gray-800 mb-4">
               Financial Management Tips
