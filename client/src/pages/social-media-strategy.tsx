@@ -18,7 +18,8 @@ import {
   Trash2, 
   Save, 
   Download, 
-  ArrowLeft
+  ArrowLeft,
+  Smartphone
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -210,7 +211,7 @@ Generated on: ${new Date().toLocaleDateString()}
           
           <div className="flex items-center gap-4 mb-6">
             <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-              <Target className="w-6 h-6 text-white" />
+              <Smartphone className="w-6 h-6 text-white" />
             </div>
             <div>
               <h1 className="text-3xl font-serif font-semibold text-gray-800">My Social Media Strategy</h1>
@@ -239,7 +240,7 @@ Generated on: ${new Date().toLocaleDateString()}
           <Card className="shadow-md border-0 bg-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Target className="w-5 h-5 text-orange-500" />
+                <Smartphone className="w-5 h-5 text-orange-500" />
                 Content Goals
               </CardTitle>
             </CardHeader>
@@ -264,7 +265,7 @@ Generated on: ${new Date().toLocaleDateString()}
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <Target className="w-5 h-5 text-orange-500" />
+                  <Smartphone className="w-5 h-5 text-orange-500" />
                   Content Pillars
                 </CardTitle>
                 <Button

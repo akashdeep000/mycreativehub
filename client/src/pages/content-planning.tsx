@@ -7,7 +7,7 @@ import BackToDashboard from '@/components/BackToDashboard';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck, Recycle, BookOpen, BarChart3, Lightbulb } from "lucide-react";
+import { Calendar, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck, Recycle, BookOpen, BarChart3, Lightbulb, Smartphone } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function ContentPlanning() {
@@ -39,7 +39,7 @@ export default function ContentPlanning() {
       id: 1,
       name: "My Social Media Strategy",
       description: "Define your content goals, segment your content pillars, and match each pillar with a clear CTA",
-      icon: Target,
+      icon: Smartphone,
       colour: "orange",
       bgGradient: "from-orange-400 to-orange-500",
       lastUsed: "Never",
