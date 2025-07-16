@@ -1,4 +1,4 @@
-// Timer Web Worker - runs in background even when tab is not active
+// Simple Timer Web Worker - runs in background even when tab is not active
 
 let timerInterval = null;
 let startTime = null;
@@ -11,6 +11,7 @@ self.onmessage = function(e) {
   
   switch (type) {
     case 'START_TIMER':
+      console.log('Worker: Starting timer for', data.totalTime, 'seconds');
       startTime = Date.now();
       totalTime = data.totalTime;
       task = data.task;
@@ -21,20 +22,21 @@ self.onmessage = function(e) {
         clearInterval(timerInterval);
       }
       
-      // Start the background timer
+      // Start the background timer - send updates every second
       timerInterval = setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        const remaining = totalTime - elapsed;
+        const remaining = Math.max(0, totalTime - elapsed);
         
         if (remaining <= 0) {
           // Timer finished
+          console.log('Worker: Timer completed');
           clearInterval(timerInterval);
           timerInterval = null;
           isRunning = false;
           
           self.postMessage({
             type: 'TIMER_COMPLETE',
-            data: { task, totalTime }
+            data: { task, totalTime, elapsed }
           });
         } else {
           // Timer still running - send update
@@ -54,62 +56,21 @@ self.onmessage = function(e) {
       break;
       
     case 'STOP_TIMER':
+      console.log('Worker: Stopping timer');
       if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
       }
       isRunning = false;
       startTime = null;
+      task = "";
       
       self.postMessage({
-        type: 'TIMER_STOPPED',
-        data: { task }
+        type: 'TIMER_STOPPED'
       });
-      break;
-      
-    case 'PAUSE_TIMER':
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-      isRunning = false;
-      
-      self.postMessage({
-        type: 'TIMER_PAUSED',
-        data: { task }
-      });
-      break;
-      
-    case 'GET_STATUS':
-      if (isRunning && startTime) {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        const remaining = totalTime - elapsed;
-        
-        self.postMessage({
-          type: 'TIMER_STATUS',
-          data: {
-            isRunning,
-            remaining: Math.max(0, remaining),
-            task,
-            totalTime,
-            elapsed
-          }
-        });
-      } else {
-        self.postMessage({
-          type: 'TIMER_STATUS',
-          data: {
-            isRunning: false,
-            remaining: 0,
-            task: "",
-            totalTime: 0,
-            elapsed: 0
-          }
-        });
-      }
       break;
   }
 };
 
-// Keep the worker alive
+// Notify main thread that worker is ready
 self.postMessage({ type: 'WORKER_READY' });

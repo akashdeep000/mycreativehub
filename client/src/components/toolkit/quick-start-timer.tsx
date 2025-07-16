@@ -394,6 +394,7 @@ export default function QuickStartTimer() {
         // Handle worker messages
         timerWorker.onmessage = function(e) {
           const { type, data } = e.data;
+          console.log('Main thread received:', type, data);
           
           switch (type) {
             case 'TIMER_UPDATE':
@@ -409,12 +410,15 @@ export default function QuickStartTimer() {
               setIsRunning(false);
               setTimeLeft(0);
               setCurrentTask(data.task);
-              handleSessionComplete();
+              setShowCompleteDialog(true);
+              setIsFloatingVisible(true);
+              localStorage.removeItem('persistent-timer');
               break;
               
             case 'TIMER_STOPPED':
               setIsRunning(false);
               setIsFloatingVisible(false);
+              localStorage.removeItem('persistent-timer');
               break;
               
             case 'WORKER_READY':
@@ -433,7 +437,7 @@ export default function QuickStartTimer() {
         console.log("Could not create timer worker:", e);
       }
     }
-  }, [handleSessionComplete]);
+  }, []); // Remove handleSessionComplete from dependencies
 
   // Initialize notification permissions and restore persistent timer
   useEffect(() => {
@@ -462,17 +466,6 @@ export default function QuickStartTimer() {
           setIsRunning(true);
           setIsFloatingVisible(true);
           setTask(timerData.task);
-          
-          // Restart worker timer
-          if (worker) {
-            worker.postMessage({
-              type: 'START_TIMER',
-              data: {
-                totalTime: timerData.totalTime,
-                task: timerData.task
-              }
-            });
-          }
         } else if (remainingTime <= 0 && timerData.isRunning) {
           // Timer finished while away - show completion
           setShowCompleteDialog(true);
