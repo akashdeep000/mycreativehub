@@ -201,11 +201,13 @@ export default function QuickStartTimer() {
 
   // Helper function to play selected alarm sound
   const playAlarmSound = () => {
+    console.log(`Playing alarm sound: ${selectedAlarmSound}`);
     createAlarmSound(selectedAlarmSound);
   };
 
   // Helper function to start alarm (repeating for 5 seconds)
   const startAlarm = () => {
+    console.log(`Starting alarm with selected sound: ${selectedAlarmSound}`);
     if (alarmIntervalRef.current) {
       clearInterval(alarmIntervalRef.current);
     }
@@ -219,6 +221,7 @@ export default function QuickStartTimer() {
     
     // Stop alarm after 5 seconds
     setTimeout(() => {
+      console.log("Auto-stopping alarm after 5 seconds");
       stopAlarm();
     }, 5000);
   };
@@ -232,6 +235,7 @@ export default function QuickStartTimer() {
   };
 
   const handleSessionComplete = () => {
+    console.log("Timer completed - handleSessionComplete called");
     const completedMinutes = Math.floor((totalTime - timeLeft) / 60);
     if (completedMinutes > 0) {
       logFocusMutation.mutate({ 
@@ -241,6 +245,7 @@ export default function QuickStartTimer() {
     }
 
     // Start alarm clock sound (repeating for 5 seconds)
+    console.log("About to start alarm");
     startAlarm();
 
     // Send enhanced browser notification
