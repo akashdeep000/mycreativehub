@@ -323,7 +323,7 @@ export default function MonthlyContentCalendar() {
             </Link>
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-500 rounded-xl flex items-center justify-center">
-                <CalendarIcon className="w-6 h-6 text-white" />
+                <Calendar className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h1 className="text-3xl font-serif font-semibold text-gray-800">Monthly Content Calendar</h1>
