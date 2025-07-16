@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { Play, Timer, Clock, ArrowRight } from "lucide-react";
+import { Play, Timer, Clock } from "lucide-react";
 import { useTimer } from "@/contexts/TimerContext";
 
 export default function QuickStartTimer() {
@@ -199,16 +199,7 @@ export default function QuickStartTimer() {
           </>
         )}
 
-        <div className="pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={() => setLocation("/daily-focus")}
-            className="w-full"
-          >
-            <ArrowRight className="w-4 h-4 mr-2" />
-            Open Full Daily Focus System
-          </Button>
-        </div>
+
       </CardContent>
     </Card>
   );
