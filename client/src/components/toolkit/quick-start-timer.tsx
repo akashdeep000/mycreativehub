@@ -412,11 +412,13 @@ export default function QuickStartTimer() {
     setCurrentTask("");
     setTask("");
     setIsFloatingVisible(false);
+    setShowCompleteDialog(false);
   };
 
   const handleMarkComplete = () => {
     stopAlarm();
     setShowCompleteDialog(false);
+    setIsRunning(false);
     setTimeLeft(0);
     setTotalTime(0);
     setCurrentTask("");
@@ -455,68 +457,73 @@ export default function QuickStartTimer() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">What will you focus on?</label>
-            <Input
-              value={task}
-              onChange={(e) => setTask(e.target.value)}
-              placeholder="e.g., Write blog post, Review emails..."
-              className="w-full"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Duration</label>
-            <Select value={selectedMinutes} onValueChange={setSelectedMinutes}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select duration" />
-              </SelectTrigger>
-              <SelectContent>
-                {timerOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {showCustomInput && (
-            <div className="space-y-2 p-3 bg-gray-50 rounded-md">
-              <label className="text-sm font-medium">Custom Duration</label>
-              <div className="flex items-center gap-2">
+          {/* Show input fields only when timer is NOT running */}
+          {!isRunning && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">What will you focus on?</label>
                 <Input
-                  type="number"
-                  min="0"
-                  max="23"
-                  value={customTime.hours}
-                  onChange={(e) => setCustomTime(prev => ({ ...prev, hours: parseInt(e.target.value) || 0 }))}
-                  className="w-16"
+                  value={task}
+                  onChange={(e) => setTask(e.target.value)}
+                  placeholder="e.g., Write blog post, Review emails..."
+                  className="w-full"
                 />
-                <span className="text-sm">hours</span>
-                <Input
-                  type="number"
-                  min="1"
-                  max="59"
-                  value={customTime.minutes}
-                  onChange={(e) => setCustomTime(prev => ({ ...prev, minutes: parseInt(e.target.value) || 0 }))}
-                  className="w-16"
-                />
-                <span className="text-sm">minutes</span>
               </div>
-            </div>
-          )}
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Duration</label>
+                <Select value={selectedMinutes} onValueChange={setSelectedMinutes}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timerOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Repeat className="w-4 h-4" />
-              <span className="text-sm">Repeat mode</span>
-            </div>
-            <Switch
-              checked={repeatMode}
-              onCheckedChange={setRepeatMode}
-            />
-          </div>
+              {showCustomInput && (
+                <div className="space-y-2 p-3 bg-gray-50 rounded-md">
+                  <label className="text-sm font-medium">Custom Duration</label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={customTime.hours}
+                      onChange={(e) => setCustomTime(prev => ({ ...prev, hours: parseInt(e.target.value) || 0 }))}
+                      className="w-16"
+                    />
+                    <span className="text-sm">hours</span>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="59"
+                      value={customTime.minutes}
+                      onChange={(e) => setCustomTime(prev => ({ ...prev, minutes: parseInt(e.target.value) || 0 }))}
+                      className="w-16"
+                    />
+                    <span className="text-sm">minutes</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Repeat className="w-4 h-4" />
+                  <span className="text-sm">Repeat mode</span>
+                </div>
+                <Switch
+                  checked={repeatMode}
+                  onCheckedChange={setRepeatMode}
+                />
+              </div>
+            </>
+          )}
 
           {/* Timer countdown display when running */}
           {isRunning && (
