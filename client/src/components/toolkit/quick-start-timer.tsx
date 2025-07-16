@@ -118,6 +118,7 @@ export default function QuickStartTimer() {
 
   // Helper function to create digital chime alarm sound
   const createAlarmSound = () => {
+    console.log("Creating alarm sound...");
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
@@ -140,7 +141,10 @@ export default function QuickStartTimer() {
       oscillator.onended = () => {
         audioContext.close();
       };
+      
+      console.log("Alarm sound created successfully");
     } catch (e) {
+      console.error("Primary alarm sound failed:", e);
       // Fallback to simple beep sound
       try {
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -161,14 +165,17 @@ export default function QuickStartTimer() {
         oscillator.onended = () => {
           audioContext.close();
         };
+        
+        console.log("Fallback beep sound created");
       } catch (fallbackError) {
-        // Silent fallback - no error logging needed
+        console.error("Fallback sound also failed:", fallbackError);
       }
     }
   };
 
   // Helper function to start alarm (repeating for 5 seconds)
   const startAlarm = () => {
+    console.log("Starting alarm...");
     if (alarmIntervalRef.current) {
       clearInterval(alarmIntervalRef.current);
     }
@@ -195,6 +202,7 @@ export default function QuickStartTimer() {
   };
 
   const handleSessionComplete = () => {
+    console.log("Timer completed - handleSessionComplete called");
     const completedMinutes = Math.floor((totalTime - timeLeft) / 60);
     if (completedMinutes > 0) {
       logFocusMutation.mutate({ 
@@ -204,6 +212,7 @@ export default function QuickStartTimer() {
     }
 
     // Start digital chime alarm (repeating for 5 seconds)
+    console.log("About to start alarm...");
     startAlarm();
 
     // Send enhanced browser notification
