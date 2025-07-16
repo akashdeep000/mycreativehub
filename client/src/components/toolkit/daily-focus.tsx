@@ -47,19 +47,19 @@ export default function DailyFocus() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`,
           "Cache-Control": "no-cache",
           "Pragma": "no-cache"
         },
       });
-      console.log('Tasks fetched from API:', response);
-      console.log('Response type:', typeof response);
-      console.log('Is array:', Array.isArray(response));
+      const data = await response.json();
+      console.log('Tasks fetched from API:', data);
+      console.log('Response type:', typeof data);
+      console.log('Is array:', Array.isArray(data));
       // Force return as array - the backend returns an array but React Query might be caching {}
-      if (Array.isArray(response)) {
-        return response;
+      if (Array.isArray(data)) {
+        return data;
       } else {
-        console.warn('API returned non-array response:', response);
+        console.warn('API returned non-array response:', data);
         return [];
       }
     },
@@ -94,8 +94,9 @@ export default function DailyFocus() {
           date: new Date().toISOString(),
         }),
       });
-      console.log('Task created:', response);
-      return response;
+      const data = await response.json();
+      console.log('Task created:', data);
+      return data;
     },
     onMutate: async ({ task, priority }) => {
       // Cancel any outgoing refetches to prevent optimistic updates from being overwritten
@@ -166,8 +167,9 @@ export default function DailyFocus() {
         },
         body: JSON.stringify({ completed }),
       });
-      console.log('Task updated successfully:', response);
-      return response;
+      const data = await response.json();
+      console.log('Task updated successfully:', data);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
@@ -214,8 +216,9 @@ export default function DailyFocus() {
           "Content-Type": "application/json",
         },
       });
-      console.log('Daily tasks cleared successfully:', response);
-      return response;
+      const data = await response.json();
+      console.log('Daily tasks cleared successfully:', data);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
@@ -265,12 +268,14 @@ export default function DailyFocus() {
       // Delete each task individually
       for (const task of tasksToDelete) {
         console.log(`Deleting ${priority} task:`, task.id);
-        await apiRequest(`/api/daily-focus/${task.id}`, {
+        const response = await apiRequest(`/api/daily-focus/${task.id}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
           },
         });
+        const data = await response.json();
+        console.log(`Task ${task.id} deleted:`, data);
       }
       console.log(`All ${priority} tasks cleared successfully`);
     },
@@ -351,8 +356,9 @@ export default function DailyFocus() {
           "Content-Type": "application/json",
         },
       });
-      console.log('Task deleted successfully:', response);
-      return response;
+      const data = await response.json();
+      console.log('Task deleted successfully:', data);
+      return data;
     },
     onMutate: async (taskId) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)

@@ -47,10 +47,7 @@ export async function apiRequest(
 
   await throwIfResNotOk(res);
   
-  // Return the parsed JSON response, not the raw response
-  if (res.headers.get('content-type')?.includes('application/json')) {
-    return await res.json();
-  }
+  // Return the raw response object for mutations to handle
   return res;
 }
 
