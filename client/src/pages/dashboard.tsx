@@ -8,21 +8,16 @@ import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import ToolkitCard from "@/components/toolkit/toolkit-card";
 import DailyFocus from "@/components/toolkit/daily-focus";
-import StatsCard from "@/components/toolkit/stats-card";
 import QuickStartTimer from "@/components/toolkit/quick-start-timer-simple";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import type { User, UserStats } from "@shared/schema";
+import type { User } from "@shared/schema";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
 
-  const { data: stats } = useQuery<UserStats>({
-    queryKey: ["/api/stats"],
-    retry: false,
-    enabled: !!user, // Only run when user is authenticated
-  });
+
 
   const { data: toolkitModules = [] } = useQuery<any[]>({
     queryKey: ["/api/toolkit-modules"],
@@ -83,39 +78,7 @@ export default function Dashboard() {
           <DailyFocus />
         </div>
 
-        {/* Monthly Stats Section */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <div className="mb-6">
-            <h2 className="text-xl font-serif font-semibold text-gray-800">
-              Your Stats for {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
-            </h2>
-          </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatsCard
-            title="Tasks Completed"
-            value={stats?.completedTasks || 0}
-            subtitle="This Month"
-            colour="green"
-            icon="check"
-          />
-          <StatsCard
-            title="Focus Hours"
-            value={((stats?.focusHours || 0) / 60).toFixed(1)}
-            subtitle="Focus Time"
-            colour="purple"
-            icon="clock"
-          />
-          <StatsCard
-            title="Days You Showed Up"
-            value={stats?.daysShowedUp || 0}
-            subtitle="This month"
-            colour="pink"
-            icon="heart"
-          />
-          </div>
-        </div>
 
         {/* Quick Start Timer */}
         <div className="mb-8">
