@@ -93,7 +93,7 @@ export default function ContentPlanning() {
   };
 
   return (
-    <div className="min-h-screen bg-rose-50">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar />
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         {/* Header */}
@@ -121,7 +121,7 @@ export default function ContentPlanning() {
           {templates.map((template) => (
             <Card 
               key={template.id} 
-              className="border-pink-100 hover:shadow-md transition-shadow cursor-pointer group"
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-md bg-white"
               onClick={() => handleTemplateClick(template)}
             >
               <CardHeader>
@@ -153,7 +153,7 @@ export default function ContentPlanning() {
         </div>
 
         {/* Tips Panel */}
-        <Card className="mt-8 border-pink-100 bg-white">
+        <Card className="mt-8 border-0 shadow-md bg-white">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-500 rounded-lg flex items-center justify-center">
