@@ -385,7 +385,7 @@ export default function SeasonalityTimeline() {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => window.history.back()}
+            onClick={() => setLocation('/launch')}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Product Launch
