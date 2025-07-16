@@ -493,17 +493,6 @@ export default function QuickStartTimer() {
                     )}
                   </div>
 
-                  {/* Test Alarm Button */}
-                  <Button 
-                    onClick={createAlarmSound}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs border-purple-200 hover:bg-purple-50"
-                  >
-                    <Volume2 className="w-3 h-3 mr-1" />
-                    Test Alarm Sound
-                  </Button>
-
 
                 </div>
               </div>
