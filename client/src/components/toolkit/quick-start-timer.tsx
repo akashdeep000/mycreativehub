@@ -622,7 +622,10 @@ export default function QuickStartTimer() {
             
             <Button 
               variant="ghost" 
-              onClick={stopAlarm}
+              onClick={() => {
+                stopAlarm();
+                setShowCompleteDialog(false);
+              }}
               className="w-full"
             >
               <Volume2 className="w-4 h-4 mr-2" />
