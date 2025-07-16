@@ -57,7 +57,7 @@ export default function Login() {
       
       // Store JWT token in localStorage for additional security
       if (responseData.token) {
-        localStorage.setItem('authToken', responseData.token);
+        localStorage.setItem('token', responseData.token);
         console.log("Frontend - JWT token stored in localStorage");
       }
 
@@ -89,8 +89,9 @@ export default function Login() {
         console.error("Frontend - Session verification error:", error);
       }
 
+      // Force a full page reload to ensure proper authentication state
       setTimeout(() => {
-        window.location.href = "/";
+        window.location.replace("/");
       }, 1000);
     } catch (error: any) {
       toast({
