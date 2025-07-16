@@ -35,6 +35,7 @@ export default function QuickStartTimer() {
   const [repeatMode, setRepeatMode] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>("default");
   const [selectedAlarmSound] = useState("chime");
+  const [worker, setWorker] = useState<Worker | null>(null);
 
   const timerOptions = [
     { value: "10", label: "10 min" },
@@ -311,26 +312,62 @@ export default function QuickStartTimer() {
     }
   }, [totalTime, timeLeft, currentTask, logFocusMutation, notificationPermission, repeatMode, selectedMinutes, customTime, startAlarm, stopAlarm, toast]);
 
-  // Timer effect
+  // Web Worker already handles timing, but we keep localStorage sync for persistence
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
     if (isRunning && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prevTime) => {
-          if (prevTime <= 1) {
-            console.log("Timer reached 0, stopping and completing session");
-            setIsRunning(false);
-            handleSessionComplete();
-            return 0;
-          }
-          return prevTime - 1;
-        });
-      }, 1000);
+      // Update localStorage for cross-tab persistence
+      const timerData = {
+        startTime: Date.now() - (totalTime - timeLeft) * 1000,
+        totalTime,
+        task: currentTask,
+        isRunning: true
+      };
+      localStorage.setItem('persistent-timer', JSON.stringify(timerData));
+    } else if (!isRunning) {
+      localStorage.removeItem('persistent-timer');
     }
+  }, [isRunning, timeLeft, totalTime, currentTask]);
 
-    return () => clearInterval(interval);
-  }, [isRunning, timeLeft, handleSessionComplete]);
+  // Listen for page visibility changes to maintain timer across tab switches
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Page became visible - sync with localStorage
+        console.log("Page became visible, syncing timer state");
+        const savedTimer = localStorage.getItem('persistent-timer');
+        if (savedTimer) {
+          try {
+            const timerData = JSON.parse(savedTimer);
+            const now = Date.now();
+            const elapsed = now - timerData.startTime;
+            const remainingTime = timerData.totalTime - Math.floor(elapsed / 1000);
+            
+            if (remainingTime > 0 && timerData.isRunning) {
+              console.log("Restoring timer state:", { remainingTime, task: timerData.task });
+              setTimeLeft(remainingTime);
+              setCurrentTask(timerData.task);
+              setTotalTime(timerData.totalTime);
+              setIsRunning(true);
+              setIsFloatingVisible(true);
+              setTask(timerData.task);
+            } else if (remainingTime <= 0 && timerData.isRunning) {
+              console.log("Timer completed while tab was hidden");
+              setIsRunning(false);
+              setShowCompleteDialog(true);
+              setCurrentTask(timerData.task);
+              setIsFloatingVisible(true);
+              localStorage.removeItem('persistent-timer');
+            }
+          } catch (e) {
+            console.log("Error restoring timer on visibility change:", e);
+          }
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [setTask]);
 
   // Save timer state to localStorage for persistence across page reloads
   useEffect(() => {
@@ -346,6 +383,57 @@ export default function QuickStartTimer() {
       localStorage.removeItem('persistent-timer');
     }
   }, [isRunning, timeLeft, totalTime, currentTask]);
+
+  // Initialize Web Worker for background timer
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.Worker) {
+      try {
+        const timerWorker = new Worker('/timer-worker.js');
+        setWorker(timerWorker);
+        
+        // Handle worker messages
+        timerWorker.onmessage = function(e) {
+          const { type, data } = e.data;
+          
+          switch (type) {
+            case 'TIMER_UPDATE':
+              setTimeLeft(data.remaining);
+              setCurrentTask(data.task);
+              setTotalTime(data.totalTime);
+              setIsRunning(data.isRunning);
+              setIsFloatingVisible(true);
+              break;
+              
+            case 'TIMER_COMPLETE':
+              console.log("Timer completed in background worker");
+              setIsRunning(false);
+              setTimeLeft(0);
+              setCurrentTask(data.task);
+              handleSessionComplete();
+              break;
+              
+            case 'TIMER_STOPPED':
+              setIsRunning(false);
+              setIsFloatingVisible(false);
+              break;
+              
+            case 'WORKER_READY':
+              console.log("Timer worker is ready");
+              break;
+          }
+        };
+        
+        // Check for existing timer state
+        timerWorker.postMessage({ type: 'GET_STATUS' });
+        
+        return () => {
+          timerWorker.terminate();
+        };
+      } catch (e) {
+        console.log("Could not create timer worker:", e);
+      }
+    }
+  }, [handleSessionComplete]);
 
   // Initialize notification permissions and restore persistent timer
   useEffect(() => {
@@ -374,6 +462,17 @@ export default function QuickStartTimer() {
           setIsRunning(true);
           setIsFloatingVisible(true);
           setTask(timerData.task);
+          
+          // Restart worker timer
+          if (worker) {
+            worker.postMessage({
+              type: 'START_TIMER',
+              data: {
+                totalTime: timerData.totalTime,
+                task: timerData.task
+              }
+            });
+          }
         } else if (remainingTime <= 0 && timerData.isRunning) {
           // Timer finished while away - show completion
           setShowCompleteDialog(true);
@@ -447,6 +546,17 @@ export default function QuickStartTimer() {
     setIsRunning(true);
     setIsFloatingVisible(true);
     
+    // Start the background worker timer
+    if (worker) {
+      worker.postMessage({
+        type: 'START_TIMER',
+        data: {
+          totalTime: seconds,
+          task: task
+        }
+      });
+    }
+    
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       if (audioContext.state === 'suspended') {
@@ -471,6 +581,11 @@ export default function QuickStartTimer() {
       });
     }
     
+    // Stop the background worker timer
+    if (worker) {
+      worker.postMessage({ type: 'STOP_TIMER' });
+    }
+    
     stopAlarm();
     setIsRunning(false);
     setTimeLeft(0);
@@ -482,6 +597,11 @@ export default function QuickStartTimer() {
   };
 
   const handleMarkComplete = () => {
+    // Stop the background worker timer
+    if (worker) {
+      worker.postMessage({ type: 'STOP_TIMER' });
+    }
+    
     stopAlarm();
     setShowCompleteDialog(false);
     setIsRunning(false);
