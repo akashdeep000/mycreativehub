@@ -118,6 +118,7 @@ export default function QuickStartTimer() {
 
   // Helper function to create and play alarm sound using Web Audio API
   const playAlarmSound = () => {
+    console.log("Playing alarm sound");
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
@@ -146,6 +147,8 @@ export default function QuickStartTimer() {
       oscillator.onended = () => {
         audioContext.close();
       };
+      
+      console.log("Web Audio API alarm sound played successfully");
     } catch (e) {
       console.log('Web Audio API failed, falling back to HTML audio:', e);
       // Fallback to HTML audio if Web Audio API fails
@@ -160,6 +163,7 @@ export default function QuickStartTimer() {
 
   // Helper function to start alarm (repeating for 5 seconds)
   const startAlarm = () => {
+    console.log("Starting alarm");
     if (alarmIntervalRef.current) {
       clearInterval(alarmIntervalRef.current);
     }
@@ -168,17 +172,20 @@ export default function QuickStartTimer() {
     
     // Set up repeating alarm
     alarmIntervalRef.current = setInterval(() => {
+      console.log("Alarm interval playing");
       playAlarmSound();
     }, 800); // Play every 800ms for alarm clock effect
     
     // Stop alarm after 5 seconds
     setTimeout(() => {
+      console.log("Auto-stopping alarm after 5 seconds");
       stopAlarm();
     }, 5000);
   };
 
   // Helper function to stop alarm
   const stopAlarm = () => {
+    console.log("Stopping alarm");
     if (alarmIntervalRef.current) {
       clearInterval(alarmIntervalRef.current);
       alarmIntervalRef.current = null;
@@ -199,6 +206,7 @@ export default function QuickStartTimer() {
     }
 
     // Start alarm clock sound (repeating for 5 seconds)
+    console.log("Timer completed - starting alarm");
     startAlarm();
 
     // Send enhanced browser notification
@@ -437,6 +445,16 @@ export default function QuickStartTimer() {
                       <span className="text-yellow-600">⚠ Click to enable notifications</span>
                     )}
                   </div>
+
+                  {/* Test Alarm Button (temporary for debugging) */}
+                  <Button
+                    onClick={playAlarmSound}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                  >
+                    Test Alarm Sound
+                  </Button>
                 </div>
               </div>
 
