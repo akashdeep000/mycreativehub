@@ -70,60 +70,90 @@ export default function GlobalTimer({
   }, [timeLeft, totalTime, currentTask, isVisible, onComplete]);
 
   const playAlarmSound = useCallback(() => {
-    console.log("Playing alarm sound");
+    console.log("=== TIMER ALARM TRIGGERED ===");
     
-    try {
-      // First try to create a new audio context if needed
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      }
-      
-      const audioContext = audioContextRef.current;
-      if (audioContext.state === 'suspended') {
-        audioContext.resume();
-      }
-      
-      // Create digital chime sound
-      const playChime = (frequency: number, startTime: number, duration: number) => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.type = 'triangle';
-        oscillator.frequency.setValueAtTime(frequency, startTime);
-        
-        gainNode.gain.setValueAtTime(0, startTime);
-        gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.1);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-        
-        oscillator.start(startTime);
-        oscillator.stop(startTime + duration);
-      };
-      
-      // Play 5 chimes with 800Hz frequency
-      const now = audioContext.currentTime;
-      console.log("Starting chime sequence");
-      for (let i = 0; i < 5; i++) {
-        playChime(800, now + i * 0.8, 0.6);
-      }
-      
-      // Auto-stop after 4 seconds
-      setTimeout(() => {
-        console.log("Alarm sequence complete");
-      }, 4000);
-      
-    } catch (e) {
-      console.log("Audio playback failed:", e);
-      // Fallback to simple beep
+    const playDigitalChime = async () => {
       try {
-        const beepSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+L2xnkpBSl+zPLZgTIGJHzU9U3fOgzZjnLZPNKcEYLmIZAFNGjPCZ3rUgQNBCJVKKUJkEFhIOKQBJZaSA6zWVbRTgpEBQSGPCqGKTARFAFKjAQBELUYz1a2b1bR3+7XW1vD0ZpHCBJMCDhEAIvAAgOBfBCoGGWGtRjyXHvs9YTIiEIAI1gGDgQAQ4YrAXRLCAIgpQP/');
-        beepSound.play();
-      } catch (beepError) {
-        console.log("Fallback beep also failed:", beepError);
+        // Create or get audio context
+        if (!audioContextRef.current) {
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
+        
+        const audioContext = audioContextRef.current;
+        console.log("Audio context state:", audioContext.state);
+        
+        // Resume audio context if suspended
+        if (audioContext.state === 'suspended') {
+          console.log("Resuming suspended audio context");
+          await audioContext.resume();
+        }
+        
+        // Create digital chime sound function
+        const createChime = (frequency: number, startTime: number, duration: number) => {
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.type = 'triangle';
+          oscillator.frequency.setValueAtTime(frequency, startTime);
+          
+          // Volume envelope - soft fade in and out
+          gainNode.gain.setValueAtTime(0, startTime);
+          gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.1);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+          
+          oscillator.start(startTime);
+          oscillator.stop(startTime + duration);
+        };
+        
+        // Play 5 chimes with 800Hz frequency
+        const now = audioContext.currentTime;
+        console.log("Playing 5 digital chimes at 800Hz");
+        for (let i = 0; i < 5; i++) {
+          createChime(800, now + i * 0.8, 0.6);
+        }
+        
+        console.log("Digital chime sequence started successfully");
+        
+      } catch (error) {
+        console.log("Web Audio API failed, trying fallback:", error);
+        playFallbackAlarm();
       }
-    }
+    };
+    
+    const playFallbackAlarm = () => {
+      try {
+        // Create a simple beep sound as fallback
+        const beepSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+L2xnkpBSl+zPLZgTIGJHzU9U3fOgzZjnLZPNKcEYLmIZAFNGjPCZ3rUgQNBCJVKKUJkEFhIOKQBJZaSA6zWVbRTgpEBQSGPCqGKTARFAFKjAQBELUYz1a2b1bR3+7XW1vD0ZpHCBJMCDhEAIvAAgOBfBCoGGWGtRjyXHvs9YTIiEIAI1gGDgQAQ4YrAXRLCAIgpQP/');
+        beepSound.volume = 0.3;
+        
+        // Play the beep 5 times
+        let playCount = 0;
+        const playBeep = () => {
+          if (playCount < 5) {
+            beepSound.currentTime = 0;
+            beepSound.play().then(() => {
+              playCount++;
+              console.log(`Fallback beep ${playCount}/5 played`);
+              setTimeout(playBeep, 800);
+            }).catch(err => {
+              console.log("Fallback beep failed:", err);
+            });
+          }
+        };
+        
+        playBeep();
+        
+      } catch (fallbackError) {
+        console.log("All audio methods failed:", fallbackError);
+      }
+    };
+    
+    // Start the alarm
+    playDigitalChime();
+    
   }, []);
 
   const showNotification = useCallback(() => {
