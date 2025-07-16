@@ -98,17 +98,40 @@ export default function DailyFocus() {
       console.log('Task created:', response);
       return response;
     },
-    onSuccess: async () => {
-      // Clear cache completely and force refetch
-      queryClient.removeQueries({ queryKey: ["/api/daily-focus", today] });
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
-      queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-      // Force immediate refetch
-      await refetch();
+    onMutate: async ({ task, priority }) => {
+      // Cancel any outgoing refetches to prevent optimistic updates from being overwritten
+      await queryClient.cancelQueries({ queryKey: ["/api/daily-focus", today] });
+      
+      // Snapshot the previous value
+      const previousTasks = queryClient.getQueryData(["/api/daily-focus", today]);
+      
+      // Optimistically update with new task
+      const optimisticTask = {
+        id: Date.now(), // temporary ID
+        task,
+        priority,
+        completed: false,
+        date: new Date().toISOString(),
+        userId: "temp",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      queryClient.setQueryData(["/api/daily-focus", today], (old: any) => {
+        return old ? [...old, optimisticTask] : [optimisticTask];
+      });
+      
+      // Return a context object with the snapshotted value
+      return { previousTasks };
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
       console.error('Error creating task:', error);
+      
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousTasks) {
+        queryClient.setQueryData(["/api/daily-focus", today], context.previousTasks);
+      }
+      
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -125,6 +148,12 @@ export default function DailyFocus() {
         description: "Failed to add task",
         variant: "destructive",
       });
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure we have the latest data
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
     },
   });
 
