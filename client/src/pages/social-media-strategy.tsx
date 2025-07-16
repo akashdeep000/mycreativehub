@@ -179,7 +179,7 @@ Generated on: ${new Date().toLocaleDateString()}
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-rose-50">
+      <div className="min-h-screen bg-gray-50">
         <Sidebar />
         <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
           <div className="flex items-center justify-center h-64">
@@ -191,7 +191,7 @@ Generated on: ${new Date().toLocaleDateString()}
   }
 
   return (
-    <div className="min-h-screen bg-rose-50">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar />
       <MobileNav />
       
@@ -236,7 +236,7 @@ Generated on: ${new Date().toLocaleDateString()}
 
         <div className="max-w-4xl space-y-8">
           {/* Content Goals Section */}
-          <Card>
+          <Card className="shadow-md border-0 bg-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5 text-orange-500" />
@@ -260,7 +260,7 @@ Generated on: ${new Date().toLocaleDateString()}
           </Card>
 
           {/* Content Pillars Section */}
-          <Card>
+          <Card className="shadow-md border-0 bg-white">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
@@ -281,7 +281,7 @@ Generated on: ${new Date().toLocaleDateString()}
             <CardContent>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {strategy.pillars.map((pillar, index) => (
-                  <Card key={pillar.id} className="border-orange-100">
+                  <Card key={pillar.id} className="shadow-md border-0 bg-white">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold text-gray-800">
