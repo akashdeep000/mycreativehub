@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Edit2 } from "lucide-react";
+import { Edit2, Target } from "lucide-react";
 
 interface DailyFocusTask {
   id: number;
@@ -587,6 +587,17 @@ export default function DailyFocus() {
 
   return (
     <>
+      {/* Title and Pro Tip Section */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Target className="w-6 h-6 text-blue-600" />
+          <h2 className="text-xl font-semibold text-gray-800">Today's Focus</h2>
+        </div>
+        <p className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <span className="font-medium">Pro Tip:</span> Set yourself up for success! Add your tasks the night before so you can start your workday with clarity.
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Must Do Today Card */}
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
