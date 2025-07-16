@@ -9,7 +9,7 @@ import MobileNav from "@/components/layout/mobile-nav";
 import ToolkitCard from "@/components/toolkit/toolkit-card";
 import DailyFocus from "@/components/toolkit/daily-focus";
 import StatsCard from "@/components/toolkit/stats-card";
-import QuickStartTimer from "@/components/toolkit/quick-start-timer";
+import QuickStartTimer from "@/components/toolkit/quick-start-timer-simple";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import type { User, UserStats } from "@shared/schema";

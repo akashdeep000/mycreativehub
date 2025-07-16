@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import ScrollToTop from "@/components/ScrollToTop";
+import { TimerProvider, useTimer } from "@/contexts/TimerContext";
+import GlobalTimer from "@/components/GlobalTimer";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
@@ -43,6 +45,25 @@ import ProfitCalculator from "@/pages/profit-calculator";
 import PreLaunchTimelinePlanner from "@/pages/pre-launch-timeline-planner";
 import LaunchGrowthPlan from "@/pages/launch-growth-plan";
 
+function TimerWrapper() {
+  const { isVisible, timeLeft, totalTime, currentTask, isRunning, pauseTimer, resumeTimer, stopTimer, hideTimer, completeTimer } = useTimer();
+  
+  return (
+    <GlobalTimer
+      isVisible={isVisible}
+      onClose={hideTimer}
+      timeLeft={timeLeft}
+      totalTime={totalTime}
+      currentTask={currentTask}
+      isRunning={isRunning}
+      onPause={pauseTimer}
+      onResume={resumeTimer}
+      onStop={stopTimer}
+      onComplete={completeTimer}
+    />
+  );
+}
+
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -54,8 +75,6 @@ function Router() {
       </div>
     );
   }
-
-
 
   if (!isAuthenticated) {
     return (
@@ -74,6 +93,7 @@ function Router() {
   return (
     <>
       <ScrollToTop />
+      <TimerWrapper />
       <Switch>
         <Route path="/" component={Dashboard} />
       <Route path="/streamline-workflow" component={StreamlineWorkflow} />
@@ -119,8 +139,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router />
+        <TimerProvider>
+          <Toaster />
+          <Router />
+        </TimerProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

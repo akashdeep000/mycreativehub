@@ -1,76 +1,117 @@
-// Simple Timer Web Worker - runs in background even when tab is not active
-
+// Timer Worker for background timer functionality
 let timerInterval = null;
-let startTime = null;
-let totalTime = 0;
-let isRunning = false;
-let task = "";
+let currentTimer = null;
+
+// Send ready signal
+self.postMessage({ type: 'WORKER_READY' });
 
 self.onmessage = function(e) {
   const { type, data } = e.data;
   
   switch (type) {
     case 'START_TIMER':
-      console.log('Worker: Starting timer for', data.totalTime, 'seconds');
-      startTime = Date.now();
-      totalTime = data.totalTime;
-      task = data.task;
-      isRunning = true;
+      startTimer(data.totalTime, data.task);
+      break;
       
-      // Clear any existing interval
-      if (timerInterval) {
-        clearInterval(timerInterval);
-      }
-      
-      // Start the background timer - send updates every second
-      timerInterval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        const remaining = Math.max(0, totalTime - elapsed);
-        
-        if (remaining <= 0) {
-          // Timer finished
-          console.log('Worker: Timer completed');
-          clearInterval(timerInterval);
-          timerInterval = null;
-          isRunning = false;
-          
-          self.postMessage({
-            type: 'TIMER_COMPLETE',
-            data: { task, totalTime, elapsed }
-          });
-        } else {
-          // Timer still running - send update
-          self.postMessage({
-            type: 'TIMER_UPDATE',
-            data: { 
-              remaining, 
-              task, 
-              totalTime,
-              elapsed,
-              isRunning: true
-            }
-          });
-        }
-      }, 1000);
-      
+    case 'PAUSE_TIMER':
+      pauseTimer();
       break;
       
     case 'STOP_TIMER':
-      console.log('Worker: Stopping timer');
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-      isRunning = false;
-      startTime = null;
-      task = "";
-      
-      self.postMessage({
-        type: 'TIMER_STOPPED'
-      });
+      stopTimer();
       break;
+      
+    default:
+      console.log('Unknown message type:', type);
   }
 };
 
-// Notify main thread that worker is ready
-self.postMessage({ type: 'WORKER_READY' });
+function startTimer(totalTime, task) {
+  // Clear any existing timer
+  if (timerInterval) {
+    clearInterval(timerInterval);
+  }
+  
+  currentTimer = {
+    remaining: totalTime,
+    totalTime: totalTime,
+    task: task,
+    isRunning: true,
+    startTime: Date.now()
+  };
+  
+  // Send initial update
+  self.postMessage({
+    type: 'TIMER_UPDATE',
+    data: {
+      remaining: currentTimer.remaining,
+      totalTime: currentTimer.totalTime,
+      task: currentTimer.task,
+      isRunning: currentTimer.isRunning
+    }
+  });
+  
+  // Start countdown
+  timerInterval = setInterval(() => {
+    if (currentTimer && currentTimer.remaining > 0) {
+      currentTimer.remaining--;
+      
+      // Send update
+      self.postMessage({
+        type: 'TIMER_UPDATE',
+        data: {
+          remaining: currentTimer.remaining,
+          totalTime: currentTimer.totalTime,
+          task: currentTimer.task,
+          isRunning: currentTimer.isRunning
+        }
+      });
+      
+      // Check if timer is complete
+      if (currentTimer.remaining <= 0) {
+        self.postMessage({
+          type: 'TIMER_COMPLETE',
+          data: {
+            task: currentTimer.task,
+            totalTime: currentTimer.totalTime
+          }
+        });
+        
+        stopTimer();
+      }
+    }
+  }, 1000);
+}
+
+function pauseTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  
+  if (currentTimer) {
+    currentTimer.isRunning = false;
+    self.postMessage({
+      type: 'TIMER_UPDATE',
+      data: {
+        remaining: currentTimer.remaining,
+        totalTime: currentTimer.totalTime,
+        task: currentTimer.task,
+        isRunning: currentTimer.isRunning
+      }
+    });
+  }
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  
+  currentTimer = null;
+  
+  self.postMessage({
+    type: 'TIMER_STOPPED'
+  });
+}
