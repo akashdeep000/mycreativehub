@@ -224,9 +224,9 @@ export default function QuickStartTimer() {
     }, 800);
     
     setTimeout(() => {
-      console.log("Stopping alarm after 5 seconds");
+      console.log("Stopping alarm after 5 chimes");
       stopAlarm();
-    }, 5000);
+    }, 4000);
   }, [createAlarmSound, stopAlarm]);
 
   // Handle session complete
