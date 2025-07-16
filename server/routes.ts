@@ -349,6 +349,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user profile image
+  app.patch('/api/auth/user/profile-image', jwtAuth, async (req: any, res) => {
+    try {
+      const { profileImageUrl } = req.body;
+      const userId = req.user.id;
+      
+      if (!profileImageUrl) {
+        return res.status(400).json({ message: "Profile image URL is required" });
+      }
+      
+      // Update the user's profile image
+      const updatedUser = await storage.updateUser(userId, { 
+        profileImageUrl: profileImageUrl 
+      });
+      
+      console.log(`Updated profile image for user ${userId}`);
+      
+      // Return updated user (without password)
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating profile image:", error);
+      res.status(500).json({ message: "Failed to update profile image" });
+    }
+  });
+
   // Update user password
   app.patch('/api/auth/user/password', jwtAuth, async (req: any, res) => {
     try {

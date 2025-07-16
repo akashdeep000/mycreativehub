@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { ImageUploadModal } from "@/components/ui/image-upload-modal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -39,7 +40,8 @@ export default function EditProfile() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(user?.profileImageUrl || null);
+  const [isImageUploadModalOpen, setIsImageUploadModalOpen] = useState(false);
 
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -63,11 +65,12 @@ export default function EditProfile() {
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
-      return await apiRequest('/api/auth/user/profile', {
+      const response = await apiRequest('/api/auth/user/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
+      return await response.json();
     },
     onSuccess: (updatedUser) => {
       queryClient.setQueryData(['/api/auth/user'], updatedUser);
@@ -88,11 +91,12 @@ export default function EditProfile() {
   // Update password mutation
   const updatePasswordMutation = useMutation({
     mutationFn: async (data: PasswordFormData) => {
-      return await apiRequest('/api/auth/user/password', {
+      const response = await apiRequest('/api/auth/user/password', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
+      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -110,6 +114,33 @@ export default function EditProfile() {
     }
   });
 
+  // Update profile image mutation
+  const updateProfileImageMutation = useMutation({
+    mutationFn: async (profileImageUrl: string) => {
+      const response = await apiRequest('/api/auth/user/profile-image', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileImageUrl })
+      });
+      return await response.json();
+    },
+    onSuccess: (updatedUser) => {
+      queryClient.setQueryData(['/api/auth/user'], updatedUser);
+      setProfileImage(updatedUser.profileImageUrl);
+      toast({
+        title: "Profile photo updated",
+        description: "Your profile photo has been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile photo. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleProfileSubmit = (data: ProfileFormData) => {
     updateProfileMutation.mutate(data);
   };
@@ -118,15 +149,8 @@ export default function EditProfile() {
     updatePasswordMutation.mutate(data);
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfileImage(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleImageSave = (croppedImageUrl: string) => {
+    updateProfileImageMutation.mutate(croppedImageUrl);
   };
 
   return (
@@ -169,18 +193,14 @@ export default function EditProfile() {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <Label htmlFor="profile-image" className="cursor-pointer">
-                  <Button variant="outline" className="cursor-pointer">
-                    Change Photo
-                  </Button>
-                </Label>
-                <Input
-                  id="profile-image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsImageUploadModalOpen(true)}
+                  disabled={updateProfileImageMutation.isPending}
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  {updateProfileImageMutation.isPending ? "Uploading..." : "Change Photo"}
+                </Button>
                 <p className="text-sm text-gray-500 mt-1">
                   JPG, PNG or GIF. Max file size 5MB.
                 </p>
@@ -345,6 +365,12 @@ export default function EditProfile() {
 
 
       </div>
+      
+      <ImageUploadModal
+        isOpen={isImageUploadModalOpen}
+        onClose={() => setIsImageUploadModalOpen(false)}
+        onImageSave={handleImageSave}
+      />
     </div>
   );
 }
