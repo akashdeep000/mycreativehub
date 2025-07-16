@@ -84,7 +84,7 @@ export default function QuickStartTimer() {
             <div>
               <CardTitle className="text-lg">Quick Focus Timer</CardTitle>
               <CardDescription>
-                Start a focused work session with the Pomodoro Technique
+                Use this timer to focus on one task at a time. Working within a set time frame boosts productivity and helps you actually finish the task.
               </CardDescription>
             </div>
           </div>
@@ -196,6 +196,10 @@ export default function QuickStartTimer() {
               <Play className="w-4 h-4 mr-2" />
               Start Focus Session
             </Button>
+            
+            <div className="text-xs text-gray-600 mt-2">
+              <strong>Note:</strong> The floating timer will stay visible as you navigate the portal. If the dashboard is minimised, the timer will continue running and the sound alarm will play when time is up.
+            </div>
           </>
         )}
 
