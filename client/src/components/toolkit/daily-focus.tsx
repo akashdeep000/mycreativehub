@@ -87,7 +87,6 @@ export default function DailyFocus() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           task,
@@ -163,7 +162,6 @@ export default function DailyFocus() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({ completed }),
       });
@@ -200,7 +198,6 @@ export default function DailyFocus() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`
         },
       });
     },
@@ -244,7 +241,6 @@ export default function DailyFocus() {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem('token')}`
           },
         });
       }
@@ -312,7 +308,6 @@ export default function DailyFocus() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`
         },
       });
     },
