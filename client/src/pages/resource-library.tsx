@@ -177,7 +177,7 @@ export default function ResourceLibrary() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-rose-50">
+      <div className="min-h-screen bg-gray-50">
         <Sidebar />
         <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
           <div className="animate-pulse">
@@ -197,7 +197,7 @@ export default function ResourceLibrary() {
   const linkItems = items.filter((item: ResourceLibraryItem) => item.type === 'link');
 
   return (
-    <div className="min-h-screen bg-rose-50">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar />
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
       <div className="mb-8">
@@ -236,7 +236,7 @@ export default function ResourceLibrary() {
       <div className="mb-12">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Uploaded PDFs & Files</h2>
         {fileItems.length === 0 ? (
-          <Card className="text-center py-8 border-dashed border-2 border-gray-300">
+          <Card className="text-center py-8 border-dashed border-2 border-gray-300 bg-white shadow-md">
             <CardContent>
               <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600 mb-4">No files uploaded yet</p>
@@ -277,7 +277,7 @@ export default function ResourceLibrary() {
           Have websites or tools you visit regularly? Add them here so they're easy to access.
         </p>
         {linkItems.length === 0 ? (
-          <Card className="text-center py-8 border-dashed border-2 border-gray-300">
+          <Card className="text-center py-8 border-dashed border-2 border-gray-300 bg-white shadow-md">
             <CardContent>
               <Link className="w-12 h-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600 mb-4">No links saved yet</p>
@@ -381,7 +381,7 @@ function ResourceCard({
 
   return (
     <Card
-      className={`transition-all duration-200 hover:shadow-lg cursor-move aspect-square ${
+      className={`transition-all duration-200 hover:shadow-lg cursor-move aspect-square border-0 shadow-md bg-white ${
         draggedItem?.id === item.id ? 'opacity-50' : ''
       }`}
       draggable
