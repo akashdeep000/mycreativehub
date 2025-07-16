@@ -518,6 +518,49 @@ export default function QuickStartTimer() {
             />
           </div>
 
+          {/* Timer countdown display when running */}
+          {isRunning && (
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">Currently focusing on:</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-gray-600">Running</span>
+                </div>
+              </div>
+              <p className="text-sm text-gray-800 mb-3 font-medium">{currentTask}</p>
+              <div className="flex items-center justify-between">
+                <div className="text-2xl font-bold text-blue-600">
+                  {formatTime(timeLeft)}
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={handlePause}
+                    disabled={!isRunning}
+                  >
+                    <Pause className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={handleStop}
+                    className="text-red-600 border-red-300 hover:bg-red-50"
+                  >
+                    <Square className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                <div 
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-1000"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           <Button 
             onClick={handleStart} 
             className="w-full" 
