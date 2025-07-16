@@ -312,23 +312,25 @@ export default function MonthlyContentCalendar() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto">
+        {/* Back Button */}
+        <div className="mb-4">
+          <Link href="/content-planning">
+            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Back to Content Planning
+            </Button>
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Link href="/content-planning">
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Back to Content Planning
-              </Button>
-            </Link>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-500 rounded-xl flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-serif font-semibold text-gray-800">Monthly Content Calendar</h1>
-                <p className="text-gray-600">Visually plan your content across the month with colour-coded tags</p>
-              </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-500 rounded-xl flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-serif font-semibold text-gray-800">Monthly Content Calendar</h1>
+              <p className="text-gray-600">Visually plan your content across the month with colour-coded tags</p>
             </div>
           </div>
           <Button
