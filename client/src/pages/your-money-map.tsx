@@ -633,7 +633,7 @@ export default function YourMoneyMap() {
   };
 
   return (
-    <div className="min-h-screen bg-rose-50">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar />
       
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
@@ -725,7 +725,7 @@ export default function YourMoneyMap() {
           <TabsContent value="goals" className="space-y-6">
 
             {/* Financial Goals */}
-            <Card>
+            <Card className="shadow-md border-0">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Financial Goals</span>
@@ -823,7 +823,7 @@ export default function YourMoneyMap() {
             </Card>
 
             {/* Goals Summary */}
-            <Card>
+            <Card className="shadow-md border-0">
               <CardHeader>
                 <CardTitle>Goals Summary</CardTitle>
               </CardHeader>
@@ -858,7 +858,7 @@ export default function YourMoneyMap() {
             </Card>
 
             {/* Goal Notes */}
-            <Card>
+            <Card className="shadow-md border-0">
               <CardHeader>
                 <CardTitle>Goal Notes</CardTitle>
               </CardHeader>
@@ -876,7 +876,7 @@ export default function YourMoneyMap() {
           {/* Income & Expense Tracker Tab */}
           <TabsContent value="tracker" className="space-y-6">
             {/* Save Button */}
-            <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <Card className="shadow-md border-0 bg-gradient-to-r from-blue-50 to-indigo-50">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -907,7 +907,7 @@ export default function YourMoneyMap() {
             </Card>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Income */}
-              <Card>
+              <Card className="shadow-md border-0">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-green-500" />
@@ -951,7 +951,7 @@ export default function YourMoneyMap() {
               </Card>
 
               {/* Expenses */}
-              <Card>
+              <Card className="shadow-md border-0">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingDown className="w-5 h-5 text-red-500" />
@@ -996,7 +996,7 @@ export default function YourMoneyMap() {
             </div>
 
             {/* Tax and Personal Pay Settings */}
-            <Card>
+            <Card className="shadow-md border-0">
               <CardHeader>
                 <CardTitle>Tax & Personal Pay Settings</CardTitle>
               </CardHeader>
@@ -1027,7 +1027,7 @@ export default function YourMoneyMap() {
             </Card>
 
             {/* Tracker Summary */}
-            <Card>
+            <Card className="shadow-md border-0">
               <CardHeader>
                 <CardTitle>Financial Summary</CardTitle>
               </CardHeader>
@@ -1085,7 +1085,7 @@ export default function YourMoneyMap() {
 
 
             {/* Tracker Notes */}
-            <Card>
+            <Card className="shadow-md border-0">
               <CardHeader>
                 <CardTitle>Tracker Notes</CardTitle>
               </CardHeader>
@@ -1107,7 +1107,7 @@ export default function YourMoneyMap() {
           {/* Savings Tracker Tab */}
           <TabsContent value="savings" className="space-y-6">
 
-            <Card>
+            <Card className="shadow-md border-0">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Savings Goals</span>
@@ -1210,7 +1210,7 @@ export default function YourMoneyMap() {
             </Card>
 
             {/* Savings Summary */}
-            <Card>
+            <Card className="shadow-md border-0">
               <CardHeader>
                 <CardTitle>Savings Summary</CardTitle>
               </CardHeader>
@@ -1239,7 +1239,7 @@ export default function YourMoneyMap() {
             </Card>
 
             {/* Savings Notes */}
-            <Card>
+            <Card className="shadow-md border-0">
               <CardHeader>
                 <CardTitle>Savings Notes</CardTitle>
               </CardHeader>
@@ -1256,7 +1256,7 @@ export default function YourMoneyMap() {
         </Tabs>
 
         {/* Monthly Records Section */}
-        <Card className="mt-6">
+        <Card className="shadow-md border-0 mt-6">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">

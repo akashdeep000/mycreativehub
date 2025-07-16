@@ -330,7 +330,7 @@ export default function AffiliateMarketing() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-rose-50">
+      <div className="min-h-screen bg-gray-50">
         <Sidebar />
         <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
           <div className="flex items-center justify-center h-64">
@@ -342,7 +342,7 @@ export default function AffiliateMarketing() {
   }
 
   return (
-    <div className="min-h-screen bg-rose-50">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar />
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
       <div className="mb-8">
@@ -415,7 +415,7 @@ export default function AffiliateMarketing() {
       </div>
       {/* Add New Link Form */}
       {showAddForm && (
-        <Card className="mb-6">
+        <Card className="mb-6 shadow-md border-0">
           <CardHeader>
             <CardTitle>Add New Affiliate Link</CardTitle>
             <CardDescription>Fill in the details for your new affiliate partnership</CardDescription>

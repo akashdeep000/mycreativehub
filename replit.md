@@ -856,6 +856,11 @@ Changelog:
   - Updated card styling to use `shadow-md` and `border-0` for consistent drop shadow effect
   - Applied same styling to empty state cards and resource cards for visual consistency
   - Maintained all existing functionality, layout, spacing, and interactions exactly as they were
+- July 16, 2025. Updated Affiliate Link Hub Visual Design:
+  - Changed background from `bg-rose-50` to `bg-gray-50` to match Streamline Your Workflow section
+  - Updated card styling to use `shadow-md` and `border-0` for consistent drop shadow effect
+  - Applied same styling to Add New Affiliate Link card for visual consistency
+  - Maintained all existing functionality, layout, spacing, and interactions exactly as they were
 
 ## User Preferences
 
