@@ -54,7 +54,7 @@ export default function ProductLaunch() {
   ];
 
   return (
-    <div className="min-h-screen bg-rose-50">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar />
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
       <div className="mb-8">
@@ -72,7 +72,7 @@ export default function ProductLaunch() {
 
       {/* Tips Panel */}
       <div className="mb-8">
-        <Card className="bg-pink-50 border-pink-200">
+        <Card className="border-0 shadow-md bg-white">
           <CardContent className="p-6">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-400 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -96,7 +96,7 @@ export default function ProductLaunch() {
         {templates.map((template) => (
           <Card 
             key={template.id}
-            className="group hover:shadow-lg transition-all duration-300 cursor-pointer aspect-square bg-white"
+            className="group hover:shadow-lg transition-all duration-300 cursor-pointer aspect-square border-0 shadow-md bg-white"
             onClick={() => handleTemplateClick(template)}
           >
             <CardContent className="p-6 flex flex-col h-full relative">
