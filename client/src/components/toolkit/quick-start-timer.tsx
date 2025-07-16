@@ -245,25 +245,47 @@ export default function QuickStartTimer() {
     console.log("Calling startAlarm()...");
     startAlarm();
 
+    // Enhanced notification system for cross-tab/cross-app visibility
     if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-      const notification = new Notification("Your Focus Timer is up!", {
-        body: "Time to wrap up or take a break. How did it go?",
+      const notification = new Notification("🎯 Focus Timer Complete!", {
+        body: `"${currentTask}" session finished. Time to wrap up or take a break!`,
         icon: "/favicon.ico",
         tag: "focus-timer",
         requireInteraction: true,
+        silent: false, // Allow sound
+        vibrate: [200, 100, 200], // Vibration pattern for mobile
       });
       
       notification.onclick = () => {
         window.focus();
         notification.close();
         stopAlarm();
+        setShowCompleteDialog(true);
       };
+
+      // Auto-close notification after 30 seconds
+      setTimeout(() => {
+        notification.close();
+      }, 30000);
     } else if (notificationPermission === "denied") {
       toast({
-        title: "Your Focus Timer is up!",
-        description: "Time to wrap up or take a break. How did it go?",
-        duration: 10000,
+        title: "🎯 Focus Timer Complete!",
+        description: `"${currentTask}" session finished. Time to wrap up or take a break!`,
+        duration: 15000,
       });
+    }
+
+    // Also play alarm sound even if tab is not focused
+    if (document.hidden) {
+      console.log("Tab is hidden, playing background alarm");
+      // Play alarm sound with higher volume for background
+      try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmkdCDWH0fTNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmkdCDWH0fTNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmkdCDWH0fTNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmkdCDWH0fTNeSsFJHfH8N2QQAoUXrTp66hVFA==');
+        audio.volume = 0.3;
+        audio.play().catch(e => console.log("Background audio failed:", e));
+      } catch (e) {
+        console.log("Background audio setup failed:", e);
+      }
     }
 
     setTimeout(() => {
@@ -310,7 +332,22 @@ export default function QuickStartTimer() {
     return () => clearInterval(interval);
   }, [isRunning, timeLeft, handleSessionComplete]);
 
-  // Initialize notification permissions
+  // Save timer state to localStorage for persistence across page reloads
+  useEffect(() => {
+    if (isRunning && timeLeft > 0) {
+      const timerData = {
+        task: currentTask,
+        totalTime,
+        startTime: Date.now() - (totalTime - timeLeft) * 1000,
+        isRunning: true
+      };
+      localStorage.setItem('persistent-timer', JSON.stringify(timerData));
+    } else {
+      localStorage.removeItem('persistent-timer');
+    }
+  }, [isRunning, timeLeft, totalTime, currentTask]);
+
+  // Initialize notification permissions and restore persistent timer
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
       setNotificationPermission(Notification.permission);
@@ -318,6 +355,35 @@ export default function QuickStartTimer() {
         Notification.requestPermission().then(permission => {
           setNotificationPermission(permission);
         });
+      }
+    }
+
+    // Restore persistent timer state from localStorage
+    const savedTimer = localStorage.getItem('persistent-timer');
+    if (savedTimer) {
+      try {
+        const timerData = JSON.parse(savedTimer);
+        const now = Date.now();
+        const elapsed = now - timerData.startTime;
+        const remainingTime = timerData.totalTime - Math.floor(elapsed / 1000);
+        
+        if (remainingTime > 0 && timerData.isRunning) {
+          setCurrentTask(timerData.task);
+          setTimeLeft(remainingTime);
+          setTotalTime(timerData.totalTime);
+          setIsRunning(true);
+          setIsFloatingVisible(true);
+          setTask(timerData.task);
+        } else if (remainingTime <= 0 && timerData.isRunning) {
+          // Timer finished while away - show completion
+          setShowCompleteDialog(true);
+          setCurrentTask(timerData.task);
+          setIsFloatingVisible(true);
+          localStorage.removeItem('persistent-timer');
+        }
+      } catch (e) {
+        console.log("Error restoring timer state:", e);
+        localStorage.removeItem('persistent-timer');
       }
     }
 
@@ -579,30 +645,40 @@ export default function QuickStartTimer() {
         </CardContent>
       </Card>
 
-      {/* Floating Timer */}
+      {/* Persistent Floating Timer - Enhanced for cross-tab visibility */}
       {isFloatingVisible && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <Card className="w-80 shadow-lg">
-            <CardHeader className="pb-2">
+        <div 
+          className="fixed bottom-4 right-4 z-[9999]"
+          style={{
+            position: 'fixed',
+            zIndex: 2147483647, // Maximum z-index for always-on-top
+            pointerEvents: 'auto'
+          }}
+        >
+          <Card className="w-80 shadow-2xl border-2 border-blue-200 bg-white/95 backdrop-blur-sm">
+            <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-purple-50">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Timer className="w-4 h-4" />
-                  {currentTask}
+                <CardTitle className="text-sm flex items-center gap-2 text-blue-800">
+                  <Timer className="w-4 h-4 text-blue-600" />
+                  <span className="truncate max-w-48">{currentTask}</span>
                 </CardTitle>
                 <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsFloatingMinimized(!isFloatingMinimized)}
+                    className="h-6 w-6 p-0"
                   >
-                    <Minimize2 className="w-4 h-4" />
+                    <Minimize2 className="w-3 h-3" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleStop}
+                    className="h-6 w-6 p-0 text-red-600 hover:bg-red-50"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3 h-3" />
                   </Button>
                 </div>
               </div>
@@ -611,14 +687,23 @@ export default function QuickStartTimer() {
               <CardContent className="pt-0">
                 <div className="space-y-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold font-mono">{formatTime(timeLeft)}</div>
+                    <div className="text-3xl font-bold font-mono text-blue-600">{formatTime(timeLeft)}</div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      {Math.floor(((totalTime - timeLeft) / totalTime) * 100)}% complete
+                    </div>
                   </div>
-                  <Progress value={progressPercentage} className="w-full" />
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div 
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-1000"
+                      style={{ width: `${progressPercentage}%` }}
+                    />
+                  </div>
                   <div className="flex justify-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={isRunning ? handlePause : handleStart}
+                      className="border-blue-300 hover:bg-blue-50"
                     >
                       {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                     </Button>
@@ -626,6 +711,7 @@ export default function QuickStartTimer() {
                       variant="outline"
                       size="sm"
                       onClick={handleStop}
+                      className="border-red-300 hover:bg-red-50 text-red-600"
                     >
                       <Square className="w-4 h-4" />
                     </Button>
