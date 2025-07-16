@@ -294,13 +294,15 @@ export default function DailyFocus() {
                 </span>
               </div>
             ))}
-            <Input
-              placeholder="+ Add a task"
-              value={taskInputs.must}
-              onChange={(e) => setTaskInputs(prev => ({ ...prev, must: e.target.value }))}
-              onKeyDown={(e) => handleKeyDown(e, "must")}
-              className="border-red-300 focus:border-red-500"
-            />
+            <form onSubmit={(e) => e.preventDefault()}>
+              <Input
+                placeholder="+ Add a task"
+                value={taskInputs.must}
+                onChange={(e) => setTaskInputs(prev => ({ ...prev, must: e.target.value }))}
+                onKeyDown={(e) => handleKeyDown(e, "must")}
+                className="border-red-300 focus:border-red-500"
+              />
+            </form>
           </div>
         </div>
 
@@ -322,13 +324,15 @@ export default function DailyFocus() {
                 </span>
               </div>
             ))}
-            <Input
-              placeholder="+ Add a task"
-              value={taskInputs.should}
-              onChange={(e) => setTaskInputs(prev => ({ ...prev, should: e.target.value }))}
-              onKeyDown={(e) => handleKeyDown(e, "should")}
-              className="border-green-300 focus:border-green-500"
-            />
+            <form onSubmit={(e) => e.preventDefault()}>
+              <Input
+                placeholder="+ Add a task"
+                value={taskInputs.should}
+                onChange={(e) => setTaskInputs(prev => ({ ...prev, should: e.target.value }))}
+                onKeyDown={(e) => handleKeyDown(e, "should")}
+                className="border-green-300 focus:border-green-500"
+              />
+            </form>
           </div>
         </div>
 
@@ -350,13 +354,15 @@ export default function DailyFocus() {
                 </span>
               </div>
             ))}
-            <Input
-              placeholder="+ Add a task"
-              value={taskInputs.could}
-              onChange={(e) => setTaskInputs(prev => ({ ...prev, could: e.target.value }))}
-              onKeyDown={(e) => handleKeyDown(e, "could")}
-              className="border-yellow-300 focus:border-yellow-500"
-            />
+            <form onSubmit={(e) => e.preventDefault()}>
+              <Input
+                placeholder="+ Add a task"
+                value={taskInputs.could}
+                onChange={(e) => setTaskInputs(prev => ({ ...prev, could: e.target.value }))}
+                onKeyDown={(e) => handleKeyDown(e, "could")}
+                className="border-yellow-300 focus:border-yellow-500"
+              />
+            </form>
           </div>
         </div>
       </div>
