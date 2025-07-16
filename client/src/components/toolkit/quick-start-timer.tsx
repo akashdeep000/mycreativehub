@@ -72,6 +72,7 @@ export default function QuickStartTimer() {
         setTimeLeft((prevTime) => {
           if (prevTime <= 1) {
             setIsRunning(false);
+            console.log("Timer completed - calling handleSessionComplete");
             handleSessionComplete();
             return 0;
           }
@@ -112,8 +113,13 @@ export default function QuickStartTimer() {
     }
   }, [selectedMinutes]);
 
+
+
+
+
   // Helper function to create digital chime alarm sound
   const createAlarmSound = () => {
+    console.log("Creating alarm sound...");
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
@@ -128,7 +134,7 @@ export default function QuickStartTimer() {
       oscillator.frequency.setValueAtTime(784, audioContext.currentTime + 0.4); // G5
       oscillator.type = 'sine';
       gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.7, audioContext.currentTime + 0.02); // Increased volume for better audibility
+      gainNode.gain.linearRampToValueAtTime(0.8, audioContext.currentTime + 0.02); // Increased volume
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.6);
@@ -136,28 +142,50 @@ export default function QuickStartTimer() {
       oscillator.onended = () => {
         audioContext.close();
       };
+      
+      console.log("Alarm sound created successfully");
     } catch (e) {
-      // Fallback to simple beep if Web Audio API fails
-      console.log("Web Audio API failed, using fallback beep");
+      console.error("Web Audio API failed:", e);
+      // Fallback to simple beep sound
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.type = 'square';
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+        
+        oscillator.onended = () => {
+          audioContext.close();
+        };
+        
+        console.log("Fallback beep sound created");
+      } catch (fallbackError) {
+        console.error("Fallback sound also failed:", fallbackError);
+      }
     }
-  };
-
-  // Helper function to play digital chime alarm sound
-  const playAlarmSound = () => {
-    createAlarmSound();
   };
 
   // Helper function to start alarm (repeating for 5 seconds)
   const startAlarm = () => {
+    console.log("Starting alarm...");
     if (alarmIntervalRef.current) {
       clearInterval(alarmIntervalRef.current);
     }
     
-    playAlarmSound(); // Play immediately
+    createAlarmSound(); // Play immediately
     
     // Set up repeating alarm
     alarmIntervalRef.current = setInterval(() => {
-      playAlarmSound();
+      createAlarmSound();
     }, 800); // Play every 800ms for alarm effect
     
     // Stop alarm after 5 seconds
@@ -175,6 +203,7 @@ export default function QuickStartTimer() {
   };
 
   const handleSessionComplete = () => {
+    console.log("Timer completed - handleSessionComplete called");
     const completedMinutes = Math.floor((totalTime - timeLeft) / 60);
     if (completedMinutes > 0) {
       logFocusMutation.mutate({ 
@@ -184,6 +213,7 @@ export default function QuickStartTimer() {
     }
 
     // Start digital chime alarm (repeating for 5 seconds)
+    console.log("About to start alarm...");
     startAlarm();
 
     // Send enhanced browser notification
