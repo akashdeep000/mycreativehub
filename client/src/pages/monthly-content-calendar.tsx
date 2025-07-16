@@ -347,7 +347,7 @@ export default function MonthlyContentCalendar() {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Lightbulb className="h-5 w-5" />
-              Color Key
+              Colour Key
             </CardTitle>
             <CardDescription>
               Select a color category or batch mode, then click calendar dates to apply.
