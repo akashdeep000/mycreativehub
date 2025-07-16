@@ -306,6 +306,48 @@ export default function DailyFocus() {
     clearPriorityTasksMutation.mutate(priority);
   };
 
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: number) => {
+      await apiRequest(`/api/daily-focus/${taskId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem('token')}`
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
+      toast({
+        title: "Success",
+        description: "Task deleted successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete task",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteTask = (taskId: number) => {
+    deleteTaskMutation.mutate(taskId);
+  };
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -361,14 +403,22 @@ export default function DailyFocus() {
           </div>
           <div className="space-y-2">
             {tasksByPriority.must.map((task) => (
-              <div key={task.id} className="flex items-center gap-2">
+              <div key={task.id} className="flex items-center gap-2 group">
                 <Checkbox
                   checked={task.completed}
                   onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
                 />
-                <span className={task.completed ? "line-through text-gray-500" : "text-gray-700"}>
+                <span className={`flex-1 ${task.completed ? "line-through text-gray-500" : "text-gray-700"}`}>
                   {task.task}
                 </span>
+                <button
+                  onClick={() => handleDeleteTask(task.id)}
+                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all duration-200 text-lg font-bold leading-none"
+                  disabled={deleteTaskMutation.isPending}
+                  title="Delete task"
+                >
+                  ×
+                </button>
               </div>
             ))}
             <form onSubmit={(e) => e.preventDefault()}>
@@ -400,14 +450,22 @@ export default function DailyFocus() {
           </div>
           <div className="space-y-2">
             {tasksByPriority.should.map((task) => (
-              <div key={task.id} className="flex items-center gap-2">
+              <div key={task.id} className="flex items-center gap-2 group">
                 <Checkbox
                   checked={task.completed}
                   onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
                 />
-                <span className={task.completed ? "line-through text-gray-500" : "text-gray-700"}>
+                <span className={`flex-1 ${task.completed ? "line-through text-gray-500" : "text-gray-700"}`}>
                   {task.task}
                 </span>
+                <button
+                  onClick={() => handleDeleteTask(task.id)}
+                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all duration-200 text-lg font-bold leading-none"
+                  disabled={deleteTaskMutation.isPending}
+                  title="Delete task"
+                >
+                  ×
+                </button>
               </div>
             ))}
             <form onSubmit={(e) => e.preventDefault()}>
@@ -439,14 +497,22 @@ export default function DailyFocus() {
           </div>
           <div className="space-y-2">
             {tasksByPriority.could.map((task) => (
-              <div key={task.id} className="flex items-center gap-2">
+              <div key={task.id} className="flex items-center gap-2 group">
                 <Checkbox
                   checked={task.completed}
                   onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
                 />
-                <span className={task.completed ? "line-through text-gray-500" : "text-gray-700"}>
+                <span className={`flex-1 ${task.completed ? "line-through text-gray-500" : "text-gray-700"}`}>
                   {task.task}
                 </span>
+                <button
+                  onClick={() => handleDeleteTask(task.id)}
+                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all duration-200 text-lg font-bold leading-none"
+                  disabled={deleteTaskMutation.isPending}
+                  title="Delete task"
+                >
+                  ×
+                </button>
               </div>
             ))}
             <form onSubmit={(e) => e.preventDefault()}>
