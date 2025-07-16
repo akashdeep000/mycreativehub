@@ -51,8 +51,13 @@ export default function DailyFocus() {
         },
       });
       console.log('Tasks fetched from API:', response);
+      // The backend is returning the correct array, but React Query might be caching an old response
       return Array.isArray(response) ? response : [];
     },
+    // Force refetch on every visit to ensure fresh data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   console.log('Current tasks:', tasks);
@@ -84,12 +89,14 @@ export default function DailyFocus() {
       return response;
     },
     onSuccess: () => {
-      // Immediately refetch the tasks to update the UI
+      // Force refetch the tasks to update the UI
       queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.refetchQueries({ queryKey: ["/api/daily-focus", today] });
       queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
     },
     onError: (error) => {
+      console.error('Error creating task:', error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -122,6 +129,7 @@ export default function DailyFocus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.refetchQueries({ queryKey: ["/api/daily-focus", today] });
       queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
     },
@@ -157,6 +165,7 @@ export default function DailyFocus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.refetchQueries({ queryKey: ["/api/daily-focus", today] });
       queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
       toast({
         title: "Success",
@@ -210,117 +219,133 @@ export default function DailyFocus() {
 
   if (isLoading) {
     return (
-      <div className="p-6 bg-white rounded-lg shadow-sm">
-        <div className="text-center">Loading today's tasks...</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+            <h3 className="font-medium">Must Do Today</h3>
+          </div>
+          <div className="text-center text-gray-500">Loading...</div>
+        </div>
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <h3 className="font-medium">Should Do</h3>
+          </div>
+          <div className="text-center text-gray-500">Loading...</div>
+        </div>
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+            <h3 className="font-medium">Could Do</h3>
+          </div>
+          <div className="text-center text-gray-500">Loading...</div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6 bg-white rounded-lg shadow-sm">
-        <div className="text-center text-red-600">
-          Error loading tasks. Please try again.
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="text-center text-red-600">Error loading tasks</div>
+        </div>
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="text-center text-red-600">Error loading tasks</div>
+        </div>
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="text-center text-red-600">Error loading tasks</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-sm">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Today's Focus</h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowClearConfirmation(true)}
-          className="text-red-600 hover:bg-red-50"
-        >
-          Clear Today's Checklist
-        </Button>
-      </div>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Must Do Today Card */}
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+            <h3 className="font-medium">Must Do Today</h3>
+          </div>
+          <div className="space-y-2">
+            {tasksByPriority.must.map((task) => (
+              <div key={task.id} className="flex items-center gap-2">
+                <Checkbox
+                  checked={task.completed}
+                  onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
+                />
+                <span className={task.completed ? "line-through text-gray-500" : "text-gray-700"}>
+                  {task.task}
+                </span>
+              </div>
+            ))}
+            <Input
+              placeholder="+ Add a task"
+              value={taskInputs.must}
+              onChange={(e) => setTaskInputs(prev => ({ ...prev, must: e.target.value }))}
+              onKeyDown={(e) => handleKeyDown(e, "must")}
+              className="border-red-300 focus:border-red-500"
+            />
+          </div>
+        </div>
 
-      {/* Must Do Section */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-          <h3 className="text-lg font-semibold">Must Do Today</h3>
+        {/* Should Do Card */}
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <h3 className="font-medium">Should Do</h3>
+          </div>
+          <div className="space-y-2">
+            {tasksByPriority.should.map((task) => (
+              <div key={task.id} className="flex items-center gap-2">
+                <Checkbox
+                  checked={task.completed}
+                  onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
+                />
+                <span className={task.completed ? "line-through text-gray-500" : "text-gray-700"}>
+                  {task.task}
+                </span>
+              </div>
+            ))}
+            <Input
+              placeholder="+ Add a task"
+              value={taskInputs.should}
+              onChange={(e) => setTaskInputs(prev => ({ ...prev, should: e.target.value }))}
+              onKeyDown={(e) => handleKeyDown(e, "should")}
+              className="border-green-300 focus:border-green-500"
+            />
+          </div>
         </div>
-        <div className="border-l-4 border-red-500 pl-4">
-          {tasksByPriority.must.map((task) => (
-            <div key={task.id} className="flex items-center gap-2 mb-2">
-              <Checkbox
-                checked={task.completed}
-                onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
-              />
-              <span className={task.completed ? "line-through text-gray-500" : ""}>
-                {task.task}
-              </span>
-            </div>
-          ))}
-          <Input
-            placeholder="+ Add a task"
-            value={taskInputs.must}
-            onChange={(e) => setTaskInputs(prev => ({ ...prev, must: e.target.value }))}
-            onKeyDown={(e) => handleKeyDown(e, "must")}
-            className="mt-2"
-          />
-        </div>
-      </div>
 
-      {/* Should Do Section */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-          <h3 className="text-lg font-semibold">Should Do</h3>
-        </div>
-        <div className="border-l-4 border-yellow-500 pl-4">
-          {tasksByPriority.should.map((task) => (
-            <div key={task.id} className="flex items-center gap-2 mb-2">
-              <Checkbox
-                checked={task.completed}
-                onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
-              />
-              <span className={task.completed ? "line-through text-gray-500" : ""}>
-                {task.task}
-              </span>
-            </div>
-          ))}
-          <Input
-            placeholder="+ Add a task"
-            value={taskInputs.should}
-            onChange={(e) => setTaskInputs(prev => ({ ...prev, should: e.target.value }))}
-            onKeyDown={(e) => handleKeyDown(e, "should")}
-            className="mt-2"
-          />
-        </div>
-      </div>
-
-      {/* Could Do Section */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          <h3 className="text-lg font-semibold">Could Do</h3>
-        </div>
-        <div className="border-l-4 border-green-500 pl-4">
-          {tasksByPriority.could.map((task) => (
-            <div key={task.id} className="flex items-center gap-2 mb-2">
-              <Checkbox
-                checked={task.completed}
-                onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
-              />
-              <span className={task.completed ? "line-through text-gray-500" : ""}>
-                {task.task}
-              </span>
-            </div>
-          ))}
-          <Input
-            placeholder="+ Add a task"
-            value={taskInputs.could}
-            onChange={(e) => setTaskInputs(prev => ({ ...prev, could: e.target.value }))}
-            onKeyDown={(e) => handleKeyDown(e, "could")}
-            className="mt-2"
-          />
+        {/* Could Do Card */}
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+            <h3 className="font-medium">Could Do</h3>
+          </div>
+          <div className="space-y-2">
+            {tasksByPriority.could.map((task) => (
+              <div key={task.id} className="flex items-center gap-2">
+                <Checkbox
+                  checked={task.completed}
+                  onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
+                />
+                <span className={task.completed ? "line-through text-gray-500" : "text-gray-700"}>
+                  {task.task}
+                </span>
+              </div>
+            ))}
+            <Input
+              placeholder="+ Add a task"
+              value={taskInputs.could}
+              onChange={(e) => setTaskInputs(prev => ({ ...prev, could: e.target.value }))}
+              onKeyDown={(e) => handleKeyDown(e, "could")}
+              className="border-yellow-300 focus:border-yellow-500"
+            />
+          </div>
         </div>
       </div>
 
@@ -349,6 +374,6 @@ export default function DailyFocus() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
