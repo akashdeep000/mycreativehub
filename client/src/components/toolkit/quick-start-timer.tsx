@@ -118,64 +118,56 @@ export default function QuickStartTimer() {
 
   // Helper function to create digital chime alarm sound
   const createAlarmSound = () => {
-    console.log("Creating alarm sound...");
     try {
+      // Create audio context and ensure it's resumed (required for user interaction)
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      // Resume audio context if it's suspended
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
       
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
       
-      // Digital chime sound: C5-E5-G5 progression
-      oscillator.frequency.setValueAtTime(523, audioContext.currentTime); // C5
-      oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.2); // E5
-      oscillator.frequency.setValueAtTime(784, audioContext.currentTime + 0.4); // G5
-      oscillator.type = 'sine';
+      // Simple but effective alarm tone - alternating between two frequencies
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.3);
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.6);
+      
+      oscillator.type = 'square';
       gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.8, audioContext.currentTime + 0.02); // Increased volume
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+      gainNode.gain.linearRampToValueAtTime(0.7, audioContext.currentTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+      
       oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.6);
+      oscillator.stop(audioContext.currentTime + 0.8);
       
       oscillator.onended = () => {
         audioContext.close();
       };
       
-      console.log("Alarm sound created successfully");
     } catch (e) {
-      console.error("Primary alarm sound failed:", e);
-      // Fallback to simple beep sound
+      // Fallback to notification sound if Web Audio API fails
       try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-        oscillator.type = 'square';
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.02);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.3);
-        
-        oscillator.onended = () => {
-          audioContext.close();
-        };
-        
-        console.log("Fallback beep sound created");
+        // Create a brief notification beep using HTML5 audio
+        const audioData = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmAcBSuKy+9+LgIIAQAAAJu7LKhMCwEwgA0n8YbqAIQGPQHGiHgAACgcNHBNFgKhAIHMgA0AAAAA";
+        const audio = new Audio(audioData);
+        audio.volume = 0.7;
+        audio.play().catch(() => {
+          // Silent fallback if audio fails
+        });
       } catch (fallbackError) {
-        console.error("Fallback sound also failed:", fallbackError);
+        // Silent fallback
       }
     }
   };
 
   // Helper function to start alarm (repeating for 5 seconds)
   const startAlarm = () => {
-    console.log("Starting alarm...");
     if (alarmIntervalRef.current) {
       clearInterval(alarmIntervalRef.current);
     }
@@ -202,7 +194,6 @@ export default function QuickStartTimer() {
   };
 
   const handleSessionComplete = () => {
-    console.log("Timer completed - handleSessionComplete called");
     const completedMinutes = Math.floor((totalTime - timeLeft) / 60);
     if (completedMinutes > 0) {
       logFocusMutation.mutate({ 
@@ -212,7 +203,6 @@ export default function QuickStartTimer() {
     }
 
     // Start digital chime alarm (repeating for 5 seconds)
-    console.log("About to start alarm...");
     startAlarm();
 
     // Send enhanced browser notification
@@ -292,6 +282,17 @@ export default function QuickStartTimer() {
     setTotalTime(seconds);
     setIsRunning(true);
     setIsFloatingVisible(true);
+    
+    // Initialize audio context with user interaction
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      audioContext.close();
+    } catch (e) {
+      // Silent initialization failure
+    }
   };
 
   const handlePause = () => {
