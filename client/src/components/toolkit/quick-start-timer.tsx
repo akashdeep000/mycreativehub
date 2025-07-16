@@ -18,6 +18,7 @@ export default function QuickStartTimer() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   const [task, setTask] = useState("");
   const [selectedMinutes, setSelectedMinutes] = useState("25");
@@ -82,9 +83,11 @@ export default function QuickStartTimer() {
 
   // Initialize audio and notification permissions
   useEffect(() => {
-    // Create audio element for timer alerts
-    audioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8+CVRE4LGnTB7e+lUAwMUpLf4bhjHAU7k9ryu3EuBSF3xfPPZjsLEIvG9uCsUgwKVKHf2oEaAAE=');
-    audioRef.current.volume = 0.5;
+    // Create audio element for timer alerts with alarm clock sound
+    // This is a longer, more alarm-like beep sound
+    audioRef.current = new Audio('data:audio/wav;base64,UklGRlQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8+CVRE4LGnTB7e+lUAwMUpLf4bhjHAU7k9ryu3EuBSF3xfPPZjsLEIvG9uCsUgwKVKHf2oEaAAE=');
+    audioRef.current.volume = 0.8;
+    audioRef.current.loop = false; // We'll handle looping manually
     
     // Request notification permissions
     if (typeof window !== "undefined" && "Notification" in window) {
@@ -95,6 +98,13 @@ export default function QuickStartTimer() {
         });
       }
     }
+
+    // Cleanup function to clear alarm interval
+    return () => {
+      if (alarmIntervalRef.current) {
+        clearInterval(alarmIntervalRef.current);
+      }
+    };
   }, []);
 
   // Handle selection change for custom time
@@ -106,6 +116,79 @@ export default function QuickStartTimer() {
     }
   }, [selectedMinutes]);
 
+  // Helper function to create and play alarm sound using Web Audio API
+  const playAlarmSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      // Connect oscillator to gain node to destination
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Set up alarm sound - alternating between two frequencies
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+      oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.3);
+      
+      // Set volume envelope
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+      
+      oscillator.type = 'square'; // Square wave for alarm-like sound
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.4);
+      
+      // Clean up
+      oscillator.onended = () => {
+        audioContext.close();
+      };
+    } catch (e) {
+      console.log('Web Audio API failed, falling back to HTML audio:', e);
+      // Fallback to HTML audio if Web Audio API fails
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(e => {
+          console.log('Audio play failed:', e);
+        });
+      }
+    }
+  };
+
+  // Helper function to start alarm (repeating for 5 seconds)
+  const startAlarm = () => {
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+    }
+    
+    playAlarmSound(); // Play immediately
+    
+    // Set up repeating alarm
+    alarmIntervalRef.current = setInterval(() => {
+      playAlarmSound();
+    }, 800); // Play every 800ms for alarm clock effect
+    
+    // Stop alarm after 5 seconds
+    setTimeout(() => {
+      stopAlarm();
+    }, 5000);
+  };
+
+  // Helper function to stop alarm
+  const stopAlarm = () => {
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  };
+
   const handleSessionComplete = () => {
     const completedMinutes = Math.floor((totalTime - timeLeft) / 60);
     if (completedMinutes > 0) {
@@ -115,12 +198,8 @@ export default function QuickStartTimer() {
       });
     }
 
-    // Play audio alert
-    if (audioRef.current) {
-      audioRef.current.play().catch(e => {
-        console.log('Audio play failed:', e);
-      });
-    }
+    // Start alarm clock sound (repeating for 5 seconds)
+    startAlarm();
 
     // Send enhanced browser notification
     if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
@@ -134,6 +213,7 @@ export default function QuickStartTimer() {
       notification.onclick = () => {
         window.focus();
         notification.close();
+        stopAlarm(); // Stop alarm when notification is clicked
       };
     } else if (notificationPermission === "denied") {
       // Fallback for denied permissions
@@ -213,6 +293,7 @@ export default function QuickStartTimer() {
       });
     }
     
+    stopAlarm(); // Stop any playing alarm
     setIsRunning(false);
     setTimeLeft(0);
     setTotalTime(0);
@@ -222,6 +303,7 @@ export default function QuickStartTimer() {
   };
 
   const handleMarkComplete = () => {
+    stopAlarm(); // Stop any playing alarm
     setShowCompleteDialog(false);
     setTimeLeft(0);
     setTotalTime(0);
@@ -420,6 +502,14 @@ export default function QuickStartTimer() {
           </DialogHeader>
           
           <div className="flex flex-col gap-2 mt-4">
+            <Button 
+              onClick={stopAlarm}
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+            >
+              <Square className="w-4 h-4 mr-2" />
+              Stop Alarm
+            </Button>
+            
             <Button 
               onClick={handleMarkComplete}
               className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
