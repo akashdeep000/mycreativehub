@@ -861,6 +861,12 @@ Changelog:
   - Updated card styling to use `shadow-md` and `border-0` for consistent drop shadow effect
   - Applied same styling to Add New Affiliate Link card for visual consistency
   - Maintained all existing functionality, layout, spacing, and interactions exactly as they were
+- July 16, 2025. Updated Reel & Carousel Template Pack Visual Design:
+  - Changed background from `bg-rose-50` to `bg-gray-50` to match Streamline Your Workflow section
+  - Updated all card styling to use `shadow-md` and `border-0` for consistent drop shadow effect
+  - Applied styling to instruction card, template cards, and template usage tips card for visual consistency
+  - Removed gradient backgrounds and pink borders in favor of clean white cards with drop shadows
+  - Maintained all existing functionality, layout, spacing, and interactions exactly as they were
 
 ## User Preferences
 

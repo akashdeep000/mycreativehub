@@ -53,7 +53,7 @@ export default function ReelCarouselTemplates() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-rose-50">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
       <Sidebar />
       <MobileNav />
       
@@ -81,7 +81,7 @@ export default function ReelCarouselTemplates() {
         </div>
 
         {/* Instruction Section */}
-        <Card className="mb-8 border-pink-200 bg-gradient-to-r from-pink-50 to-rose-50">
+        <Card className="mb-8 shadow-md border-0 bg-white">
           <CardContent className="p-6">
             <div className="text-gray-700">
               <p className="font-medium mb-2">Choose your template type to get started.</p>
@@ -109,7 +109,7 @@ export default function ReelCarouselTemplates() {
             {templates.map((template) => (
               <Card 
                 key={template.id} 
-                className="border-pink-100 hover:shadow-lg transition-all duration-300 cursor-pointer group hover:scale-105"
+                className="shadow-md border-0 bg-white hover:shadow-lg transition-all duration-300 cursor-pointer group hover:scale-105"
                 onClick={() => handleTemplateClick(template)}
               >
                 <CardHeader>
@@ -145,7 +145,7 @@ export default function ReelCarouselTemplates() {
           </div>
 
           {/* Additional Info */}
-          <Card className="mt-8 border-pink-100 bg-gradient-to-r from-pink-50 to-purple-50">
+          <Card className="mt-8 shadow-md border-0 bg-white">
             <CardContent className="p-6">
               <h3 className="text-xl font-serif font-semibold text-gray-800 mb-4">
                 Template Usage Tips
