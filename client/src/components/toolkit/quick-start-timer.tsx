@@ -17,7 +17,6 @@ export default function QuickStartTimer() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   const [task, setTask] = useState("");
@@ -81,14 +80,8 @@ export default function QuickStartTimer() {
     return () => clearInterval(interval);
   }, [isRunning, timeLeft]);
 
-  // Initialize audio and notification permissions
+  // Initialize notification permissions
   useEffect(() => {
-    // Create audio element for timer alerts with alarm clock sound
-    // This is a longer, more alarm-like beep sound
-    audioRef.current = new Audio('data:audio/wav;base64,UklGRlQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8+CVRE4LGnTB7e+lUAwMUpLf4bhjHAU7k9ryu3EuBSF3xfPPZjsLEIvG9uCsUgwKVKHf2oEaAAE=');
-    audioRef.current.volume = 0.8;
-    audioRef.current.loop = false; // We'll handle looping manually
-    
     // Request notification permissions
     if (typeof window !== "undefined" && "Notification" in window) {
       setNotificationPermission(Notification.permission);
@@ -116,48 +109,52 @@ export default function QuickStartTimer() {
     }
   }, [selectedMinutes]);
 
-  // Helper function to create and play alarm sound using Web Audio API
+  // Helper function to create and play alarm sound - simplified approach
   const playAlarmSound = () => {
     console.log("Playing alarm sound");
+    
+    // Create a simple beep sound using data URI
+    const beepSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8+CVRE4LGnTB7e+lUAwMUpLf4bhjHAU7k9ryu3EuBSF3xfPPZjsLEIvG9uCsUgwKVKHf2oEaAAE=');
+    
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      // Connect oscillator to gain node to destination
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      // Set up alarm sound - alternating between two frequencies
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
-      oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.3);
-      
-      // Set volume envelope
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
-      
-      oscillator.type = 'square'; // Square wave for alarm-like sound
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.4);
-      
-      // Clean up
-      oscillator.onended = () => {
-        audioContext.close();
-      };
-      
-      console.log("Web Audio API alarm sound played successfully");
+      beepSound.volume = 0.7;
+      beepSound.play().then(() => {
+        console.log("Alarm sound played successfully");
+      }).catch(e => {
+        console.log('Alarm sound play failed:', e);
+        
+        // If that fails, try Web Audio API as fallback
+        try {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          // Create alarm beep
+          oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+          oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
+          
+          gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+          gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.01);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+          
+          oscillator.type = 'square';
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.2);
+          
+          oscillator.onended = () => {
+            audioContext.close();
+          };
+          
+          console.log("Web Audio API fallback played successfully");
+        } catch (webAudioError) {
+          console.log('Both audio methods failed:', webAudioError);
+        }
+      });
     } catch (e) {
-      console.log('Web Audio API failed, falling back to HTML audio:', e);
-      // Fallback to HTML audio if Web Audio API fails
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(e => {
-          console.log('Audio play failed:', e);
-        });
-      }
+      console.log('Audio creation failed:', e);
     }
   };
 
@@ -189,10 +186,6 @@ export default function QuickStartTimer() {
     if (alarmIntervalRef.current) {
       clearInterval(alarmIntervalRef.current);
       alarmIntervalRef.current = null;
-    }
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
     }
   };
 
