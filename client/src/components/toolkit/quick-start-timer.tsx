@@ -184,6 +184,14 @@ export default function QuickStartTimer() {
     }
   };
 
+  // Helper function to stop alarm
+  const stopAlarm = useCallback(() => {
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
+  }, []);
+
   // Helper function to start alarm (repeating for 5 seconds)
   const startAlarm = useCallback(() => {
     console.log("=== START ALARM CALLED ===");
@@ -217,15 +225,7 @@ export default function QuickStartTimer() {
       console.log("Stopping alarm after 5 seconds");
       stopAlarm();
     }, 5000);
-  }, []);
-
-  // Helper function to stop alarm
-  const stopAlarm = useCallback(() => {
-    if (alarmIntervalRef.current) {
-      clearInterval(alarmIntervalRef.current);
-      alarmIntervalRef.current = null;
-    }
-  }, []);
+  }, [stopAlarm]);
 
   const handleSessionComplete = useCallback(() => {
     console.log("=== SESSION COMPLETE ===");
