@@ -207,12 +207,15 @@ export default function DailyFocus() {
 
   const clearDailyTasksMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest(`/api/daily-focus/${today}`, {
+      console.log('Clearing daily tasks for date:', today);
+      const response = await apiRequest(`/api/daily-focus/${today}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
       });
+      console.log('Daily tasks cleared successfully:', response);
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
@@ -224,7 +227,17 @@ export default function DailyFocus() {
       });
     },
     onError: (error) => {
+      console.error('Error clearing daily tasks:', error);
+      console.error('Clear daily tasks error details:', {
+        message: error?.message,
+        name: error?.name,
+        tokenExists: !!localStorage.getItem('token'),
+        tokenLength: localStorage.getItem('token')?.length || 0,
+        date: today
+      });
+      
       if (isUnauthorizedError(error)) {
+        console.log('Detected unauthorized error during clear - redirecting to login');
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",
@@ -247,9 +260,11 @@ export default function DailyFocus() {
     mutationFn: async (priority: "must" | "should" | "could") => {
       // Get all tasks for this priority
       const tasksToDelete = tasksByPriority[priority];
+      console.log(`Clearing ${priority} tasks:`, tasksToDelete);
       
       // Delete each task individually
       for (const task of tasksToDelete) {
+        console.log(`Deleting ${priority} task:`, task.id);
         await apiRequest(`/api/daily-focus/${task.id}`, {
           method: "DELETE",
           headers: {
@@ -257,6 +272,7 @@ export default function DailyFocus() {
           },
         });
       }
+      console.log(`All ${priority} tasks cleared successfully`);
     },
     onSuccess: (_, priority) => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
@@ -266,8 +282,19 @@ export default function DailyFocus() {
         description: `${priority === "must" ? "Must do" : priority === "should" ? "Should do" : "Could do"} tasks cleared successfully`,
       });
     },
-    onError: (error) => {
+    onError: (error, priority) => {
+      console.error(`Error clearing ${priority} tasks:`, error);
+      console.error('Clear priority tasks error details:', {
+        priority,
+        message: error?.message,
+        name: error?.name,
+        tokenExists: !!localStorage.getItem('token'),
+        tokenLength: localStorage.getItem('token')?.length || 0,
+        tasksToDelete: tasksByPriority[priority]?.length || 0
+      });
+      
       if (isUnauthorizedError(error)) {
+        console.log('Detected unauthorized error during priority clear - redirecting to login');
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",
@@ -317,12 +344,15 @@ export default function DailyFocus() {
 
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId: number) => {
-      await apiRequest(`/api/daily-focus/${taskId}`, {
+      console.log('Deleting task:', taskId);
+      const response = await apiRequest(`/api/daily-focus/${taskId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
       });
+      console.log('Task deleted successfully:', response);
+      return response;
     },
     onMutate: async (taskId) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
@@ -344,7 +374,17 @@ export default function DailyFocus() {
       // If the mutation fails, use the context to roll back
       queryClient.setQueryData(["/api/daily-focus", today], context?.previousTasks);
       
+      console.error('Error deleting task:', error);
+      console.error('Delete error details:', {
+        taskId,
+        message: error?.message,
+        name: error?.name,
+        tokenExists: !!localStorage.getItem('token'),
+        tokenLength: localStorage.getItem('token')?.length || 0
+      });
+      
       if (isUnauthorizedError(error)) {
+        console.log('Detected unauthorized error during delete - redirecting to login');
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",
