@@ -70,7 +70,7 @@ export default function DailyFocus() {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 0,
-    cacheTime: 0, // Don't cache at all
+    gcTime: 0, // Don't cache at all
   });
 
   console.log('Current tasks:', tasks);
