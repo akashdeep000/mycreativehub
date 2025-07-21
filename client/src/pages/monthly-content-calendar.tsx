@@ -9,6 +9,8 @@ import { Link } from 'wouter';
 import { ChevronLeft, ChevronRight, Calendar, Lightbulb, Download, Edit3, Trash2, Plus, Palette, Check, Video, RefreshCw, TrendingUp } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ColorTag {
   id: string;
@@ -36,6 +38,7 @@ const defaultColorTags: ColorTag[] = [
 
 export default function MonthlyContentCalendar() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [colorTags, setColorTags] = useState<ColorTag[]>(defaultColorTags);
@@ -45,28 +48,73 @@ export default function MonthlyContentCalendar() {
   const [isDragging, setIsDragging] = useState(false);
   const [batchMode, setBatchMode] = useState(false);
 
-  // Load calendar data from localStorage
-  useEffect(() => {
-    const savedCalendar = localStorage.getItem('monthly-content-calendar');
-    const savedTags = localStorage.getItem('monthly-content-calendar-tags');
-    
-    if (savedCalendar) {
-      setCalendarData(JSON.parse(savedCalendar));
-    }
-    
-    if (savedTags) {
-      setColorTags(JSON.parse(savedTags));
-    }
-  }, []);
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
 
-  // Save calendar data to localStorage
-  useEffect(() => {
-    localStorage.setItem('monthly-content-calendar', JSON.stringify(calendarData));
-  }, [calendarData]);
+  // Load calendar data from database
+  const { data: dbCalendar, isLoading } = useQuery({
+    queryKey: ['/api/persistent/monthly-content-calendar', year, month],
+    queryFn: async () => {
+      const response = await fetch(`/api/persistent/monthly-content-calendar/${year}/${month}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
+      });
+      if (!response.ok) throw new Error('Failed to fetch calendar data');
+      return response.json();
+    }
+  });
 
+  // Save calendar data to database
+  const saveCalendarMutation = useMutation({
+    mutationFn: async (data: { calendarData: CalendarCell[], colorTags: ColorTag[] }) => {
+      await apiRequest('/api/persistent/monthly-content-calendar', {
+        method: 'PUT',
+        body: JSON.stringify({
+          year,
+          month,
+          calendarData: data.calendarData,
+          colorTags: data.colorTags
+        })
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/persistent/monthly-content-calendar', year, month] });
+      toast({
+        title: "Calendar saved",
+        description: "Your content calendar has been saved successfully.",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Calendar save error:', error);
+      toast({
+        title: "Error saving calendar",
+        description: error.message || "Failed to save calendar data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Initialize calendar data when database data is loaded
   useEffect(() => {
-    localStorage.setItem('monthly-content-calendar-tags', JSON.stringify(colorTags));
-  }, [colorTags]);
+    if (dbCalendar) {
+      if (dbCalendar.calendarData) {
+        setCalendarData(dbCalendar.calendarData);
+      }
+      if (dbCalendar.colorTags) {
+        setColorTags(dbCalendar.colorTags);
+      }
+    }
+  }, [dbCalendar]);
+
+  // Auto-save to database when data changes (with debounce)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (calendarData.length > 0 || colorTags.length !== defaultColorTags.length) {
+        saveCalendarMutation.mutate({ calendarData, colorTags });
+      }
+    }, 2000); // 2-second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [calendarData, colorTags]);
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',

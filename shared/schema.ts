@@ -498,6 +498,278 @@ export const insertAffiliateLinkSchema = createInsertSchema(affiliateLinks).omit
   updatedAt: true,
 });
 
+// Content Creation System Tables
+export const monthlyContentCalendar = pgTable("monthly_content_calendar", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  year: integer("year").notNull(),
+  month: integer("month").notNull(), // 1-12
+  calendarData: jsonb("calendar_data").notNull().default('{}'), // Full calendar data structure
+  colorTags: jsonb("color_tags").notNull().default('[]'), // Color tag definitions
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  uniqueUserYearMonth: uniqueIndex("unique_user_year_month").on(table.userId, table.year, table.month),
+}));
+
+export const contentBatchingPlanner = pgTable("content_batching_planner", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  posts: jsonb("posts").notNull().default('[]'), // Array of post objects
+  customPillars: jsonb("custom_pillars").notNull().default('[]'), // Custom pillar options
+  customPostTypes: jsonb("custom_post_types").notNull().default('[]'), // Custom post type options
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const contentStatusTracker = pgTable("content_status_tracker", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  contentItems: jsonb("content_items").notNull().default('[]'), // Array of content items
+  customTypes: jsonb("custom_types").notNull().default('[]'), // Custom content types
+  customPlatforms: jsonb("custom_platforms").notNull().default('[]'), // Custom platforms
+  customStatuses: jsonb("custom_statuses").notNull().default('[]'), // Custom statuses
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const repurposingToolkit = pgTable("repurposing_toolkit", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  repurposingItems: jsonb("repurposing_items").notNull().default('[]'), // Array of repurposing entries
+  customPlatforms: jsonb("custom_platforms").notNull().default('[]'), // Custom platform options
+  customFormats: jsonb("custom_formats").notNull().default('[]'), // Custom format options
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const contentPerformanceStrategy = pgTable("content_performance_strategy", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  contentThatFeltGood: text("content_that_felt_good"),
+  contentThatPerformed: text("content_that_performed"),
+  whatDidntLand: text("what_didnt_land"),
+  audienceReactions: text("audience_reactions"),
+  strategyShifts: text("strategy_shifts"),
+  nextCheckInDate: varchar("next_check_in_date"), // Date string
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const performanceTrackingTable = pgTable("performance_tracking_table", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  performanceItems: jsonb("performance_items").notNull().default('[]'), // Array of performance entries
+  customContentTypes: jsonb("custom_content_types").notNull().default('[]'), // Custom content types
+  customPlatforms: jsonb("custom_platforms").notNull().default('[]'), // Custom platforms
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Product Launch System Tables
+export const seasonalityTimeline = pgTable("seasonality_timeline", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  year: integer("year").notNull(),
+  events: jsonb("events").notNull().default('[]'), // Array of timeline events
+  eventTypes: jsonb("event_types").notNull().default('[]'), // Custom event type definitions
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  uniqueUserYear: uniqueIndex("unique_user_year_seasonality").on(table.userId, table.year),
+}));
+
+export const quarterDetailPlans = pgTable("quarter_detail_plans", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  year: integer("year").notNull(),
+  quarter: integer("quarter").notNull(), // 1-4
+  quarterData: jsonb("quarter_data").notNull().default('{}'), // Quarter-specific data
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  uniqueUserYearQuarter: uniqueIndex("unique_user_year_quarter").on(table.userId, table.year, table.quarter),
+}));
+
+export const productComponentChecklists = pgTable("product_component_checklists", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  products: jsonb("products").notNull().default('[]'), // Array of product objects
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const profitCalculator = pgTable("profit_calculator", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  savedCalculations: jsonb("saved_calculations").notNull().default('[]'), // Saved calculations library
+  currency: varchar("currency").notNull().default('USD'), // Selected currency
+  currentCalculation: jsonb("current_calculation").notNull().default('{}'), // Current workspace data
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const prelaunchTimelinePlanner = pgTable("prelaunch_timeline_planner", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  timelineLength: integer("timeline_length").notNull().default(3), // 2, 3, or 4 weeks
+  weeklyContent: jsonb("weekly_content").notNull().default('{}'), // Weekly content blocks
+  weekNotes: jsonb("week_notes").notNull().default('{}'), // Weekly notes/goals
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const launchGrowthPlans = pgTable("launch_growth_plans", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  growthPlans: jsonb("growth_plans").notNull().default('[]'), // Array of growth plan objects
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Financial Management System Tables
+export const moneyMap = pgTable("money_map", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  currency: varchar("currency").notNull().default('USD'), // USD, EUR, GBP, CAD, AUD
+  period: varchar("period").notNull().default('monthly'), // monthly, quarterly, yearly
+  goalsData: jsonb("goals_data").notNull().default('{}'), // Goals tab data
+  incomeExpensesData: jsonb("income_expenses_data").notNull().default('{}'), // Income & Expenses tab data
+  savingsData: jsonb("savings_data").notNull().default('{}'), // Savings tab data
+  monthlySnapshots: jsonb("monthly_snapshots").notNull().default('[]'), // Saved monthly snapshots
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// SOP Builder Tables
+export const sopBuilders = pgTable("sop_builders", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  sops: jsonb("sops").notNull().default('[]'), // Array of SOP objects with steps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Automation System Toolkit Tables
+export const automationToolkit = pgTable("automation_toolkit", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  promptLibrary: jsonb("prompt_library").notNull().default('[]'), // Saved prompts
+  flowBuilder: jsonb("flow_builder").notNull().default('[]'), // Flow builder steps
+  instagramCopies: jsonb("instagram_copies").notNull().default('[]'), // Instagram CTA copies
+  prewrittenReplies: jsonb("prewritten_replies").notNull().default('{}'), // Categorized replies
+  oneClickFlows: jsonb("one_click_flows").notNull().default('[]'), // One-click flow templates
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Focus Timer Session Logs (already partially implemented, enhancing)
+export const focusSessionLogs = pgTable("focus_session_logs", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  task: varchar("task").notNull(),
+  duration: integer("duration").notNull(), // in minutes
+  completedAt: timestamp("completed_at").notNull(),
+  sessionDate: varchar("session_date").notNull(), // YYYY-MM-DD format
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Insert schemas for new tables
+export const insertMonthlyContentCalendarSchema = createInsertSchema(monthlyContentCalendar).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertContentBatchingPlannerSchema = createInsertSchema(contentBatchingPlanner).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertContentStatusTrackerSchema = createInsertSchema(contentStatusTracker).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRepurposingToolkitSchema = createInsertSchema(repurposingToolkit).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertContentPerformanceStrategySchema = createInsertSchema(contentPerformanceStrategy).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPerformanceTrackingTableSchema = createInsertSchema(performanceTrackingTable).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSeasonalityTimelineSchema = createInsertSchema(seasonalityTimeline).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertQuarterDetailPlanSchema = createInsertSchema(quarterDetailPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertProductComponentChecklistSchema = createInsertSchema(productComponentChecklists).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertProfitCalculatorSchema = createInsertSchema(profitCalculator).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPrelaunchTimelinePlannerSchema = createInsertSchema(prelaunchTimelinePlanner).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertLaunchGrowthPlanSchema = createInsertSchema(launchGrowthPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMoneyMapSchema = createInsertSchema(moneyMap).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSopBuilderSchema = createInsertSchema(sopBuilders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAutomationToolkitSchema = createInsertSchema(automationToolkit).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFocusSessionLogSchema = createInsertSchema(focusSessionLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -533,3 +805,37 @@ export type ResourceLibraryItem = typeof resourceLibrary.$inferSelect;
 export type InsertResourceLibraryItem = z.infer<typeof insertResourceLibrarySchema>;
 export type AffiliateLink = typeof affiliateLinks.$inferSelect;
 export type InsertAffiliateLink = z.infer<typeof insertAffiliateLinkSchema>;
+
+// New persistent data types
+export type MonthlyContentCalendar = typeof monthlyContentCalendar.$inferSelect;
+export type InsertMonthlyContentCalendar = z.infer<typeof insertMonthlyContentCalendarSchema>;
+export type ContentBatchingPlanner = typeof contentBatchingPlanner.$inferSelect;
+export type InsertContentBatchingPlanner = z.infer<typeof insertContentBatchingPlannerSchema>;
+export type ContentStatusTracker = typeof contentStatusTracker.$inferSelect;
+export type InsertContentStatusTracker = z.infer<typeof insertContentStatusTrackerSchema>;
+export type RepurposingToolkit = typeof repurposingToolkit.$inferSelect;
+export type InsertRepurposingToolkit = z.infer<typeof insertRepurposingToolkitSchema>;
+export type ContentPerformanceStrategy = typeof contentPerformanceStrategy.$inferSelect;
+export type InsertContentPerformanceStrategy = z.infer<typeof insertContentPerformanceStrategySchema>;
+export type PerformanceTrackingTable = typeof performanceTrackingTable.$inferSelect;
+export type InsertPerformanceTrackingTable = z.infer<typeof insertPerformanceTrackingTableSchema>;
+export type SeasonalityTimeline = typeof seasonalityTimeline.$inferSelect;
+export type InsertSeasonalityTimeline = z.infer<typeof insertSeasonalityTimelineSchema>;
+export type QuarterDetailPlan = typeof quarterDetailPlans.$inferSelect;
+export type InsertQuarterDetailPlan = z.infer<typeof insertQuarterDetailPlanSchema>;
+export type ProductComponentChecklist = typeof productComponentChecklists.$inferSelect;
+export type InsertProductComponentChecklist = z.infer<typeof insertProductComponentChecklistSchema>;
+export type ProfitCalculator = typeof profitCalculator.$inferSelect;
+export type InsertProfitCalculator = z.infer<typeof insertProfitCalculatorSchema>;
+export type PrelaunchTimelinePlanner = typeof prelaunchTimelinePlanner.$inferSelect;
+export type InsertPrelaunchTimelinePlanner = z.infer<typeof insertPrelaunchTimelinePlannerSchema>;
+export type LaunchGrowthPlan = typeof launchGrowthPlans.$inferSelect;
+export type InsertLaunchGrowthPlan = z.infer<typeof insertLaunchGrowthPlanSchema>;
+export type MoneyMap = typeof moneyMap.$inferSelect;
+export type InsertMoneyMap = z.infer<typeof insertMoneyMapSchema>;
+export type SopBuilder = typeof sopBuilders.$inferSelect;
+export type InsertSopBuilder = z.infer<typeof insertSopBuilderSchema>;
+export type AutomationToolkit = typeof automationToolkit.$inferSelect;
+export type InsertAutomationToolkit = z.infer<typeof insertAutomationToolkitSchema>;
+export type FocusSessionLog = typeof focusSessionLogs.$inferSelect;
+export type InsertFocusSessionLog = z.infer<typeof insertFocusSessionLogSchema>;

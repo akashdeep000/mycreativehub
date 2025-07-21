@@ -19,6 +19,23 @@ import {
   socialMediaStrategies,
   resourceLibrary,
   affiliateLinks,
+  // New persistent data tables
+  monthlyContentCalendar,
+  contentBatchingPlanner,
+  contentStatusTracker,
+  repurposingToolkit,
+  contentPerformanceStrategy,
+  performanceTrackingTable,
+  seasonalityTimeline,
+  quarterDetailPlans,
+  productComponentChecklists,
+  profitCalculator,
+  prelaunchTimelinePlanner,
+  launchGrowthPlans,
+  moneyMap,
+  sopBuilders,
+  automationToolkit,
+  focusSessionLogs,
   type User,
   type UpsertUser,
   type ToolkitModule,
@@ -53,6 +70,39 @@ import {
   type InsertResourceLibraryItem,
   type AffiliateLink,
   type InsertAffiliateLink,
+  // New persistent data types
+  type MonthlyContentCalendar,
+  type InsertMonthlyContentCalendar,
+  type ContentBatchingPlanner,
+  type InsertContentBatchingPlanner,
+  type ContentStatusTracker,
+  type InsertContentStatusTracker,
+  type RepurposingToolkit,
+  type InsertRepurposingToolkit,
+  type ContentPerformanceStrategy,
+  type InsertContentPerformanceStrategy,
+  type PerformanceTrackingTable,
+  type InsertPerformanceTrackingTable,
+  type SeasonalityTimeline,
+  type InsertSeasonalityTimeline,
+  type QuarterDetailPlan,
+  type InsertQuarterDetailPlan,
+  type ProductComponentChecklist,
+  type InsertProductComponentChecklist,
+  type ProfitCalculator,
+  type InsertProfitCalculator,
+  type PrelaunchTimelinePlanner,
+  type InsertPrelaunchTimelinePlanner,
+  type LaunchGrowthPlan,
+  type InsertLaunchGrowthPlan,
+  type MoneyMap,
+  type InsertMoneyMap,
+  type SopBuilder,
+  type InsertSopBuilder,
+  type AutomationToolkit,
+  type InsertAutomationToolkit,
+  type FocusSessionLog,
+  type InsertFocusSessionLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, gte, lte, sql, inArray } from "drizzle-orm";
@@ -168,6 +218,59 @@ export interface IStorage {
   createAffiliateLink(link: InsertAffiliateLink): Promise<AffiliateLink>;
   updateAffiliateLink(id: number, data: any): Promise<AffiliateLink>;
   deleteAffiliateLink(id: number): Promise<void>;
+  
+  // Persistent Data Operations - Content Creation System
+  getMonthlyContentCalendar(userId: string, year: number, month: number): Promise<MonthlyContentCalendar | undefined>;
+  upsertMonthlyContentCalendar(data: InsertMonthlyContentCalendar): Promise<MonthlyContentCalendar>;
+  
+  getContentBatchingPlanner(userId: string): Promise<ContentBatchingPlanner | undefined>;
+  upsertContentBatchingPlanner(data: InsertContentBatchingPlanner): Promise<ContentBatchingPlanner>;
+  
+  getContentStatusTracker(userId: string): Promise<ContentStatusTracker | undefined>;
+  upsertContentStatusTracker(data: InsertContentStatusTracker): Promise<ContentStatusTracker>;
+  
+  getRepurposingToolkit(userId: string): Promise<RepurposingToolkit | undefined>;
+  upsertRepurposingToolkit(data: InsertRepurposingToolkit): Promise<RepurposingToolkit>;
+  
+  getContentPerformanceStrategy(userId: string): Promise<ContentPerformanceStrategy | undefined>;
+  upsertContentPerformanceStrategy(data: InsertContentPerformanceStrategy): Promise<ContentPerformanceStrategy>;
+  
+  getPerformanceTrackingTable(userId: string): Promise<PerformanceTrackingTable | undefined>;
+  upsertPerformanceTrackingTable(data: InsertPerformanceTrackingTable): Promise<PerformanceTrackingTable>;
+  
+  // Product Launch System
+  getSeasonalityTimeline(userId: string, year: number): Promise<SeasonalityTimeline | undefined>;
+  upsertSeasonalityTimeline(data: InsertSeasonalityTimeline): Promise<SeasonalityTimeline>;
+  
+  getQuarterDetailPlan(userId: string, year: number, quarter: number): Promise<QuarterDetailPlan | undefined>;
+  upsertQuarterDetailPlan(data: InsertQuarterDetailPlan): Promise<QuarterDetailPlan>;
+  
+  getProductComponentChecklist(userId: string): Promise<ProductComponentChecklist | undefined>;
+  upsertProductComponentChecklist(data: InsertProductComponentChecklist): Promise<ProductComponentChecklist>;
+  
+  getProfitCalculator(userId: string): Promise<ProfitCalculator | undefined>;
+  upsertProfitCalculator(data: InsertProfitCalculator): Promise<ProfitCalculator>;
+  
+  getPrelaunchTimelinePlanner(userId: string): Promise<PrelaunchTimelinePlanner | undefined>;
+  upsertPrelaunchTimelinePlanner(data: InsertPrelaunchTimelinePlanner): Promise<PrelaunchTimelinePlanner>;
+  
+  getLaunchGrowthPlans(userId: string): Promise<LaunchGrowthPlan | undefined>;
+  upsertLaunchGrowthPlans(data: InsertLaunchGrowthPlan): Promise<LaunchGrowthPlan>;
+  
+  // Financial Management System
+  getMoneyMap(userId: string): Promise<MoneyMap | undefined>;
+  upsertMoneyMap(data: InsertMoneyMap): Promise<MoneyMap>;
+  
+  // Streamline Your Workflow System
+  getSopBuilder(userId: string): Promise<SopBuilder | undefined>;
+  upsertSopBuilder(data: InsertSopBuilder): Promise<SopBuilder>;
+  
+  getAutomationToolkit(userId: string): Promise<AutomationToolkit | undefined>;
+  upsertAutomationToolkit(data: InsertAutomationToolkit): Promise<AutomationToolkit>;
+  
+  // Focus Timer System
+  logFocusSession(session: InsertFocusSessionLog): Promise<FocusSessionLog>;
+  getFocusSessionLogs(userId: string, limit?: number): Promise<FocusSessionLog[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1018,6 +1121,413 @@ export class DatabaseStorage implements IStorage {
   async deleteAffiliateLink(id: number): Promise<void> {
     await db.delete(affiliateLinks)
       .where(eq(affiliateLinks.id, id));
+  }
+
+  // Persistent Data Operations - Content Creation System
+  async getMonthlyContentCalendar(userId: string, year: number, month: number): Promise<MonthlyContentCalendar | undefined> {
+    const [calendar] = await db
+      .select()
+      .from(monthlyContentCalendar)
+      .where(and(
+        eq(monthlyContentCalendar.userId, userId),
+        eq(monthlyContentCalendar.year, year),
+        eq(monthlyContentCalendar.month, month)
+      ));
+    return calendar;
+  }
+
+  async upsertMonthlyContentCalendar(data: InsertMonthlyContentCalendar): Promise<MonthlyContentCalendar> {
+    const [calendar] = await db
+      .insert(monthlyContentCalendar)
+      .values(data)
+      .onConflictDoUpdate({
+        target: [monthlyContentCalendar.userId, monthlyContentCalendar.year, monthlyContentCalendar.month],
+        set: {
+          calendarData: data.calendarData,
+          colorTags: data.colorTags,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return calendar;
+  }
+
+  async getContentBatchingPlanner(userId: string): Promise<ContentBatchingPlanner | undefined> {
+    const [planner] = await db
+      .select()
+      .from(contentBatchingPlanner)
+      .where(eq(contentBatchingPlanner.userId, userId));
+    return planner;
+  }
+
+  async upsertContentBatchingPlanner(data: InsertContentBatchingPlanner): Promise<ContentBatchingPlanner> {
+    const [planner] = await db
+      .insert(contentBatchingPlanner)
+      .values(data)
+      .onConflictDoUpdate({
+        target: contentBatchingPlanner.userId,
+        set: {
+          posts: data.posts,
+          customPillars: data.customPillars,
+          customPostTypes: data.customPostTypes,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return planner;
+  }
+
+  async getContentStatusTracker(userId: string): Promise<ContentStatusTracker | undefined> {
+    const [tracker] = await db
+      .select()
+      .from(contentStatusTracker)
+      .where(eq(contentStatusTracker.userId, userId));
+    return tracker;
+  }
+
+  async upsertContentStatusTracker(data: InsertContentStatusTracker): Promise<ContentStatusTracker> {
+    const [tracker] = await db
+      .insert(contentStatusTracker)
+      .values(data)
+      .onConflictDoUpdate({
+        target: contentStatusTracker.userId,
+        set: {
+          contentItems: data.contentItems,
+          customTypes: data.customTypes,
+          customPlatforms: data.customPlatforms,
+          customStatuses: data.customStatuses,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return tracker;
+  }
+
+  async getRepurposingToolkit(userId: string): Promise<RepurposingToolkit | undefined> {
+    const [toolkit] = await db
+      .select()
+      .from(repurposingToolkit)
+      .where(eq(repurposingToolkit.userId, userId));
+    return toolkit;
+  }
+
+  async upsertRepurposingToolkit(data: InsertRepurposingToolkit): Promise<RepurposingToolkit> {
+    const [toolkit] = await db
+      .insert(repurposingToolkit)
+      .values(data)
+      .onConflictDoUpdate({
+        target: repurposingToolkit.userId,
+        set: {
+          repurposingItems: data.repurposingItems,
+          customPlatforms: data.customPlatforms,
+          customFormats: data.customFormats,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return toolkit;
+  }
+
+  async getContentPerformanceStrategy(userId: string): Promise<ContentPerformanceStrategy | undefined> {
+    const [strategy] = await db
+      .select()
+      .from(contentPerformanceStrategy)
+      .where(eq(contentPerformanceStrategy.userId, userId));
+    return strategy;
+  }
+
+  async upsertContentPerformanceStrategy(data: InsertContentPerformanceStrategy): Promise<ContentPerformanceStrategy> {
+    const [strategy] = await db
+      .insert(contentPerformanceStrategy)
+      .values(data)
+      .onConflictDoUpdate({
+        target: contentPerformanceStrategy.userId,
+        set: {
+          contentThatFeltGood: data.contentThatFeltGood,
+          contentThatPerformed: data.contentThatPerformed,
+          whatDidntLand: data.whatDidntLand,
+          audienceReactions: data.audienceReactions,
+          strategyShifts: data.strategyShifts,
+          nextCheckInDate: data.nextCheckInDate,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return strategy;
+  }
+
+  async getPerformanceTrackingTable(userId: string): Promise<PerformanceTrackingTable | undefined> {
+    const [table] = await db
+      .select()
+      .from(performanceTrackingTable)
+      .where(eq(performanceTrackingTable.userId, userId));
+    return table;
+  }
+
+  async upsertPerformanceTrackingTable(data: InsertPerformanceTrackingTable): Promise<PerformanceTrackingTable> {
+    const [table] = await db
+      .insert(performanceTrackingTable)
+      .values(data)
+      .onConflictDoUpdate({
+        target: performanceTrackingTable.userId,
+        set: {
+          performanceItems: data.performanceItems,
+          customContentTypes: data.customContentTypes,
+          customPlatforms: data.customPlatforms,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return table;
+  }
+
+  // Product Launch System
+  async getSeasonalityTimeline(userId: string, year: number): Promise<SeasonalityTimeline | undefined> {
+    const [timeline] = await db
+      .select()
+      .from(seasonalityTimeline)
+      .where(and(
+        eq(seasonalityTimeline.userId, userId),
+        eq(seasonalityTimeline.year, year)
+      ));
+    return timeline;
+  }
+
+  async upsertSeasonalityTimeline(data: InsertSeasonalityTimeline): Promise<SeasonalityTimeline> {
+    const [timeline] = await db
+      .insert(seasonalityTimeline)
+      .values(data)
+      .onConflictDoUpdate({
+        target: [seasonalityTimeline.userId, seasonalityTimeline.year],
+        set: {
+          events: data.events,
+          eventTypes: data.eventTypes,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return timeline;
+  }
+
+  async getQuarterDetailPlan(userId: string, year: number, quarter: number): Promise<QuarterDetailPlan | undefined> {
+    const [plan] = await db
+      .select()
+      .from(quarterDetailPlans)
+      .where(and(
+        eq(quarterDetailPlans.userId, userId),
+        eq(quarterDetailPlans.year, year),
+        eq(quarterDetailPlans.quarter, quarter)
+      ));
+    return plan;
+  }
+
+  async upsertQuarterDetailPlan(data: InsertQuarterDetailPlan): Promise<QuarterDetailPlan> {
+    const [plan] = await db
+      .insert(quarterDetailPlans)
+      .values(data)
+      .onConflictDoUpdate({
+        target: [quarterDetailPlans.userId, quarterDetailPlans.year, quarterDetailPlans.quarter],
+        set: {
+          quarterData: data.quarterData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return plan;
+  }
+
+  async getProductComponentChecklist(userId: string): Promise<ProductComponentChecklist | undefined> {
+    const [checklist] = await db
+      .select()
+      .from(productComponentChecklists)
+      .where(eq(productComponentChecklists.userId, userId));
+    return checklist;
+  }
+
+  async upsertProductComponentChecklist(data: InsertProductComponentChecklist): Promise<ProductComponentChecklist> {
+    const [checklist] = await db
+      .insert(productComponentChecklists)
+      .values(data)
+      .onConflictDoUpdate({
+        target: productComponentChecklists.userId,
+        set: {
+          products: data.products,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return checklist;
+  }
+
+  async getProfitCalculator(userId: string): Promise<ProfitCalculator | undefined> {
+    const [calculator] = await db
+      .select()
+      .from(profitCalculator)
+      .where(eq(profitCalculator.userId, userId));
+    return calculator;
+  }
+
+  async upsertProfitCalculator(data: InsertProfitCalculator): Promise<ProfitCalculator> {
+    const [calculator] = await db
+      .insert(profitCalculator)
+      .values(data)
+      .onConflictDoUpdate({
+        target: profitCalculator.userId,
+        set: {
+          savedCalculations: data.savedCalculations,
+          currency: data.currency,
+          currentCalculation: data.currentCalculation,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return calculator;
+  }
+
+  async getPrelaunchTimelinePlanner(userId: string): Promise<PrelaunchTimelinePlanner | undefined> {
+    const [planner] = await db
+      .select()
+      .from(prelaunchTimelinePlanner)
+      .where(eq(prelaunchTimelinePlanner.userId, userId));
+    return planner;
+  }
+
+  async upsertPrelaunchTimelinePlanner(data: InsertPrelaunchTimelinePlanner): Promise<PrelaunchTimelinePlanner> {
+    const [planner] = await db
+      .insert(prelaunchTimelinePlanner)
+      .values(data)
+      .onConflictDoUpdate({
+        target: prelaunchTimelinePlanner.userId,
+        set: {
+          timelineLength: data.timelineLength,
+          weeklyContent: data.weeklyContent,
+          weekNotes: data.weekNotes,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return planner;
+  }
+
+  async getLaunchGrowthPlans(userId: string): Promise<LaunchGrowthPlan | undefined> {
+    const [plans] = await db
+      .select()
+      .from(launchGrowthPlans)
+      .where(eq(launchGrowthPlans.userId, userId));
+    return plans;
+  }
+
+  async upsertLaunchGrowthPlans(data: InsertLaunchGrowthPlan): Promise<LaunchGrowthPlan> {
+    const [plans] = await db
+      .insert(launchGrowthPlans)
+      .values(data)
+      .onConflictDoUpdate({
+        target: launchGrowthPlans.userId,
+        set: {
+          growthPlans: data.growthPlans,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return plans;
+  }
+
+  // Financial Management System
+  async getMoneyMap(userId: string): Promise<MoneyMap | undefined> {
+    const [moneymap] = await db
+      .select()
+      .from(moneyMap)
+      .where(eq(moneyMap.userId, userId));
+    return moneymap;
+  }
+
+  async upsertMoneyMap(data: InsertMoneyMap): Promise<MoneyMap> {
+    const [moneymap] = await db
+      .insert(moneyMap)
+      .values(data)
+      .onConflictDoUpdate({
+        target: moneyMap.userId,
+        set: {
+          currency: data.currency,
+          period: data.period,
+          goalsData: data.goalsData,
+          incomeExpensesData: data.incomeExpensesData,
+          savingsData: data.savingsData,
+          monthlySnapshots: data.monthlySnapshots,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return moneymap;
+  }
+
+  // Streamline Your Workflow System
+  async getSopBuilder(userId: string): Promise<SopBuilder | undefined> {
+    const [builder] = await db
+      .select()
+      .from(sopBuilders)
+      .where(eq(sopBuilders.userId, userId));
+    return builder;
+  }
+
+  async upsertSopBuilder(data: InsertSopBuilder): Promise<SopBuilder> {
+    const [builder] = await db
+      .insert(sopBuilders)
+      .values(data)
+      .onConflictDoUpdate({
+        target: sopBuilders.userId,
+        set: {
+          sops: data.sops,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return builder;
+  }
+
+  async getAutomationToolkit(userId: string): Promise<AutomationToolkit | undefined> {
+    const [toolkit] = await db
+      .select()
+      .from(automationToolkit)
+      .where(eq(automationToolkit.userId, userId));
+    return toolkit;
+  }
+
+  async upsertAutomationToolkit(data: InsertAutomationToolkit): Promise<AutomationToolkit> {
+    const [toolkit] = await db
+      .insert(automationToolkit)
+      .values(data)
+      .onConflictDoUpdate({
+        target: automationToolkit.userId,
+        set: {
+          promptLibrary: data.promptLibrary,
+          flowBuilder: data.flowBuilder,
+          instagramCopies: data.instagramCopies,
+          prewrittenReplies: data.prewrittenReplies,
+          oneClickFlows: data.oneClickFlows,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return toolkit;
+  }
+
+  // Focus Timer System
+  async logFocusSession(session: InsertFocusSessionLog): Promise<FocusSessionLog> {
+    const [log] = await db
+      .insert(focusSessionLogs)
+      .values(session)
+      .returning();
+    return log;
+  }
+
+  async getFocusSessionLogs(userId: string, limit: number = 50): Promise<FocusSessionLog[]> {
+    return await db
+      .select()
+      .from(focusSessionLogs)
+      .where(eq(focusSessionLogs.userId, userId))
+      .orderBy(desc(focusSessionLogs.completedAt))
+      .limit(limit);
   }
 }
 

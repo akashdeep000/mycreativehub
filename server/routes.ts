@@ -1633,6 +1633,367 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===========================================
+  // PERSISTENT DATA API ROUTES - DATABASE STORAGE
+  // ===========================================
+
+  // Content Creation System - Monthly Content Calendar
+  app.get('/api/persistent/monthly-content-calendar/:year/:month', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      const calendar = await storage.getMonthlyContentCalendar(userId, year, month);
+      res.json(calendar || null);
+    } catch (error) {
+      console.error('Error fetching monthly content calendar:', error);
+      res.status(500).json({ message: 'Failed to fetch calendar data' });
+    }
+  });
+
+  app.put('/api/persistent/monthly-content-calendar', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { year, month, calendarData, colorTags } = req.body;
+      const calendar = await storage.upsertMonthlyContentCalendar({
+        userId,
+        year,
+        month,
+        calendarData,
+        colorTags
+      });
+      res.json(calendar);
+    } catch (error) {
+      console.error('Error saving monthly content calendar:', error);
+      res.status(500).json({ message: 'Failed to save calendar data' });
+    }
+  });
+
+  // Content Creation System - Content Batching Planner
+  app.get('/api/persistent/content-batching-planner', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const planner = await storage.getContentBatchingPlanner(userId);
+      res.json(planner || null);
+    } catch (error) {
+      console.error('Error fetching content batching planner:', error);
+      res.status(500).json({ message: 'Failed to fetch planner data' });
+    }
+  });
+
+  app.put('/api/persistent/content-batching-planner', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { posts, customPillars, customPostTypes } = req.body;
+      const planner = await storage.upsertContentBatchingPlanner({
+        userId,
+        posts,
+        customPillars,
+        customPostTypes
+      });
+      res.json(planner);
+    } catch (error) {
+      console.error('Error saving content batching planner:', error);
+      res.status(500).json({ message: 'Failed to save planner data' });
+    }
+  });
+
+  // Content Creation System - Content Status Tracker
+  app.get('/api/persistent/content-status-tracker', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const tracker = await storage.getContentStatusTracker(userId);
+      res.json(tracker || null);
+    } catch (error) {
+      console.error('Error fetching content status tracker:', error);
+      res.status(500).json({ message: 'Failed to fetch tracker data' });
+    }
+  });
+
+  app.put('/api/persistent/content-status-tracker', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { contentItems, customTypes, customPlatforms, customStatuses } = req.body;
+      const tracker = await storage.upsertContentStatusTracker({
+        userId,
+        contentItems,
+        customTypes,
+        customPlatforms,
+        customStatuses
+      });
+      res.json(tracker);
+    } catch (error) {
+      console.error('Error saving content status tracker:', error);
+      res.status(500).json({ message: 'Failed to save tracker data' });
+    }
+  });
+
+  // Product Launch System - Seasonality Timeline
+  app.get('/api/persistent/seasonality-timeline/:year', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const year = parseInt(req.params.year);
+      const timeline = await storage.getSeasonalityTimeline(userId, year);
+      res.json(timeline || null);
+    } catch (error) {
+      console.error('Error fetching seasonality timeline:', error);
+      res.status(500).json({ message: 'Failed to fetch timeline data' });
+    }
+  });
+
+  app.put('/api/persistent/seasonality-timeline', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { year, events, eventTypes } = req.body;
+      const timeline = await storage.upsertSeasonalityTimeline({
+        userId,
+        year,
+        events,
+        eventTypes
+      });
+      res.json(timeline);
+    } catch (error) {
+      console.error('Error saving seasonality timeline:', error);
+      res.status(500).json({ message: 'Failed to save timeline data' });
+    }
+  });
+
+  // Product Launch System - Quarter Detail Plans
+  app.get('/api/persistent/quarter-detail/:year/:quarter', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const year = parseInt(req.params.year);
+      const quarter = parseInt(req.params.quarter);
+      const plan = await storage.getQuarterDetailPlan(userId, year, quarter);
+      res.json(plan || null);
+    } catch (error) {
+      console.error('Error fetching quarter detail plan:', error);
+      res.status(500).json({ message: 'Failed to fetch quarter plan data' });
+    }
+  });
+
+  app.put('/api/persistent/quarter-detail', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { year, quarter, quarterData } = req.body;
+      const plan = await storage.upsertQuarterDetailPlan({
+        userId,
+        year,
+        quarter,
+        quarterData
+      });
+      res.json(plan);
+    } catch (error) {
+      console.error('Error saving quarter detail plan:', error);
+      res.status(500).json({ message: 'Failed to save quarter plan data' });
+    }
+  });
+
+  // Product Launch System - Profit Calculator
+  app.get('/api/persistent/profit-calculator', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const calculator = await storage.getProfitCalculator(userId);
+      res.json(calculator || null);
+    } catch (error) {
+      console.error('Error fetching profit calculator:', error);
+      res.status(500).json({ message: 'Failed to fetch calculator data' });
+    }
+  });
+
+  app.put('/api/persistent/profit-calculator', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { savedCalculations, currency, currentCalculation } = req.body;
+      const calculator = await storage.upsertProfitCalculator({
+        userId,
+        savedCalculations,
+        currency,
+        currentCalculation
+      });
+      res.json(calculator);
+    } catch (error) {
+      console.error('Error saving profit calculator:', error);
+      res.status(500).json({ message: 'Failed to save calculator data' });
+    }
+  });
+
+  // Product Launch System - Pre-launch Timeline Planner
+  app.get('/api/persistent/prelaunch-timeline-planner', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const planner = await storage.getPrelaunchTimelinePlanner(userId);
+      res.json(planner || null);
+    } catch (error) {
+      console.error('Error fetching prelaunch timeline planner:', error);
+      res.status(500).json({ message: 'Failed to fetch planner data' });
+    }
+  });
+
+  app.put('/api/persistent/prelaunch-timeline-planner', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { timelineLength, weeklyContent, weekNotes } = req.body;
+      const planner = await storage.upsertPrelaunchTimelinePlanner({
+        userId,
+        timelineLength,
+        weeklyContent,
+        weekNotes
+      });
+      res.json(planner);
+    } catch (error) {
+      console.error('Error saving prelaunch timeline planner:', error);
+      res.status(500).json({ message: 'Failed to save planner data' });
+    }
+  });
+
+  // Product Launch System - Launch Growth Plans
+  app.get('/api/persistent/launch-growth-plans', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const plans = await storage.getLaunchGrowthPlans(userId);
+      res.json(plans || null);
+    } catch (error) {
+      console.error('Error fetching launch growth plans:', error);
+      res.status(500).json({ message: 'Failed to fetch growth plans data' });
+    }
+  });
+
+  app.put('/api/persistent/launch-growth-plans', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { growthPlans } = req.body;
+      const plans = await storage.upsertLaunchGrowthPlans({
+        userId,
+        growthPlans
+      });
+      res.json(plans);
+    } catch (error) {
+      console.error('Error saving launch growth plans:', error);
+      res.status(500).json({ message: 'Failed to save growth plans data' });
+    }
+  });
+
+  // Financial Management System - Money Map
+  app.get('/api/persistent/money-map', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const moneyMap = await storage.getMoneyMap(userId);
+      res.json(moneyMap || null);
+    } catch (error) {
+      console.error('Error fetching money map:', error);
+      res.status(500).json({ message: 'Failed to fetch money map data' });
+    }
+  });
+
+  app.put('/api/persistent/money-map', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { currency, period, goalsData, incomeExpensesData, savingsData, monthlySnapshots } = req.body;
+      const moneyMap = await storage.upsertMoneyMap({
+        userId,
+        currency,
+        period,
+        goalsData,
+        incomeExpensesData,
+        savingsData,
+        monthlySnapshots
+      });
+      res.json(moneyMap);
+    } catch (error) {
+      console.error('Error saving money map:', error);
+      res.status(500).json({ message: 'Failed to save money map data' });
+    }
+  });
+
+  // Streamline Your Workflow System - SOP Builder
+  app.get('/api/persistent/sop-builder', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const builder = await storage.getSopBuilder(userId);
+      res.json(builder || null);
+    } catch (error) {
+      console.error('Error fetching SOP builder:', error);
+      res.status(500).json({ message: 'Failed to fetch SOP builder data' });
+    }
+  });
+
+  app.put('/api/persistent/sop-builder', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { sops } = req.body;
+      const builder = await storage.upsertSopBuilder({
+        userId,
+        sops
+      });
+      res.json(builder);
+    } catch (error) {
+      console.error('Error saving SOP builder:', error);
+      res.status(500).json({ message: 'Failed to save SOP builder data' });
+    }
+  });
+
+  // Streamline Your Workflow System - Automation Toolkit
+  app.get('/api/persistent/automation-toolkit', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const toolkit = await storage.getAutomationToolkit(userId);
+      res.json(toolkit || null);
+    } catch (error) {
+      console.error('Error fetching automation toolkit:', error);
+      res.status(500).json({ message: 'Failed to fetch automation toolkit data' });
+    }
+  });
+
+  app.put('/api/persistent/automation-toolkit', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { promptLibrary, flowBuilder, instagramCopies, prewrittenReplies, oneClickFlows } = req.body;
+      const toolkit = await storage.upsertAutomationToolkit({
+        userId,
+        promptLibrary,
+        flowBuilder,
+        instagramCopies,
+        prewrittenReplies,
+        oneClickFlows
+      });
+      res.json(toolkit);
+    } catch (error) {
+      console.error('Error saving automation toolkit:', error);
+      res.status(500).json({ message: 'Failed to save automation toolkit data' });
+    }
+  });
+
+  // Focus Timer System - Session Logging
+  app.post('/api/persistent/focus-session', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { taskName, durationMinutes, completedAt } = req.body;
+      const session = await storage.logFocusSession({
+        userId,
+        taskName,
+        durationMinutes,
+        completedAt: completedAt ? new Date(completedAt) : new Date()
+      });
+      res.json(session);
+    } catch (error) {
+      console.error('Error logging focus session:', error);
+      res.status(500).json({ message: 'Failed to log focus session' });
+    }
+  });
+
+  app.get('/api/persistent/focus-sessions', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const sessions = await storage.getFocusSessionLogs(userId, limit);
+      res.json(sessions);
+    } catch (error) {
+      console.error('Error fetching focus sessions:', error);
+      res.status(500).json({ message: 'Failed to fetch focus sessions' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
