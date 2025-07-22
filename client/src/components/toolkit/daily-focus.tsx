@@ -39,19 +39,14 @@ export default function DailyFocus() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const today = new Date().toISOString().split('T')[0];
-  console.log('Today date for API calls:', today);
-
   const { data: tasks = [], isLoading, error, refetch } = useQuery({
-    queryKey: ["/api/daily-focus", today],
+    queryKey: ["/api/daily-focus"],
     queryFn: async () => {
-      console.log('Fetching tasks for date:', today);
-      const response = await apiRequest(`/api/daily-focus/${today}`, {
+      console.log('Fetching all daily focus tasks for user');
+      const response = await apiRequest(`/api/daily-focus`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Cache-Control": "no-cache",
-          "Pragma": "no-cache"
         },
       });
       const data = await response.json();
@@ -66,11 +61,9 @@ export default function DailyFocus() {
         return [];
       }
     },
-    // Force refetch on every visit to ensure fresh data
+    // Normal caching behavior since tasks persist
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    staleTime: 0,
-    gcTime: 0, // Don't cache at all
   });
 
   console.log('Current tasks:', tasks);
@@ -103,10 +96,10 @@ export default function DailyFocus() {
     },
     onMutate: async ({ task, priority }) => {
       // Cancel any outgoing refetches to prevent optimistic updates from being overwritten
-      await queryClient.cancelQueries({ queryKey: ["/api/daily-focus", today] });
+      await queryClient.cancelQueries({ queryKey: ["/api/daily-focus"] });
       
       // Snapshot the previous value
-      const previousTasks = queryClient.getQueryData(["/api/daily-focus", today]);
+      const previousTasks = queryClient.getQueryData(["/api/daily-focus"]);
       
       // Optimistically update with new task
       const optimisticTask = {
@@ -120,7 +113,7 @@ export default function DailyFocus() {
         updatedAt: new Date().toISOString()
       };
       
-      queryClient.setQueryData(["/api/daily-focus", today], (old: any) => {
+      queryClient.setQueryData(["/api/daily-focus"], (old: any) => {
         return old ? [...old, optimisticTask] : [optimisticTask];
       });
       
@@ -154,7 +147,7 @@ export default function DailyFocus() {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus"] });
       queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
     },
@@ -176,13 +169,13 @@ export default function DailyFocus() {
     },
     onMutate: async ({ id, completed }) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey: ["/api/daily-focus", today] });
+      await queryClient.cancelQueries({ queryKey: ["/api/daily-focus"] });
 
       // Snapshot the previous value
-      const previousTasks = queryClient.getQueryData(["/api/daily-focus", today]);
+      const previousTasks = queryClient.getQueryData(["/api/daily-focus"]);
 
       // Optimistically update the task
-      queryClient.setQueryData(["/api/daily-focus", today], (old: any) => {
+      queryClient.setQueryData(["/api/daily-focus"], (old: any) => {
         if (!old) return old;
         return old.map((task: any) => 
           task.id === id ? { ...task, completed } : task
@@ -193,14 +186,14 @@ export default function DailyFocus() {
       return { previousTasks };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus"] });
       queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
     },
     onError: (error, variables, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousTasks) {
-        queryClient.setQueryData(["/api/daily-focus", today], context.previousTasks);
+        queryClient.setQueryData(["/api/daily-focus"], context.previousTasks);
       }
       
       console.error('Error updating task:', error);
@@ -238,24 +231,24 @@ export default function DailyFocus() {
 
   const clearDailyTasksMutation = useMutation({
     mutationFn: async () => {
-      console.log('Clearing daily tasks for date:', today);
-      const response = await apiRequest(`/api/daily-focus/${today}`, {
+      console.log('Clearing all daily tasks');
+      const response = await apiRequest(`/api/daily-focus/clear-all`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
       });
       const data = await response.json();
-      console.log('Daily tasks cleared successfully:', data);
+      console.log('All daily tasks cleared successfully:', data);
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
-      queryClient.refetchQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus"] });
+      queryClient.refetchQueries({ queryKey: ["/api/daily-focus"] });
       queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
       toast({
         title: "Success",
-        description: "Daily checklist cleared successfully",
+        description: "All daily tasks cleared successfully",
       });
     },
     onError: (error) => {
@@ -309,7 +302,7 @@ export default function DailyFocus() {
       console.log(`All ${priority} tasks cleared successfully`);
     },
     onSuccess: (_, priority) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus"] });
       queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
       toast({
         title: "Success",
@@ -391,13 +384,13 @@ export default function DailyFocus() {
     },
     onMutate: async (taskId) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey: ["/api/daily-focus", today] });
+      await queryClient.cancelQueries({ queryKey: ["/api/daily-focus"] });
 
       // Snapshot the previous value
-      const previousTasks = queryClient.getQueryData(["/api/daily-focus", today]);
+      const previousTasks = queryClient.getQueryData(["/api/daily-focus"]);
 
       // Optimistically update to remove the task
-      queryClient.setQueryData(["/api/daily-focus", today], (old: any) => {
+      queryClient.setQueryData(["/api/daily-focus"], (old: any) => {
         if (!old) return old;
         return old.filter((task: any) => task.id !== taskId);
       });
@@ -407,7 +400,7 @@ export default function DailyFocus() {
     },
     onError: (error, taskId, context) => {
       // If the mutation fails, use the context to roll back
-      queryClient.setQueryData(["/api/daily-focus", today], context?.previousTasks);
+      queryClient.setQueryData(["/api/daily-focus"], context?.previousTasks);
       
       console.error('Error deleting task:', error);
       console.error('Delete error details:', {
@@ -438,7 +431,7 @@ export default function DailyFocus() {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus"] });
       queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
     },
   });
@@ -463,13 +456,13 @@ export default function DailyFocus() {
     },
     onMutate: async ({ taskId, newText }) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey: ["/api/daily-focus", today] });
+      await queryClient.cancelQueries({ queryKey: ["/api/daily-focus"] });
 
       // Snapshot the previous value
-      const previousTasks = queryClient.getQueryData(["/api/daily-focus", today]);
+      const previousTasks = queryClient.getQueryData(["/api/daily-focus"]);
 
       // Optimistically update the task
-      queryClient.setQueryData(["/api/daily-focus", today], (old: any) => {
+      queryClient.setQueryData(["/api/daily-focus"], (old: any) => {
         if (!old) return old;
         return old.map((task: any) => 
           task.id === taskId ? { ...task, task: newText } : task
@@ -480,14 +473,14 @@ export default function DailyFocus() {
       return { previousTasks };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus"] });
       setEditingTaskId(null);
       setEditingTaskText("");
     },
     onError: (error, { taskId }, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousTasks) {
-        queryClient.setQueryData(["/api/daily-focus", today], context.previousTasks);
+        queryClient.setQueryData(["/api/daily-focus"], context.previousTasks);
       }
       
       console.error('Error editing task:', error);

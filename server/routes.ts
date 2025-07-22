@@ -425,14 +425,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Daily focus tasks
-  app.get('/api/daily-focus/:date', jwtAuth, async (req: any, res) => {
+  app.get('/api/daily-focus', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const date = new Date(req.params.date);
-      console.log(`Fetching daily focus tasks for userId: ${userId}, date: ${req.params.date}`);
-      console.log(`Parsed date object: ${date}`);
+      console.log(`Fetching daily focus tasks for userId: ${userId}`);
       
-      const tasks = await storage.getDailyFocusTasks(userId, date);
+      const tasks = await storage.getDailyFocusTasks(userId);
       console.log(`Retrieved ${tasks.length} tasks:`, tasks);
       
       res.json(tasks);
@@ -589,23 +587,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Clear daily tasks
-  app.delete('/api/daily-focus/:date', jwtAuth, async (req: any, res) => {
+  // Clear all daily tasks
+  app.delete('/api/daily-focus/clear-all', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const date = new Date(req.params.date);
       
-      await storage.clearDailyFocusTasks(userId, date);
+      await storage.clearDailyFocusTasks(userId);
       
       // Log activity
       await storage.createActivityLog({
         userId,
         action: 'tasks_cleared',
-        description: 'Cleared daily checklist',
-        metadata: { date: req.params.date },
+        description: 'Cleared all daily focus tasks',
+        metadata: {},
       });
       
-      res.json({ message: 'Daily tasks cleared successfully' });
+      res.json({ message: 'All daily tasks cleared successfully' });
     } catch (error) {
       console.error("Error clearing daily tasks:", error);
       res.status(500).json({ message: "Failed to clear daily tasks" });

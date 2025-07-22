@@ -121,12 +121,12 @@ export interface IStorage {
   upsertUserToolkitData(data: any): Promise<UserToolkitData>;
   
   // Daily focus tasks
-  getDailyFocusTasks(userId: string, date: Date): Promise<DailyFocusTask[]>;
+  getDailyFocusTasks(userId: string): Promise<DailyFocusTask[]>;
   getDailyFocusTask(id: number): Promise<DailyFocusTask | undefined>;
   createDailyFocusTask(task: InsertDailyFocusTask): Promise<DailyFocusTask>;
   updateDailyFocusTask(id: number, completed: boolean): Promise<DailyFocusTask>;
   deleteDailyFocusTask(id: number): Promise<void>;
-  clearDailyFocusTasks(userId: string, date: Date): Promise<void>;
+  clearDailyFocusTasks(userId: string): Promise<void>;
   
   // Task completion log
   logTaskCompletion(log: InsertTaskCompletionLog): Promise<TaskCompletionLog>;
@@ -344,22 +344,12 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async getDailyFocusTasks(userId: string, date: Date): Promise<DailyFocusTask[]> {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
+  async getDailyFocusTasks(userId: string): Promise<DailyFocusTask[]> {
     return await db
       .select()
       .from(dailyFocusTasks)
-      .where(
-        and(
-          eq(dailyFocusTasks.userId, userId),
-          gte(dailyFocusTasks.date, startOfDay),
-          lte(dailyFocusTasks.date, endOfDay)
-        )
-      );
+      .where(eq(dailyFocusTasks.userId, userId))
+      .orderBy(dailyFocusTasks.createdAt);
   }
 
   async createDailyFocusTask(task: InsertDailyFocusTask): Promise<DailyFocusTask> {
@@ -409,21 +399,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(dailyFocusTasks.id, id));
   }
 
-  async clearDailyFocusTasks(userId: string, date: Date): Promise<void> {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
+  async clearDailyFocusTasks(userId: string): Promise<void> {
     await db
       .delete(dailyFocusTasks)
-      .where(
-        and(
-          eq(dailyFocusTasks.userId, userId),
-          gte(dailyFocusTasks.date, startOfDay),
-          lte(dailyFocusTasks.date, endOfDay)
-        )
-      );
+      .where(eq(dailyFocusTasks.userId, userId));
   }
 
   async logTaskCompletion(log: InsertTaskCompletionLog): Promise<TaskCompletionLog> {
