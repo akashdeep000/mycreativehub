@@ -225,7 +225,7 @@ export default function DailyFocus() {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus"] });
     },
   });
 
@@ -258,7 +258,7 @@ export default function DailyFocus() {
         name: error?.name,
         tokenExists: !!localStorage.getItem('token'),
         tokenLength: localStorage.getItem('token')?.length || 0,
-        date: today
+
       });
       
       if (isUnauthorizedError(error)) {
@@ -287,19 +287,42 @@ export default function DailyFocus() {
       const tasksToDelete = tasksByPriority[priority];
       console.log(`Clearing ${priority} tasks:`, tasksToDelete);
       
-      // Delete each task individually
-      for (const task of tasksToDelete) {
-        console.log(`Deleting ${priority} task:`, task.id);
-        const response = await apiRequest(`/api/daily-focus/${task.id}`, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        const data = await response.json();
-        console.log(`Task ${task.id} deleted:`, data);
-      }
-      console.log(`All ${priority} tasks cleared successfully`);
+      // Delete each task individually with error handling
+      const deleteResults = await Promise.allSettled(
+        tasksToDelete.map(async (task) => {
+          console.log(`Deleting ${priority} task:`, task.id);
+          try {
+            const response = await apiRequest(`/api/daily-focus/${task.id}`, {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+            
+            if (!response.ok) {
+              if (response.status === 404) {
+                console.log(`Task ${task.id} already deleted, skipping`);
+                return { success: true, taskId: task.id };
+              }
+              throw new Error(`Failed to delete task ${task.id}: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log(`Task ${task.id} deleted:`, data);
+            return { success: true, taskId: task.id };
+          } catch (error) {
+            console.error(`Error deleting task ${task.id}:`, error);
+            return { success: false, taskId: task.id, error };
+          }
+        })
+      );
+      
+      const successCount = deleteResults.filter(result => 
+        result.status === 'fulfilled' && result.value.success
+      ).length;
+      
+      console.log(`${successCount} out of ${tasksToDelete.length} ${priority} tasks cleared successfully`);
+      return { deletedCount: successCount };
     },
     onSuccess: (_, priority) => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-focus"] });
@@ -505,7 +528,7 @@ export default function DailyFocus() {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-focus"] });
     },
   });
 
