@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
-import { ChevronLeft, ChevronRight, Calendar, Lightbulb, Download, Edit3, Trash2, Plus, Palette, Check, Video, RefreshCw, TrendingUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Lightbulb, Download, Edit3, Trash2, Plus, Palette, Check, Video, RefreshCw, TrendingUp, Edit2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -36,6 +36,14 @@ const defaultColorTags: ColorTag[] = [
   { id: '5', label: 'Story', color: '#96CEB4' },
 ];
 
+// Predefined color swatches for easier selection
+const colorSwatches = [
+  '#FF6B9D', '#FF8E3C', '#4ECDC4', '#45B7D1', '#96CEB4',
+  '#F39C12', '#E74C3C', '#9B59B6', '#3498DB', '#2ECC71',
+  '#1ABC9C', '#F1C40F', '#E67E22', '#8E44AD', '#3498DB',
+  '#16A085', '#27AE60', '#E74C3C', '#D35400', '#8E44AD'
+];
+
 export default function MonthlyContentCalendar() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -44,6 +52,7 @@ export default function MonthlyContentCalendar() {
   const [colorTags, setColorTags] = useState<ColorTag[]>(defaultColorTags);
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
+  const [colorPickerTagId, setColorPickerTagId] = useState<string | null>(null);
   const [calendarData, setCalendarData] = useState<CalendarCell[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [batchMode, setBatchMode] = useState(false);
@@ -115,6 +124,21 @@ export default function MonthlyContentCalendar() {
 
     return () => clearTimeout(timeoutId);
   }, [calendarData, colorTags]);
+
+  // Close color picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.color-picker') && !target.closest('.color-button')) {
+        setColorPickerTagId(null);
+      }
+    };
+
+    if (colorPickerTagId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [colorPickerTagId]);
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -405,6 +429,7 @@ export default function MonthlyContentCalendar() {
             <div className="flex flex-wrap gap-3 items-center">
               {colorTags.map((tag) => {
                 const isActive = selectedTagId === tag.id;
+                const isColorPickerOpen = colorPickerTagId === tag.id;
                 return (
                   <div
                     key={tag.id}
@@ -413,48 +438,89 @@ export default function MonthlyContentCalendar() {
                         ? 'bg-blue-50 border-2 border-blue-500 shadow-md ring-2 ring-blue-200' 
                         : 'bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
                     }`}
-                    onClick={() => setSelectedTagId(selectedTagId === tag.id ? null : tag.id)}
+                    onClick={(e) => {
+                      // Only select tag if not clicking on pencil, delete, or color circle
+                      const target = e.target as HTMLElement;
+                      const isInteractiveElement = target.closest('.edit-button, .delete-button, .color-button, .color-picker');
+                      if (!isInteractiveElement) {
+                        setSelectedTagId(selectedTagId === tag.id ? null : tag.id);
+                      }
+                    }}
                   >
                     {isActive && (
                       <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
                         Selected
                       </div>
                     )}
-                    <div
-                      className={`w-4 h-4 rounded-full border transition-all ${
-                        isActive ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
-                      }`}
-                      style={{ backgroundColor: tag.color }}
-                    />
-                    {editingTagId === tag.id ? (
-                      <Input
-                        value={tag.label}
-                        onChange={(e) => updateColorTag(tag.id, 'label', e.target.value)}
-                        onBlur={() => setEditingTagId(null)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') setEditingTagId(null);
-                        }}
-                        className="h-6 text-xs w-24"
-                        autoFocus
-                      />
-                    ) : (
-                      <span
-                        className="text-sm cursor-pointer hover:bg-gray-100 px-1 rounded"
+                    
+                    {/* Color circle - clickable for color picker */}
+                    <div className="relative">
+                      <div
+                        className={`w-4 h-4 rounded-full border transition-all cursor-pointer color-button ${
+                          isActive ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
+                        }`}
+                        style={{ backgroundColor: tag.color }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setEditingTagId(tag.id);
+                          setColorPickerTagId(isColorPickerOpen ? null : tag.id);
                         }}
-                      >
-                        {tag.label}
-                      </span>
-                    )}
-                    <input
-                      type="color"
-                      value={tag.color}
-                      onChange={(e) => updateColorTag(tag.id, 'color', e.target.value)}
-                      className="w-6 h-6 rounded border-none cursor-pointer"
-                      onClick={(e) => e.stopPropagation()}
-                    />
+                      />
+                      
+                      {/* Color picker popup */}
+                      {isColorPickerOpen && (
+                        <div className="absolute top-6 left-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3 color-picker">
+                          <div className="grid grid-cols-5 gap-2">
+                            {colorSwatches.map((color) => (
+                              <div
+                                key={color}
+                                className={`w-6 h-6 rounded-full cursor-pointer border-2 transition-all hover:scale-110 ${
+                                  tag.color === color ? 'border-gray-600 ring-2 ring-gray-300' : 'border-gray-200'
+                                }`}
+                                style={{ backgroundColor: color }}
+                                onClick={() => {
+                                  updateColorTag(tag.id, 'color', color);
+                                  setColorPickerTagId(null);
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Tag name with pencil edit */}
+                    <div className="flex items-center gap-1">
+                      {editingTagId === tag.id ? (
+                        <Input
+                          value={tag.label}
+                          onChange={(e) => updateColorTag(tag.id, 'label', e.target.value)}
+                          onBlur={() => setEditingTagId(null)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') setEditingTagId(null);
+                            if (e.key === 'Escape') setEditingTagId(null);
+                          }}
+                          className="h-6 text-xs w-24"
+                          autoFocus
+                        />
+                      ) : (
+                        <>
+                          <span className="text-sm">{tag.label}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingTagId(tag.id);
+                            }}
+                            className="h-4 w-4 p-0 text-gray-400 hover:text-gray-600 edit-button ml-1"
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Delete button */}
                     <Button
                       size="sm"
                       variant="ghost"
@@ -462,7 +528,7 @@ export default function MonthlyContentCalendar() {
                         e.stopPropagation();
                         deleteColorTag(tag.id);
                       }}
-                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700 delete-button"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -555,10 +621,10 @@ export default function MonthlyContentCalendar() {
               </div>
               
               {/* Calendar grid */}
-              <div className="grid grid-cols-7" onMouseUp={handleMouseUp}>
+              <div className="grid grid-cols-7 gap-0" onMouseUp={handleMouseUp}>
                 {days.map((day, index) => {
                   if (day === null) {
-                    return <div key={`empty-${index}`} className="h-40 border-r border-b last:border-r-0" />;
+                    return <div key={`empty-${index}`} className="h-40 border border-gray-200" />;
                   }
                   
                   const cellData = getCellData(day);
@@ -576,7 +642,7 @@ export default function MonthlyContentCalendar() {
                     <div
                       key={`day-${day}`}
                       data-day={day}
-                      className={`h-32 border-r border-b last:border-r-0 p-2 cursor-pointer transition-colors relative ${
+                      className={`h-40 border border-gray-200 p-3 cursor-pointer transition-colors relative ${
                         batchMode ? 'hover:bg-yellow-50' : selectedTagId ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
                       } ${cellData.isBatchDay ? 'ring-2 ring-yellow-300 ring-opacity-50' : ''}`}
                       onClick={() => handleCellClick(day)}
