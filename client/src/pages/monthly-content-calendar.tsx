@@ -101,6 +101,7 @@ export default function MonthlyContentCalendar() {
       });
     },
     onSuccess: () => {
+      console.log('Calendar save successful - resetting hasLocalChanges flag');
       queryClient.invalidateQueries({ queryKey: ['/api/persistent/monthly-content-calendar', year, month] });
       setHasLocalChanges(false); // Reset local changes flag after successful save
     },
@@ -114,9 +115,10 @@ export default function MonthlyContentCalendar() {
     }
   });
 
-  // Initialize calendar data when database data is loaded
+  // Initialize calendar data when database data is loaded - only on first load
   useEffect(() => {
-    if (dbCalendar && !hasLocalChanges) {
+    if (dbCalendar && !hasLocalChanges && calendarData.length === 0 && colorTags.length === defaultColorTags.length) {
+      console.log('Initializing calendar data from database:', dbCalendar);
       if (dbCalendar.calendarData && Array.isArray(dbCalendar.calendarData)) {
         setCalendarData(dbCalendar.calendarData);
       } else {
@@ -129,20 +131,21 @@ export default function MonthlyContentCalendar() {
         setColorTags(defaultColorTags);
       }
     }
-  }, [dbCalendar, hasLocalChanges]);
+  }, [dbCalendar]); // Remove hasLocalChanges dependency to prevent data resets
 
   // Auto-save to database when data changes (with debounce)
   useEffect(() => {
-    if (!hasLocalChanges) return; // Only save when we have local changes
+    if (!hasLocalChanges || saveCalendarMutation.isPending) return; // Only save when we have local changes and not already saving
     
     const timeoutId = setTimeout(() => {
-      if (hasLocalChanges && (calendarData.length > 0 || colorTags.length !== defaultColorTags.length)) {
+      if (hasLocalChanges && !saveCalendarMutation.isPending && (calendarData.length > 0 || colorTags.length !== defaultColorTags.length)) {
+        console.log('Auto-saving calendar data', { calendarDataLength: calendarData.length, colorTagsLength: colorTags.length });
         saveCalendarMutation.mutate({ calendarData, colorTags });
       }
-    }, 1000); // 1-second debounce for faster saving
+    }, 2000); // 2-second debounce to avoid conflicts with immediate saves
 
     return () => clearTimeout(timeoutId);
-  }, [calendarData, colorTags, hasLocalChanges]);
+  }, [calendarData, colorTags, hasLocalChanges, saveCalendarMutation.isPending]);
 
   // Close color picker when clicking outside
   useEffect(() => {
@@ -229,24 +232,35 @@ export default function MonthlyContentCalendar() {
       status: null
     };
 
+    console.log('Adding tag to date:', dateKey, 'tagId:', tagId, 'tag:', newTag);
+
     setCalendarData(prev => {
       const currentData = Array.isArray(prev) ? prev : [];
       const existing = currentData.find(cell => cell.date === dateKey);
       
+      let newCalendarData;
       if (existing) {
-        return currentData.map(cell => 
+        newCalendarData = currentData.map(cell => 
           cell.date === dateKey 
             ? { ...cell, tags: [...cell.tags, newTag] }
             : cell
         );
       } else {
-        return [...currentData, { 
+        newCalendarData = [...currentData, { 
           date: dateKey, 
           tags: [newTag], 
           isBatchDay: false, 
           batchNote: '' 
         }];
       }
+      
+      // Immediate save to database to prevent data loss
+      setTimeout(() => {
+        console.log('Saving immediately after tag addition');
+        saveCalendarMutation.mutate({ calendarData: newCalendarData, colorTags });
+      }, 100);
+      
+      return newCalendarData;
     });
     setHasLocalChanges(true);
   };
@@ -281,9 +295,11 @@ export default function MonthlyContentCalendar() {
   const saveTagNotes = () => {
     if (!editingTag) return;
 
+    console.log('Saving tag notes for tag:', editingTag.tagId, 'notes:', tempNotes);
+
     setCalendarData(prev => {
       const currentData = Array.isArray(prev) ? prev : [];
-      return currentData.map(cell => 
+      const newCalendarData = currentData.map(cell => 
         cell.date === editingTag.cellDate
           ? {
               ...cell,
@@ -295,6 +311,14 @@ export default function MonthlyContentCalendar() {
             }
           : cell
       );
+      
+      // Immediate save to database for tag notes
+      setTimeout(() => {
+        console.log('Saving tag notes immediately to database');
+        saveCalendarMutation.mutate({ calendarData: newCalendarData, colorTags });
+      }, 100);
+      
+      return newCalendarData;
     });
 
     // Close modal and reset state
