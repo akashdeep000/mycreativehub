@@ -322,14 +322,35 @@ export default function MonthlyContentCalendar() {
 
   const exportToPDF = async () => {
     try {
-      const element = document.getElementById('monthly-calendar');
-      if (!element) return;
+      // Hide interactive elements during capture
+      setColorPickerTagId(null);
+      setEditingTagId(null);
+      
+      // Wait for any state changes to settle
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Capture the entire calendar container
+      const element = document.getElementById('pdf-export-container');
+      if (!element) {
+        toast({
+          title: "Export failed",
+          description: "Calendar container not found",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
 
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        scrollX: 0,
+        scrollY: 0
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -339,40 +360,61 @@ export default function MonthlyContentCalendar() {
         format: 'a4'
       });
 
-      const imgWidth = 297;
-      const pageHeight = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-
-      let position = 0;
-
-      // Add title
-      pdf.setFontSize(20);
-      pdf.text(`${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()} Content Calendar`, 20, 20);
-
-      // Add calendar
-      pdf.addImage(imgData, 'PNG', 0, 30, imgWidth, imgHeight - 30);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      // Calculate dimensions to fit A4 landscape
+      const pdfWidth = 297; // A4 landscape width in mm
+      const pdfHeight = 210; // A4 landscape height in mm
+      const margin = 10;
+      const availableWidth = pdfWidth - (margin * 2);
+      const availableHeight = pdfHeight - (margin * 3); // Extra margin for title
+      
+      // Calculate scaling to fit within available space
+      const imgAspectRatio = canvas.width / canvas.height;
+      let imgWidth = availableWidth;
+      let imgHeight = imgWidth / imgAspectRatio;
+      
+      // If height exceeds available space, scale down based on height
+      if (imgHeight > availableHeight) {
+        imgHeight = availableHeight;
+        imgWidth = imgHeight * imgAspectRatio;
       }
 
-      pdf.save(`${monthNames[currentDate.getMonth()]}-${currentDate.getFullYear()}-content-calendar.pdf`);
+      // Add title
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      const title = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()} Content Calendar`;
+      const titleWidth = pdf.getTextWidth(title);
+      const titleX = (pdfWidth - titleWidth) / 2; // Center the title
+      pdf.text(title, titleX, margin + 8);
+
+      // Add subtitle
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      const subtitle = 'Generated from Creative Business Toolkit';
+      const subtitleWidth = pdf.getTextWidth(subtitle);
+      const subtitleX = (pdfWidth - subtitleWidth) / 2;
+      pdf.text(subtitle, subtitleX, margin + 15);
+
+      // Calculate centered position for the image
+      const imgX = (pdfWidth - imgWidth) / 2;
+      const imgY = margin + 20;
+
+      // Add the calendar image
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth, imgHeight);
+
+      // Save the PDF
+      const filename = `${monthNames[currentDate.getMonth()]}-${currentDate.getFullYear()}-content-calendar.pdf`;
+      pdf.save(filename);
       
       toast({
         title: "PDF exported successfully",
-        description: "Your content calendar has been downloaded",
+        description: `${filename} has been downloaded`,
         duration: 3000,
       });
     } catch (error) {
       console.error('Error exporting PDF:', error);
       toast({
         title: "Export failed",
-        description: "There was an error exporting your calendar to PDF",
+        description: "There was an error exporting your calendar to PDF. Please try again.",
         variant: "destructive",
         duration: 3000,
       });
@@ -414,17 +456,19 @@ export default function MonthlyContentCalendar() {
           </Button>
         </div>
 
-        {/* Color Key Section */}
-        <Card className="mb-6">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Lightbulb className="h-5 w-5" />
-              Colour Key
-            </CardTitle>
-            <CardDescription>
-              Select a color category or batch mode, then click calendar dates to apply.
-            </CardDescription>
-          </CardHeader>
+        {/* PDF Export Container - includes both Color Key and Calendar */}
+        <div id="pdf-export-container">
+          {/* Color Key Section */}
+          <Card className="mb-6">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Lightbulb className="h-5 w-5" />
+                Colour Key
+              </CardTitle>
+              <CardDescription>
+                Select a color category or batch mode, then click calendar dates to apply.
+              </CardDescription>
+            </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-3 items-center">
               {colorTags.map((tag) => {
@@ -777,6 +821,7 @@ export default function MonthlyContentCalendar() {
             </div>
           </CardContent>
         </Card>
+        </div> {/* End PDF Export Container */}
       </div>
     </div>
   );
