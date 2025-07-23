@@ -1652,10 +1652,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const { year, month, calendarData, colorTags } = req.body;
-      const calendar = await storage.upsertMonthlyContentCalendar({
+      
+      console.log('Calendar save request:', {
         userId,
         year,
         month,
+        yearType: typeof year,
+        monthType: typeof month,
+        calendarDataLength: calendarData?.length,
+        colorTagsLength: colorTags?.length
+      });
+      
+      // Ensure year and month are numbers
+      const validYear = year && typeof year === 'number' ? year : new Date().getFullYear();
+      const validMonth = month && typeof month === 'number' ? month : new Date().getMonth() + 1;
+      
+      const calendar = await storage.upsertMonthlyContentCalendar({
+        userId,
+        year: validYear,
+        month: validMonth,
         calendarData,
         colorTags
       });

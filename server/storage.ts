@@ -804,7 +804,7 @@ export class DatabaseStorage implements IStorage {
         imageUrl: img.imageUrl,
         caption: img.caption,
         tags: img.tags,
-        position: img.position,
+        position: img.position as any,
         isPinned: img.isPinned,
       })),
       ...notes.map(note => this.createBoardNote({
@@ -812,12 +812,12 @@ export class DatabaseStorage implements IStorage {
         title: note.title,
         content: note.content,
         color: note.color,
-        position: note.position,
+        position: note.position as any,
       })),
       ...palettes.map(palette => this.createColorPalette({
         boardId: duplicatedBoard.id,
         name: palette.name,
-        colors: palette.colors,
+        colors: palette.colors as any,
       })),
       ...links.map(link => this.createBoardLink({
         boardId: duplicatedBoard.id,
