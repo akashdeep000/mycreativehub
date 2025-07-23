@@ -105,11 +105,15 @@ export default function MonthlyContentCalendar() {
   // Initialize calendar data when database data is loaded
   useEffect(() => {
     if (dbCalendar) {
-      if (dbCalendar.calendarData) {
+      if (dbCalendar.calendarData && Array.isArray(dbCalendar.calendarData)) {
         setCalendarData(dbCalendar.calendarData);
+      } else {
+        setCalendarData([]);
       }
-      if (dbCalendar.colorTags) {
+      if (dbCalendar.colorTags && Array.isArray(dbCalendar.colorTags)) {
         setColorTags(dbCalendar.colorTags);
+      } else {
+        setColorTags(defaultColorTags);
       }
     }
   }, [dbCalendar]);
@@ -179,6 +183,17 @@ export default function MonthlyContentCalendar() {
 
   const getCellData = (day: number) => {
     const dateKey = getDateKey(day);
+    if (!Array.isArray(calendarData)) {
+      return { 
+        date: dateKey, 
+        content: '', 
+        tagId: null, 
+        tagLabel: '', 
+        status: null, 
+        isBatchDay: false, 
+        batchNote: '' 
+      };
+    }
     return calendarData.find(cell => cell.date === dateKey) || { 
       date: dateKey, 
       content: '', 
@@ -193,13 +208,15 @@ export default function MonthlyContentCalendar() {
   const updateCell = (day: number, updates: Partial<CalendarCell>) => {
     const dateKey = getDateKey(day);
     setCalendarData(prev => {
-      const existing = prev.find(cell => cell.date === dateKey);
+      // Ensure prev is an array
+      const currentData = Array.isArray(prev) ? prev : [];
+      const existing = currentData.find(cell => cell.date === dateKey);
       if (existing) {
-        return prev.map(cell => 
+        return currentData.map(cell => 
           cell.date === dateKey ? { ...cell, ...updates } : cell
         );
       } else {
-        return [...prev, { 
+        return [...currentData, { 
           date: dateKey, 
           content: '', 
           tagId: null, 
@@ -311,10 +328,13 @@ export default function MonthlyContentCalendar() {
   };
 
   const deleteColorTag = (id: string) => {
-    setColorTags(prev => prev.filter(tag => tag.id !== id));
-    setCalendarData(prev => prev.map(cell => 
-      cell.tagId === id ? { ...cell, tagId: null, tagLabel: '' } : cell
-    ));
+    setColorTags(prev => Array.isArray(prev) ? prev.filter(tag => tag.id !== id) : []);
+    setCalendarData(prev => {
+      const currentData = Array.isArray(prev) ? prev : [];
+      return currentData.map(cell => 
+        cell.tagId === id ? { ...cell, tagId: null, tagLabel: '' } : cell
+      );
+    });
     if (selectedTagId === id) {
       setSelectedTagId(null);
     }
