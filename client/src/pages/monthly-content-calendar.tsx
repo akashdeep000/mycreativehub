@@ -90,13 +90,22 @@ export default function MonthlyContentCalendar() {
   // Save calendar data to database
   const saveCalendarMutation = useMutation({
     mutationFn: async (data: { calendarData: CalendarCell[], colorTags: ColorTag[] }) => {
+      console.log('Saving calendar data to database:', {
+        year,
+        month,
+        calendarDataArray: data.calendarData,
+        calendarDataLength: data.calendarData?.length || 0,
+        colorTagsArray: data.colorTags,
+        colorTagsLength: data.colorTags?.length || 0
+      });
+      
       await apiRequest('/api/persistent/monthly-content-calendar', {
         method: 'PUT',
         body: JSON.stringify({
           year,
           month,
-          calendarData: data.calendarData,
-          colorTags: data.colorTags
+          calendarData: data.calendarData || [],
+          colorTags: data.colorTags || []
         })
       });
     },
@@ -117,21 +126,34 @@ export default function MonthlyContentCalendar() {
 
   // Initialize calendar data when database data is loaded - only on first load
   useEffect(() => {
-    if (dbCalendar && !hasLocalChanges && calendarData.length === 0 && colorTags.length === defaultColorTags.length) {
+    if (dbCalendar && !hasLocalChanges) {
       console.log('Initializing calendar data from database:', dbCalendar);
-      if (dbCalendar.calendarData && Array.isArray(dbCalendar.calendarData)) {
+      console.log('Database calendar data type:', typeof dbCalendar.calendarData, 'value:', dbCalendar.calendarData);
+      console.log('Database color tags type:', typeof dbCalendar.colorTags, 'value:', dbCalendar.colorTags);
+      
+      // Handle calendar data - could be array or object from database
+      if (Array.isArray(dbCalendar.calendarData)) {
         setCalendarData(dbCalendar.calendarData);
+      } else if (dbCalendar.calendarData && typeof dbCalendar.calendarData === 'object') {
+        // Convert object to array if needed
+        const dataArray = Object.values(dbCalendar.calendarData);
+        setCalendarData(Array.isArray(dataArray) ? dataArray : []);
       } else {
         setCalendarData([]);
       }
-      if (dbCalendar.colorTags && Array.isArray(dbCalendar.colorTags) && dbCalendar.colorTags.length > 0) {
+      
+      // Handle color tags
+      if (Array.isArray(dbCalendar.colorTags) && dbCalendar.colorTags.length > 0) {
         setColorTags(dbCalendar.colorTags);
       } else {
         // Initialize with default color tags if none exist in database
         setColorTags(defaultColorTags);
       }
+      
+      // Set flag to indicate we've loaded from database
+      setHasLocalChanges(false);
     }
-  }, [dbCalendar]); // Remove hasLocalChanges dependency to prevent data resets
+  }, [dbCalendar, year, month]); // Re-run when month changes
 
   // Auto-save to database when data changes (with debounce)
   useEffect(() => {

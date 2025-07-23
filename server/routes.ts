@@ -1653,27 +1653,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const { year, month, calendarData, colorTags } = req.body;
       
-      console.log('Calendar save request:', {
+      console.log('Calendar save request received:', {
         userId,
         year,
         month,
         yearType: typeof year,
         monthType: typeof month,
+        calendarDataType: typeof calendarData,
+        calendarDataIsArray: Array.isArray(calendarData),
         calendarDataLength: calendarData?.length,
-        colorTagsLength: colorTags?.length
+        calendarDataValue: calendarData,
+        colorTagsType: typeof colorTags,
+        colorTagsIsArray: Array.isArray(colorTags),
+        colorTagsLength: colorTags?.length,
+        colorTagsValue: colorTags
       });
       
       // Ensure year and month are numbers
       const validYear = year && typeof year === 'number' ? year : new Date().getFullYear();
       const validMonth = month && typeof month === 'number' ? month : new Date().getMonth() + 1;
       
-      const calendar = await storage.upsertMonthlyContentCalendar({
+      console.log('About to save to database:', {
         userId,
         year: validYear,
         month: validMonth,
         calendarData,
         colorTags
       });
+      
+      const calendar = await storage.upsertMonthlyContentCalendar({
+        userId,
+        year: validYear,
+        month: validMonth,
+        calendarData: calendarData || [],
+        colorTags: colorTags || []
+      });
+      
+      console.log('Database save result:', calendar);
       res.json(calendar);
     } catch (error) {
       console.error('Error saving monthly content calendar:', error);
