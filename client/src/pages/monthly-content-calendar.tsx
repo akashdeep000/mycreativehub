@@ -803,43 +803,47 @@ export default function MonthlyContentCalendar() {
                         </div>
                       )}
                       
-                      {/* Multiple Tags Display - stacked vertically */}
-                      <div className={`${cellData.isBatchDay ? 'mt-1' : 'mt-6'} space-y-1 overflow-y-auto max-h-24`}>
+                      {/* Multiple Tags Display - stacked vertically with full names */}
+                      <div className={`${cellData.isBatchDay ? 'mt-1' : 'mt-6'} space-y-1 overflow-y-auto max-h-28`}>
                         {cellData.tags.map((tag) => (
-                          <div key={tag.id} className="flex items-center justify-between group bg-white/80 rounded px-1 py-1">
-                            <div className="flex items-center gap-1 flex-1 min-w-0">
-                              <div 
-                                className="w-3 h-3 rounded-full flex-shrink-0" 
-                                style={{ backgroundColor: tag.color }}
-                              />
-                              <span className="text-xs font-medium text-gray-800 truncate">
-                                {tag.tagLabel}
-                              </span>
-                              {tag.status === 'posted' && (
-                                <Check className="w-3 h-3 text-green-600 flex-shrink-0" />
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openTagNotesModal(cellData.date, tag.id);
-                                }}
-                                className="p-0.5 hover:bg-gray-200 rounded text-gray-600 hover:text-gray-800"
-                                title="Edit notes"
-                              >
-                                <Edit2 className="w-3 h-3" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeTagFromDate(cellData.date, tag.id);
-                                }}
-                                className="p-0.5 hover:bg-red-100 rounded text-red-600 hover:text-red-800"
-                                title="Remove tag"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
+                          <div key={tag.id} className="group bg-white/90 rounded px-2 py-1.5 border border-gray-100 shadow-sm">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start gap-2 flex-1 min-w-0">
+                                <div 
+                                  className="w-3 h-3 rounded-full flex-shrink-0 mt-0.5" 
+                                  style={{ backgroundColor: tag.color }}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-xs font-medium text-gray-800 leading-tight break-words block">
+                                    {tag.tagLabel}
+                                  </span>
+                                  {tag.status === 'posted' && (
+                                    <Check className="w-3 h-3 text-green-600 mt-0.5" />
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openTagNotesModal(cellData.date, tag.id);
+                                  }}
+                                  className="p-0.5 hover:bg-gray-200 rounded text-gray-600 hover:text-gray-800"
+                                  title="Edit notes"
+                                >
+                                  <Edit2 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeTagFromDate(cellData.date, tag.id);
+                                  }}
+                                  className="p-0.5 hover:bg-red-100 rounded text-red-600 hover:text-red-800"
+                                  title="Remove tag"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}
