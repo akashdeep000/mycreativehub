@@ -63,6 +63,7 @@ export default function MonthlyContentCalendar() {
   const [colorPickerTagId, setColorPickerTagId] = useState<string | null>(null);
   const [calendarData, setCalendarData] = useState<CalendarCell[]>([]);
   const [batchMode, setBatchMode] = useState(false);
+  const [hasLocalChanges, setHasLocalChanges] = useState(false);
   
   // Tag notes modal state
   const [editingTag, setEditingTag] = useState<{ cellDate: string; tagId: string } | null>(null);
@@ -101,7 +102,7 @@ export default function MonthlyContentCalendar() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/persistent/monthly-content-calendar', year, month] });
-      // Remove persistent success notifications - calendar auto-saves
+      setHasLocalChanges(false); // Reset local changes flag after successful save
     },
     onError: (error: any) => {
       console.error('Calendar save error:', error);
@@ -115,7 +116,7 @@ export default function MonthlyContentCalendar() {
 
   // Initialize calendar data when database data is loaded
   useEffect(() => {
-    if (dbCalendar) {
+    if (dbCalendar && !hasLocalChanges) {
       if (dbCalendar.calendarData && Array.isArray(dbCalendar.calendarData)) {
         setCalendarData(dbCalendar.calendarData);
       } else {
@@ -128,7 +129,7 @@ export default function MonthlyContentCalendar() {
         setColorTags(defaultColorTags);
       }
     }
-  }, [dbCalendar]);
+  }, [dbCalendar, hasLocalChanges]);
 
   // Auto-save to database when data changes (with debounce)
   useEffect(() => {
@@ -136,7 +137,7 @@ export default function MonthlyContentCalendar() {
       if (calendarData.length > 0 || colorTags.length !== defaultColorTags.length) {
         saveCalendarMutation.mutate({ calendarData, colorTags });
       }
-    }, 5000); // 5-second debounce to reduce API calls
+    }, 1000); // 1-second debounce for faster saving
 
     return () => clearTimeout(timeoutId);
   }, [calendarData, colorTags]);
@@ -245,6 +246,7 @@ export default function MonthlyContentCalendar() {
         }];
       }
     });
+    setHasLocalChanges(true);
   };
 
   const removeTagFromDate = (cellDate: string, tagId: string) => {
@@ -256,6 +258,7 @@ export default function MonthlyContentCalendar() {
           : cell
       ).filter(cell => cell.tags.length > 0 || cell.isBatchDay); // Remove empty cells unless they're batch days
     });
+    setHasLocalChanges(true);
   };
 
   // Open tag notes modal
@@ -298,6 +301,7 @@ export default function MonthlyContentCalendar() {
     setTempNotes('');
     setTempTime('');
     setTempStatus(null);
+    setHasLocalChanges(true);
   };
 
   const updateCell = (day: number, updates: Partial<CalendarCell>) => {
@@ -312,16 +316,14 @@ export default function MonthlyContentCalendar() {
       } else {
         return [...currentData, { 
           date: dateKey, 
-          content: '', 
-          tagId: null, 
-          tagLabel: '', 
-          status: null, 
+          tags: [],
           isBatchDay: false, 
           batchNote: '', 
           ...updates 
         }];
       }
     });
+    setHasLocalChanges(true);
   };
 
   const handleCellClick = (day: number, event: React.MouseEvent) => {
@@ -372,6 +374,7 @@ export default function MonthlyContentCalendar() {
         tag.id === id ? { ...tag, [field]: value } : tag
       )
     );
+    setHasLocalChanges(true);
   };
 
   const addColorTag = () => {
@@ -393,19 +396,23 @@ export default function MonthlyContentCalendar() {
     
     setColorTags(prev => [...prev, newTag]);
     setEditingTagId(newTag.id);
+    setHasLocalChanges(true);
   };
 
   const deleteColorTag = (id: string) => {
     setColorTags(prev => Array.isArray(prev) ? prev.filter(tag => tag.id !== id) : []);
+    // Remove any calendar tags that use this deleted color tag
     setCalendarData(prev => {
       const currentData = Array.isArray(prev) ? prev : [];
-      return currentData.map(cell => 
-        cell.tagId === id ? { ...cell, tagId: null, tagLabel: '' } : cell
-      );
+      return currentData.map(cell => ({
+        ...cell,
+        tags: cell.tags.filter(tag => tag.tagId !== id)
+      }));
     });
     if (selectedTagId === id) {
       setSelectedTagId(null);
     }
+    setHasLocalChanges(true);
   };
 
   const exportToPDF = async () => {
