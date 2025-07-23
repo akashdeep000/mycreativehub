@@ -1114,6 +1114,7 @@ export class DatabaseStorage implements IStorage {
 
   // Persistent Data Operations - Content Creation System
   async getMonthlyContentCalendar(userId: string, year: number, month: number): Promise<MonthlyContentCalendar | undefined> {
+    console.log('Storage GET - Querying calendar for:', { userId, year, month });
     const [calendar] = await db
       .select()
       .from(monthlyContentCalendar)
@@ -1122,10 +1123,27 @@ export class DatabaseStorage implements IStorage {
         eq(monthlyContentCalendar.year, year),
         eq(monthlyContentCalendar.month, month)
       ));
+    console.log('Storage GET - Raw database result:', calendar);
+    console.log('Storage GET - Calendar data type:', typeof calendar?.calendarData, 'Value:', calendar?.calendarData);
+    console.log('Storage GET - Color tags type:', typeof calendar?.colorTags, 'Value:', calendar?.colorTags);
     return calendar;
   }
 
   async upsertMonthlyContentCalendar(data: InsertMonthlyContentCalendar): Promise<MonthlyContentCalendar> {
+    console.log('Storage UPSERT - Input data:', {
+      userId: data.userId,
+      year: data.year,
+      month: data.month,
+      calendarDataType: typeof data.calendarData,
+      calendarDataValue: data.calendarData,
+      calendarDataIsArray: Array.isArray(data.calendarData),
+      calendarDataLength: data.calendarData?.length,
+      colorTagsType: typeof data.colorTags,
+      colorTagsValue: data.colorTags,
+      colorTagsIsArray: Array.isArray(data.colorTags),
+      colorTagsLength: data.colorTags?.length
+    });
+    
     const [calendar] = await db
       .insert(monthlyContentCalendar)
       .values(data)
@@ -1138,6 +1156,10 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
+      
+    console.log('Storage UPSERT - Database save result:', calendar);
+    console.log('Storage UPSERT - Saved calendar data type:', typeof calendar.calendarData, 'Value:', calendar.calendarData);
+    console.log('Storage UPSERT - Saved color tags type:', typeof calendar.colorTags, 'Value:', calendar.colorTags);
     return calendar;
   }
 
