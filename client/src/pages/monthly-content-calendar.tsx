@@ -87,10 +87,7 @@ export default function MonthlyContentCalendar() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/persistent/monthly-content-calendar', year, month] });
-      toast({
-        title: "Calendar saved",
-        description: "Your content calendar has been saved successfully.",
-      });
+      // Remove persistent success notifications - calendar auto-saves
     },
     onError: (error: any) => {
       console.error('Calendar save error:', error);
@@ -110,9 +107,10 @@ export default function MonthlyContentCalendar() {
       } else {
         setCalendarData([]);
       }
-      if (dbCalendar.colorTags && Array.isArray(dbCalendar.colorTags)) {
+      if (dbCalendar.colorTags && Array.isArray(dbCalendar.colorTags) && dbCalendar.colorTags.length > 0) {
         setColorTags(dbCalendar.colorTags);
       } else {
+        // Initialize with default color tags if none exist in database
         setColorTags(defaultColorTags);
       }
     }
@@ -124,7 +122,7 @@ export default function MonthlyContentCalendar() {
       if (calendarData.length > 0 || colorTags.length !== defaultColorTags.length) {
         saveCalendarMutation.mutate({ calendarData, colorTags });
       }
-    }, 2000); // 2-second debounce
+    }, 5000); // 5-second debounce to reduce API calls
 
     return () => clearTimeout(timeoutId);
   }, [calendarData, colorTags]);
