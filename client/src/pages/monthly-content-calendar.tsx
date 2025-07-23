@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
-import { ChevronLeft, ChevronRight, Calendar, Lightbulb, Download, Edit3, Trash2, Plus, Palette, Check, Video, RefreshCw, TrendingUp, Edit2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Lightbulb, Download, Edit3, Trash2, Plus, Palette, Check, Video, RefreshCw, TrendingUp, Edit2, Clock, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -18,12 +19,19 @@ interface ColorTag {
   color: string;
 }
 
+interface CalendarTag {
+  id: string;
+  tagId: string;
+  tagLabel: string;
+  color: string;
+  notes: string;
+  time: string;
+  status: 'idea' | 'in-progress' | 'scheduled' | 'posted' | null;
+}
+
 interface CalendarCell {
   date: string;
-  content: string;
-  tagId: string | null;
-  tagLabel: string;
-  status: 'idea' | 'in-progress' | 'scheduled' | 'posted' | null;
+  tags: CalendarTag[];
   isBatchDay: boolean;
   batchNote: string;
 }
@@ -54,8 +62,14 @@ export default function MonthlyContentCalendar() {
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
   const [colorPickerTagId, setColorPickerTagId] = useState<string | null>(null);
   const [calendarData, setCalendarData] = useState<CalendarCell[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
   const [batchMode, setBatchMode] = useState(false);
+  
+  // Tag notes modal state
+  const [editingTag, setEditingTag] = useState<{ cellDate: string; tagId: string } | null>(null);
+  const [tagNotesModal, setTagNotesModal] = useState(false);
+  const [tempNotes, setTempNotes] = useState('');
+  const [tempTime, setTempTime] = useState('');
+  const [tempStatus, setTempStatus] = useState<'idea' | 'in-progress' | 'scheduled' | 'posted' | null>(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
@@ -179,34 +193,116 @@ export default function MonthlyContentCalendar() {
     return `${year}-${month}-${day}`;
   };
 
-  const getCellData = (day: number) => {
+  const getCellData = (day: number): CalendarCell => {
     const dateKey = getDateKey(day);
     if (!Array.isArray(calendarData)) {
       return { 
         date: dateKey, 
-        content: '', 
-        tagId: null, 
-        tagLabel: '', 
-        status: null, 
+        tags: [],
         isBatchDay: false, 
         batchNote: '' 
       };
     }
     return calendarData.find(cell => cell.date === dateKey) || { 
       date: dateKey, 
-      content: '', 
-      tagId: null, 
-      tagLabel: '', 
-      status: null, 
+      tags: [],
       isBatchDay: false, 
       batchNote: '' 
     };
   };
 
+  const addTagToDate = (day: number, tagId: string) => {
+    const dateKey = getDateKey(day);
+    const colorTag = colorTags.find(t => t.id === tagId);
+    if (!colorTag) return;
+
+    const newTag: CalendarTag = {
+      id: Math.random().toString(36).substr(2, 9),
+      tagId: tagId,
+      tagLabel: colorTag.label,
+      color: colorTag.color,
+      notes: '',
+      time: '',
+      status: null
+    };
+
+    setCalendarData(prev => {
+      const currentData = Array.isArray(prev) ? prev : [];
+      const existing = currentData.find(cell => cell.date === dateKey);
+      
+      if (existing) {
+        return currentData.map(cell => 
+          cell.date === dateKey 
+            ? { ...cell, tags: [...cell.tags, newTag] }
+            : cell
+        );
+      } else {
+        return [...currentData, { 
+          date: dateKey, 
+          tags: [newTag], 
+          isBatchDay: false, 
+          batchNote: '' 
+        }];
+      }
+    });
+  };
+
+  const removeTagFromDate = (cellDate: string, tagId: string) => {
+    setCalendarData(prev => {
+      const currentData = Array.isArray(prev) ? prev : [];
+      return currentData.map(cell => 
+        cell.date === cellDate 
+          ? { ...cell, tags: cell.tags.filter(tag => tag.id !== tagId) }
+          : cell
+      ).filter(cell => cell.tags.length > 0 || cell.isBatchDay); // Remove empty cells unless they're batch days
+    });
+  };
+
+  // Open tag notes modal
+  const openTagNotesModal = (cellDate: string, tagId: string) => {
+    const cell = calendarData.find(c => c.date === cellDate);
+    const tag = cell?.tags.find(t => t.id === tagId);
+    
+    if (tag) {
+      setEditingTag({ cellDate, tagId });
+      setTempNotes(tag.notes);
+      setTempTime(tag.time);
+      setTempStatus(tag.status);
+      setTagNotesModal(true);
+    }
+  };
+
+  // Save tag notes
+  const saveTagNotes = () => {
+    if (!editingTag) return;
+
+    setCalendarData(prev => {
+      const currentData = Array.isArray(prev) ? prev : [];
+      return currentData.map(cell => 
+        cell.date === editingTag.cellDate
+          ? {
+              ...cell,
+              tags: cell.tags.map(tag => 
+                tag.id === editingTag.tagId
+                  ? { ...tag, notes: tempNotes, time: tempTime, status: tempStatus }
+                  : tag
+              )
+            }
+          : cell
+      );
+    });
+
+    // Close modal and reset state
+    setTagNotesModal(false);
+    setEditingTag(null);
+    setTempNotes('');
+    setTempTime('');
+    setTempStatus(null);
+  };
+
   const updateCell = (day: number, updates: Partial<CalendarCell>) => {
     const dateKey = getDateKey(day);
     setCalendarData(prev => {
-      // Ensure prev is an array
       const currentData = Array.isArray(prev) ? prev : [];
       const existing = currentData.find(cell => cell.date === dateKey);
       if (existing) {
@@ -228,7 +324,11 @@ export default function MonthlyContentCalendar() {
     });
   };
 
-  const handleCellClick = (day: number) => {
+  const handleCellClick = (day: number, event: React.MouseEvent) => {
+    // Prevent click and drag behavior - only single clicks should add tags
+    event.preventDefault();
+    event.stopPropagation();
+    
     if (batchMode) {
       // Handle batch day toggle
       const cellData = getCellData(day);
@@ -239,9 +339,8 @@ export default function MonthlyContentCalendar() {
         batchNote: newBatchState ? cellData.batchNote : ''
       });
       
-      // Optionally prompt for batch goal
+      // Optionally focus on batch note input
       if (newBatchState) {
-        // Focus on the batch note input after a short delay
         setTimeout(() => {
           const noteInput = document.querySelector(`[data-day="${day}"] .batch-note-input`) as HTMLInputElement;
           if (noteInput) {
@@ -250,38 +349,9 @@ export default function MonthlyContentCalendar() {
         }, 100);
       }
     } else if (selectedTagId) {
-      // Handle color tag selection
-      const selectedTag = colorTags.find(tag => tag.id === selectedTagId);
-      updateCell(day, { 
-        tagId: selectedTagId,
-        tagLabel: selectedTag ? selectedTag.label : ''
-      });
+      // Add new tag to this date (no drag behavior)
+      addTagToDate(day, selectedTagId);
     }
-  };
-
-  const handleMouseDown = (day: number) => {
-    if (selectedTagId && !batchMode) {
-      setIsDragging(true);
-      const selectedTag = colorTags.find(tag => tag.id === selectedTagId);
-      updateCell(day, { 
-        tagId: selectedTagId,
-        tagLabel: selectedTag ? selectedTag.label : ''
-      });
-    }
-  };
-
-  const handleMouseEnter = (day: number) => {
-    if (isDragging && selectedTagId && !batchMode) {
-      const selectedTag = colorTags.find(tag => tag.id === selectedTagId);
-      updateCell(day, { 
-        tagId: selectedTagId,
-        tagLabel: selectedTag ? selectedTag.label : ''
-      });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
@@ -683,21 +753,18 @@ export default function MonthlyContentCalendar() {
               </div>
               
               {/* Calendar grid */}
-              <div className="grid grid-cols-7 gap-0" onMouseUp={handleMouseUp}>
+              <div className="grid grid-cols-7 gap-0">
                 {days.map((day, index) => {
                   if (day === null) {
                     return <div key={`empty-${index}`} className="h-40 border border-gray-200" />;
                   }
                   
                   const cellData = getCellData(day);
-                  const tag = cellData.tagId ? colorTags.find(t => t.id === cellData.tagId) : null;
                   
                   // Determine background color - batch day gets priority
                   let backgroundColor = 'transparent';
                   if (cellData.isBatchDay) {
                     backgroundColor = '#fef3c7'; // Pastel yellow for batch days
-                  } else if (tag) {
-                    backgroundColor = `${tag.color}15`;
                   }
                   
                   return (
@@ -707,9 +774,7 @@ export default function MonthlyContentCalendar() {
                       className={`h-40 border border-gray-200 p-3 cursor-pointer transition-colors relative ${
                         batchMode ? 'hover:bg-yellow-50' : selectedTagId ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
                       } ${cellData.isBatchDay ? 'ring-2 ring-yellow-300 ring-opacity-50' : ''}`}
-                      onClick={() => handleCellClick(day)}
-                      onMouseDown={() => handleMouseDown(day)}
-                      onMouseEnter={() => handleMouseEnter(day)}
+                      onClick={(e) => handleCellClick(day, e)}
                       style={{
                         backgroundColor
                       }}
@@ -720,16 +785,6 @@ export default function MonthlyContentCalendar() {
                         {cellData.isBatchDay && (
                           <div className="flex items-center">
                             <span className="text-xs">⏳</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Status indicator - positioned in top right */}
-                      <div className="absolute top-2 right-2">
-                        {cellData.status === 'posted' && (
-                          <div className="relative">
-                            <Check className="w-5 h-5 text-white bg-green-500 rounded-full p-1 border-2 border-white shadow-lg" 
-                                   style={{ filter: 'drop-shadow(0 0 4px rgba(34, 197, 94, 0.6))' }} />
                           </div>
                         )}
                       </div>
@@ -748,55 +803,46 @@ export default function MonthlyContentCalendar() {
                         </div>
                       )}
                       
-                      {/* Tag label - positioned below batch controls or date */}
-                      <div className={`${cellData.isBatchDay ? 'mt-1' : 'mt-6'} min-h-[20px]`}>
-                        {cellData.tagId && (
-                          <div className="flex items-center gap-1 mb-1">
-                            <div
-                              className="w-3 h-3 rounded-full border border-white shadow-sm"
-                              style={{ backgroundColor: tag?.color || '#ccc' }}
-                            />
-                            <input
-                              type="text"
-                              value={cellData.tagLabel || ''}
-                              onChange={(e) => updateCell(day, { tagLabel: e.target.value })}
-                              placeholder="Tag label"
-                              className="text-xs font-medium text-gray-700 bg-transparent border-none outline-none focus:ring-0 w-full"
-                              onClick={(e) => e.stopPropagation()}
-                            />
+                      {/* Multiple Tags Display - stacked vertically */}
+                      <div className={`${cellData.isBatchDay ? 'mt-1' : 'mt-6'} space-y-1 overflow-y-auto max-h-24`}>
+                        {cellData.tags.map((tag) => (
+                          <div key={tag.id} className="flex items-center justify-between group bg-white/80 rounded px-1 py-1">
+                            <div className="flex items-center gap-1 flex-1 min-w-0">
+                              <div 
+                                className="w-3 h-3 rounded-full flex-shrink-0" 
+                                style={{ backgroundColor: tag.color }}
+                              />
+                              <span className="text-xs font-medium text-gray-800 truncate">
+                                {tag.tagLabel}
+                              </span>
+                              {tag.status === 'posted' && (
+                                <Check className="w-3 h-3 text-green-600 flex-shrink-0" />
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openTagNotesModal(cellData.date, tag.id);
+                                }}
+                                className="p-0.5 hover:bg-gray-200 rounded text-gray-600 hover:text-gray-800"
+                                title="Edit notes"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeTagFromDate(cellData.date, tag.id);
+                                }}
+                                className="p-0.5 hover:bg-red-100 rounded text-red-600 hover:text-red-800"
+                                title="Remove tag"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
                           </div>
-                        )}
-                      </div>
-                      
-                      {/* Status dropdown - only show when a tag is applied */}
-                      {cellData.tagId && (
-                        <div className="mb-1" onClick={(e) => e.stopPropagation()}>
-                          <Select
-                            value={cellData.status || ''}
-                            onValueChange={(value) => updateCell(day, { status: value as 'idea' | 'in-progress' | 'scheduled' | 'posted' })}
-                          >
-                            <SelectTrigger className="h-6 text-xs border-gray-200 bg-white/80">
-                              <SelectValue placeholder="Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="idea">Idea 💡</SelectItem>
-                              <SelectItem value="in-progress">In Progress ✍️</SelectItem>
-                              <SelectItem value="scheduled">Scheduled 📆</SelectItem>
-                              <SelectItem value="posted">Posted ✅</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                      
-                      {/* Notes area - positioned at bottom */}
-                      <div className="mt-1 flex-1">
-                        <Textarea
-                          value={cellData.content}
-                          onChange={(e) => updateCell(day, { content: e.target.value })}
-                          placeholder=""
-                          className="w-full h-8 text-xs border-none bg-transparent p-0 resize-none focus:ring-0 placeholder:text-gray-400"
-                          onClick={(e) => e.stopPropagation()}
-                        />
+                        ))}
                       </div>
                     </div>
                   );
@@ -839,6 +885,68 @@ export default function MonthlyContentCalendar() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Tag Notes Modal */}
+        <Dialog open={tagNotesModal} onOpenChange={setTagNotesModal}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Edit2 className="h-5 w-5" />
+                Edit Tag Details
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Notes</label>
+                <Textarea
+                  value={tempNotes}
+                  onChange={(e) => setTempNotes(e.target.value)}
+                  placeholder="Add notes about this content..."
+                  className="min-h-[80px]"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Time/Duration</label>
+                <Input
+                  value={tempTime}
+                  onChange={(e) => setTempTime(e.target.value)}
+                  placeholder="e.g., 2:30 PM, 30 seconds"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
+                <Select
+                  value={tempStatus || ''}
+                  onValueChange={(value) => setTempStatus(value as 'idea' | 'in-progress' | 'scheduled' | 'posted' | null)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="idea">Idea 💡</SelectItem>
+                    <SelectItem value="in-progress">In Progress ✍️</SelectItem>
+                    <SelectItem value="scheduled">Scheduled 📆</SelectItem>
+                    <SelectItem value="posted">Posted ✅</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex justify-end gap-3 pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setTagNotesModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={saveTagNotes}>
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
         </div> {/* End PDF Export Container */}
       </div>
     </div>
