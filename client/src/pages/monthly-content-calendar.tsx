@@ -133,14 +133,16 @@ export default function MonthlyContentCalendar() {
 
   // Auto-save to database when data changes (with debounce)
   useEffect(() => {
+    if (!hasLocalChanges) return; // Only save when we have local changes
+    
     const timeoutId = setTimeout(() => {
-      if (calendarData.length > 0 || colorTags.length !== defaultColorTags.length) {
+      if (hasLocalChanges && (calendarData.length > 0 || colorTags.length !== defaultColorTags.length)) {
         saveCalendarMutation.mutate({ calendarData, colorTags });
       }
     }, 1000); // 1-second debounce for faster saving
 
     return () => clearTimeout(timeoutId);
-  }, [calendarData, colorTags]);
+  }, [calendarData, colorTags, hasLocalChanges]);
 
   // Close color picker when clicking outside
   useEffect(() => {
@@ -821,7 +823,7 @@ export default function MonthlyContentCalendar() {
                                   style={{ backgroundColor: tag.color }}
                                 />
                                 <div className="flex-1 min-w-0">
-                                  <span className="text-xs font-medium text-gray-800 leading-tight break-words block">
+                                  <span className="text-xs font-medium text-gray-800 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
                                     {tag.tagLabel}
                                   </span>
                                   {tag.status === 'posted' && (
