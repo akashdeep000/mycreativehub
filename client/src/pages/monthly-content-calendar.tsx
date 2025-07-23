@@ -56,14 +56,12 @@ export default function MonthlyContentCalendar() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // MINIMAL STATE: Only UI controls, no data storage
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [colorTags, setColorTags] = useState<ColorTag[]>(defaultColorTags);
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
   const [colorPickerTagId, setColorPickerTagId] = useState<string | null>(null);
-  const [calendarData, setCalendarData] = useState<CalendarCell[]>([]);
   const [batchMode, setBatchMode] = useState(false);
-  const [hasLocalChanges, setHasLocalChanges] = useState(false);
   
   // Tag notes modal state
   const [editingTag, setEditingTag] = useState<{ cellDate: string; tagId: string } | null>(null);
@@ -75,21 +73,48 @@ export default function MonthlyContentCalendar() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
 
-  // Load calendar data from database
-  const { data: dbCalendar, isLoading } = useQuery({
+  // DATABASE-DRIVEN: Load calendar data from database only
+  const { data: dbCalendar, isLoading, isError } = useQuery({
     queryKey: ['/api/persistent/monthly-content-calendar', year, month],
     queryFn: async () => {
+      console.log('Frontend Query - Token check:', {
+        tokenExists: !!localStorage.getItem('authToken'),
+        tokenLength: localStorage.getItem('authToken')?.length,
+        tokenPreview: localStorage.getItem('authToken')?.substring(0, 30) + '...',
+        url: `/api/persistent/monthly-content-calendar/${year}/${month}`
+      });
+      
       const response = await fetch(`/api/persistent/monthly-content-calendar/${year}/${month}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
       });
-      if (!response.ok) throw new Error('Failed to fetch calendar data');
-      return response.json();
-    }
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch calendar data: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Initializing calendar data from database:', data);
+      console.log('Database calendar data type:', typeof data?.calendarData, 'value:', data?.calendarData);
+      console.log('Database color tags type:', typeof data?.colorTags, 'value:', data?.colorTags);
+      
+      return data;
+    },
+    staleTime: 0, // Always fetch fresh data
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
   });
 
-  // Save calendar data to database
+  // DERIVED STATE: Get current data from database, never from local state
+  const calendarData: CalendarCell[] = dbCalendar?.calendarData || [];
+  const colorTags: ColorTag[] = dbCalendar?.colorTags?.length > 0 ? dbCalendar.colorTags : defaultColorTags;
+
+  // DATABASE-ONLY SAVE: Direct database mutation with immediate refresh
   const saveCalendarMutation = useMutation({
     mutationFn: async (data: { calendarData: CalendarCell[], colorTags: ColorTag[] }) => {
+      console.log('Auto-saving calendar data', {
+        calendarDataLength: data.calendarData?.length || 0,
+        colorTagsLength: data.colorTags?.length || 0
+      });
+      
       console.log('Saving calendar data to database:', {
         year,
         month,
@@ -98,6 +123,15 @@ export default function MonthlyContentCalendar() {
         colorTagsArray: data.colorTags,
         colorTagsLength: data.colorTags?.length || 0
       });
+      
+      console.log('Frontend API - Token check:', {
+        tokenExists: !!localStorage.getItem('authToken'),
+        tokenLength: localStorage.getItem('authToken')?.length,
+        tokenPreview: localStorage.getItem('authToken')?.substring(0, 30) + '...',
+        url: '/api/persistent/monthly-content-calendar',
+        method: 'PUT'
+      });
+      console.log('Frontend API - Authorization header added');
       
       await apiRequest('/api/persistent/monthly-content-calendar', {
         method: 'PUT',
@@ -110,64 +144,20 @@ export default function MonthlyContentCalendar() {
       });
     },
     onSuccess: () => {
-      console.log('Calendar save successful - resetting hasLocalChanges flag');
+      console.log('Calendar save successful - refreshing from database');
       queryClient.invalidateQueries({ queryKey: ['/api/persistent/monthly-content-calendar', year, month] });
-      setHasLocalChanges(false); // Reset local changes flag after successful save
     },
     onError: (error: any) => {
       console.error('Calendar save error:', error);
       toast({
-        title: "Error saving calendar",
-        description: error.message || "Failed to save calendar data. Please try again.",
+        title: "Save Error",
+        description: "Failed to save to database. Data may be lost.",
         variant: "destructive",
       });
     }
   });
 
-  // Initialize calendar data when database data is loaded - only on first load
-  useEffect(() => {
-    if (dbCalendar && !hasLocalChanges) {
-      console.log('Initializing calendar data from database:', dbCalendar);
-      console.log('Database calendar data type:', typeof dbCalendar.calendarData, 'value:', dbCalendar.calendarData);
-      console.log('Database color tags type:', typeof dbCalendar.colorTags, 'value:', dbCalendar.colorTags);
-      
-      // Handle calendar data - could be array or object from database
-      if (Array.isArray(dbCalendar.calendarData)) {
-        setCalendarData(dbCalendar.calendarData);
-      } else if (dbCalendar.calendarData && typeof dbCalendar.calendarData === 'object') {
-        // Convert object to array if needed
-        const dataArray = Object.values(dbCalendar.calendarData);
-        setCalendarData(Array.isArray(dataArray) ? dataArray : []);
-      } else {
-        setCalendarData([]);
-      }
-      
-      // Handle color tags
-      if (Array.isArray(dbCalendar.colorTags) && dbCalendar.colorTags.length > 0) {
-        setColorTags(dbCalendar.colorTags);
-      } else {
-        // Initialize with default color tags if none exist in database
-        setColorTags(defaultColorTags);
-      }
-      
-      // Set flag to indicate we've loaded from database
-      setHasLocalChanges(false);
-    }
-  }, [dbCalendar, year, month]); // Re-run when month changes
-
-  // Auto-save to database when data changes (with debounce)
-  useEffect(() => {
-    if (!hasLocalChanges || saveCalendarMutation.isPending) return; // Only save when we have local changes and not already saving
-    
-    const timeoutId = setTimeout(() => {
-      if (hasLocalChanges && !saveCalendarMutation.isPending && (calendarData.length > 0 || colorTags.length !== defaultColorTags.length)) {
-        console.log('Auto-saving calendar data', { calendarDataLength: calendarData.length, colorTagsLength: colorTags.length });
-        saveCalendarMutation.mutate({ calendarData, colorTags });
-      }
-    }, 2000); // 2-second debounce to avoid conflicts with immediate saves
-
-    return () => clearTimeout(timeoutId);
-  }, [calendarData, colorTags, hasLocalChanges, saveCalendarMutation.isPending]);
+  // DATABASE-DRIVEN: No local state initialization needed - data comes directly from database
 
   // Close color picker when clicking outside
   useEffect(() => {
@@ -254,49 +244,45 @@ export default function MonthlyContentCalendar() {
       status: null
     };
 
-    console.log('Adding tag to date:', dateKey, 'tagId:', tagId, 'tag:', newTag);
+    console.log('DATABASE-DRIVEN: Adding tag to date:', dateKey, 'tagId:', tagId);
 
-    setCalendarData(prev => {
-      const currentData = Array.isArray(prev) ? prev : [];
-      const existing = currentData.find(cell => cell.date === dateKey);
-      
-      let newCalendarData;
-      if (existing) {
-        newCalendarData = currentData.map(cell => 
-          cell.date === dateKey 
-            ? { ...cell, tags: [...cell.tags, newTag] }
-            : cell
-        );
-      } else {
-        newCalendarData = [...currentData, { 
-          date: dateKey, 
-          tags: [newTag], 
-          isBatchDay: false, 
-          batchNote: '' 
-        }];
-      }
-      
-      // Immediate save to database to prevent data loss
-      setTimeout(() => {
-        console.log('Saving immediately after tag addition');
-        saveCalendarMutation.mutate({ calendarData: newCalendarData, colorTags });
-      }, 100);
-      
-      return newCalendarData;
-    });
-    setHasLocalChanges(true);
+    // IMMEDIATE DATABASE SAVE: Calculate new data and save directly
+    const currentData = Array.isArray(calendarData) ? calendarData : [];
+    const existing = currentData.find(cell => cell.date === dateKey);
+    
+    let newCalendarData;
+    if (existing) {
+      newCalendarData = currentData.map(cell => 
+        cell.date === dateKey 
+          ? { ...cell, tags: [...cell.tags, newTag] }
+          : cell
+      );
+    } else {
+      newCalendarData = [...currentData, { 
+        date: dateKey, 
+        tags: [newTag], 
+        isBatchDay: false, 
+        batchNote: '' 
+      }];
+    }
+    
+    // IMMEDIATE SAVE: Save to database immediately on tag addition
+    saveCalendarMutation.mutate({ calendarData: newCalendarData, colorTags });
   };
 
   const removeTagFromDate = (cellDate: string, tagId: string) => {
-    setCalendarData(prev => {
-      const currentData = Array.isArray(prev) ? prev : [];
-      return currentData.map(cell => 
-        cell.date === cellDate 
-          ? { ...cell, tags: cell.tags.filter(tag => tag.id !== tagId) }
-          : cell
-      ).filter(cell => cell.tags.length > 0 || cell.isBatchDay); // Remove empty cells unless they're batch days
-    });
-    setHasLocalChanges(true);
+    console.log('DATABASE-DRIVEN: Removing tag from date:', cellDate, 'tagId:', tagId);
+
+    // IMMEDIATE DATABASE SAVE: Calculate new data and save directly
+    const currentData = Array.isArray(calendarData) ? calendarData : [];
+    const newCalendarData = currentData.map(cell => 
+      cell.date === cellDate 
+        ? { ...cell, tags: cell.tags.filter(tag => tag.id !== tagId) }
+        : cell
+    ).filter(cell => cell.tags.length > 0 || cell.isBatchDay); // Remove empty cells unless they're batch days
+    
+    // IMMEDIATE SAVE: Save to database immediately on tag removal
+    saveCalendarMutation.mutate({ calendarData: newCalendarData, colorTags });
   };
 
   // Open tag notes modal
@@ -317,31 +303,25 @@ export default function MonthlyContentCalendar() {
   const saveTagNotes = () => {
     if (!editingTag) return;
 
-    console.log('Saving tag notes for tag:', editingTag.tagId, 'notes:', tempNotes);
+    console.log('DATABASE-DRIVEN: Saving tag notes for tag:', editingTag.tagId, 'notes:', tempNotes);
 
-    setCalendarData(prev => {
-      const currentData = Array.isArray(prev) ? prev : [];
-      const newCalendarData = currentData.map(cell => 
-        cell.date === editingTag.cellDate
-          ? {
-              ...cell,
-              tags: cell.tags.map(tag => 
-                tag.id === editingTag.tagId
-                  ? { ...tag, notes: tempNotes, time: tempTime, status: tempStatus }
-                  : tag
-              )
-            }
-          : cell
-      );
-      
-      // Immediate save to database for tag notes
-      setTimeout(() => {
-        console.log('Saving tag notes immediately to database');
-        saveCalendarMutation.mutate({ calendarData: newCalendarData, colorTags });
-      }, 100);
-      
-      return newCalendarData;
-    });
+    // IMMEDIATE DATABASE SAVE: Calculate new data and save directly
+    const currentData = Array.isArray(calendarData) ? calendarData : [];
+    const newCalendarData = currentData.map(cell => 
+      cell.date === editingTag.cellDate
+        ? {
+            ...cell,
+            tags: cell.tags.map(tag => 
+              tag.id === editingTag.tagId
+                ? { ...tag, notes: tempNotes, time: tempTime, status: tempStatus }
+                : tag
+            )
+          }
+        : cell
+    );
+    
+    // IMMEDIATE SAVE: Save to database immediately on tag notes update
+    saveCalendarMutation.mutate({ calendarData: newCalendarData, colorTags });
 
     // Close modal and reset state
     setTagNotesModal(false);
@@ -349,29 +329,33 @@ export default function MonthlyContentCalendar() {
     setTempNotes('');
     setTempTime('');
     setTempStatus(null);
-    setHasLocalChanges(true);
   };
 
   const updateCell = (day: number, updates: Partial<CalendarCell>) => {
     const dateKey = getDateKey(day);
-    setCalendarData(prev => {
-      const currentData = Array.isArray(prev) ? prev : [];
-      const existing = currentData.find(cell => cell.date === dateKey);
-      if (existing) {
-        return currentData.map(cell => 
-          cell.date === dateKey ? { ...cell, ...updates } : cell
-        );
-      } else {
-        return [...currentData, { 
-          date: dateKey, 
-          tags: [],
-          isBatchDay: false, 
-          batchNote: '', 
-          ...updates 
-        }];
-      }
-    });
-    setHasLocalChanges(true);
+    console.log('DATABASE-DRIVEN: Updating cell for date:', dateKey, 'updates:', updates);
+
+    // IMMEDIATE DATABASE SAVE: Calculate new data and save directly
+    const currentData = Array.isArray(calendarData) ? calendarData : [];
+    const existing = currentData.find(cell => cell.date === dateKey);
+    
+    let newCalendarData;
+    if (existing) {
+      newCalendarData = currentData.map(cell => 
+        cell.date === dateKey ? { ...cell, ...updates } : cell
+      );
+    } else {
+      newCalendarData = [...currentData, { 
+        date: dateKey, 
+        tags: [],
+        isBatchDay: false, 
+        batchNote: '', 
+        ...updates 
+      }];
+    }
+    
+    // IMMEDIATE SAVE: Save to database immediately on cell update
+    saveCalendarMutation.mutate({ calendarData: newCalendarData, colorTags });
   };
 
   const handleCellClick = (day: number, event: React.MouseEvent) => {
@@ -416,13 +400,30 @@ export default function MonthlyContentCalendar() {
     });
   };
 
+  // getCellData function already exists earlier in the component
+
+  // All helper functions already exist earlier in the component - removed duplicates
+
   const updateColorTag = (id: string, field: 'label' | 'color', value: string) => {
-    setColorTags(prev => 
-      prev.map(tag => 
-        tag.id === id ? { ...tag, [field]: value } : tag
-      )
+    console.log('DATABASE-DRIVEN: Updating color tag:', id, field, value);
+    
+    // IMMEDIATE DATABASE SAVE: Calculate new color tags and save directly
+    const newColorTags = colorTags.map(tag => 
+      tag.id === id ? { ...tag, [field]: value } : tag
     );
-    setHasLocalChanges(true);
+    
+    // Update any calendar tags that use this color tag (for label/color changes)
+    const newCalendarData = calendarData.map(cell => ({
+      ...cell,
+      tags: cell.tags.map(tag => 
+        tag.tagId === id 
+          ? { ...tag, tagLabel: field === 'label' ? value : tag.tagLabel, color: field === 'color' ? value : tag.color }
+          : tag
+      )
+    }));
+    
+    // IMMEDIATE SAVE: Save to database immediately on color tag update
+    saveCalendarMutation.mutate({ calendarData: newCalendarData, colorTags: newColorTags });
   };
 
   const addColorTag = () => {
@@ -436,31 +437,41 @@ export default function MonthlyContentCalendar() {
       return;
     }
 
+    console.log('DATABASE-DRIVEN: Adding new color tag');
+
     const newTag: ColorTag = {
       id: Date.now().toString(),
       label: `Tag ${colorTags.length + 1}`,
       color: `#${Math.floor(Math.random()*16777215).toString(16)}`
     };
     
-    setColorTags(prev => [...prev, newTag]);
+    // IMMEDIATE DATABASE SAVE: Add new color tag and save directly
+    const newColorTags = [...colorTags, newTag];
+    
+    // IMMEDIATE SAVE: Save to database immediately on color tag addition
+    saveCalendarMutation.mutate({ calendarData, colorTags: newColorTags });
+    
     setEditingTagId(newTag.id);
-    setHasLocalChanges(true);
   };
 
   const deleteColorTag = (id: string) => {
-    setColorTags(prev => Array.isArray(prev) ? prev.filter(tag => tag.id !== id) : []);
+    console.log('DATABASE-DRIVEN: Deleting color tag:', id);
+    
+    // IMMEDIATE DATABASE SAVE: Calculate new data with tag removed
+    const newColorTags = colorTags.filter(tag => tag.id !== id);
+    
     // Remove any calendar tags that use this deleted color tag
-    setCalendarData(prev => {
-      const currentData = Array.isArray(prev) ? prev : [];
-      return currentData.map(cell => ({
-        ...cell,
-        tags: cell.tags.filter(tag => tag.tagId !== id)
-      }));
-    });
+    const newCalendarData = calendarData.map(cell => ({
+      ...cell,
+      tags: cell.tags.filter(tag => tag.tagId !== id)
+    }));
+    
     if (selectedTagId === id) {
       setSelectedTagId(null);
     }
-    setHasLocalChanges(true);
+    
+    // IMMEDIATE SAVE: Save to database immediately on color tag deletion
+    saveCalendarMutation.mutate({ calendarData: newCalendarData, colorTags: newColorTags });
   };
 
   const exportToPDF = async () => {

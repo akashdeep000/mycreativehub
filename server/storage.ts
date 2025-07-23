@@ -1130,36 +1130,57 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertMonthlyContentCalendar(data: InsertMonthlyContentCalendar): Promise<MonthlyContentCalendar> {
-    console.log('Storage UPSERT - Input data:', {
+    console.log('=== STORAGE UPSERT START ===');
+    console.log('Input data received:', {
       userId: data.userId,
       year: data.year,
       month: data.month,
       calendarDataType: typeof data.calendarData,
-      calendarDataValue: data.calendarData,
       calendarDataIsArray: Array.isArray(data.calendarData),
       calendarDataLength: data.calendarData?.length,
       colorTagsType: typeof data.colorTags,
-      colorTagsValue: data.colorTags,
       colorTagsIsArray: Array.isArray(data.colorTags),
       colorTagsLength: data.colorTags?.length
     });
     
+    // Force JSON serialization to ensure proper storage
+    const finalData = {
+      ...data,
+      calendarData: Array.isArray(data.calendarData) ? data.calendarData : [],
+      colorTags: Array.isArray(data.colorTags) ? data.colorTags : []
+    };
+    
+    console.log('Final data for DB insert:', {
+      calendarDataFinal: finalData.calendarData,
+      colorTagsFinal: finalData.colorTags
+    });
+    
     const [calendar] = await db
       .insert(monthlyContentCalendar)
-      .values(data)
+      .values(finalData)
       .onConflictDoUpdate({
         target: [monthlyContentCalendar.userId, monthlyContentCalendar.year, monthlyContentCalendar.month],
         set: {
-          calendarData: data.calendarData,
-          colorTags: data.colorTags,
+          calendarData: finalData.calendarData,
+          colorTags: finalData.colorTags,
           updatedAt: new Date(),
         },
       })
       .returning();
       
-    console.log('Storage UPSERT - Database save result:', calendar);
-    console.log('Storage UPSERT - Saved calendar data type:', typeof calendar.calendarData, 'Value:', calendar.calendarData);
-    console.log('Storage UPSERT - Saved color tags type:', typeof calendar.colorTags, 'Value:', calendar.colorTags);
+    console.log('=== STORAGE UPSERT RESULT ===');
+    console.log('Database returned:', {
+      id: calendar.id,
+      calendarDataType: typeof calendar.calendarData,
+      calendarDataIsArray: Array.isArray(calendar.calendarData),
+      calendarDataLength: calendar.calendarData?.length,
+      calendarDataValue: calendar.calendarData,
+      colorTagsType: typeof calendar.colorTags,
+      colorTagsIsArray: Array.isArray(calendar.colorTags),
+      colorTagsLength: calendar.colorTags?.length,
+      colorTagsValue: calendar.colorTags
+    });
+    console.log('=== STORAGE UPSERT END ===');
     return calendar;
   }
 

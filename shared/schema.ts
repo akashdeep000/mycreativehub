@@ -504,8 +504,8 @@ export const monthlyContentCalendar = pgTable("monthly_content_calendar", {
   userId: varchar("user_id").notNull().references(() => users.id),
   year: integer("year").notNull(),
   month: integer("month").notNull(), // 1-12
-  calendarData: jsonb("calendar_data").notNull().default('{}'), // Full calendar data structure
-  colorTags: jsonb("color_tags").notNull().default('[]'), // Color tag definitions
+  calendarData: jsonb("calendar_data").notNull().default('[]'), // Full calendar data structure - ARRAY
+  colorTags: jsonb("color_tags").notNull().default('[]'), // Color tag definitions - ARRAY
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({

@@ -1653,43 +1653,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const { year, month, calendarData, colorTags } = req.body;
       
-      console.log('Calendar save request received:', {
+      console.log('=== CALENDAR SAVE START ===');
+      console.log('Received data:', {
         userId,
         year,
         month,
-        yearType: typeof year,
-        monthType: typeof month,
-        calendarDataType: typeof calendarData,
-        calendarDataIsArray: Array.isArray(calendarData),
         calendarDataLength: calendarData?.length,
-        calendarDataValue: calendarData,
-        colorTagsType: typeof colorTags,
-        colorTagsIsArray: Array.isArray(colorTags),
         colorTagsLength: colorTags?.length,
-        colorTagsValue: colorTags
+        calendarDataFirst: calendarData?.[0],
+        colorTagsFirst: colorTags?.[0]
       });
       
       // Ensure year and month are numbers
       const validYear = year && typeof year === 'number' ? year : new Date().getFullYear();
       const validMonth = month && typeof month === 'number' ? month : new Date().getMonth() + 1;
       
-      console.log('About to save to database:', {
-        userId,
-        year: validYear,
-        month: validMonth,
-        calendarData,
-        colorTags
+      // Ensure data is properly serialized
+      const serializedCalendarData = JSON.parse(JSON.stringify(calendarData || []));
+      const serializedColorTags = JSON.parse(JSON.stringify(colorTags || []));
+      
+      console.log('Serialized data for DB:', {
+        serializedCalendarDataLength: serializedCalendarData.length,
+        serializedColorTagsLength: serializedColorTags.length,
+        serializedCalendarData,
+        serializedColorTags
       });
       
       const calendar = await storage.upsertMonthlyContentCalendar({
         userId,
         year: validYear,
         month: validMonth,
-        calendarData: calendarData || [],
-        colorTags: colorTags || []
+        calendarData: serializedCalendarData,
+        colorTags: serializedColorTags
       });
       
-      console.log('Database save result:', calendar);
+      console.log('=== CALENDAR SAVE RESULT ===');
+      console.log('Saved calendar:', calendar);
+      console.log('=== CALENDAR SAVE END ===');
       res.json(calendar);
     } catch (error) {
       console.error('Error saving monthly content calendar:', error);
