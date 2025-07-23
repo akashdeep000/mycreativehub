@@ -16,8 +16,6 @@ import {
   Target, 
   Plus, 
   Trash2, 
-  Save, 
-  Download, 
   ArrowLeft,
   Smartphone
 } from "lucide-react";
@@ -66,10 +64,7 @@ export default function SocialMediaStrategy() {
       });
     },
     onSuccess: () => {
-      toast({
-        title: "Strategy Saved",
-        description: "Your social media strategy has been saved successfully.",
-      });
+      // Silent auto-save - no toast notifications for automatic saves
       queryClient.invalidateQueries({ queryKey: ['/api/social-media-strategy'] });
     },
     onError: (error) => {
@@ -95,20 +90,32 @@ export default function SocialMediaStrategy() {
   // Load existing strategy when data is available
   useEffect(() => {
     if (existingStrategy) {
-      setStrategy(existingStrategy);
+      setStrategy({
+        contentGoals: existingStrategy.contentGoals || "",
+        pillars: existingStrategy.pillars || [
+          { id: "1", title: "", cta: "" },
+          { id: "2", title: "", cta: "" },
+          { id: "3", title: "", cta: "" }
+        ],
+        id: existingStrategy.id,
+        userId: existingStrategy.userId,
+        updatedAt: existingStrategy.updatedAt
+      });
     }
   }, [existingStrategy]);
 
-  // Auto-save functionality with debounce
+  // Enhanced auto-save functionality with debounce - saves all changes automatically
   useEffect(() => {
+    // Only auto-save if user is logged in and strategy has any content
+    if (!user) return;
+    
     const timeoutId = setTimeout(() => {
-      if (strategy.contentGoals.trim() || strategy.pillars.some(p => p.title.trim() || p.cta.trim())) {
-        saveMutation.mutate(strategy);
-      }
-    }, 2000);
+      // Save strategy whenever there's any content (even empty content to persist structure)
+      saveMutation.mutate(strategy);
+    }, 1000); // Reduced debounce time for more responsive saving
 
     return () => clearTimeout(timeoutId);
-  }, [strategy]);
+  }, [strategy, user]);
 
   const updateContentGoals = (goals: string) => {
     setStrategy(prev => ({ ...prev, contentGoals: goals }));
@@ -142,41 +149,7 @@ export default function SocialMediaStrategy() {
     }
   };
 
-  const handleSave = () => {
-    saveMutation.mutate(strategy);
-  };
 
-  const handleDownload = () => {
-    const content = `
-MY SOCIAL MEDIA STRATEGY
-
-CONTENT GOALS:
-${strategy.contentGoals}
-
-CONTENT PILLARS:
-${strategy.pillars.map((pillar, index) => `
-${index + 1}. ${pillar.title || 'Untitled Pillar'}
-   Call-to-Action: ${pillar.cta || 'No CTA defined'}
-`).join('')}
-
-Generated on: ${new Date().toLocaleDateString()}
-    `;
-
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'social-media-strategy.txt';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "Strategy Downloaded",
-      description: "Your strategy has been downloaded as a text file.",
-    });
-  };
 
   if (isLoading) {
     return (
@@ -332,24 +305,9 @@ Generated on: ${new Date().toLocaleDateString()}
             </CardContent>
           </Card>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 justify-end">
-            <Button
-              onClick={handleDownload}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Download as Text
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={saveMutation.isPending}
-              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {saveMutation.isPending ? 'Saving...' : 'Save Strategy'}
-            </Button>
+          {/* Auto-save indicator */}
+          <div className="text-center text-sm text-gray-500">
+            Your strategy is automatically saved as you type
           </div>
         </div>
       </div>
