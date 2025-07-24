@@ -1137,10 +1137,10 @@ export class DatabaseStorage implements IStorage {
       month: data.month,
       calendarDataType: typeof data.calendarData,
       calendarDataIsArray: Array.isArray(data.calendarData),
-      calendarDataLength: data.calendarData?.length,
+      calendarDataLength: Array.isArray(data.calendarData) ? data.calendarData.length : 0,
       colorTagsType: typeof data.colorTags,
       colorTagsIsArray: Array.isArray(data.colorTags),
-      colorTagsLength: data.colorTags?.length
+      colorTagsLength: Array.isArray(data.colorTags) ? data.colorTags.length : 0
     });
     
     // Force JSON serialization to ensure proper storage
@@ -1173,11 +1173,11 @@ export class DatabaseStorage implements IStorage {
       id: calendar.id,
       calendarDataType: typeof calendar.calendarData,
       calendarDataIsArray: Array.isArray(calendar.calendarData),
-      calendarDataLength: calendar.calendarData?.length,
+      calendarDataLength: Array.isArray(calendar.calendarData) ? calendar.calendarData.length : 0,
       calendarDataValue: calendar.calendarData,
       colorTagsType: typeof calendar.colorTags,
       colorTagsIsArray: Array.isArray(calendar.colorTags),
-      colorTagsLength: calendar.colorTags?.length,
+      colorTagsLength: Array.isArray(calendar.colorTags) ? calendar.colorTags.length : 0,
       colorTagsValue: calendar.colorTags
     });
     console.log('=== STORAGE UPSERT END ===');
