@@ -207,7 +207,7 @@ export default function MonthlyContentCalendar() {
 
   const getDateKey = (day: number) => {
     const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+    const month = currentDate.getMonth() + 1; // Add 1 to convert from 0-indexed to 1-indexed month
     return `${year}-${month}-${day}`;
   };
 
