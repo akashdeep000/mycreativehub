@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, ChevronLeft, ChevronRight, Pencil, X, Download } from 'lucide-react';
-import { useDebounce } from '@/hooks/use-debounce';
+import { useDebounce } from '../hooks/use-debounce';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 

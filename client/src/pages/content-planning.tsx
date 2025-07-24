@@ -56,7 +56,7 @@ export default function ContentPlanning() {
       lastUsed: "1 week ago",
       isPopular: true,
       isInternal: true,
-      internalUrl: "/monthly-content-calendar"
+      internalUrl: "/monthly-content-calendar-v3"
     },
 
     {
