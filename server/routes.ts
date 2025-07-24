@@ -2117,11 +2117,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           year,
           month,
           colorKeys: [
-            { id: '1', label: 'Reel', color: 'pink' },
-            { id: '2', label: 'Carousel', color: 'orange' },
-            { id: '3', label: 'Photo', color: 'blue' },
-            { id: '4', label: 'Promo', color: 'green' },
-            { id: '5', label: 'Story', color: 'purple' }
+            { id: '1', label: 'Reel', color: '#FF6B9D' },
+            { id: '2', label: 'Carousel', color: '#FF8E3C' },
+            { id: '3', label: 'Photo', color: '#4ECDC4' },
+            { id: '4', label: 'Promo', color: '#6BCF7F' },
+            { id: '5', label: 'Story', color: '#BB8FCE' }
           ],
           days: []
         };

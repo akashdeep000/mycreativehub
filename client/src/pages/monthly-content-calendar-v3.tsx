@@ -63,8 +63,8 @@ export default function MonthlyContentCalendarV3() {
     queryFn: () => apiRequest(`/api/calendar-v3/${year}/${month}`),
   });
 
-  const colorKeys: ColorKey[] = calendarData?.colorKeys || [];
-  const days: CalendarDay[] = calendarData?.days || [];
+  const colorKeys: ColorKey[] = (calendarData as any)?.colorKeys || [];
+  const days: CalendarDay[] = (calendarData as any)?.days || [];
 
   // Debounced save function
   const debouncedSave = useDebounce(() => {
@@ -72,8 +72,8 @@ export default function MonthlyContentCalendarV3() {
     saveCalendarData.mutate({
       year,
       month,
-      colorKeys,
-      days
+      colorKeys: colorKeys,
+      days: days
     });
   }, 1000);
 
@@ -114,7 +114,7 @@ export default function MonthlyContentCalendarV3() {
     );
     
     // Update the calendar data
-    const updatedData = { ...calendarData, colorKeys: updatedColorKeys };
+    const updatedData = { ...(calendarData as any), colorKeys: updatedColorKeys };
     queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
     debouncedSave();
   };
@@ -139,7 +139,7 @@ export default function MonthlyContentCalendarV3() {
       updatedDays = [...days, { date, entries: [newEntry] }];
     }
 
-    const updatedData = { ...calendarData, days: updatedDays };
+    const updatedData = { ...(calendarData as any), days: updatedDays };
     queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
     debouncedSave();
   };
@@ -154,7 +154,7 @@ export default function MonthlyContentCalendarV3() {
 
     updatedDays[dayIndex].entries[entryIndex].notes = notes;
 
-    const updatedData = { ...calendarData, days: updatedDays };
+    const updatedData = { ...(calendarData as any), days: updatedDays };
     queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
     debouncedSave();
   };
@@ -171,7 +171,7 @@ export default function MonthlyContentCalendarV3() {
       updatedDays.splice(dayIndex, 1);
     }
 
-    const updatedData = { ...calendarData, days: updatedDays };
+    const updatedData = { ...(calendarData as any), days: updatedDays };
     queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
     debouncedSave();
   };
