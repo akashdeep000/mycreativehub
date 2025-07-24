@@ -44,6 +44,8 @@ import ProductComponentChecklist from "@/pages/product-component-checklist";
 import ProfitCalculator from "@/pages/profit-calculator";
 import PreLaunchTimelinePlanner from "@/pages/pre-launch-timeline-planner";
 import LaunchGrowthPlan from "@/pages/launch-growth-plan";
+import MonthlyContentCalendarV2 from "@/pages/monthly-content-calendar-v2";
+import MonthlyContentCalendarV3 from "@/pages/monthly-content-calendar-v3";
 
 function TimerWrapper() {
   const { isVisible, timeLeft, totalTime, currentTask, isRunning, pauseTimer, resumeTimer, stopTimer, hideTimer, completeTimer } = useTimer();
@@ -104,6 +106,8 @@ function Router() {
       <Route path="/monthly-content-planner" component={MonthlyContentPlanner} />
       <Route path="/content-batching-planner" component={ContentBatchingPlanner} />
       <Route path="/monthly-content-calendar" component={MonthlyContentCalendar} />
+      <Route path="/monthly-content-calendar-v2" component={MonthlyContentCalendarV2} />
+      <Route path="/monthly-content-calendar-v3" component={MonthlyContentCalendarV3} />
       <Route path="/time-blocking" component={TimeBlocking} />
       <Route path="/finance" component={FinanceTracker} />
       <Route path="/your-money-map" component={YourMoneyMap} />

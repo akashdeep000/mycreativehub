@@ -37,6 +37,7 @@ import {
   automationToolkit,
   focusSessionLogs,
   calendarV2,
+  calendarV3,
   type User,
   type UpsertUser,
   type ToolkitModule,
@@ -105,6 +106,11 @@ import {
   type FocusSessionLog,
   type InsertFocusSessionLog,
   type CalendarV2,
+  type CalendarV3,
+  type InsertCalendarV3,
+  type ColorKeyV3,
+  type CalendarEntryV3,
+  type CalendarDayV3,
   type InsertCalendarV2,
 } from "@shared/schema";
 import { db } from "./db";
@@ -274,6 +280,14 @@ export interface IStorage {
   // Focus Timer System
   logFocusSession(session: InsertFocusSessionLog): Promise<FocusSessionLog>;
   getFocusSessionLogs(userId: string, limit?: number): Promise<FocusSessionLog[]>;
+  
+  // Calendar V2 Operations
+  getCalendarV2(userId: string, year: number, month: number): Promise<CalendarV2 | undefined>;
+  upsertCalendarV2(data: InsertCalendarV2): Promise<CalendarV2>;
+  
+  // Calendar V3 Operations
+  getCalendarV3(userId: string, year: number, month: number): Promise<CalendarV3 | undefined>;
+  upsertCalendarV3(data: InsertCalendarV3): Promise<CalendarV3>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1648,6 +1662,60 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
+    return calendar;
+  }
+
+  // Calendar V3 Operations
+  async getCalendarV3(userId: string, year: number, month: number): Promise<CalendarV3 | undefined> {
+    console.log('CalendarV3 GET - Querying for:', { userId, year, month });
+    const [calendar] = await db
+      .select()
+      .from(calendarV3)
+      .where(and(
+        eq(calendarV3.userId, userId),
+        eq(calendarV3.year, year),
+        eq(calendarV3.month, month)
+      ));
+    console.log('CalendarV3 GET - Database result:', {
+      found: !!calendar,
+      colorKeysCount: Array.isArray(calendar?.colorKeys) ? calendar.colorKeys.length : 0,
+      daysCount: Array.isArray(calendar?.days) ? calendar.days.length : 0
+    });
+    return calendar;
+  }
+
+  async upsertCalendarV3(data: InsertCalendarV3): Promise<CalendarV3> {
+    console.log('CalendarV3 UPSERT - Saving data:', {
+      userId: data.userId,
+      year: data.year,
+      month: data.month,
+      colorKeysCount: Array.isArray(data.colorKeys) ? data.colorKeys.length : 0,
+      daysCount: Array.isArray(data.days) ? data.days.length : 0
+    });
+    
+    const [calendar] = await db
+      .insert(calendarV3)
+      .values({
+        ...data,
+        colorKeys: Array.isArray(data.colorKeys) ? data.colorKeys : [],
+        days: Array.isArray(data.days) ? data.days : [],
+      })
+      .onConflictDoUpdate({
+        target: [calendarV3.userId, calendarV3.year, calendarV3.month],
+        set: {
+          colorKeys: Array.isArray(data.colorKeys) ? data.colorKeys : [],
+          days: Array.isArray(data.days) ? data.days : [],
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+      
+    console.log('CalendarV3 UPSERT - Save successful:', {
+      id: calendar.id,
+      savedColorKeys: calendar.colorKeys,
+      savedDays: calendar.days
+    });
+    
     return calendar;
   }
 }

@@ -1,0 +1,53 @@
+I need the “Monthly Content Calendar” template to be rebuilt from scratch because the current version is not functioning as expected, despite multiple requests.
+
+Please ensure the new version includes the following functionality and layout requirements:
+
+Layout & Grid:
+
+The calendar should display a clean, even grid layout that fits all days properly.
+
+Each date box must be the same size and evenly spaced.
+
+Colour Key Functionality:
+
+Each colour key should show a circular swatch (only a circle, no rectangle) and the associated editable label.
+
+Include a pencil edit icon next to each colour key word (not clickable text) to edit the label.
+
+When a colour key is selected and then a calendar day is clicked, it should append a colour key item to that day, showing:
+
+A circle of the selected colour.
+
+The associated label (e.g., “Reel”).
+
+Multiple colour keys should be allowed per day, displayed as a vertical list.
+
+Detailed Notes & Timing (Optional):
+
+Next to each colour key item on a calendar day, include a pencil icon that opens a pop-up form.
+
+The form should allow the user to add more details or time scheduling for that key (optional).
+
+All notes should be saved with that day and colour key.
+
+Saving Requirements:
+
+Any information entered into the calendar must be saved permanently, even if the user logs out, switches months, or exits and re-enters the app.
+
+Data should persist unless explicitly deleted by the user.
+
+When navigating to a new month or year, all data should be retained and displayed correctly.
+
+Simplified Colour Picker:
+
+When changing a colour, the selection tool should be a simple visible grid of colour options, not a gradient slider.
+
+Export Option:
+
+The “Export to PDF” button should allow the user to download a clean, styled PDF of their calendar with all keys and notes displayed.
+
+Fix the Current Bug:
+
+Currently, when a colour key is clicked and a date is selected, nothing appears—or it disappears after a few seconds. This must be resolved in the new build.
+
+Please make sure this build matches the dashboard’s visual aesthetic (clean, light theme with soft shadows) and functions smoothly across sessions.

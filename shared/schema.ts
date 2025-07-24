@@ -862,3 +862,47 @@ export const insertCalendarV2Schema = createInsertSchema(calendarV2).omit({
 
 export type CalendarV2 = typeof calendarV2.$inferSelect;
 export type InsertCalendarV2 = z.infer<typeof insertCalendarV2Schema>;
+
+// Calendar V3 Types
+export interface ColorKeyV3 {
+  id: string;
+  label: string;
+  color: string;
+}
+
+export interface CalendarEntryV3 {
+  id: string;
+  colorKeyId: string;
+  label: string;
+  color: string;
+  notes: string;
+  time: string;
+}
+
+export interface CalendarDayV3 {
+  date: string;
+  entries: CalendarEntryV3[];
+}
+
+// Calendar V3 table - final rebuilt calendar system
+export const calendarV3 = pgTable("calendar_v3", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  year: integer("year").notNull(),
+  month: integer("month").notNull(),
+  colorKeys: jsonb("color_keys").$type<ColorKeyV3[]>().notNull().default('[]'),
+  days: jsonb("days").$type<CalendarDayV3[]>().notNull().default('[]'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("calendar_v3_user_year_month_idx").on(table.userId, table.year, table.month)
+]);
+
+export const insertCalendarV3Schema = createInsertSchema(calendarV3).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CalendarV3 = typeof calendarV3.$inferSelect;
+export type InsertCalendarV3 = z.infer<typeof insertCalendarV3Schema>;

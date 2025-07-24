@@ -2083,6 +2083,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Calendar V3 - Final rebuild with comprehensive logging
+  app.get('/api/calendar-v3/:year/:month', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      console.log(`Calendar V3 GET - User: ${userId}, Year: ${year}, Month: ${month}`);
+      
+      const calendar = await storage.getCalendarV3(userId, year, month);
+      
+      if (calendar) {
+        // Return calendar with default empty arrays if needed
+        const response = {
+          userId: calendar.userId,
+          year: calendar.year,
+          month: calendar.month,
+          colorKeys: calendar.colorKeys || [],
+          days: calendar.days || []
+        };
+        
+        console.log('Calendar V3 GET - Sending response:', {
+          colorKeysCount: response.colorKeys.length,
+          daysCount: response.days.length
+        });
+        
+        res.json(response);
+      } else {
+        // Return default structure for new calendar
+        const defaultResponse = {
+          userId,
+          year,
+          month,
+          colorKeys: [
+            { id: '1', label: 'Reel', color: 'pink' },
+            { id: '2', label: 'Carousel', color: 'orange' },
+            { id: '3', label: 'Photo', color: 'blue' },
+            { id: '4', label: 'Promo', color: 'green' },
+            { id: '5', label: 'Story', color: 'purple' }
+          ],
+          days: []
+        };
+        
+        console.log('Calendar V3 GET - Sending default response');
+        res.json(defaultResponse);
+      }
+    } catch (error) {
+      console.error('Error fetching calendar v3:', error);
+      res.status(500).json({ message: 'Failed to fetch calendar data' });
+    }
+  });
+
+  app.put('/api/calendar-v3', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { year, month, colorKeys, days } = req.body;
+      
+      console.log('Calendar V3 PUT - Received data:', {
+        userId,
+        year,
+        month,
+        colorKeysCount: Array.isArray(colorKeys) ? colorKeys.length : 0,
+        daysCount: Array.isArray(days) ? days.length : 0
+      });
+      
+      const calendar = await storage.upsertCalendarV3({
+        userId,
+        year,
+        month,
+        colorKeys: colorKeys || [],
+        days: days || []
+      });
+      
+      const response = {
+        userId: calendar.userId,
+        year: calendar.year,
+        month: calendar.month,
+        colorKeys: calendar.colorKeys || [],
+        days: calendar.days || []
+      };
+      
+      console.log('Calendar V3 PUT - Sending response:', {
+        colorKeysCount: response.colorKeys.length,
+        daysCount: response.days.length
+      });
+      
+      res.json(response);
+    } catch (error) {
+      console.error('Error saving calendar v3:', error);
+      res.status(500).json({ message: 'Failed to save calendar data' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
