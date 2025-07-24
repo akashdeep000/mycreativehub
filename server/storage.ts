@@ -1155,33 +1155,67 @@ export class DatabaseStorage implements IStorage {
       colorTagsFinal: finalData.colorTags
     });
     
-    const [calendar] = await db
-      .insert(monthlyContentCalendar)
-      .values(finalData)
-      .onConflictDoUpdate({
-        target: [monthlyContentCalendar.userId, monthlyContentCalendar.year, monthlyContentCalendar.month],
-        set: {
-          calendarData: finalData.calendarData,
-          colorTags: finalData.colorTags,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
+    try {
+      const [calendar] = await db
+        .insert(monthlyContentCalendar)
+        .values(finalData)
+        .onConflictDoUpdate({
+          target: [monthlyContentCalendar.userId, monthlyContentCalendar.year, monthlyContentCalendar.month],
+          set: {
+            calendarData: finalData.calendarData,
+            colorTags: finalData.colorTags,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
       
-    console.log('=== STORAGE UPSERT RESULT ===');
-    console.log('Database returned:', {
-      id: calendar.id,
-      calendarDataType: typeof calendar.calendarData,
-      calendarDataIsArray: Array.isArray(calendar.calendarData),
-      calendarDataLength: Array.isArray(calendar.calendarData) ? calendar.calendarData.length : 0,
-      calendarDataValue: calendar.calendarData,
-      colorTagsType: typeof calendar.colorTags,
-      colorTagsIsArray: Array.isArray(calendar.colorTags),
-      colorTagsLength: Array.isArray(calendar.colorTags) ? calendar.colorTags.length : 0,
-      colorTagsValue: calendar.colorTags
-    });
-    console.log('=== STORAGE UPSERT END ===');
-    return calendar;
+      console.log('Database insert/update successful - returned result:', {
+        id: calendar.id,
+        userId: calendar.userId,
+        year: calendar.year,
+        month: calendar.month,
+        actualCalendarData: calendar.calendarData,
+        actualColorTags: calendar.colorTags,
+        calendarDataType: typeof calendar.calendarData,
+        colorTagsType: typeof calendar.colorTags,
+        calendarDataIsArray: Array.isArray(calendar.calendarData),
+        colorTagsIsArray: Array.isArray(calendar.colorTags)
+      });
+      
+      // Immediately verify the data was saved by querying it back
+      const verification = await db
+        .select()
+        .from(monthlyContentCalendar)
+        .where(and(
+          eq(monthlyContentCalendar.id, calendar.id)
+        ));
+      
+      console.log('VERIFICATION QUERY - Data actually in database:', {
+        verificationResult: verification[0],
+        verificationCalendarData: verification[0]?.calendarData,
+        verificationColorTags: verification[0]?.colorTags
+      });
+      
+      console.log('=== STORAGE UPSERT RESULT ===');
+      console.log('Database returned:', {
+        id: calendar.id,
+        calendarDataType: typeof calendar.calendarData,
+        calendarDataIsArray: Array.isArray(calendar.calendarData),
+        calendarDataLength: Array.isArray(calendar.calendarData) ? calendar.calendarData.length : 0,
+        calendarDataValue: calendar.calendarData,
+        colorTagsType: typeof calendar.colorTags,
+        colorTagsIsArray: Array.isArray(calendar.colorTags),
+        colorTagsLength: Array.isArray(calendar.colorTags) ? calendar.colorTags.length : 0,
+        colorTagsValue: calendar.colorTags
+      });
+      console.log('=== STORAGE UPSERT END ===');
+      return calendar;
+    } catch (error) {
+      console.error('=== DATABASE ERROR DURING UPSERT ===');
+      console.error('Error details:', error);
+      console.error('Data that failed to save:', finalData);
+      throw error;
+    }
   }
 
   async getContentBatchingPlanner(userId: string): Promise<ContentBatchingPlanner | undefined> {
