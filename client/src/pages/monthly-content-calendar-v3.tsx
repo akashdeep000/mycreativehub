@@ -58,13 +58,21 @@ export default function MonthlyContentCalendarV3() {
   const month = currentDate.getMonth() + 1;
 
   // Query calendar data
-  const { data: calendarData, isLoading } = useQuery({
+  const { data: calendarData, isLoading, refetch } = useQuery({
     queryKey: ['/api/calendar-v3', year, month],
     queryFn: () => apiRequest(`/api/calendar-v3/${year}/${month}`),
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache the data (v5 syntax)
+    refetchOnMount: true, // Always refetch when component mounts
   });
 
   const colorKeys: ColorKey[] = (calendarData as any)?.colorKeys || [];
   const days: CalendarDay[] = (calendarData as any)?.days || [];
+
+  // Debug logging
+  console.log('V3Calendar - Calendar data:', calendarData);
+  console.log('V3Calendar - Color keys:', colorKeys);
+  console.log('V3Calendar - Color keys length:', colorKeys.length);
 
   // Debounced save function
   const debouncedSave = useDebounce(() => {
