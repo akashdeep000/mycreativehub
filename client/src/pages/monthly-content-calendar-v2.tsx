@@ -84,13 +84,17 @@ export default function MonthlyContentCalendarV2() {
     mutationFn: (data: Partial<CalendarData>) => 
       apiRequest('/api/calendar-v2', {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(data),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/calendar-v2', year, month] });
       toast({ title: 'Calendar saved successfully' });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Calendar save error:', error);
       toast({ title: 'Failed to save calendar', variant: 'destructive' });
     }
   });
@@ -133,6 +137,15 @@ export default function MonthlyContentCalendarV2() {
       year,
       month
     };
+    
+    console.log('Frontend saveCalendarData - Data being sent:', {
+      year: dataToSave.year,
+      month: dataToSave.month,
+      colorKeysCount: Array.isArray(dataToSave.colorKeys) ? dataToSave.colorKeys.length : 0,
+      daysCount: Array.isArray(dataToSave.days) ? dataToSave.days.length : 0,
+      fullData: dataToSave
+    });
+    
     saveCalendarMutation.mutate(dataToSave);
   };
 
