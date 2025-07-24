@@ -1156,18 +1156,37 @@ export class DatabaseStorage implements IStorage {
     });
     
     try {
-      const [calendar] = await db
-        .insert(monthlyContentCalendar)
-        .values(finalData)
-        .onConflictDoUpdate({
-          target: [monthlyContentCalendar.userId, monthlyContentCalendar.year, monthlyContentCalendar.month],
-          set: {
+      // First, try to get existing record
+      const existing = await db
+        .select()
+        .from(monthlyContentCalendar)
+        .where(and(
+          eq(monthlyContentCalendar.userId, finalData.userId),
+          eq(monthlyContentCalendar.year, finalData.year),
+          eq(monthlyContentCalendar.month, finalData.month)
+        ));
+
+      let calendar;
+      if (existing.length > 0) {
+        // Update existing record
+        console.log('Updating existing calendar record:', existing[0].id);
+        [calendar] = await db
+          .update(monthlyContentCalendar)
+          .set({
             calendarData: finalData.calendarData,
             colorTags: finalData.colorTags,
             updatedAt: new Date(),
-          },
-        })
-        .returning();
+          })
+          .where(eq(monthlyContentCalendar.id, existing[0].id))
+          .returning();
+      } else {
+        // Insert new record
+        console.log('Creating new calendar record');
+        [calendar] = await db
+          .insert(monthlyContentCalendar)
+          .values(finalData)
+          .returning();
+      }
       
       console.log('Database insert/update successful - returned result:', {
         id: calendar.id,
