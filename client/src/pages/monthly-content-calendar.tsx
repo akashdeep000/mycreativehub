@@ -246,8 +246,11 @@ export default function MonthlyContentCalendar() {
 
     console.log('DATABASE-DRIVEN: Adding tag to date:', dateKey, 'tagId:', tagId);
 
-    // IMMEDIATE DATABASE SAVE: Calculate new data and save directly
+    // CRITICAL FIX: Get the most current data from the query result, not stale state
     const currentData = Array.isArray(calendarData) ? calendarData : [];
+    console.log('Current calendar data before adding tag:', currentData.length, 'items');
+    console.log('Current calendar data structure:', currentData);
+    
     const existing = currentData.find(cell => cell.date === dateKey);
     
     let newCalendarData;
@@ -265,6 +268,9 @@ export default function MonthlyContentCalendar() {
         batchNote: '' 
       }];
     }
+    
+    console.log('New calendar data after adding tag:', newCalendarData.length, 'items');
+    console.log('New calendar data structure:', newCalendarData);
     
     // IMMEDIATE SAVE: Save to database immediately on tag addition
     saveCalendarMutation.mutate({ calendarData: newCalendarData, colorTags });
