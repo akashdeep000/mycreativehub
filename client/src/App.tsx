@@ -17,7 +17,7 @@ import SocialMediaStrategy from "@/pages/social-media-strategy";
 import ReelCarouselTemplates from "@/pages/reel-carousel-templates";
 import MonthlyContentPlanner from "@/pages/monthly-content-planner";
 import ContentBatchingPlanner from "@/pages/content-batching-planner";
-import MonthlyContentCalendar from "@/pages/monthly-content-calendar";
+import MonthlyContentCalendarV2 from "@/pages/monthly-content-calendar-v2";
 import TimeBlocking from "@/pages/time-blocking";
 import FinanceTracker from "@/pages/finance-tracker";
 import YourMoneyMap from "@/pages/your-money-map";
@@ -103,7 +103,7 @@ function Router() {
       <Route path="/reel-carousel-templates" component={ReelCarouselTemplates} />
       <Route path="/monthly-content-planner" component={MonthlyContentPlanner} />
       <Route path="/content-batching-planner" component={ContentBatchingPlanner} />
-      <Route path="/monthly-content-calendar" component={MonthlyContentCalendar} />
+      <Route path="/monthly-content-calendar" component={MonthlyContentCalendarV2} />
       <Route path="/time-blocking" component={TimeBlocking} />
       <Route path="/finance" component={FinanceTracker} />
       <Route path="/your-money-map" component={YourMoneyMap} />

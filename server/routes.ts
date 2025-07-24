@@ -2022,6 +2022,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Calendar V2 - Complete rebuild
+  app.get('/api/calendar-v2/:year/:month', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      console.log(`Calendar V2 GET - User: ${userId}, Year: ${year}, Month: ${month}`);
+      
+      const calendar = await storage.getCalendarV2(userId, year, month);
+      
+      console.log('Calendar V2 GET - Database result:', {
+        found: !!calendar,
+        id: calendar?.id,
+        colorKeysCount: Array.isArray(calendar?.colorKeys) ? calendar.colorKeys.length : 0,
+        daysCount: Array.isArray(calendar?.days) ? calendar.days.length : 0
+      });
+      
+      res.json(calendar || null);
+    } catch (error) {
+      console.error('Error fetching calendar v2:', error);
+      res.status(500).json({ message: 'Failed to fetch calendar data' });
+    }
+  });
+
+  app.put('/api/calendar-v2', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { year, month, colorKeys, days } = req.body;
+      
+      console.log('Calendar V2 PUT - Received data:', {
+        userId,
+        year,
+        month,
+        colorKeysCount: Array.isArray(colorKeys) ? colorKeys.length : 0,
+        daysCount: Array.isArray(days) ? days.length : 0,
+        colorKeysType: typeof colorKeys,
+        daysType: typeof days
+      });
+      
+      const calendar = await storage.upsertCalendarV2({
+        userId,
+        year,
+        month,
+        colorKeys: colorKeys || [],
+        days: days || []
+      });
+      
+      console.log('Calendar V2 PUT - Save successful:', {
+        id: calendar.id,
+        savedColorKeys: calendar.colorKeys,
+        savedDays: calendar.days
+      });
+      
+      res.json(calendar);
+    } catch (error) {
+      console.error('Error saving calendar v2:', error);
+      res.status(500).json({ message: 'Failed to save calendar data' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

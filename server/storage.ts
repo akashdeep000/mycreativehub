@@ -36,6 +36,7 @@ import {
   sopBuilders,
   automationToolkit,
   focusSessionLogs,
+  calendarV2,
   type User,
   type UpsertUser,
   type ToolkitModule,
@@ -103,6 +104,8 @@ import {
   type InsertAutomationToolkit,
   type FocusSessionLog,
   type InsertFocusSessionLog,
+  type CalendarV2,
+  type InsertCalendarV2,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, gte, lte, sql, inArray } from "drizzle-orm";
@@ -1613,6 +1616,39 @@ export class DatabaseStorage implements IStorage {
       .where(eq(focusSessionLogs.userId, userId))
       .orderBy(desc(focusSessionLogs.completedAt))
       .limit(limit);
+  }
+
+  // Calendar V2 - Complete rebuild
+  async getCalendarV2(userId: string, year: number, month: number): Promise<CalendarV2 | undefined> {
+    const [calendar] = await db
+      .select()
+      .from(calendarV2)
+      .where(and(
+        eq(calendarV2.userId, userId),
+        eq(calendarV2.year, year),
+        eq(calendarV2.month, month)
+      ));
+    return calendar;
+  }
+
+  async upsertCalendarV2(data: InsertCalendarV2): Promise<CalendarV2> {
+    const [calendar] = await db
+      .insert(calendarV2)
+      .values({
+        ...data,
+        colorKeys: Array.isArray(data.colorKeys) ? data.colorKeys : [],
+        days: Array.isArray(data.days) ? data.days : [],
+      })
+      .onConflictDoUpdate({
+        target: [calendarV2.userId, calendarV2.year, calendarV2.month],
+        set: {
+          colorKeys: Array.isArray(data.colorKeys) ? data.colorKeys : [],
+          days: Array.isArray(data.days) ? data.days : [],
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return calendar;
   }
 }
 

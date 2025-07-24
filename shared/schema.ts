@@ -839,3 +839,26 @@ export type AutomationToolkit = typeof automationToolkit.$inferSelect;
 export type InsertAutomationToolkit = z.infer<typeof insertAutomationToolkitSchema>;
 export type FocusSessionLog = typeof focusSessionLogs.$inferSelect;
 export type InsertFocusSessionLog = z.infer<typeof insertFocusSessionLogSchema>;
+
+// New Calendar V2 - Complete rebuild
+export const calendarV2 = pgTable("calendar_v2", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  year: integer("year").notNull(),
+  month: integer("month").notNull(),
+  colorKeys: jsonb("color_keys").notNull().default('[]'),
+  days: jsonb("days").notNull().default('[]'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("calendar_v2_user_year_month_idx").on(table.userId, table.year, table.month)
+]);
+
+export const insertCalendarV2Schema = createInsertSchema(calendarV2).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CalendarV2 = typeof calendarV2.$inferSelect;
+export type InsertCalendarV2 = z.infer<typeof insertCalendarV2Schema>;
