@@ -565,20 +565,10 @@ export default function MonthlyContentCalendarV3() {
                                   setCurrentEntryId(entry.id);
                                   setNotesValue(entry.notes);
                                 }}
-                                className="text-xs bg-gray-100 hover:bg-gray-200 rounded px-1 ml-1"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-gray-100 hover:bg-gray-200 rounded px-1 ml-1"
                                 title="Edit notes"
                               >
                                 <Pencil className="w-3 h-3 text-gray-500" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteEntry(dayNumber, entry.id);
-                                }}
-                                className="text-xs bg-red-100 hover:bg-red-200 rounded px-1 ml-1"
-                                title="Delete entry"
-                              >
-                                <X className="w-3 h-3 text-red-500" />
                               </button>
                             </div>
                           );
@@ -605,18 +595,32 @@ export default function MonthlyContentCalendarV3() {
                 placeholder="Add notes about this content..."
                 rows={4}
               />
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowNotesPopup(null)}>
-                  Cancel
+              <div className="flex justify-between gap-2">
+                <Button 
+                  variant="destructive" 
+                  onClick={() => {
+                    if (showNotesPopup && currentEntryId) {
+                      const date = parseInt(showNotesPopup.split('-')[0]);
+                      deleteEntry(date, currentEntryId);
+                      setShowNotesPopup(null);
+                    }
+                  }}
+                >
+                  Delete Note
                 </Button>
-                <Button onClick={() => {
-                  if (showNotesPopup && currentEntryId) {
-                    const date = parseInt(showNotesPopup.split('-')[0]);
-                    handleNotesEdit(date, currentEntryId, notesValue);
-                  }
-                }}>
-                  Save
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setShowNotesPopup(null)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={() => {
+                    if (showNotesPopup && currentEntryId) {
+                      const date = parseInt(showNotesPopup.split('-')[0]);
+                      handleNotesEdit(date, currentEntryId, notesValue);
+                    }
+                  }}>
+                    Save
+                  </Button>
+                </div>
               </div>
             </div>
           </DialogContent>
