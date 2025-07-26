@@ -260,10 +260,10 @@ export default function StreamlineWorkflow() {
     return (
       <div className="flex h-screen bg-gray-50">
         <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden ml-0 lg:ml-0">
           <MobileNav />
           <main className="flex-1 overflow-y-auto">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="w-full px-6 sm:px-8 lg:px-12 py-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                   <Button
@@ -295,7 +295,7 @@ export default function StreamlineWorkflow() {
               </div>
 
               {/* Template-specific content */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
                 {selectedTemplate === "inspiration" && (
                   <CreativeInspirationHub
                     templateId={templateInstance.id}
