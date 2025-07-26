@@ -35,6 +35,14 @@ const COLOR_OPTIONS = [
   '#F8C471', '#82E0AA', '#F1948A', '#AED6F1', '#A9DFBF'
 ];
 
+// Simple color options for the color picker grid
+const SIMPLE_COLOR_OPTIONS = [
+  '#FF6B9D', '#FF8E3C', '#FFD93D', '#6BCF7F', '#4ECDC4', 
+  '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FFB6C1',
+  '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+  '#F8C471', '#82E0AA', '#F1948A', '#AED6F1', '#A9DFBF'
+];
+
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
@@ -257,6 +265,24 @@ export default function MonthlyContentCalendarV3() {
     setNewTagColor('#FF6B9D');
   };
 
+  const deleteColorKey = (keyId: string) => {
+    const updatedColorKeys = colorKeys.filter(key => key.id !== keyId);
+    const updatedData = { ...(calendarData as any), colorKeys: updatedColorKeys };
+    queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
+    debouncedSave();
+    toast({ title: "Tag deleted successfully", variant: "default" });
+  };
+
+  const updateColorKeyColor = (keyId: string, newColor: string) => {
+    const updatedColorKeys = colorKeys.map(key => 
+      key.id === keyId ? { ...key, color: newColor } : key
+    );
+    const updatedData = { ...(calendarData as any), colorKeys: updatedColorKeys };
+    queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
+    debouncedSave();
+    setShowColorPicker(null);
+  };
+
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
     if (direction === 'prev') {
@@ -400,13 +426,35 @@ export default function MonthlyContentCalendarV3() {
                     Selected
                   </div>
                 )}
-                <div
-                  className={`w-4 h-4 rounded-full border transition-all ${
-                    selectedKeyId === colorKey.id ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
-                  }`}
-                  style={{ backgroundColor: colorKey.color }}
-                  title={`${selectedKeyId === colorKey.id ? 'Active: ' : 'Select '}${colorKey.label} colour`}
-                />
+                <div className="relative">
+                  <div
+                    className={`w-4 h-4 rounded-full border transition-all cursor-pointer hover:ring-2 hover:ring-gray-300 ${
+                      selectedKeyId === colorKey.id ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
+                    }`}
+                    style={{ backgroundColor: colorKey.color }}
+                    title="Click to change color"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowColorPicker(showColorPicker === colorKey.id ? null : colorKey.id);
+                    }}
+                  />
+                  {/* Simple Color Grid */}
+                  {showColorPicker === colorKey.id && (
+                    <div className="color-picker-container absolute top-6 left-0 z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-3">
+                      <div className="grid grid-cols-5 gap-2">
+                        {SIMPLE_COLOR_OPTIONS.map((color) => (
+                          <div
+                            key={color}
+                            className="w-6 h-6 rounded-full border border-gray-300 cursor-pointer hover:scale-110 transition-transform"
+                            style={{ backgroundColor: color }}
+                            onClick={() => updateColorKeyColor(colorKey.id, color)}
+                            title={`Change to ${color}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 {editingKeyId === colorKey.id ? (
                   <Input
                     value={editingKeyValue}
@@ -432,6 +480,16 @@ export default function MonthlyContentCalendarV3() {
                     >
                       <Pencil className="w-3 h-3 text-gray-500 hover:text-gray-700" />
                     </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteColorKey(colorKey.id);
+                      }}
+                      className="ml-1 hover:bg-red-100 rounded p-1"
+                      title="Delete tag"
+                    >
+                      <X className="w-3 h-3 text-gray-500 hover:text-red-600" />
+                    </button>
                   </>
                 )}
               </div>
@@ -441,12 +499,33 @@ export default function MonthlyContentCalendarV3() {
             {isCreatingNewTag ? (
               <div className="relative">
                 <div className="flex items-center gap-2 rounded-lg p-2 bg-green-50 border-2 border-green-500 shadow-md">
-                  <div
-                    className="w-4 h-4 rounded-full border border-green-400 cursor-pointer"
-                    style={{ backgroundColor: newTagColor }}
-                    onClick={() => setShowColorPicker(showColorPicker === 'newTag' ? null : 'newTag')}
-                    title="Click to change color"
-                  />
+                  <div className="relative">
+                    <div
+                      className="w-4 h-4 rounded-full border border-green-400 cursor-pointer hover:ring-2 hover:ring-green-300"
+                      style={{ backgroundColor: newTagColor }}
+                      onClick={() => setShowColorPicker(showColorPicker === 'newTag' ? null : 'newTag')}
+                      title="Click to change color"
+                    />
+                    {/* Simple Color Grid for new tag */}
+                    {showColorPicker === 'newTag' && (
+                      <div className="color-picker-container absolute top-6 left-0 z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-3">
+                        <div className="grid grid-cols-5 gap-2">
+                          {SIMPLE_COLOR_OPTIONS.map((color: string) => (
+                            <div
+                              key={color}
+                              className="w-6 h-6 rounded-full border border-gray-300 cursor-pointer hover:scale-110 transition-transform"
+                              style={{ backgroundColor: color }}
+                              onClick={() => {
+                                setNewTagColor(color);
+                                setShowColorPicker(null);
+                              }}
+                              title={`Change to ${color}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <Input
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
