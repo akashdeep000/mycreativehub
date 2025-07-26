@@ -73,6 +73,8 @@ export default function MonthlyContentCalendarV3() {
   console.log('V3Calendar - Calendar data:', calendarData);
   console.log('V3Calendar - Color keys:', colorKeys);
   console.log('V3Calendar - Color keys length:', colorKeys.length);
+  console.log('V3Calendar - API response type:', typeof calendarData);
+  console.log('V3Calendar - Is loading:', isLoading);
 
   // Debounced save function
   const debouncedSave = useDebounce(() => {
