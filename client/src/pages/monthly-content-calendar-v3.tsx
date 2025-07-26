@@ -66,8 +66,8 @@ export default function MonthlyContentCalendarV3() {
       console.log('V3Calendar - Raw API response:', data);
       return data;
     },
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Don't cache the data (v5 syntax)
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnMount: true, // Always refetch when component mounts
   });
 
@@ -101,11 +101,14 @@ export default function MonthlyContentCalendarV3() {
       }),
     onSuccess: () => {
       toast({ title: "Calendar saved successfully", variant: "default" });
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar-v3', year, month] });
+      // Don't invalidate query immediately to prevent race condition
+      // The optimistic updates should be sufficient
     },
     onError: (error) => {
       console.error('Save error:', error);
       toast({ title: "Failed to save calendar", variant: "destructive" });
+      // Only refetch on error to restore the correct state
+      queryClient.invalidateQueries({ queryKey: ['/api/calendar-v3', year, month] });
     },
   });
 
