@@ -440,12 +440,12 @@ export default function MonthlyContentCalendarV3() {
                   />
                   {/* Simple Color Grid */}
                   {showColorPicker === colorKey.id && (
-                    <div className="color-picker-container absolute top-6 left-0 z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-3">
-                      <div className="grid grid-cols-5 gap-2">
+                    <div className="color-picker-container absolute top-6 left-0 z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-4 min-w-[200px]">
+                      <div className="grid grid-cols-4 gap-3">
                         {SIMPLE_COLOR_OPTIONS.map((color) => (
                           <div
                             key={color}
-                            className="w-6 h-6 rounded-full border border-gray-300 cursor-pointer hover:scale-110 transition-transform"
+                            className="w-7 h-7 rounded-full border border-gray-300 cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
                             style={{ backgroundColor: color }}
                             onClick={() => updateColorKeyColor(colorKey.id, color)}
                             title={`Change to ${color}`}
@@ -508,12 +508,12 @@ export default function MonthlyContentCalendarV3() {
                     />
                     {/* Simple Color Grid for new tag */}
                     {showColorPicker === 'newTag' && (
-                      <div className="color-picker-container absolute top-6 left-0 z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-3">
-                        <div className="grid grid-cols-5 gap-2">
+                      <div className="color-picker-container absolute top-6 left-0 z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-4 min-w-[200px]">
+                        <div className="grid grid-cols-4 gap-3">
                           {SIMPLE_COLOR_OPTIONS.map((color: string) => (
                             <div
                               key={color}
-                              className="w-6 h-6 rounded-full border border-gray-300 cursor-pointer hover:scale-110 transition-transform"
+                              className="w-7 h-7 rounded-full border border-gray-300 cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
                               style={{ backgroundColor: color }}
                               onClick={() => {
                                 setNewTagColor(color);
