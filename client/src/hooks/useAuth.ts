@@ -14,7 +14,7 @@ export function useAuth() {
       }
       return failureCount < 1;
     },
-    retryOnMount: false,
+    retryOnMount: true,
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
@@ -24,7 +24,6 @@ export function useAuth() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token && !user && !isLoading) {
-      console.log("Token found in localStorage, refetching auth state");
       refetch();
     }
   }, [user, isLoading, refetch]);
