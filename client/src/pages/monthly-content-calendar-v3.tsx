@@ -60,7 +60,12 @@ export default function MonthlyContentCalendarV3() {
   // Query calendar data
   const { data: calendarData, isLoading, refetch } = useQuery({
     queryKey: ['/api/calendar-v3', year, month],
-    queryFn: () => apiRequest(`/api/calendar-v3/${year}/${month}`),
+    queryFn: async () => {
+      const response = await apiRequest(`/api/calendar-v3/${year}/${month}`);
+      const data = await response.json();
+      console.log('V3Calendar - Raw API response:', data);
+      return data;
+    },
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Don't cache the data (v5 syntax)
     refetchOnMount: true, // Always refetch when component mounts
@@ -304,77 +309,39 @@ export default function MonthlyContentCalendarV3() {
           </Button>
         </div>
 
-        {/* Color Keys */}
+        {/* Color Keys - Time Blocking Style */}
         <div className="bg-white rounded-lg shadow-md border-0 p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Color Keys & Content Types</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {colorKeys.map((key) => (
-              <div key={key.id} className="flex items-center gap-3">
-                <button
-                  className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center relative"
-                  style={{ backgroundColor: key.color }}
-                  onClick={() => setShowColorPicker(showColorPicker === key.id ? null : key.id)}
-                >
-                  {selectedKeyId === key.id && (
-                    <div className="absolute inset-0 rounded-full ring-2 ring-offset-2 ring-gray-400" />
-                  )}
-                </button>
-                
-                {editingKeyId === key.id ? (
-                  <Input
-                    value={editingKeyValue}
-                    onChange={(e) => setEditingKeyValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleKeyEdit(key.id, editingKeyValue);
-                      if (e.key === 'Escape') {
-                        setEditingKeyId(null);
-                        setEditingKeyValue('');
-                      }
-                    }}
-                    onBlur={() => handleKeyEdit(key.id, editingKeyValue)}
-                    className="text-sm h-8"
-                    autoFocus
-                  />
-                ) : (
-                  <div className="flex items-center gap-2 flex-1">
-                    <span 
-                      className={`text-sm font-medium cursor-pointer hover:bg-gray-100 px-2 py-1 rounded ${
-                        selectedKeyId === key.id ? 'bg-gray-100' : ''
-                      }`}
-                      onClick={() => setSelectedKeyId(selectedKeyId === key.id ? null : key.id)}
-                    >
-                      {key.label}
-                    </span>
-                    <button
-                      onClick={() => {
-                        setEditingKeyId(key.id);
-                        setEditingKeyValue(key.label);
-                      }}
-                      className="opacity-0 hover:opacity-100 transition-opacity"
-                    >
-                      <Pencil className="w-3 h-3 text-gray-500" />
-                    </button>
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Colour Key</h3>
+          </div>
+          <p className="text-gray-600 text-sm mb-4">
+            Select a colour category, then click a calendar block to apply it. This block will auto-fill with the category name, which you can edit anytime.
+          </p>
+          <div className="flex flex-wrap gap-3 items-center">
+            {/* Default color keys with proper selection highlighting */}
+            {colorKeys.map((colorKey) => (
+              <div
+                key={colorKey.id}
+                className={`relative flex items-center gap-2 rounded-lg p-2 transition-all cursor-pointer ${
+                  selectedKeyId === colorKey.id 
+                    ? 'bg-blue-50 border-2 border-blue-500 shadow-md ring-2 ring-blue-200' 
+                    : 'bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
+                }`}
+                onClick={() => setSelectedKeyId(selectedKeyId === colorKey.id ? null : colorKey.id)}
+              >
+                {selectedKeyId === colorKey.id && (
+                  <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
+                    Selected
                   </div>
                 )}
-
-                {/* Color Picker */}
-                {showColorPicker === key.id && (
-                  <div className="absolute z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3 mt-2">
-                    <div className="grid grid-cols-5 gap-2 w-48">
-                      {COLOR_OPTIONS.map((color) => (
-                        <button
-                          key={color}
-                          className="w-7 h-7 rounded border-2 hover:scale-110 transition-transform"
-                          style={{ backgroundColor: color }}
-                          onClick={() => {
-                            updateColorKey(key.id, { color });
-                            setShowColorPicker(null);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <div
+                  className={`w-4 h-4 rounded-full border transition-all ${
+                    selectedKeyId === colorKey.id ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
+                  }`}
+                  style={{ backgroundColor: colorKey.color }}
+                  title={`${selectedKeyId === colorKey.id ? 'Active: ' : 'Select '}${colorKey.label} colour`}
+                />
+                <span className="text-sm font-medium">{colorKey.label}</span>
               </div>
             ))}
           </div>
