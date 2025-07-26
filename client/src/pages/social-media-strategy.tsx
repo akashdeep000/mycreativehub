@@ -104,30 +104,42 @@ export default function SocialMediaStrategy() {
     }
   }, [existingStrategy]);
 
-  // Auto-save with proper debouncing using useRef to avoid infinite re-renders
+  // Auto-save with proper debouncing to prevent text loss during typing
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedRef = useRef<string>('');
+
+  // Create stable string representations for comparison
+  const contentGoalsString = strategy.contentGoals;
+  const pillarsString = strategy.pillars.map(p => `${p.id}:${p.title}:${p.cta}`).join('|');
+  const combinedString = `${contentGoalsString}||${pillarsString}`;
 
   useEffect(() => {
     if (!user) return;
+
+    // Skip if no change from last saved state
+    if (combinedString === lastSavedRef.current) return;
 
     // Clear existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    // Set new timeout for auto-save
+    // Set timeout with longer delay to prevent interrupting typing
     saveTimeoutRef.current = setTimeout(() => {
       // Only save if there's actual content
       const hasContent = strategy.contentGoals.trim() || 
                         strategy.pillars.some(p => p.title.trim() || p.cta.trim());
       
       if (hasContent) {
+        // Store current state before saving to prevent duplicate saves
+        lastSavedRef.current = combinedString;
+        
         saveMutation.mutate({
           contentGoals: strategy.contentGoals,
           pillars: strategy.pillars
         });
       }
-    }, 1000);
+    }, 3000); // Increased to 3 seconds to allow complete typing of words/phrases
 
     // Cleanup timeout on unmount
     return () => {
@@ -135,7 +147,7 @@ export default function SocialMediaStrategy() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [strategy.contentGoals, JSON.stringify(strategy.pillars), user, saveMutation]);
+  }, [combinedString, user, saveMutation, strategy.contentGoals, strategy.pillars]);
 
   const updateContentGoals = (goals: string) => {
     setStrategy(prev => ({ ...prev, contentGoals: goals }));
