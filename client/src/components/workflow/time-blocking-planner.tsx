@@ -468,22 +468,23 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           ))}
         </div>
 
-        <div className="w-full border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
-          <div className="grid grid-cols-8 bg-gray-50 border-b border-gray-200">
-            <div className="py-4 px-3 text-sm font-semibold text-gray-700 border-r border-gray-200 text-center">
-              Time
-            </div>
-            {DAYS.map(day => (
-              <div key={day} className="py-4 px-3 text-sm font-semibold text-gray-700 text-center border-r border-gray-200 last:border-r-0">
-                {day.slice(0, 3)}
+        <div className="w-full border border-gray-200 rounded-lg bg-white shadow-sm overflow-auto">
+          <div className="min-w-[800px]">
+            <div className="grid grid-cols-8 bg-gray-50 border-b border-gray-200">
+              <div className="py-4 px-3 text-sm font-semibold text-gray-700 border-r border-gray-200 text-center w-20 flex-shrink-0">
+                Time
               </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-8 max-h-[700px] overflow-y-auto">
-            {HOURS.map(hour => [
-              <div key={`time-${hour}`} className="py-4 px-3 text-sm text-gray-600 font-medium bg-gray-50 border-r border-b border-gray-200 flex items-center justify-center min-w-[80px]">
-                {formatTime(hour)}
-              </div>,
+              {DAYS.map(day => (
+                <div key={day} className="py-4 px-3 text-sm font-semibold text-gray-700 text-center border-r border-gray-200 last:border-r-0 min-w-[100px] flex-1">
+                  {day.slice(0, 3)}
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-8 max-h-[700px] overflow-y-auto">
+              {HOURS.map(hour => [
+                <div key={`time-${hour}`} className="py-4 px-3 text-sm text-gray-600 font-medium bg-gray-50 border-r border-b border-gray-200 flex items-center justify-center w-20 flex-shrink-0">
+                  {formatTime(hour)}
+                </div>,
               ...DAYS.map(day => (
                 <div
                   key={`${day}-${hour}`}
@@ -563,6 +564,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                 </div>
               ))
             ])}
+            </div>
           </div>
         </div>
       </div>
@@ -719,7 +721,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   };
 
   return (
-    <div className="w-full px-8 lg:px-12 space-y-6">
+    <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Time Blocking Planner</h2>
