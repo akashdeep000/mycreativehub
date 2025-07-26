@@ -69,7 +69,9 @@ function TimerWrapper() {
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
-  // Always show login/signup routes for unauthenticated users
+  console.log("Router - Authentication state:", { isAuthenticated, isLoading });
+
+  // Show loading state while authentication is being checked
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -78,6 +80,7 @@ function Router() {
     );
   }
 
+  // Show login routes only for confirmed unauthenticated users
   if (!isAuthenticated) {
     return (
       <>
