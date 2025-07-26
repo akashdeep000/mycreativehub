@@ -117,7 +117,7 @@ export default function MonthlyContentCalendarV3() {
         headers: { 'Content-Type': 'application/json' },
       }),
     onSuccess: () => {
-      toast({ title: "Calendar saved successfully", variant: "default" });
+      // Silent save - no toast notification for cleaner UX
       // Don't invalidate query immediately to prevent race condition
       // The optimistic updates should be sufficient
     },

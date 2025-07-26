@@ -923,6 +923,14 @@ Changelog:
   - Built comprehensive V3 Monthly Content Calendar from scratch with complete backend and frontend
   - Created dedicated database schema (calendarV3 table) with separate API endpoints for V3 functionality
   - Implemented horizontal color keys section with 5 default types (Reel, Carousel, Photo, Promo, Story)
+- July 26, 2025. FINAL CALENDAR V3 IMPROVEMENTS COMPLETED:
+  - Removed truncation from calendar entries - full tag names now display (removed truncate class)
+  - Added hover-activated pencil icons to all color keys for inline editing functionality
+  - Implemented "+" button for creating custom tags with color picker and click-outside detection
+  - Added auto-save functionality for inline tag name editing with toast notifications
+  - Removed "Calendar saved successfully" toast notification for cleaner, uninterrupted user experience
+  - All new features maintain existing data persistence and click-to-apply workflow
+  - Monthly Content Calendar V3 now fully complete with all requested enhancements
   - Added pencil icon editing for color key labels with inline text modification
   - Built color picker functionality allowing users to customize color key colors with hex values
   - Created click-to-select workflow: select color key, then click calendar dates to add colored entries
