@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, ChevronLeft, ChevronRight, Pencil, X, Download, Plus } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Pencil, X, Download, Plus, ArrowLeft, Home } from 'lucide-react';
 import { useDebounce } from '../hooks/use-debounce';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -362,6 +362,28 @@ export default function MonthlyContentCalendarV3() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto">
+        {/* Navigation Buttons */}
+        <div className="flex items-center gap-3 mb-6">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => window.location.href = '/'}
+            className="flex items-center gap-2"
+          >
+            <Home className="w-4 h-4" />
+            Back to Dashboard
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => window.location.href = '/content'}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Content Creation
+          </Button>
+        </div>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
@@ -370,7 +392,7 @@ export default function MonthlyContentCalendarV3() {
             </div>
             <div>
               <h1 className="text-2xl font-serif font-semibold text-gray-900">
-                Monthly Content Calendar V3
+                Monthly Content Calendar
               </h1>
             </div>
           </div>
