@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -104,18 +104,38 @@ export default function SocialMediaStrategy() {
     }
   }, [existingStrategy]);
 
-  // Enhanced auto-save functionality with debounce - saves all changes automatically
-  useEffect(() => {
-    // Only auto-save if user is logged in and strategy has any content
-    if (!user) return;
-    
-    const timeoutId = setTimeout(() => {
-      // Save strategy whenever there's any content (even empty content to persist structure)
-      saveMutation.mutate(strategy);
-    }, 1000); // Reduced debounce time for more responsive saving
+  // Auto-save with proper debouncing using useRef to avoid infinite re-renders
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    return () => clearTimeout(timeoutId);
-  }, [strategy, user]);
+  useEffect(() => {
+    if (!user) return;
+
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Set new timeout for auto-save
+    saveTimeoutRef.current = setTimeout(() => {
+      // Only save if there's actual content
+      const hasContent = strategy.contentGoals.trim() || 
+                        strategy.pillars.some(p => p.title.trim() || p.cta.trim());
+      
+      if (hasContent) {
+        saveMutation.mutate({
+          contentGoals: strategy.contentGoals,
+          pillars: strategy.pillars
+        });
+      }
+    }, 1000);
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [strategy.contentGoals, JSON.stringify(strategy.pillars), user, saveMutation]);
 
   const updateContentGoals = (goals: string) => {
     setStrategy(prev => ({ ...prev, contentGoals: goals }));
