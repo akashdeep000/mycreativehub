@@ -427,7 +427,7 @@ export default function MonthlyContentCalendarV3() {
                         e.stopPropagation();
                         startEditingKey(colorKey.id, colorKey.label);
                       }}
-                      className="opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity ml-1"
+                      className="ml-2 hover:bg-gray-200 rounded p-1"
                       title="Edit tag name"
                     >
                       <Pencil className="w-3 h-3 text-gray-500 hover:text-gray-700" />
@@ -565,18 +565,20 @@ export default function MonthlyContentCalendarV3() {
                                   setCurrentEntryId(entry.id);
                                   setNotesValue(entry.notes);
                                 }}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-gray-100 hover:bg-gray-200 rounded px-1"
+                                className="text-xs bg-gray-100 hover:bg-gray-200 rounded px-1 ml-1"
+                                title="Edit notes"
                               >
-                                ✏️
+                                <Pencil className="w-3 h-3 text-gray-500" />
                               </button>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   deleteEntry(dayNumber, entry.id);
                                 }}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-red-100 hover:bg-red-200 rounded px-1"
+                                className="text-xs bg-red-100 hover:bg-red-200 rounded px-1 ml-1"
+                                title="Delete entry"
                               >
-                                <X className="w-3 h-3" />
+                                <X className="w-3 h-3 text-red-500" />
                               </button>
                             </div>
                           );
