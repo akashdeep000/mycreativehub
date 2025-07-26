@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, ChevronLeft, ChevronRight, Pencil, X, Download } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Pencil, X, Download, Plus } from 'lucide-react';
 import { useDebounce } from '../hooks/use-debounce';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -53,6 +53,9 @@ export default function MonthlyContentCalendarV3() {
   const [showNotesPopup, setShowNotesPopup] = useState<string | null>(null);
   const [notesValue, setNotesValue] = useState('');
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
+  const [isCreatingNewTag, setIsCreatingNewTag] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#FF6B9D');
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
@@ -80,6 +83,20 @@ export default function MonthlyContentCalendarV3() {
   console.log('V3Calendar - Color keys length:', colorKeys.length);
   console.log('V3Calendar - API response type:', typeof calendarData);
   console.log('V3Calendar - Is loading:', isLoading);
+
+  // Click outside effect to close color picker
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showColorPicker && !(event.target as Element).closest('.color-picker-container')) {
+        setShowColorPicker(null);
+      }
+    };
+
+    if (showColorPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showColorPicker]);
 
   // Debounced save function
   const debouncedSave = useDebounce(() => {
@@ -192,6 +209,52 @@ export default function MonthlyContentCalendarV3() {
     const updatedData = { ...(calendarData as any), days: updatedDays };
     queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
     debouncedSave();
+  };
+
+  // New helper functions for editing and custom tags
+  const startEditingKey = (keyId: string, currentLabel: string) => {
+    setEditingKeyId(keyId);
+    setEditingKeyValue(currentLabel);
+  };
+
+  const saveKeyEdit = () => {
+    if (editingKeyId && editingKeyValue.trim()) {
+      updateColorKey(editingKeyId, { label: editingKeyValue.trim() });
+      toast({ title: "Tag renamed successfully", variant: "default" });
+    }
+    setEditingKeyId(null);
+    setEditingKeyValue('');
+  };
+
+  const cancelKeyEdit = () => {
+    setEditingKeyId(null);
+    setEditingKeyValue('');
+  };
+
+  const addNewCustomTag = () => {
+    if (newTagName.trim()) {
+      const newKey: ColorKey = {
+        id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        label: newTagName.trim(),
+        color: newTagColor
+      };
+      
+      const updatedColorKeys = [...colorKeys, newKey];
+      const updatedData = { ...(calendarData as any), colorKeys: updatedColorKeys };
+      queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
+      debouncedSave();
+      
+      toast({ title: "New tag created successfully", variant: "default" });
+      setIsCreatingNewTag(false);
+      setNewTagName('');
+      setNewTagColor('#FF6B9D');
+    }
+  };
+
+  const cancelNewTag = () => {
+    setIsCreatingNewTag(false);
+    setNewTagName('');
+    setNewTagColor('#FF6B9D');
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
@@ -321,16 +384,16 @@ export default function MonthlyContentCalendarV3() {
             Select a colour category, then click a calendar block to apply it. This block will auto-fill with the category name, which you can edit anytime.
           </p>
           <div className="flex flex-wrap gap-3 items-center">
-            {/* Default color keys with proper selection highlighting */}
+            {/* Color keys with inline editing */}
             {colorKeys.map((colorKey) => (
               <div
                 key={colorKey.id}
-                className={`relative flex items-center gap-2 rounded-lg p-2 transition-all cursor-pointer ${
+                className={`group relative flex items-center gap-2 rounded-lg p-2 transition-all cursor-pointer ${
                   selectedKeyId === colorKey.id 
                     ? 'bg-blue-50 border-2 border-blue-500 shadow-md ring-2 ring-blue-200' 
                     : 'bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
                 }`}
-                onClick={() => setSelectedKeyId(selectedKeyId === colorKey.id ? null : colorKey.id)}
+                onClick={() => editingKeyId !== colorKey.id && setSelectedKeyId(selectedKeyId === colorKey.id ? null : colorKey.id)}
               >
                 {selectedKeyId === colorKey.id && (
                   <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
@@ -344,9 +407,104 @@ export default function MonthlyContentCalendarV3() {
                   style={{ backgroundColor: colorKey.color }}
                   title={`${selectedKeyId === colorKey.id ? 'Active: ' : 'Select '}${colorKey.label} colour`}
                 />
-                <span className="text-sm font-medium">{colorKey.label}</span>
+                {editingKeyId === colorKey.id ? (
+                  <Input
+                    value={editingKeyValue}
+                    onChange={(e) => setEditingKeyValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveKeyEdit();
+                      if (e.key === 'Escape') cancelKeyEdit();
+                    }}
+                    onBlur={saveKeyEdit}
+                    className="text-sm font-medium h-7 w-24"
+                    autoFocus
+                  />
+                ) : (
+                  <>
+                    <span className="text-sm font-medium">{colorKey.label}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startEditingKey(colorKey.id, colorKey.label);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity ml-1"
+                      title="Edit tag name"
+                    >
+                      <Pencil className="w-3 h-3 text-gray-500 hover:text-gray-700" />
+                    </button>
+                  </>
+                )}
               </div>
             ))}
+            
+            {/* Add new custom tag */}
+            {isCreatingNewTag ? (
+              <div className="relative">
+                <div className="flex items-center gap-2 rounded-lg p-2 bg-green-50 border-2 border-green-500 shadow-md">
+                  <div
+                    className="w-4 h-4 rounded-full border border-green-400 cursor-pointer"
+                    style={{ backgroundColor: newTagColor }}
+                    onClick={() => setShowColorPicker(showColorPicker === 'newTag' ? null : 'newTag')}
+                    title="Click to change color"
+                  />
+                  <Input
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') addNewCustomTag();
+                      if (e.key === 'Escape') cancelNewTag();
+                    }}
+                    placeholder="Tag name"
+                    className="text-sm font-medium h-7 w-24"
+                    autoFocus
+                  />
+                  <button
+                    onClick={addNewCustomTag}
+                    className="text-green-600 hover:text-green-800"
+                    title="Save new tag"
+                  >
+                    ✓
+                  </button>
+                  <button
+                    onClick={cancelNewTag}
+                    className="text-gray-400 hover:text-gray-600"
+                    title="Cancel"
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                {/* Color picker for new tag */}
+                {showColorPicker === 'newTag' && (
+                  <div className="color-picker-container absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border p-3 z-10 min-w-[180px]">
+                    <div className="grid grid-cols-5 gap-2">
+                      {COLOR_OPTIONS.map((color) => (
+                        <button
+                          key={color}
+                          className={`w-7 h-7 rounded-md hover:scale-110 transition-transform ${
+                            newTagColor === color 
+                              ? 'ring-2 ring-blue-500 ring-offset-1' 
+                              : 'hover:shadow-md'
+                          }`}
+                          style={{ backgroundColor: color }}
+                          onClick={() => setNewTagColor(color)}
+                          title={`Select ${color}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsCreatingNewTag(true)}
+                className="flex items-center gap-1 rounded-lg p-2 bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all text-gray-600 hover:text-gray-800"
+                title="Add new custom tag"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="text-sm font-medium">Add Tag</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -397,7 +555,7 @@ export default function MonthlyContentCalendarV3() {
                                 className="w-3 h-3 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: colorKey?.color || '#gray' }}
                               />
-                              <span className="text-xs font-medium text-gray-700 truncate flex-1">
+                              <span className="text-xs font-medium text-gray-700 flex-1 break-words">
                                 {colorKey?.label || 'Unknown'}
                               </span>
                               <button
