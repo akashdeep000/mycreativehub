@@ -100,29 +100,20 @@ export default function PreLaunchTimelinePlanner() {
 
   const generateId = () => Math.random().toString(36).substring(2, 9);
 
-  const updateWeekCount = (count: number) => {
-    const weeks = [...timelineData.weeks];
+  const addWeek = () => {
+    const newWeekNumber = timelineData.weeks.length + 1;
+    const newWeek: WeekData = {
+      weekNumber: newWeekNumber,
+      weekTitle: `Week ${newWeekNumber}`,
+      content: [],
+      notes: '',
+    };
     
-    if (count > weeks.length) {
-      // Add new weeks
-      for (let i = weeks.length; i < count; i++) {
-        weeks.push({
-          weekNumber: i + 1,
-          weekTitle: `Week ${i + 1}`,
-          content: [],
-          notes: '',
-        });
-      }
-    } else if (count < weeks.length) {
-      // Remove weeks
-      weeks.splice(count);
-    }
-
-    setTimelineData({
-      ...timelineData,
-      weeks,
-      weekCount: count,
-    });
+    setTimelineData(prev => ({
+      ...prev,
+      weeks: [...prev.weeks, newWeek],
+      weekCount: prev.weekCount + 1,
+    }));
   };
 
   const addContentToWeek = (weekNumber: number, contentType: string, emoji: string, isCustom: boolean = false) => {
@@ -259,32 +250,19 @@ export default function PreLaunchTimelinePlanner() {
             </div>
           </div>
           
-          <p className="text-gray-600 mb-6">Map out your 2-4 week pre-launch timeline with week by week planning</p>
+          <p className="text-gray-600 mb-6">Map out your pre-launch timeline with drag-and-drop content planning</p>
 
           {/* Controls */}
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700">Timeline Length:</span>
-                <Select value={timelineData.weekCount.toString()} onValueChange={(value) => updateWeekCount(parseInt(value))}>
-                  <SelectTrigger className="w-24">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2">2 weeks</SelectItem>
-                    <SelectItem value="3">3 weeks</SelectItem>
-                    <SelectItem value="4">4 weeks</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button onClick={clearTimeline} variant="outline" size="sm">
-                Clear Timeline
-              </Button>
-            </div>
+          <div className="flex justify-end mb-4">
+            <Button onClick={clearTimeline} variant="outline" size="sm">
+              Clear Timeline
+            </Button>
           </div>
+          
+          {/* Instructions */}
+          <p className="text-sm text-gray-600 mb-4">
+            Click "Add Week" to build your launch timeline.
+          </p>
         </div>
 
         {/* Timeline Grid */}
@@ -413,6 +391,14 @@ export default function PreLaunchTimelinePlanner() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+          
+          {/* Add Week Button */}
+          <div className="mt-6 flex justify-center">
+            <Button onClick={addWeek} variant="outline" className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Add Week
+            </Button>
           </div>
         </div>
 
