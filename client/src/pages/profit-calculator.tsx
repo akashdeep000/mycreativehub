@@ -55,6 +55,7 @@ interface PricingLibraryEntry {
   profitMargin: number;
   marginStrength: 'strong' | 'moderate' | 'low';
   dateAdded: string;
+  currency: string;
 }
 
 const MARGIN_CONFIG = {
@@ -384,7 +385,8 @@ export default function ProfitCalculator() {
       profitPerUnit: selectedCalculation.profitPerUnit,
       profitMargin: selectedCalculation.profitMargin,
       marginStrength: selectedCalculation.marginStrength,
-      dateAdded: new Date().toISOString()
+      dateAdded: new Date().toISOString(),
+      currency: selectedCalculation.currency
     };
     
     // Check if product already exists in library
@@ -435,6 +437,7 @@ export default function ProfitCalculator() {
       'Profit per Unit',
       'Profit Margin %',
       'Margin Strength',
+      'Currency',
       'Date Added'
     ];
 
@@ -447,6 +450,7 @@ export default function ProfitCalculator() {
         entry.profitPerUnit.toFixed(2),
         entry.profitMargin.toFixed(1),
         `"${MARGIN_CONFIG[entry.marginStrength].label}"`,
+        entry.currency || 'USD',
         new Date(entry.dateAdded).toLocaleDateString()
       ].join(','))
     ].join('\n');
@@ -836,9 +840,9 @@ export default function ProfitCalculator() {
                         {pricingLibrary.map((entry, index) => (
                           <tr key={entry.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                             <td className="p-4 font-medium text-gray-900">{entry.productName}</td>
-                            <td className="p-4 text-gray-900">${entry.totalCost.toFixed(2)}</td>
-                            <td className="p-4 text-gray-900">${entry.sellingPrice.toFixed(2)}</td>
-                            <td className="p-4 text-gray-900">${entry.profitPerUnit.toFixed(2)}</td>
+                            <td className="p-4 text-gray-900">{getCurrencySymbol(entry.currency || 'USD')}{entry.totalCost.toFixed(2)}</td>
+                            <td className="p-4 text-gray-900">{getCurrencySymbol(entry.currency || 'USD')}{entry.sellingPrice.toFixed(2)}</td>
+                            <td className="p-4 text-gray-900">{getCurrencySymbol(entry.currency || 'USD')}{entry.profitPerUnit.toFixed(2)}</td>
                             <td className="p-4 text-gray-900">{entry.profitMargin.toFixed(1)}%</td>
                             <td className={`p-4 ${MARGIN_CONFIG[entry.marginStrength].cellColor}`}>
                               <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${MARGIN_CONFIG[entry.marginStrength].color}`}>
