@@ -43,7 +43,7 @@ export default function ProductLaunch() {
       id: 4,
       title: "Launch Growth Plan",
       subtitle: "Capture key insights and plan improvements for your next launch with interactive planning.",
-      icon: BarChart3,
+      icon: TrendingUp,
       gradient: "from-blue-400 to-indigo-400",
       route: "/launch-growth-plan"
     }
