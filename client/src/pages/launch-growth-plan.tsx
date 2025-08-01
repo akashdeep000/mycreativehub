@@ -240,10 +240,10 @@ export default function LaunchGrowthPlan() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
       <Sidebar />
       
-      <div className="lg:pl-64 p-6">
+      <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
