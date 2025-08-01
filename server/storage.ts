@@ -38,6 +38,7 @@ import {
   focusSessionLogs,
   calendarV2,
   calendarV3,
+  globalColorKeys,
   type User,
   type UpsertUser,
   type ToolkitModule,
@@ -112,6 +113,8 @@ import {
   type CalendarEntryV3,
   type CalendarDayV3,
   type InsertCalendarV2,
+  type GlobalColorKeys,
+  type InsertGlobalColorKeys,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, gte, lte, sql, inArray } from "drizzle-orm";
@@ -288,6 +291,10 @@ export interface IStorage {
   // Calendar V3 Operations
   getCalendarV3(userId: string, year: number, month: number): Promise<CalendarV3 | undefined>;
   upsertCalendarV3(data: InsertCalendarV3): Promise<CalendarV3>;
+  
+  // Global Color Keys Operations
+  getGlobalColorKeys(userId: string): Promise<GlobalColorKeys | undefined>;
+  upsertGlobalColorKeys(data: InsertGlobalColorKeys): Promise<GlobalColorKeys>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1717,6 +1724,49 @@ export class DatabaseStorage implements IStorage {
     });
     
     return calendar;
+  }
+
+  // Global Color Keys Operations
+  async getGlobalColorKeys(userId: string): Promise<GlobalColorKeys | undefined> {
+    console.log('GlobalColorKeys GET - Querying for userId:', userId);
+    const [colorKeys] = await db
+      .select()
+      .from(globalColorKeys)
+      .where(eq(globalColorKeys.userId, userId));
+    console.log('GlobalColorKeys GET - Database result:', {
+      found: !!colorKeys,
+      colorKeysCount: Array.isArray(colorKeys?.colorKeys) ? colorKeys.colorKeys.length : 0
+    });
+    return colorKeys;
+  }
+
+  async upsertGlobalColorKeys(data: InsertGlobalColorKeys): Promise<GlobalColorKeys> {
+    console.log('GlobalColorKeys UPSERT - Saving data:', {
+      userId: data.userId,
+      colorKeysCount: Array.isArray(data.colorKeys) ? data.colorKeys.length : 0
+    });
+    
+    const [keys] = await db
+      .insert(globalColorKeys)
+      .values({
+        ...data,
+        colorKeys: Array.isArray(data.colorKeys) ? data.colorKeys : [],
+      })
+      .onConflictDoUpdate({
+        target: [globalColorKeys.userId],
+        set: {
+          colorKeys: Array.isArray(data.colorKeys) ? data.colorKeys : [],
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+      
+    console.log('GlobalColorKeys UPSERT - Save successful:', {
+      id: keys.id,
+      savedColorKeys: keys.colorKeys
+    });
+    
+    return keys;
   }
 }
 
