@@ -125,12 +125,19 @@ export default function ProductLaunch() {
               {/* Footer */}
               <div className="mt-auto">
                 <p className="text-xs text-gray-500 mb-3">Last used: Never</p>
-                <Button
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-                  size="sm"
-                >
-                  Open
-                </Button>
+                <div className="flex items-center justify-end">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-blue-600 hover:text-blue-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTemplateClick(template);
+                    }}
+                  >
+                    Open
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
