@@ -92,6 +92,7 @@ export default function PreLaunchTimelinePlanner() {
   const [customEmoji, setCustomEmoji] = useState('📝');
   const [isEditingLaunchTitle, setIsEditingLaunchTitle] = useState(false);
   const [editingLaunchTitle, setEditingLaunchTitle] = useState('');
+  const [editingLaunchId, setEditingLaunchId] = useState<string | null>(null);
 
   // Auto-save launches to localStorage
   useEffect(() => {
@@ -300,9 +301,10 @@ export default function PreLaunchTimelinePlanner() {
   };
 
   const handleLaunchTitleSave = () => {
-    if (selectedLaunch && editingLaunchTitle.trim()) {
-      updateLaunchTitle(selectedLaunch.id, editingLaunchTitle.trim());
+    if (editingLaunchId && editingLaunchTitle.trim()) {
+      updateLaunchTitle(editingLaunchId, editingLaunchTitle.trim());
       setIsEditingLaunchTitle(false);
+      setEditingLaunchId(null);
       toast({
         title: "Launch Title Updated",
         description: "Launch name saved successfully",
@@ -406,6 +408,7 @@ export default function PreLaunchTimelinePlanner() {
                         variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
+                          setEditingLaunchId(launch.id);
                           setEditingLaunchTitle(launch.title);
                           setIsEditingLaunchTitle(true);
                         }}
@@ -463,7 +466,10 @@ export default function PreLaunchTimelinePlanner() {
                   placeholder="Launch title"
                 />
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsEditingLaunchTitle(false)}>
+                  <Button variant="outline" onClick={() => {
+                    setIsEditingLaunchTitle(false);
+                    setEditingLaunchId(null);
+                  }}>
                     Cancel
                   </Button>
                   <Button onClick={handleLaunchTitleSave}>
