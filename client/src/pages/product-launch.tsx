@@ -124,7 +124,6 @@ export default function ProductLaunch() {
               
               {/* Footer */}
               <div className="mt-auto">
-                <p className="text-xs text-gray-500 mb-3">Last used: Never</p>
                 <div className="flex items-center justify-end">
                   <Button 
                     variant="ghost" 
