@@ -6,11 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, ArrowLeft, Plus, Edit3, Trash2, Download, Clock, Target, Lightbulb } from 'lucide-react';
+import { Calendar, ArrowLeft, Plus, Edit3, Trash2, Clock, Target, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/layout/sidebar';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+
 
 interface ContentBlock {
   id: string;
@@ -177,49 +176,7 @@ export default function PreLaunchTimelinePlanner() {
     }
   };
 
-  const exportAsPDF = async () => {
-    const element = document.getElementById('timeline-export');
-    if (!element) return;
 
-    try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-      });
-      
-      const pdf = new jsPDF('l', 'mm', 'a4');
-      const imgData = canvas.toDataURL('image/png');
-      
-      const imgWidth = 280;
-      const pageHeight = 200;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 10;
-
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight + 10;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(`${timelineData.projectName.replace(/\s+/g, '-')}-timeline.pdf`);
-      
-      toast({
-        title: "PDF Downloaded",
-        description: "Timeline exported successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Export Failed",
-        description: "Unable to export timeline",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleProjectNameSave = () => {
     setTimelineData({ ...timelineData, projectName: editingProjectName });
@@ -319,10 +276,6 @@ export default function PreLaunchTimelinePlanner() {
             </div>
             
             <div className="flex gap-2">
-              <Button onClick={exportAsPDF} variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Export PDF
-              </Button>
               <Button onClick={clearTimeline} variant="outline" size="sm">
                 Clear Timeline
               </Button>
