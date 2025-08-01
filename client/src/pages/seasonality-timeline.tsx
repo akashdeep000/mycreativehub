@@ -60,11 +60,29 @@ const quarters = [
 ];
 
 const quickSuggestions = [
-  { title: 'Black Friday Promo', type: 'promo', month: 11 },
-  { title: 'New Year Launch', type: 'launch', month: 1 },
-  { title: 'Summer Break', type: 'break', month: 7 },
-  { title: 'Holiday Campaign', type: 'holiday', month: 12 },
-  { title: 'Spring Energy Boost', type: 'energy-high', month: 3 }
+  // Q1 (Jan-Mar)
+  { title: 'New Year Campaign', type: 'New Year Campaign', month: 1 },
+  { title: 'Valentine\'s Day Promo', type: 'Valentine\'s Day Promo', month: 2 },
+  { title: 'Spring Collection Teaser', type: 'Spring Collection Teaser', month: 3 },
+  { title: 'Quarter 1 Planning Sprint', type: 'Quarter 1 Planning Sprint', month: 1 },
+  
+  // Q2 (Apr-Jun)
+  { title: 'Easter Promotion', type: 'Easter Promotion', month: 4 },
+  { title: 'Mother\'s Day Campaign', type: 'Mother\'s Day Campaign', month: 5 },
+  { title: 'Mid-Year Review & Promo', type: 'Mid-Year Review & Promo', month: 6 },
+  { title: 'Summer Launch Prep', type: 'Summer Launch Prep', month: 6 },
+  
+  // Q3 (Jul-Sep)
+  { title: 'Back to School Campaign', type: 'Back to School Campaign', month: 7 },
+  { title: 'Black Friday Prep', type: 'Black Friday Prep', month: 9 },
+  { title: 'Seasonal Product Drop', type: 'Seasonal Product Drop', month: 8 },
+  { title: 'Q4 Planning Session', type: 'Q4 Planning Session', month: 9 },
+  
+  // Q4 (Oct-Dec)
+  { title: 'Black Friday Promo', type: 'Black Friday Promo', month: 11 },
+  { title: 'Cyber Monday', type: 'Cyber Monday', month: 11 },
+  { title: 'Christmas Launch or Offer', type: 'Christmas Launch or Offer', month: 12 },
+  { title: 'New Year Countdown Campaign', type: 'New Year Countdown Campaign', month: 12 }
 ];
 
 export default function SeasonalityTimeline() {
