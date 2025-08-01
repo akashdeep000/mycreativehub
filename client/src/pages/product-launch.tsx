@@ -61,9 +61,7 @@ export default function ProductLaunch() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Product Launch System</h1>
         </div>
-        <p className="text-gray-600 leading-relaxed">
-          Strategic tools to plan, execute, and optimize your product launches throughout the year.
-        </p>
+        <p className="text-gray-600 leading-relaxed">Strategic tools to plan, execute, and optimise your product launches throughout the year.</p>
       </div>
 
       {/* Tips Panel */}
