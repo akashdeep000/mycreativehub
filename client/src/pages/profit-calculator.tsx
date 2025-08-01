@@ -689,7 +689,13 @@ export default function ProfitCalculator() {
               <Archive className="w-4 h-4 mr-2" />
               Save to Pricing Library
             </Button>
-            <Button onClick={() => setActiveTab('library')} variant="outline">
+            <Button 
+              onClick={() => {
+                setSelectedCalculation(null);
+                setActiveTab('library');
+              }} 
+              variant="outline"
+            >
               <FileText className="w-4 h-4 mr-2" />
               View Library
             </Button>
