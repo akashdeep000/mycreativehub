@@ -368,7 +368,7 @@ export default function SeasonalityTimeline() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
-          <p className="text-gray-600">Plan your year with purpose—map your seasonal cycles, launches, and personal flow.</p>
+          <p className="text-gray-600">Plan your year with purpose - map your seasonal cycles, launches, and holidays.</p>
           <div className="flex gap-2">
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
               <DialogTrigger asChild>
@@ -471,7 +471,6 @@ export default function SeasonalityTimeline() {
           </CardContent>
         </Card>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Main Timeline */}
         <div className="lg:col-span-3">
