@@ -169,32 +169,47 @@ export default function SeasonalityTimeline() {
     return eventTypes.find(t => t.value === type) || eventTypes[0];
   };
 
-  const handleEditTypeLabel = (typeValue: string, currentLabel: string) => {
-    setEditingTypeId(typeValue);
-    setEditingLabel(currentLabel);
-  };
-
-  const saveTypeLabel = () => {
-    if (!editingTypeId || !editingLabel.trim()) return;
-    
+  const handleEditEventType = (typeValue: string, newLabel: string) => {
     setEventTypes(prev => prev.map(type => 
-      type.value === editingTypeId 
-        ? { ...type, label: editingLabel.trim() }
+      type.value === typeValue 
+        ? { ...type, label: newLabel }
         : type
     ));
     
-    setEditingTypeId(null);
-    setEditingLabel('');
-    
     toast({
-      title: "Label updated",
-      description: "Event type label has been saved"
+      title: "Event type updated",
+      description: "Changes saved successfully"
     });
   };
 
-  const cancelEditLabel = () => {
-    setEditingTypeId(null);
-    setEditingLabel('');
+  const handleDeleteEventType = (typeValue: string) => {
+    // Prevent deletion if it's the last event type
+    if (eventTypes.length <= 1) {
+      toast({
+        title: "Cannot delete",
+        description: "At least one event type must remain",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if any events use this type
+    const eventsUsingType = events.filter(event => event.type === typeValue);
+    if (eventsUsingType.length > 0) {
+      toast({
+        title: "Cannot delete",
+        description: `This event type is used by ${eventsUsingType.length} event(s)`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setEventTypes(prev => prev.filter(type => type.value !== typeValue));
+    
+    toast({
+      title: "Event type deleted",
+      description: "Event type removed successfully"
+    });
   };
 
   // Available color options for the color picker
@@ -399,6 +414,8 @@ export default function SeasonalityTimeline() {
                 setNewEvent={setNewEvent}
                 onAdd={handleAddEvent}
                 eventTypes={eventTypes}
+                onEditEventType={handleEditEventType}
+                onDeleteEventType={handleDeleteEventType}
               />
             </DialogContent>
           </Dialog>
@@ -516,7 +533,28 @@ export default function SeasonalityTimeline() {
   );
 }
 
-function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes }: any) {
+function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes, onEditEventType, onDeleteEventType }: any) {
+  const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState('');
+
+  const handleEditType = (typeValue: string, currentLabel: string) => {
+    setEditingTypeId(typeValue);
+    setEditingLabel(currentLabel);
+  };
+
+  const handleSaveEdit = (typeValue: string) => {
+    if (editingLabel.trim()) {
+      onEditEventType(typeValue, editingLabel.trim());
+      setEditingTypeId(null);
+      setEditingLabel('');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTypeId(null);
+    setEditingLabel('');
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -528,7 +566,56 @@ function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes }: any) {
           <SelectContent>
             {eventTypes.map((type) => (
               <SelectItem key={type.value} value={type.value}>
-                {type.emoji} {type.label}
+                <div className="flex items-center justify-between w-full group">
+                  {editingTypeId === type.value ? (
+                    <Input
+                      value={editingLabel}
+                      onChange={(e) => setEditingLabel(e.target.value)}
+                      className="h-6 text-xs flex-1 mr-2"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSaveEdit(type.value);
+                        }
+                        if (e.key === 'Escape') {
+                          e.preventDefault();
+                          handleCancelEdit();
+                        }
+                      }}
+                      onBlur={() => handleSaveEdit(type.value)}
+                      autoFocus
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    <>
+                      <span className="flex-1">{type.label}</span>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleEditType(type.value, type.label);
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded"
+                          type="button"
+                        >
+                          <Edit2 className="w-3 h-3 text-gray-500" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onDeleteEventType(type.value);
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded"
+                          type="button"
+                        >
+                          <Trash2 className="w-3 h-3 text-gray-500" />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
