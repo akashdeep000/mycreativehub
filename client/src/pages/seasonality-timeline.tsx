@@ -532,6 +532,144 @@ export default function SeasonalityTimeline() {
   );
 }
 
+function CustomEventTypeDropdown({ 
+  value, 
+  onChange, 
+  eventTypes, 
+  onEditEventType, 
+  onDeleteEventType,
+  editingTypeId,
+  editingLabel,
+  setEditingTypeId,
+  setEditingLabel,
+  onEditType,
+  onSaveEdit,
+  onCancelEdit
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  eventTypes: any[];
+  onEditEventType: (typeValue: string, newLabel: string) => void;
+  onDeleteEventType: (typeValue: string) => void;
+  editingTypeId: string | null;
+  editingLabel: string;
+  setEditingTypeId: (id: string | null) => void;
+  setEditingLabel: (label: string) => void;
+  onEditType: (typeValue: string, currentLabel: string) => void;
+  onSaveEdit: (typeValue: string) => void;
+  onCancelEdit: () => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedType = eventTypes.find(type => type.value === value);
+  const displayText = selectedType ? selectedType.label : 'Select event type';
+
+  const handleSelectType = (typeValue: string) => {
+    if (editingTypeId !== typeValue) {
+      onChange(typeValue);
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      {/* Dropdown Trigger */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <span className={value ? 'text-foreground' : 'text-muted-foreground'}>
+          {displayText}
+        </span>
+        <svg
+          className={`h-4 w-4 opacity-50 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Dropdown Content */}
+      {isOpen && (
+        <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+          {eventTypes.map((type) => (
+            <div key={type.value} className="relative group">
+              {editingTypeId === type.value ? (
+                <div className="flex items-center p-2 gap-2">
+                  <Input
+                    value={editingLabel}
+                    onChange={(e) => setEditingLabel(e.target.value)}
+                    className="h-8 text-sm flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        onSaveEdit(type.value);
+                      }
+                      if (e.key === 'Escape') {
+                        e.preventDefault();
+                        onCancelEdit();
+                      }
+                    }}
+                    onBlur={() => onSaveEdit(type.value)}
+                    autoFocus
+                  />
+                </div>
+              ) : (
+                <div
+                  className="relative select-none rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground cursor-pointer pr-16"
+                  onClick={() => handleSelectType(type.value)}
+                >
+                  <span>{type.label}</span>
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onEditType(type.value, type.label);
+                      }}
+                      className="p-1 hover:bg-gray-200 rounded"
+                      type="button"
+                    >
+                      <Edit2 className="w-3 h-3 text-gray-500" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onDeleteEventType(type.value);
+                      }}
+                      className="p-1 hover:bg-gray-200 rounded"
+                      type="button"
+                    >
+                      <Trash2 className="w-3 h-3 text-gray-500" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes, onEditEventType, onDeleteEventType }: {
   newEvent: any;
   setNewEvent: any;
@@ -565,68 +703,20 @@ function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes, onEditEventTyp
     <div className="space-y-4">
       <div>
         <Label htmlFor="type">Event Type</Label>
-        <Select value={newEvent.type} onValueChange={(value) => setNewEvent({ ...newEvent, type: value })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select event type" />
-          </SelectTrigger>
-          <SelectContent>
-            {eventTypes.map((type) => (
-              <div key={type.value} className="relative group">
-                {editingTypeId === type.value ? (
-                  <div className="flex items-center p-2 gap-2">
-                    <Input
-                      value={editingLabel}
-                      onChange={(e) => setEditingLabel(e.target.value)}
-                      className="h-6 text-xs flex-1"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleSaveEdit(type.value);
-                        }
-                        if (e.key === 'Escape') {
-                          e.preventDefault();
-                          handleCancelEdit();
-                        }
-                      }}
-                      onBlur={() => handleSaveEdit(type.value)}
-                      autoFocus
-                    />
-                  </div>
-                ) : (
-                  <SelectItem value={type.value} className="pr-16">
-                    <div className="flex items-center justify-between w-full">
-                      <span>{type.label}</span>
-                      <div className="absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleEditType(type.value, type.label);
-                          }}
-                          className="p-1 hover:bg-gray-200 rounded z-10"
-                          type="button"
-                        >
-                          <Edit2 className="w-3 h-3 text-gray-500" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onDeleteEventType(type.value);
-                          }}
-                          className="p-1 hover:bg-gray-200 rounded z-10"
-                          type="button"
-                        >
-                          <Trash2 className="w-3 h-3 text-gray-500" />
-                        </button>
-                      </div>
-                    </div>
-                  </SelectItem>
-                )}
-              </div>
-            ))}
-          </SelectContent>
-        </Select>
+        <CustomEventTypeDropdown
+          value={newEvent.type}
+          onChange={(value) => setNewEvent({ ...newEvent, type: value })}
+          eventTypes={eventTypes}
+          onEditEventType={onEditEventType}
+          onDeleteEventType={onDeleteEventType}
+          editingTypeId={editingTypeId}
+          editingLabel={editingLabel}
+          setEditingTypeId={setEditingTypeId}
+          setEditingLabel={setEditingLabel}
+          onEditType={handleEditType}
+          onSaveEdit={handleSaveEdit}
+          onCancelEdit={handleCancelEdit}
+        />
       </div>
 
       <div>
