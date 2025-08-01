@@ -68,9 +68,29 @@ export default function PreLaunchTimelinePlanner() {
   const [isEditingProjectName, setIsEditingProjectName] = useState(false);
   const [editingProjectName, setEditingProjectName] = useState(timelineData.projectName);
 
-  // Auto-save to localStorage
+  // Migrate existing localStorage data and auto-save
   useEffect(() => {
-    localStorage.setItem('prelaunchTimeline', JSON.stringify(timelineData));
+    // Check for old localStorage key and migrate data
+    const oldData = localStorage.getItem('New Launch Timeline');
+    if (oldData && !localStorage.getItem('prelaunchTimeline')) {
+      try {
+        const parsedOldData = JSON.parse(oldData);
+        // Update the project name to the new title
+        const migratedData = {
+          ...parsedOldData,
+          projectName: 'Pre-Launch Timeline Planner'
+        };
+        localStorage.setItem('prelaunchTimeline', JSON.stringify(migratedData));
+        localStorage.removeItem('New Launch Timeline');
+        setTimelineData(migratedData);
+        setEditingProjectName(migratedData.projectName);
+      } catch (error) {
+        console.error('Error migrating old timeline data:', error);
+      }
+    } else {
+      // Normal auto-save
+      localStorage.setItem('prelaunchTimeline', JSON.stringify(timelineData));
+    }
   }, [timelineData]);
 
   const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -177,6 +197,11 @@ export default function PreLaunchTimelinePlanner() {
   };
 
 
+
+  // Update editingProjectName when timelineData.projectName changes
+  useEffect(() => {
+    setEditingProjectName(timelineData.projectName);
+  }, [timelineData.projectName]);
 
   const handleProjectNameSave = () => {
     setTimelineData({ ...timelineData, projectName: editingProjectName });
