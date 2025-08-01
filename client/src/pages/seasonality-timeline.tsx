@@ -432,7 +432,7 @@ export default function SeasonalityTimeline() {
                           ></div>
                         ))}
                       </div>
-                      <div className="text-xs text-gray-500 text-center font-medium">Click a color to select</div>
+
                     </div>
                   )}
                   
