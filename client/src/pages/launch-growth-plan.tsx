@@ -248,14 +248,24 @@ export default function LaunchGrowthPlan() {
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div>
-              <Button
-                variant="ghost"
-                onClick={() => setLocation('/launch')}
-                className="mb-4"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Product Launch
-              </Button>
+              <div className="flex gap-2 mb-4">
+                <Button
+                  variant="ghost"
+                  onClick={() => window.location.href = '/'}
+                  className=""
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Main Dashboard
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setLocation('/launch')}
+                  className=""
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Product Launch
+                </Button>
+              </div>
               <h1 className="text-3xl font-bold text-gray-900">Launch Growth Plan</h1>
               <p className="text-gray-600 mt-2">
                 Capture key insights and plan improvements for your next launch
