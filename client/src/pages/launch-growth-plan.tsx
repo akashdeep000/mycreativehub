@@ -266,10 +266,17 @@ export default function LaunchGrowthPlan() {
                   Back to Product Launch
                 </Button>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900">Launch Growth Plan</h1>
-              <p className="text-gray-600 mt-2">
-                Capture key insights and plan improvements for your next launch
-              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                  LG
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">Launch Growth Plan</h1>
+                  <p className="text-gray-600 mt-2">
+                    Capture key insights and plan improvements for your next launch
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
