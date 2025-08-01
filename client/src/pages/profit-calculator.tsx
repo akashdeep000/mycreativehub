@@ -709,6 +709,26 @@ export default function ProfitCalculator() {
     <div className="min-h-screen flex flex-col lg:flex-row bg-white">
       <Sidebar />
       <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
+        {/* Navigation */}
+        <div className="mb-4 flex gap-4">
+          <Button
+            variant="ghost"
+            onClick={() => setLocation('/')}
+            className="text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Main Dashboard
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => setLocation('/product-launch')}
+            className="text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Product Launch
+          </Button>
+        </div>
+        
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
