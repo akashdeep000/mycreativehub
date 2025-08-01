@@ -57,7 +57,7 @@ export default function PreLaunchTimelinePlanner() {
         { weekNumber: 2, weekTitle: 'Week 2', content: [], notes: '' },
       ],
       weekCount: 2,
-      projectName: 'New Launch Timeline',
+      projectName: 'Pre-Launch Timeline Planner',
     };
   });
 
