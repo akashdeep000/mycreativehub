@@ -193,7 +193,7 @@ export default function InspirationHub() {
     return (
       <div className="min-h-screen flex flex-col lg:flex-row bg-cream">
         <Sidebar />
-        <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
+        <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-64 mb-6"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -211,7 +211,7 @@ export default function InspirationHub() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-cream">
       <Sidebar />
-      <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
+      <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
