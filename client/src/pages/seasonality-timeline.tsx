@@ -83,8 +83,7 @@ export default function SeasonalityTimeline() {
 
   const [newEvent, setNewEvent] = useState({
     type: '',
-    date: '',
-    notes: ''
+    date: ''
   });
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -386,13 +385,13 @@ export default function SeasonalityTimeline() {
       month,
       quarter,
       title: newEvent.type,
-      notes: newEvent.notes,
+      notes: '',
       emoji: '📅',
       color: randomColor
     };
 
     setEvents(prev => [...prev, event]);
-    setNewEvent({ type: '', date: '', notes: '' });
+    setNewEvent({ type: '', date: '' });
     setIsAddModalOpen(false);
     
     toast({
@@ -415,8 +414,7 @@ export default function SeasonalityTimeline() {
     
     setNewEvent({
       type: suggestion.type,
-      date,
-      notes: ''
+      date
     });
     setIsAddModalOpen(true);
   };
@@ -906,14 +904,9 @@ function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes, onEditEventTyp
 
 
       <div>
-        <Label htmlFor="notes">Notes (Optional)</Label>
-        <Textarea
-          id="notes"
-          value={newEvent.notes}
-          onChange={(e) => setNewEvent({ ...newEvent, notes: e.target.value })}
-          placeholder="Additional details..."
-          rows={3}
-        />
+        <p className="text-sm text-gray-600">
+          Add detailed notes and a Checklist by expanding the event within your timeline
+        </p>
       </div>
 
 
