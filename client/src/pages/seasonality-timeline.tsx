@@ -61,28 +61,28 @@ const quarters = [
 
 const quickSuggestions = [
   // Q1 (Jan-Mar)
-  { title: 'New Year Campaign', type: 'New Year Campaign', month: 1 },
-  { title: 'Valentine\'s Day Promo', type: 'Valentine\'s Day Promo', month: 2 },
-  { title: 'Spring Collection Teaser', type: 'Spring Collection Teaser', month: 3 },
-  { title: 'Quarter 1 Planning Sprint', type: 'Quarter 1 Planning Sprint', month: 1 },
+  { title: 'New Year Campaign', type: 'New Year Campaign', date: '2025-01-02' },
+  { title: 'Valentine\'s Day Promo', type: 'Valentine\'s Day Promo', date: '2025-02-01' },
+  { title: 'Spring Collection Teaser', type: 'Spring Collection Teaser', date: '2025-03-01' },
+  { title: 'Quarter 1 Planning Sprint', type: 'Quarter 1 Planning Sprint', date: '2025-01-05' },
   
   // Q2 (Apr-Jun)
-  { title: 'Easter Promotion', type: 'Easter Promotion', month: 4 },
-  { title: 'Mother\'s Day Campaign', type: 'Mother\'s Day Campaign', month: 5 },
-  { title: 'Mid-Year Review & Promo', type: 'Mid-Year Review & Promo', month: 6 },
-  { title: 'Summer Launch Prep', type: 'Summer Launch Prep', month: 6 },
+  { title: 'Easter Promotion', type: 'Easter Promotion', date: '2025-04-07' },
+  { title: 'Mother\'s Day Campaign', type: 'Mother\'s Day Campaign', date: '2025-04-28' },
+  { title: 'Mid-Year Review & Promo', type: 'Mid-Year Review & Promo', date: '2025-06-01' },
+  { title: 'Summer Launch Prep', type: 'Summer Launch Prep', date: '2025-06-17' },
   
   // Q3 (Jul-Sep)
-  { title: 'Back to School Campaign', type: 'Back to School Campaign', month: 7 },
-  { title: 'Black Friday Prep', type: 'Black Friday Prep', month: 9 },
-  { title: 'Seasonal Product Drop', type: 'Seasonal Product Drop', month: 8 },
-  { title: 'Q4 Planning Session', type: 'Q4 Planning Session', month: 9 },
+  { title: 'Back to School Campaign', type: 'Back to School Campaign', date: '2025-08-05' },
+  { title: 'Black Friday Prep', type: 'Black Friday Prep', date: '2025-09-30' },
+  { title: 'Seasonal Product Drop', type: 'Seasonal Product Drop', date: '2025-07-15' },
+  { title: 'Q4 Planning Session', type: 'Q4 Planning Session', date: '2025-09-20' },
   
   // Q4 (Oct-Dec)
-  { title: 'Black Friday Promo', type: 'Black Friday Promo', month: 11 },
-  { title: 'Cyber Monday', type: 'Cyber Monday', month: 11 },
-  { title: 'Christmas Launch or Offer', type: 'Christmas Launch or Offer', month: 12 },
-  { title: 'New Year Countdown Campaign', type: 'New Year Countdown Campaign', month: 12 }
+  { title: 'Black Friday Promo', type: 'Black Friday Promo', date: '2025-11-24' },
+  { title: 'Cyber Monday', type: 'Cyber Monday', date: '2025-12-01' },
+  { title: 'Christmas Launch or Offer', type: 'Christmas Launch or Offer', date: '2025-11-10' },
+  { title: 'New Year Countdown Campaign', type: 'New Year Countdown Campaign', date: '2025-12-26' }
 ];
 
 export default function SeasonalityTimeline() {
@@ -427,12 +427,9 @@ export default function SeasonalityTimeline() {
   };
 
   const handleQuickAdd = (suggestion: any) => {
-    const year = new Date().getFullYear();
-    const date = `${year}-${suggestion.month.toString().padStart(2, '0')}-01`;
-    
     setNewEvent({
       type: suggestion.type,
-      date
+      date: suggestion.date
     });
     setIsAddModalOpen(true);
   };
