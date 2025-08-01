@@ -259,9 +259,7 @@ export default function PreLaunchTimelinePlanner() {
             </div>
           </div>
           
-          <p className="text-gray-600 mb-6">
-            Map out your 2–4 week pre-launch timeline with drag-and-drop content planning
-          </p>
+          <p className="text-gray-600 mb-6">Map out your 2-4 week pre-launch timeline with week by week planning</p>
 
           {/* Controls */}
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
