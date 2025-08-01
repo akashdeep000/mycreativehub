@@ -101,15 +101,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
-        <Route path="/inspiration-hub" component={() => (
-          <div className="min-h-screen flex flex-col lg:flex-row bg-cream">
-            <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
-              <h1 className="text-3xl font-serif font-semibold text-gray-800">Inspiration Hub - Test</h1>
-              <p>This is a test to see if the route works</p>
-              <InspirationHub />
-            </div>
-          </div>
-        )} />
+        <Route path="/inspiration-hub" component={InspirationHub} />
         <Route path="/streamline-workflow" component={StreamlineWorkflow} />
         <Route path="/content" component={ContentPlanning} />
         <Route path="/content-planning" component={ContentPlanning} />

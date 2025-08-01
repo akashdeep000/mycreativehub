@@ -21,6 +21,11 @@ export async function apiRequest(
   
   const method = options?.method || 'GET';
   
+  // Add Content-Type header for POST/PATCH/PUT requests with body
+  if (options?.body && ['POST', 'PATCH', 'PUT'].includes(method.toUpperCase())) {
+    headers['Content-Type'] = 'application/json';
+  }
+  
   // Add JWT token from localStorage if available
   const token = localStorage.getItem('token'); // Changed from 'authToken' to 'token' to match login.tsx
   console.log("Frontend API - Token check:", {

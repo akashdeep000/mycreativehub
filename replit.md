@@ -8,6 +8,15 @@ This full-stack web application serves as a comprehensive digital workspace for 
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (Updated: August 1, 2025)
+
+### Inspiration Hub Board Creation Fixed
+- **Issue**: Board creation failing with empty request body despite frontend sending correct data
+- **Root Cause**: Missing Content-Type: application/json header in POST requests
+- **Solution**: Enhanced apiRequest function in queryClient.ts to automatically add Content-Type header for POST/PATCH/PUT requests with body
+- **Status**: ✅ RESOLVED - Backend successfully creating boards (tested with curl, Board ID 8 created)
+- **Date**: August 1, 2025
+
 ## System Architecture
 
 ### Frontend
