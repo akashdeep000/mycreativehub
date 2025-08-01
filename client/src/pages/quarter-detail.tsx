@@ -296,9 +296,7 @@ export default function QuarterDetail() {
                       <p className="text-white/90 text-sm">{event.date}</p>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="bg-white/20 text-white">
-                    {event.type}
-                  </Badge>
+                  
                 </div>
               </CardHeader>
               
