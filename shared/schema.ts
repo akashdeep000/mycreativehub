@@ -906,21 +906,3 @@ export const insertCalendarV3Schema = createInsertSchema(calendarV3).omit({
 
 export type CalendarV3 = typeof calendarV3.$inferSelect;
 export type InsertCalendarV3 = z.infer<typeof insertCalendarV3Schema>;
-
-// Global Color Keys table - persistent color keys across all months
-export const globalColorKeys = pgTable("global_color_keys", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  colorKeys: jsonb("color_keys").$type<ColorKeyV3[]>().notNull().default('[]'),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const insertGlobalColorKeysSchema = createInsertSchema(globalColorKeys).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type GlobalColorKeys = typeof globalColorKeys.$inferSelect;
-export type InsertGlobalColorKeys = z.infer<typeof insertGlobalColorKeysSchema>;

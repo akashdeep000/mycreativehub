@@ -2093,7 +2093,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Calendar V3 - Final rebuild with global color keys
+  // Calendar V3 - Final rebuild with comprehensive logging
   app.get('/api/calendar-v3/:year/:month', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -2102,36 +2102,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Calendar V3 GET - User: ${userId}, Year: ${year}, Month: ${month}`);
       
-      // Get global color keys and specific month data
-      const [globalKeys, calendar] = await Promise.all([
-        storage.getGlobalColorKeys(userId),
-        storage.getCalendarV3(userId, year, month)
-      ]);
+      const calendar = await storage.getCalendarV3(userId, year, month);
       
-      // Use global color keys or defaults
-      const colorKeys = globalKeys?.colorKeys || [
-        { id: '1', label: 'Reel', color: '#FF6B9D' },
-        { id: '2', label: 'Carousel', color: '#FF8E3C' },
-        { id: '3', label: 'Photo', color: '#4ECDC4' },
-        { id: '4', label: 'Promo', color: '#6BCF7F' },
-        { id: '5', label: 'Story', color: '#BB8FCE' }
-      ];
-      
-      const response = {
-        userId,
-        year,
-        month,
-        colorKeys,
-        days: calendar?.days || []
-      };
-      
-      console.log('Calendar V3 GET - Sending response:', {
-        colorKeysCount: response.colorKeys.length,
-        daysCount: response.days.length,
-        usingGlobalKeys: !!globalKeys
-      });
-      
-      res.json(response);
+      if (calendar) {
+        // Return calendar with default empty arrays if needed
+        const response = {
+          userId: calendar.userId,
+          year: calendar.year,
+          month: calendar.month,
+          colorKeys: calendar.colorKeys || [],
+          days: calendar.days || []
+        };
+        
+        console.log('Calendar V3 GET - Sending response:', {
+          colorKeysCount: response.colorKeys.length,
+          daysCount: response.days.length
+        });
+        
+        res.json(response);
+      } else {
+        // Return default structure for new calendar
+        const defaultResponse = {
+          userId,
+          year,
+          month,
+          colorKeys: [
+            { id: '1', label: 'Reel', color: '#FF6B9D' },
+            { id: '2', label: 'Carousel', color: '#FF8E3C' },
+            { id: '3', label: 'Photo', color: '#4ECDC4' },
+            { id: '4', label: 'Promo', color: '#6BCF7F' },
+            { id: '5', label: 'Story', color: '#BB8FCE' }
+          ],
+          days: []
+        };
+        
+        console.log('Calendar V3 GET - Sending default response');
+        res.json(defaultResponse);
+      }
     } catch (error) {
       console.error('Error fetching calendar v3:', error);
       res.status(500).json({ message: 'Failed to fetch calendar data' });
@@ -2151,114 +2158,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         daysCount: Array.isArray(days) ? days.length : 0
       });
       
-      // Save global color keys and calendar data separately
-      const [globalKeys, calendar] = await Promise.all([
-        // Save global color keys
-        storage.upsertGlobalColorKeys({
-          userId,
-          colorKeys: colorKeys || []
-        }),
-        // Save calendar data (only days, no color keys per month)
-        storage.upsertCalendarV3({
-          userId,
-          year,
-          month,
-          colorKeys: [], // Empty since we're using global color keys now
-          days: days || []
-        })
-      ]);
+      const calendar = await storage.upsertCalendarV3({
+        userId,
+        year,
+        month,
+        colorKeys: colorKeys || [],
+        days: days || []
+      });
       
       const response = {
         userId: calendar.userId,
         year: calendar.year,
         month: calendar.month,
-        colorKeys: globalKeys.colorKeys || [],
+        colorKeys: calendar.colorKeys || [],
         days: calendar.days || []
       };
       
       console.log('Calendar V3 PUT - Sending response:', {
         colorKeysCount: response.colorKeys.length,
-        daysCount: response.days.length,
-        savedGlobalKeys: true
+        daysCount: response.days.length
       });
       
       res.json(response);
     } catch (error) {
       console.error('Error saving calendar v3:', error);
       res.status(500).json({ message: 'Failed to save calendar data' });
-    }
-  });
-
-  // Global Color Keys - Persistent color keys across all months
-  app.get('/api/global-color-keys', jwtAuth, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      
-      console.log(`Global Color Keys GET - User: ${userId}`);
-      
-      const globalKeys = await storage.getGlobalColorKeys(userId);
-      
-      if (globalKeys) {
-        const response = {
-          userId: globalKeys.userId,
-          colorKeys: globalKeys.colorKeys || []
-        };
-        
-        console.log('Global Color Keys GET - Sending response:', {
-          colorKeysCount: response.colorKeys.length
-        });
-        
-        res.json(response);
-      } else {
-        // Return default color keys for new users
-        const defaultResponse = {
-          userId,
-          colorKeys: [
-            { id: '1', label: 'Reel', color: '#FF6B9D' },
-            { id: '2', label: 'Carousel', color: '#FF8E3C' },
-            { id: '3', label: 'Photo', color: '#4ECDC4' },
-            { id: '4', label: 'Promo', color: '#6BCF7F' },
-            { id: '5', label: 'Story', color: '#BB8FCE' }
-          ]
-        };
-        
-        console.log('Global Color Keys GET - Sending default response');
-        res.json(defaultResponse);
-      }
-    } catch (error) {
-      console.error('Error fetching global color keys:', error);
-      res.status(500).json({ message: 'Failed to fetch global color keys' });
-    }
-  });
-
-  app.put('/api/global-color-keys', jwtAuth, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const { colorKeys } = req.body;
-      
-      console.log('Global Color Keys PUT - Received data:', {
-        userId,
-        colorKeysCount: Array.isArray(colorKeys) ? colorKeys.length : 0
-      });
-      
-      const globalKeys = await storage.upsertGlobalColorKeys({
-        userId,
-        colorKeys: colorKeys || []
-      });
-      
-      const response = {
-        userId: globalKeys.userId,
-        colorKeys: globalKeys.colorKeys || []
-      };
-      
-      console.log('Global Color Keys PUT - Sending response:', {
-        colorKeysCount: response.colorKeys.length
-      });
-      
-      res.json(response);
-    } catch (error) {
-      console.error('Error saving global color keys:', error);
-      res.status(500).json({ message: 'Failed to save global color keys' });
     }
   });
 
