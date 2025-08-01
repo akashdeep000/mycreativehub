@@ -49,7 +49,12 @@ export default function PreLaunchTimelinePlanner() {
   const [timelineData, setTimelineData] = useState<TimelineData>(() => {
     const saved = localStorage.getItem('prelaunchTimeline');
     if (saved) {
-      return JSON.parse(saved);
+      const data = JSON.parse(saved);
+      // Migrate old project name to new one
+      if (data.projectName === 'New Launch Timeline') {
+        data.projectName = 'Pre-Launch Timeline Planner';
+      }
+      return data;
     }
     return {
       weeks: [
