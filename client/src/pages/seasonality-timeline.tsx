@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Calendar, 
   Plus, 
-  Download, 
   Trash2, 
   Edit2, 
   GripVertical,
@@ -20,8 +19,6 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 interface TimelineEvent {
   id: string;
@@ -342,36 +339,7 @@ export default function SeasonalityTimeline() {
     });
   };
 
-  const exportToPDF = async () => {
-    if (!timelineRef.current) return;
 
-    try {
-      const canvas = await html2canvas(timelineRef.current, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('l', 'mm', 'a4');
-      const imgWidth = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      pdf.save(`seasonality-timeline-${new Date().getFullYear()}.pdf`);
-
-      toast({
-        title: "PDF exported",
-        description: "Your timeline has been downloaded"
-      });
-    } catch (error) {
-      toast({
-        title: "Export failed",
-        description: "Unable to export PDF",
-        variant: "destructive"
-      });
-    }
-  };
 
   const getEventsForMonth = (month: number) => {
     return events.filter(event => event.month === month);
@@ -425,10 +393,7 @@ export default function SeasonalityTimeline() {
               </DialogContent>
             </Dialog>
             
-            <Button variant="outline" onClick={exportToPDF}>
-              <Download className="w-4 h-4 mr-2" />
-              Export PDF
-            </Button>
+
           </div>
         </div>
 
