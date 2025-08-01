@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import BackToDashboard from '@/components/BackToDashboard';
 
 interface TimelineEvent {
   id: string;
@@ -350,6 +351,7 @@ export default function SeasonalityTimeline() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
+          <BackToDashboard />
           <Button 
             variant="ghost" 
             size="sm"
