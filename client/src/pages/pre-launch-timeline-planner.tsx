@@ -34,6 +34,14 @@ interface TimelineData {
   projectName: string;
 }
 
+interface Launch {
+  id: string;
+  title: string;
+  timelineData: TimelineData;
+  createdAt: string;
+  lastModified: string;
+}
+
 const PRE_FILLED_CONTENT_TYPES = [
   { type: 'Teaser Post', emoji: '👀', color: 'bg-pink-100 border-pink-300 text-pink-800' },
   { type: 'Behind-the-Scenes', emoji: '🎬', color: 'bg-blue-100 border-blue-300 text-blue-800' },
@@ -46,62 +54,106 @@ const PRE_FILLED_CONTENT_TYPES = [
 
 export default function PreLaunchTimelinePlanner() {
   const { toast } = useToast();
-  const [timelineData, setTimelineData] = useState<TimelineData>(() => {
-    const saved = localStorage.getItem('prelaunchTimeline');
+  
+  // Initialize launches from localStorage with migration support
+  const [launches, setLaunches] = useState<Launch[]>(() => {
+    const saved = localStorage.getItem('prelaunchLaunches');
     if (saved) {
-      const data = JSON.parse(saved);
-      // Migrate old project name to new one
-      if (data.projectName === 'New Launch Timeline') {
-        data.projectName = 'Pre-Launch Timeline Planner';
-      }
-      return data;
+      return JSON.parse(saved);
     }
-    return {
-      weeks: [
-        { weekNumber: 1, weekTitle: 'Week 1', content: [], notes: '' },
-        { weekNumber: 2, weekTitle: 'Week 2', content: [], notes: '' },
-      ],
-      weekCount: 2,
-      projectName: 'Pre-Launch Timeline Planner',
-    };
+    
+    // Check for legacy single timeline data and migrate
+    const legacyData = localStorage.getItem('prelaunchTimeline');
+    if (legacyData) {
+      try {
+        const data = JSON.parse(legacyData);
+        const migratedLaunch: Launch = {
+          id: 'migrated-launch',
+          title: data.projectName || 'Pre-Launch Timeline Planner',
+          timelineData: data,
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+        };
+        // Remove legacy data
+        localStorage.removeItem('prelaunchTimeline');
+        return [migratedLaunch];
+      } catch (error) {
+        console.error('Error migrating legacy data:', error);
+      }
+    }
+    
+    return [];
   });
 
+  const [selectedLaunch, setSelectedLaunch] = useState<Launch | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
   const [customContentType, setCustomContentType] = useState('');
   const [customEmoji, setCustomEmoji] = useState('📝');
-  const [isEditingProjectName, setIsEditingProjectName] = useState(false);
-  const [editingProjectName, setEditingProjectName] = useState(timelineData.projectName);
+  const [isEditingLaunchTitle, setIsEditingLaunchTitle] = useState(false);
+  const [editingLaunchTitle, setEditingLaunchTitle] = useState('');
 
-  // Migrate existing localStorage data and auto-save
+  // Auto-save launches to localStorage
   useEffect(() => {
-    // Check for old localStorage key and migrate data
-    const oldData = localStorage.getItem('New Launch Timeline');
-    if (oldData && !localStorage.getItem('prelaunchTimeline')) {
-      try {
-        const parsedOldData = JSON.parse(oldData);
-        // Update the project name to the new title
-        const migratedData = {
-          ...parsedOldData,
-          projectName: 'Pre-Launch Timeline Planner'
-        };
-        localStorage.setItem('prelaunchTimeline', JSON.stringify(migratedData));
-        localStorage.removeItem('New Launch Timeline');
-        setTimelineData(migratedData);
-        setEditingProjectName(migratedData.projectName);
-      } catch (error) {
-        console.error('Error migrating old timeline data:', error);
-      }
-    } else {
-      // Normal auto-save
-      localStorage.setItem('prelaunchTimeline', JSON.stringify(timelineData));
-    }
-  }, [timelineData]);
+    localStorage.setItem('prelaunchLaunches', JSON.stringify(launches));
+  }, [launches]);
 
   const generateId = () => Math.random().toString(36).substring(2, 9);
 
+  // Launch management functions
+  const createNewLaunch = () => {
+    const newLaunch: Launch = {
+      id: generateId(),
+      title: 'New Launch',
+      timelineData: {
+        weeks: [
+          { weekNumber: 1, weekTitle: 'Week 1', content: [], notes: '' },
+          { weekNumber: 2, weekTitle: 'Week 2', content: [], notes: '' },
+        ],
+        weekCount: 2,
+        projectName: 'New Launch',
+      },
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+    };
+
+    setLaunches([...launches, newLaunch]);
+    toast({
+      title: "New Launch Created",
+      description: "Created a new launch timeline",
+    });
+  };
+
+  const updateLaunchTitle = (launchId: string, newTitle: string) => {
+    setLaunches(launches.map(launch => {
+      if (launch.id === launchId) {
+        return {
+          ...launch,
+          title: newTitle,
+          timelineData: { ...launch.timelineData, projectName: newTitle },
+          lastModified: new Date().toISOString(),
+        };
+      }
+      return launch;
+    }));
+  };
+
+  const deleteLaunch = (launchId: string) => {
+    setLaunches(launches.filter(launch => launch.id !== launchId));
+    if (selectedLaunch?.id === launchId) {
+      setSelectedLaunch(null);
+    }
+    toast({
+      title: "Launch Deleted",
+      description: "Launch timeline has been removed",
+    });
+  };
+
+  // Timeline functions (work with the selected launch)
   const addWeek = () => {
-    const newWeekNumber = timelineData.weeks.length + 1;
+    if (!selectedLaunch) return;
+    
+    const newWeekNumber = selectedLaunch.timelineData.weeks.length + 1;
     const newWeek: WeekData = {
       weekNumber: newWeekNumber,
       weekTitle: `Week ${newWeekNumber}`,
@@ -109,15 +161,26 @@ export default function PreLaunchTimelinePlanner() {
       notes: '',
     };
     
-    setTimelineData(prev => ({
-      ...prev,
-      weeks: [...prev.weeks, newWeek],
-      weekCount: prev.weekCount + 1,
-    }));
+    const updatedLaunch = {
+      ...selectedLaunch,
+      timelineData: {
+        ...selectedLaunch.timelineData,
+        weeks: [...selectedLaunch.timelineData.weeks, newWeek],
+        weekCount: selectedLaunch.timelineData.weekCount + 1,
+      },
+      lastModified: new Date().toISOString(),
+    };
+
+    setSelectedLaunch(updatedLaunch);
+    setLaunches(launches.map(launch => 
+      launch.id === selectedLaunch.id ? updatedLaunch : launch
+    ));
   };
 
   const addContentToWeek = (weekNumber: number, contentType: string, emoji: string, isCustom: boolean = false) => {
-    const weeks = timelineData.weeks.map(week => {
+    if (!selectedLaunch) return;
+
+    const weeks = selectedLaunch.timelineData.weeks.map(week => {
       if (week.weekNumber === weekNumber) {
         const newContent: ContentBlock = {
           id: generateId(),
@@ -132,7 +195,17 @@ export default function PreLaunchTimelinePlanner() {
       return week;
     });
 
-    setTimelineData({ ...timelineData, weeks });
+    const updatedLaunch = {
+      ...selectedLaunch,
+      timelineData: { ...selectedLaunch.timelineData, weeks },
+      lastModified: new Date().toISOString(),
+    };
+
+    setSelectedLaunch(updatedLaunch);
+    setLaunches(launches.map(launch => 
+      launch.id === selectedLaunch.id ? updatedLaunch : launch
+    ));
+
     setIsAddModalOpen(false);
     setSelectedWeek(null);
 
@@ -143,14 +216,26 @@ export default function PreLaunchTimelinePlanner() {
   };
 
   const removeContent = (weekNumber: number, contentId: string) => {
-    const weeks = timelineData.weeks.map(week => {
+    if (!selectedLaunch) return;
+
+    const weeks = selectedLaunch.timelineData.weeks.map(week => {
       if (week.weekNumber === weekNumber) {
         return { ...week, content: week.content.filter(c => c.id !== contentId) };
       }
       return week;
     });
 
-    setTimelineData({ ...timelineData, weeks });
+    const updatedLaunch = {
+      ...selectedLaunch,
+      timelineData: { ...selectedLaunch.timelineData, weeks },
+      lastModified: new Date().toISOString(),
+    };
+
+    setSelectedLaunch(updatedLaunch);
+    setLaunches(launches.map(launch => 
+      launch.id === selectedLaunch.id ? updatedLaunch : launch
+    ));
+
     toast({
       title: "Content Removed",
       description: "Content block removed from timeline",
@@ -158,7 +243,9 @@ export default function PreLaunchTimelinePlanner() {
   };
 
   const updateContentStatus = (weekNumber: number, contentId: string, status: 'in progress' | 'scheduled' | 'completed') => {
-    const weeks = timelineData.weeks.map(week => {
+    if (!selectedLaunch) return;
+
+    const weeks = selectedLaunch.timelineData.weeks.map(week => {
       if (week.weekNumber === weekNumber) {
         return {
           ...week,
@@ -170,18 +257,38 @@ export default function PreLaunchTimelinePlanner() {
       return week;
     });
 
-    setTimelineData({ ...timelineData, weeks });
+    const updatedLaunch = {
+      ...selectedLaunch,
+      timelineData: { ...selectedLaunch.timelineData, weeks },
+      lastModified: new Date().toISOString(),
+    };
+
+    setSelectedLaunch(updatedLaunch);
+    setLaunches(launches.map(launch => 
+      launch.id === selectedLaunch.id ? updatedLaunch : launch
+    ));
   };
 
   const updateWeekNotes = (weekNumber: number, notes: string) => {
-    const weeks = timelineData.weeks.map(week => {
+    if (!selectedLaunch) return;
+
+    const weeks = selectedLaunch.timelineData.weeks.map(week => {
       if (week.weekNumber === weekNumber) {
         return { ...week, notes };
       }
       return week;
     });
 
-    setTimelineData({ ...timelineData, weeks });
+    const updatedLaunch = {
+      ...selectedLaunch,
+      timelineData: { ...selectedLaunch.timelineData, weeks },
+      lastModified: new Date().toISOString(),
+    };
+
+    setSelectedLaunch(updatedLaunch);
+    setLaunches(launches.map(launch => 
+      launch.id === selectedLaunch.id ? updatedLaunch : launch
+    ));
   };
 
   const handleCustomContentSubmit = () => {
@@ -192,30 +299,37 @@ export default function PreLaunchTimelinePlanner() {
     }
   };
 
-
-
-  // Update editingProjectName when timelineData.projectName changes
-  useEffect(() => {
-    setEditingProjectName(timelineData.projectName);
-  }, [timelineData.projectName]);
-
-  const handleProjectNameSave = () => {
-    setTimelineData({ ...timelineData, projectName: editingProjectName });
-    setIsEditingProjectName(false);
-    toast({
-      title: "Project Name Updated",
-      description: "Timeline name saved successfully",
-    });
+  const handleLaunchTitleSave = () => {
+    if (selectedLaunch && editingLaunchTitle.trim()) {
+      updateLaunchTitle(selectedLaunch.id, editingLaunchTitle.trim());
+      setIsEditingLaunchTitle(false);
+      toast({
+        title: "Launch Title Updated",
+        description: "Launch name saved successfully",
+      });
+    }
   };
 
   const clearTimeline = () => {
-    const weeks = timelineData.weeks.map(week => ({
+    if (!selectedLaunch) return;
+
+    const weeks = selectedLaunch.timelineData.weeks.map(week => ({
       ...week,
       content: [],
       notes: '',
     }));
 
-    setTimelineData({ ...timelineData, weeks });
+    const updatedLaunch = {
+      ...selectedLaunch,
+      timelineData: { ...selectedLaunch.timelineData, weeks },
+      lastModified: new Date().toISOString(),
+    };
+
+    setSelectedLaunch(updatedLaunch);
+    setLaunches(launches.map(launch => 
+      launch.id === selectedLaunch.id ? updatedLaunch : launch
+    ));
+
     toast({
       title: "Timeline Cleared",
       description: "All content removed from timeline",
@@ -226,6 +340,145 @@ export default function PreLaunchTimelinePlanner() {
     return status === 'scheduled' ? 'bg-green-100 border-green-300 text-green-800' : 'bg-gray-100 border-gray-300 text-gray-600';
   };
 
+  // Launch cards view (when no launch is selected)
+  if (!selectedLaunch) {
+    return (
+      <div className="min-h-screen flex flex-col lg:flex-row bg-white">
+        <Sidebar />
+        <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
+          {/* Header */}
+          <div className="mb-8">
+            <Button
+              variant="ghost"
+              onClick={() => window.history.back()}
+              className="mb-4 text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Product Launch
+            </Button>
+            
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-gray-900">Pre-Launch Timeline Planner</h1>
+              </div>
+            </div>
+            
+            <p className="text-gray-600 mb-6">Manage multiple launch timelines with detailed planning for each</p>
+          </div>
+
+          {/* Add New Launch Button */}
+          <div className="mb-6">
+            <Button onClick={createNewLaunch} className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Add New Launch
+            </Button>
+          </div>
+
+          {/* Launch Cards */}
+          {launches.length === 0 ? (
+            <Card className="p-8 text-center">
+              <CardContent>
+                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No launches yet</h3>
+                <p className="text-gray-600 mb-4">Create your first launch timeline to get started</p>
+                <Button onClick={createNewLaunch}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create First Launch
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {launches.map((launch) => (
+                <Card 
+                  key={launch.id} 
+                  className="h-fit cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => setSelectedLaunch(launch)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg text-gray-900">{launch.title}</CardTitle>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingLaunchTitle(launch.title);
+                          setIsEditingLaunchTitle(true);
+                        }}
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="text-sm text-gray-600">
+                        {launch.timelineData.weeks.length} weeks planned
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Last modified: {new Date(launch.lastModified).toLocaleDateString()}
+                      </div>
+                      <div className="flex justify-between items-center pt-2">
+                        <Button
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedLaunch(launch);
+                          }}
+                        >
+                          Open Timeline
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteLaunch(launch.id);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Edit Launch Title Dialog */}
+          <Dialog open={isEditingLaunchTitle} onOpenChange={setIsEditingLaunchTitle}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Launch Title</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  value={editingLaunchTitle}
+                  onChange={(e) => setEditingLaunchTitle(e.target.value)}
+                  placeholder="Launch title"
+                />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsEditingLaunchTitle(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleLaunchTitleSave}>
+                    Save
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+    );
+  }
+
+  // Timeline view (when a launch is selected)
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white">
       <Sidebar />
@@ -234,11 +487,11 @@ export default function PreLaunchTimelinePlanner() {
         <div className="mb-8">
           <Button
             variant="ghost"
-            onClick={() => window.history.back()}
+            onClick={() => setSelectedLaunch(null)}
             className="mb-4 text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Product Launch
+            Back to All Launches
           </Button>
           
           <div className="flex items-center gap-3 mb-4">
@@ -246,7 +499,7 @@ export default function PreLaunchTimelinePlanner() {
               <Calendar className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">{timelineData.projectName}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{selectedLaunch.title}</h1>
             </div>
           </div>
           
@@ -268,7 +521,7 @@ export default function PreLaunchTimelinePlanner() {
         {/* Timeline Grid */}
         <div id="timeline-export" className="bg-white p-6 rounded-lg border">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {timelineData.weeks.map((week) => (
+            {selectedLaunch.timelineData.weeks.map((week) => (
               <Card key={week.weekNumber} className="h-fit">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
