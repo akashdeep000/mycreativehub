@@ -362,66 +362,6 @@ export default function QuarterDetail() {
                     )}
                   </div>
                 </div>
-
-                {/* Reminders */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      Reminders & Deadlines
-                    </Label>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => addReminder(event.id)}
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add Reminder
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {event.reminders?.map((reminder) => (
-                      <div key={reminder.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                        <Input
-                          value={reminder.text}
-                          onChange={(e) => updateReminder(event.id, reminder.id, { text: e.target.value })}
-                          placeholder="Reminder text..."
-                          className="flex-1 h-8"
-                        />
-                        <Input
-                          type="date"
-                          value={reminder.date}
-                          onChange={(e) => updateReminder(event.id, reminder.id, { date: e.target.value })}
-                          className="w-32 h-8"
-                        />
-                        <select
-                          value={reminder.priority}
-                          onChange={(e) => updateReminder(event.id, reminder.id, { priority: e.target.value as 'low' | 'medium' | 'high' })}
-                          className="px-2 py-1 rounded border text-xs"
-                        >
-                          <option value="low">Low</option>
-                          <option value="medium">Medium</option>
-                          <option value="high">High</option>
-                        </select>
-                        <Badge className={getPriorityColor(reminder.priority)}>
-                          {reminder.priority}
-                        </Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteReminder(event.id, reminder.id)}
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
-                      </div>
-                    ))}
-                    
-                    {(!event.reminders || event.reminders.length === 0) && (
-                      <p className="text-sm text-gray-500 py-2">No reminders set. Add some to stay on track!</p>
-                    )}
-                  </div>
-                </div>
               </CardContent>
             </Card>
           ))
