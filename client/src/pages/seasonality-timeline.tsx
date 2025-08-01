@@ -77,6 +77,7 @@ export default function SeasonalityTimeline() {
   const [draggedEvent, setDraggedEvent] = useState<TimelineEvent | null>(null);
   const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
+  const [eventChecklists, setEventChecklists] = useState<{[eventId: string]: any[]}>({});
   const [editingLabel, setEditingLabel] = useState('');
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
 
@@ -137,6 +138,26 @@ export default function SeasonalityTimeline() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [colorPickerOpen]);
+
+  // Load existing checklists from localStorage when events change
+  useEffect(() => {
+    const loadedChecklists: {[key: string]: any[]} = {};
+    
+    // Check all existing events and load their checklists
+    events.forEach(event => {
+      const eventData = JSON.parse(localStorage.getItem(`event-${event.id}-data`) || '{}');
+      if (eventData.checklist && eventData.checklist.length > 0) {
+        loadedChecklists[event.id] = eventData.checklist;
+      }
+    });
+
+    if (Object.keys(loadedChecklists).length > 0) {
+      setEventChecklists(prev => ({
+        ...prev,
+        ...loadedChecklists
+      }));
+    }
+  }, [events]);
 
   // Sync events to quarter detail pages
   const syncEventsToQuarters = () => {
@@ -284,6 +305,12 @@ export default function SeasonalityTimeline() {
   };
 
   const updateEventChecklist = (eventId: string, checklist: any[]) => {
+    // Update React state first for immediate UI response
+    setEventChecklists(prev => ({
+      ...prev,
+      [eventId]: checklist
+    }));
+    
     // Store checklist in localStorage for persistence
     const eventData = JSON.parse(localStorage.getItem(`event-${eventId}-data`) || '{}');
     eventData.checklist = checklist;
@@ -291,31 +318,48 @@ export default function SeasonalityTimeline() {
   };
 
   const getEventChecklist = (eventId: string) => {
+    // First check React state for immediate response
+    if (eventChecklists[eventId]) {
+      return eventChecklists[eventId];
+    }
+    
+    // Fallback to localStorage
     const eventData = JSON.parse(localStorage.getItem(`event-${eventId}-data`) || '{}');
-    return eventData.checklist || [];
+    const checklist = eventData.checklist || [];
+    
+    // Update React state with the loaded data
+    if (checklist.length > 0) {
+      setEventChecklists(prev => ({
+        ...prev,
+        [eventId]: checklist
+      }));
+    }
+    
+    return checklist;
   };
 
   const addChecklistItem = (eventId: string) => {
-    const checklist = getEventChecklist(eventId);
+    const currentChecklist = getEventChecklist(eventId);
     const newItem = {
       id: `item-${Date.now()}`,
       text: '',
       completed: false
     };
-    updateEventChecklist(eventId, [...checklist, newItem]);
+    const updatedChecklist = [...currentChecklist, newItem];
+    updateEventChecklist(eventId, updatedChecklist);
   };
 
   const updateChecklistItem = (eventId: string, itemId: string, updates: any) => {
-    const checklist = getEventChecklist(eventId);
-    const updatedChecklist = checklist.map((item: any) => 
+    const currentChecklist = getEventChecklist(eventId);
+    const updatedChecklist = currentChecklist.map((item: any) => 
       item.id === itemId ? { ...item, ...updates } : item
     );
     updateEventChecklist(eventId, updatedChecklist);
   };
 
   const deleteChecklistItem = (eventId: string, itemId: string) => {
-    const checklist = getEventChecklist(eventId);
-    const updatedChecklist = checklist.filter((item: any) => item.id !== itemId);
+    const currentChecklist = getEventChecklist(eventId);
+    const updatedChecklist = currentChecklist.filter((item: any) => item.id !== itemId);
     updateEventChecklist(eventId, updatedChecklist);
   };
 
