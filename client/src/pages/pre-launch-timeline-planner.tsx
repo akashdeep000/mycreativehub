@@ -419,9 +419,6 @@ export default function PreLaunchTimelinePlanner() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <div className="text-sm text-gray-600">
-                        {launch.timelineData.weeks.length} weeks planned
-                      </div>
                       <div className="text-sm text-gray-500">
                         Last modified: {new Date(launch.lastModified).toLocaleDateString()}
                       </div>
