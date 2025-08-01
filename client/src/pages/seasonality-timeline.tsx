@@ -369,35 +369,7 @@ export default function SeasonalityTimeline() {
           <h1 className="text-2xl font-bold text-gray-900">Seasonality Timeline {new Date().getFullYear()}</h1>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
-          <p className="text-gray-600">Plan your year with purpose - map your seasonal cycles, launches, and holidays.</p>
-          <div className="flex gap-2">
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-pink-500 hover:bg-pink-600">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Event
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Timeline Event</DialogTitle>
-                  <DialogDescription>
-                    Create a new event for your timeline. Choose the type, date, and details.
-                  </DialogDescription>
-                </DialogHeader>
-                <AddEventForm 
-                  newEvent={newEvent}
-                  setNewEvent={setNewEvent}
-                  onAdd={handleAddEvent}
-                  eventTypes={eventTypes}
-                />
-              </DialogContent>
-            </Dialog>
-            
-
-          </div>
-        </div>
+        <p className="text-gray-600 mb-6">Plan your year with purpose - map your seasonal cycles, launches, and holidays.</p>
 
         {/* Quick-Use Summary */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -406,81 +378,31 @@ export default function SeasonalityTimeline() {
           </p>
         </div>
 
-        {/* Color Key - Moved to Top */}
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Event Types & Color Key</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-3 mb-4">
-              {eventTypes.map((type) => (
-                <div key={type.value} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 relative">
-                  <div 
-                    className={`w-4 h-4 ${type.color} rounded cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all`}
-                    onClick={() => setColorPickerOpen(colorPickerOpen === type.value ? null : type.value)}
-                  ></div>
-                  
-                  {/* Color Picker Popup */}
-                  {colorPickerOpen === type.value && (
-                    <div className="color-picker-container absolute top-10 left-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-4 min-w-[180px]">
-                      <div className="grid grid-cols-5 gap-3 mb-3">
-                        {colorOptions.map((color) => (
-                          <div
-                            key={color}
-                            className={`w-7 h-7 ${color} rounded-md cursor-pointer hover:scale-110 transition-all duration-200 hover:shadow-md ${
-                              type.color === color ? 'ring-2 ring-gray-800 ring-offset-1' : ''
-                            }`}
-                            onClick={() => handleColorChange(type.value, color)}
-                          ></div>
-                        ))}
-                      </div>
-
-                    </div>
-                  )}
-                  
-                  {editingTypeId === type.value ? (
-                    <Input
-                      value={editingLabel}
-                      onChange={(e) => setEditingLabel(e.target.value)}
-                      className="h-6 text-xs w-24"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') saveTypeLabel();
-                        if (e.key === 'Escape') cancelEditLabel();
-                      }}
-                      onBlur={saveTypeLabel}
-                      autoFocus
-                    />
-                  ) : (
-                    <>
-                      <span className="text-sm">
-                        {type.label}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditTypeLabel(type.value, type.label);
-                        }}
-                        className="ml-2 hover:bg-gray-200 rounded p-1"
-                        title="Edit tag name"
-                      >
-                        <Edit2 className="w-3 h-3 text-gray-500 hover:text-gray-700" />
-                      </button>
-                    </>
-                  )}
-                </div>
-              ))}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addCustomEventType}
-                className="h-8 text-xs"
-              >
-                <Plus className="w-3 h-3 mr-1" />
-                Add Label
+        {/* Centered Add Event Button */}
+        <div className="flex justify-center mb-6">
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-pink-500 hover:bg-pink-600">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Event
               </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Timeline Event</DialogTitle>
+                <DialogDescription>
+                  Create a new event for your timeline. Choose the type, date, and details.
+                </DialogDescription>
+              </DialogHeader>
+              <AddEventForm 
+                newEvent={newEvent}
+                setNewEvent={setNewEvent}
+                onAdd={handleAddEvent}
+                eventTypes={eventTypes}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Main Timeline */}
