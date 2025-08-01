@@ -127,6 +127,7 @@ function Router() {
 
       <Route path="/resource-library" component={ResourceLibrary} />
       <Route path="/launch" component={ProductLaunch} />
+      <Route path="/product-launch" component={ProductLaunch} />
       <Route path="/seasonality-timeline" component={SeasonalityTimeline} />
       <Route path="/seasonality/:quarter" component={QuarterDetail} />
       <Route path="/product-component-checklist" component={ProductComponentChecklist} />
