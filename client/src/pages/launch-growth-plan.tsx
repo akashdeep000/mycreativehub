@@ -283,15 +283,6 @@ export default function LaunchGrowthPlan() {
                 {growthPlans.length} growth plans • {growthPlans.filter(p => p.isCompleted).length} completed
               </span>
             </div>
-            
-            {growthPlans.length > 0 && (
-              <div className="flex gap-2">
-                <Button onClick={exportSelectedPlans} variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Completed Plans
-                </Button>
-              </div>
-            )}
           </div>
 
           {/* Growth Plans Grid */}
