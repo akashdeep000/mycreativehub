@@ -85,8 +85,7 @@ export default function SeasonalityTimeline() {
     type: '',
     date: '',
     title: '',
-    notes: '',
-    emoji: ''
+    notes: ''
   });
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -386,12 +385,12 @@ export default function SeasonalityTimeline() {
       quarter,
       title: newEvent.title,
       notes: newEvent.notes,
-      emoji: newEvent.emoji || typeData.emoji,
+      emoji: typeData.emoji,
       color: typeData.color
     };
 
     setEvents(prev => [...prev, event]);
-    setNewEvent({ type: '', date: '', title: '', notes: '', emoji: '' });
+    setNewEvent({ type: '', date: '', title: '', notes: '' });
     setIsAddModalOpen(false);
     
     toast({
@@ -416,8 +415,7 @@ export default function SeasonalityTimeline() {
       type: suggestion.type,
       date,
       title: suggestion.title,
-      notes: '',
-      emoji: ''
+      notes: ''
     });
     setIsAddModalOpen(true);
   };
@@ -563,7 +561,6 @@ export default function SeasonalityTimeline() {
                                   onDragStart={(e) => handleDragStart(e, event)}
                                 >
                                   <GripVertical className="w-3 h-3" />
-                                  <span>{event.emoji}</span>
                                   <span className="flex-1 truncate">{event.title}</span>
                                   <Button
                                     variant="ghost"
@@ -934,16 +931,7 @@ function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes, onEditEventTyp
         />
       </div>
 
-      <div>
-        <Label htmlFor="emoji">Custom Emoji (Optional)</Label>
-        <Input
-          id="emoji"
-          value={newEvent.emoji}
-          onChange={(e) => setNewEvent({ ...newEvent, emoji: e.target.value })}
-          placeholder="🎯"
-          maxLength={2}
-        />
-      </div>
+
 
       <Button onClick={onAdd} className="w-full bg-pink-500 hover:bg-pink-600">
         Add Event
