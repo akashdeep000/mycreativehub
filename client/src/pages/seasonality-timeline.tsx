@@ -84,7 +84,6 @@ export default function SeasonalityTimeline() {
   const [newEvent, setNewEvent] = useState({
     type: '',
     date: '',
-    title: '',
     notes: ''
   });
 
@@ -363,10 +362,10 @@ export default function SeasonalityTimeline() {
   };
 
   const handleAddEvent = () => {
-    if (!newEvent.type || !newEvent.date || !newEvent.title) {
+    if (!newEvent.type || !newEvent.date) {
       toast({
         title: "Missing fields",
-        description: "Please fill in type, date, and title",
+        description: "Please fill in type and date",
         variant: "destructive"
       });
       return;
@@ -383,14 +382,14 @@ export default function SeasonalityTimeline() {
       date: newEvent.date,
       month,
       quarter,
-      title: newEvent.title,
+      title: typeData.label,
       notes: newEvent.notes,
       emoji: typeData.emoji,
       color: typeData.color
     };
 
     setEvents(prev => [...prev, event]);
-    setNewEvent({ type: '', date: '', title: '', notes: '' });
+    setNewEvent({ type: '', date: '', notes: '' });
     setIsAddModalOpen(false);
     
     toast({
@@ -414,7 +413,6 @@ export default function SeasonalityTimeline() {
     setNewEvent({
       type: suggestion.type,
       date,
-      title: suggestion.title,
       notes: ''
     });
     setIsAddModalOpen(true);
@@ -910,15 +908,7 @@ function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes, onEditEventTyp
         />
       </div>
 
-      <div>
-        <Label htmlFor="title">Title</Label>
-        <Input
-          id="title"
-          value={newEvent.title}
-          onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-          placeholder="Event title"
-        />
-      </div>
+
 
       <div>
         <Label htmlFor="notes">Notes (Optional)</Label>
