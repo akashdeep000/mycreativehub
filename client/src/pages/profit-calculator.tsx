@@ -197,7 +197,7 @@ export default function ProfitCalculator() {
       profitMargin: 0,
       marginStrength: 'low',
       lastModified: new Date().toISOString(),
-      currency: 'USD'
+      currency: 'GBP'
     };
     setCalculations(prev => [...prev, newCalculation]);
     setSelectedCalculation(newCalculation);
