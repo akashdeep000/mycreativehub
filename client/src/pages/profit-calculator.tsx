@@ -471,7 +471,7 @@ export default function ProfitCalculator() {
     return (
       <div className="min-h-screen flex flex-col lg:flex-row bg-white">
         <Sidebar />
-        <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
+        <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
           {/* Header */}
           <div className="mb-6">
             <Button
