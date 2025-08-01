@@ -255,7 +255,6 @@ export default function SeasonalityTimeline() {
     };
     
     setEventTypes(prev => [...prev, newType]);
-    handleEditTypeLabel(newType.value, newType.label);
   };
 
   const navigateToQuarter = (quarterNum: number) => {
@@ -533,7 +532,14 @@ export default function SeasonalityTimeline() {
   );
 }
 
-function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes, onEditEventType, onDeleteEventType }: any) {
+function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes, onEditEventType, onDeleteEventType }: {
+  newEvent: any;
+  setNewEvent: any;
+  onAdd: any;
+  eventTypes: any[];
+  onEditEventType: (typeValue: string, newLabel: string) => void;
+  onDeleteEventType: (typeValue: string) => void;
+}) {
   const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState('');
 
@@ -565,13 +571,13 @@ function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes, onEditEventTyp
           </SelectTrigger>
           <SelectContent>
             {eventTypes.map((type) => (
-              <SelectItem key={type.value} value={type.value}>
-                <div className="flex items-center justify-between w-full group">
-                  {editingTypeId === type.value ? (
+              <div key={type.value} className="relative group">
+                {editingTypeId === type.value ? (
+                  <div className="flex items-center p-2 gap-2">
                     <Input
                       value={editingLabel}
                       onChange={(e) => setEditingLabel(e.target.value)}
-                      className="h-6 text-xs flex-1 mr-2"
+                      className="h-6 text-xs flex-1"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -584,19 +590,20 @@ function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes, onEditEventTyp
                       }}
                       onBlur={() => handleSaveEdit(type.value)}
                       autoFocus
-                      onClick={(e) => e.stopPropagation()}
                     />
-                  ) : (
-                    <>
-                      <span className="flex-1">{type.label}</span>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  </div>
+                ) : (
+                  <SelectItem value={type.value} className="pr-16">
+                    <div className="flex items-center justify-between w-full">
+                      <span>{type.label}</span>
+                      <div className="absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             handleEditType(type.value, type.label);
                           }}
-                          className="p-1 hover:bg-gray-200 rounded"
+                          className="p-1 hover:bg-gray-200 rounded z-10"
                           type="button"
                         >
                           <Edit2 className="w-3 h-3 text-gray-500" />
@@ -607,16 +614,16 @@ function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes, onEditEventTyp
                             e.stopPropagation();
                             onDeleteEventType(type.value);
                           }}
-                          className="p-1 hover:bg-gray-200 rounded"
+                          className="p-1 hover:bg-gray-200 rounded z-10"
                           type="button"
                         >
                           <Trash2 className="w-3 h-3 text-gray-500" />
                         </button>
                       </div>
-                    </>
-                  )}
-                </div>
-              </SelectItem>
+                    </div>
+                  </SelectItem>
+                )}
+              </div>
             ))}
           </SelectContent>
         </Select>
