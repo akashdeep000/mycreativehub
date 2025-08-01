@@ -374,7 +374,10 @@ export default function SeasonalityTimeline() {
     const date = new Date(newEvent.date);
     const month = date.getMonth() + 1;
     const quarter = Math.ceil(month / 3);
-    const typeData = getEventTypeData(newEvent.type);
+    
+    // Use a default color scheme for custom events
+    const colors = ['bg-purple-500', 'bg-blue-500', 'bg-green-500', 'bg-orange-500', 'bg-pink-500', 'bg-yellow-500', 'bg-red-500'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
     const event: TimelineEvent = {
       id: generateId(),
@@ -382,10 +385,10 @@ export default function SeasonalityTimeline() {
       date: newEvent.date,
       month,
       quarter,
-      title: typeData.label,
+      title: newEvent.type,
       notes: newEvent.notes,
-      emoji: typeData.emoji,
-      color: typeData.color
+      emoji: '📅',
+      color: randomColor
     };
 
     setEvents(prev => [...prev, event]);
@@ -394,7 +397,7 @@ export default function SeasonalityTimeline() {
     
     toast({
       title: "Event added",
-      description: `${event.title} added to your timeline`
+      description: `${event.title} event added to your timeline`
     });
   };
 
@@ -882,19 +885,11 @@ function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes, onEditEventTyp
     <div className="space-y-4">
       <div>
         <Label htmlFor="type">Event Type</Label>
-        <CustomEventTypeDropdown
+        <Input
+          id="type"
           value={newEvent.type}
-          onChange={(value) => setNewEvent({ ...newEvent, type: value })}
-          eventTypes={eventTypes}
-          onEditEventType={onEditEventType}
-          onDeleteEventType={onDeleteEventType}
-          editingTypeId={editingTypeId}
-          editingLabel={editingLabel}
-          setEditingTypeId={setEditingTypeId}
-          setEditingLabel={setEditingLabel}
-          onEditType={handleEditType}
-          onSaveEdit={handleSaveEdit}
-          onCancelEdit={handleCancelEdit}
+          onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })}
+          placeholder="Enter event type (e.g., Launch, Holiday, Break)"
         />
       </div>
 
