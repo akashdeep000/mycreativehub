@@ -100,44 +100,52 @@ function Router() {
       <TimerWrapper />
       <Switch>
         <Route path="/" component={Dashboard} />
-      <Route path="/streamline-workflow" component={StreamlineWorkflow} />
-      <Route path="/content" component={ContentPlanning} />
-      <Route path="/content-planning" component={ContentPlanning} />
-      <Route path="/social-media-strategy" component={SocialMediaStrategy} />
-      <Route path="/reel-carousel-templates" component={ReelCarouselTemplates} />
-      <Route path="/monthly-content-planner" component={MonthlyContentPlanner} />
-      <Route path="/content-batching-planner" component={ContentBatchingPlanner} />
-      <Route path="/monthly-content-calendar" component={MonthlyContentCalendar} />
-      <Route path="/monthly-content-calendar-v2" component={MonthlyContentCalendarV2} />
-      <Route path="/monthly-content-calendar-v3" component={MonthlyContentCalendarV3} />
+        <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
+        <Route path="/inspiration-hub" component={() => (
+          <div className="min-h-screen flex flex-col lg:flex-row bg-cream">
+            <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
+              <h1 className="text-3xl font-serif font-semibold text-gray-800">Inspiration Hub - Test</h1>
+              <p>This is a test to see if the route works</p>
+              <InspirationHub />
+            </div>
+          </div>
+        )} />
+        <Route path="/streamline-workflow" component={StreamlineWorkflow} />
+        <Route path="/content" component={ContentPlanning} />
+        <Route path="/content-planning" component={ContentPlanning} />
+        <Route path="/social-media-strategy" component={SocialMediaStrategy} />
+        <Route path="/reel-carousel-templates" component={ReelCarouselTemplates} />
+        <Route path="/monthly-content-planner" component={MonthlyContentPlanner} />
+        <Route path="/content-batching-planner" component={ContentBatchingPlanner} />
+        <Route path="/monthly-content-calendar" component={MonthlyContentCalendar} />
+        <Route path="/monthly-content-calendar-v2" component={MonthlyContentCalendarV2} />
+        <Route path="/monthly-content-calendar-v3" component={MonthlyContentCalendarV3} />
 
-      <Route path="/time-blocking" component={TimeBlocking} />
-      <Route path="/finance" component={FinanceTracker} />
-      <Route path="/your-money-map" component={YourMoneyMap} />
-      <Route path="/affiliate-marketing" component={AffiliateMarketing} />
-      <Route path="/daily-focus" component={DailyFocusPage} />
-      <Route path="/automation-toolkit" component={AutomationToolkit} />
-      <Route path="/sop-builder" component={SOPBuilderHub} />
-      <Route path="/sop/:id" component={SOPEditor} />
-      <Route path="/content-status-tracker" component={ContentStatusTracker} />
-      <Route path="/repurposing-toolkit" component={RepurposingToolkit} />
-      <Route path="/content-performance-strategy" component={ContentPerformanceStrategy} />
-      <Route path="/performance-tracking-table" component={PerformanceTrackingTable} />
-      <Route path="/edit-profile" component={EditProfile} />
+        <Route path="/time-blocking" component={TimeBlocking} />
+        <Route path="/finance" component={FinanceTracker} />
+        <Route path="/your-money-map" component={YourMoneyMap} />
+        <Route path="/affiliate-marketing" component={AffiliateMarketing} />
+        <Route path="/daily-focus" component={DailyFocusPage} />
+        <Route path="/automation-toolkit" component={AutomationToolkit} />
+        <Route path="/sop-builder" component={SOPBuilderHub} />
+        <Route path="/sop/:id" component={SOPEditor} />
+        <Route path="/content-status-tracker" component={ContentStatusTracker} />
+        <Route path="/repurposing-toolkit" component={RepurposingToolkit} />
+        <Route path="/content-performance-strategy" component={ContentPerformanceStrategy} />
+        <Route path="/performance-tracking-table" component={PerformanceTrackingTable} />
+        <Route path="/edit-profile" component={EditProfile} />
 
-      <Route path="/resource-library" component={ResourceLibrary} />
-      <Route path="/launch" component={ProductLaunch} />
-      <Route path="/product-launch" component={ProductLaunch} />
-      <Route path="/seasonality-timeline" component={SeasonalityTimeline} />
-      <Route path="/seasonality/:quarter" component={QuarterDetail} />
-      <Route path="/product-component-checklist" component={ProductComponentChecklist} />
-      <Route path="/profit-calculator" component={ProfitCalculator} />
-      <Route path="/pre-launch-timeline-planner" component={PreLaunchTimelinePlanner} />
-      <Route path="/launch-growth-plan" component={LaunchGrowthPlan} />
-      <Route path="/archived-templates" component={ArchivedTemplates} />
-      <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
-      <Route path="/inspiration-hub" component={InspirationHub} />
-      <Route component={NotFound} />
+        <Route path="/resource-library" component={ResourceLibrary} />
+        <Route path="/launch" component={ProductLaunch} />
+        <Route path="/product-launch" component={ProductLaunch} />
+        <Route path="/seasonality-timeline" component={SeasonalityTimeline} />
+        <Route path="/seasonality/:quarter" component={QuarterDetail} />
+        <Route path="/product-component-checklist" component={ProductComponentChecklist} />
+        <Route path="/profit-calculator" component={ProfitCalculator} />
+        <Route path="/pre-launch-timeline-planner" component={PreLaunchTimelinePlanner} />
+        <Route path="/launch-growth-plan" component={LaunchGrowthPlan} />
+        <Route path="/archived-templates" component={ArchivedTemplates} />
+        <Route component={NotFound} />
       </Switch>
     </>
   );

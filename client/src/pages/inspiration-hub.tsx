@@ -74,12 +74,12 @@ export default function InspirationHub() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: boards = [], isLoading: boardsLoading } = useQuery({
+  const { data: boards = [], isLoading: boardsLoading } = useQuery<InspirationBoard[]>({
     queryKey: ["/api/inspiration-boards"],
     enabled: isAuthenticated,
   });
 
-  const { data: archivedBoards = [] } = useQuery({
+  const { data: archivedBoards = [] } = useQuery<InspirationBoard[]>({
     queryKey: ["/api/inspiration-boards/archived"],
     enabled: isAuthenticated,
   });
@@ -87,7 +87,10 @@ export default function InspirationHub() {
   const createBoardMutation = useMutation({
     mutationFn: async (boardData: { title: string; description?: string }) => {
       console.log("Frontend - Creating board with data:", boardData);
-      return await apiRequest("POST", "/api/inspiration-boards", boardData);
+      return await apiRequest("/api/inspiration-boards", {
+        method: "POST",
+        body: JSON.stringify(boardData),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards"] });
