@@ -1100,8 +1100,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const { title, description, backgroundColor, backgroundTexture } = req.body;
       
+      console.log("VALIDATION DEBUG - Title value:", JSON.stringify(title));
+      console.log("VALIDATION DEBUG - Title type:", typeof title);
+      console.log("VALIDATION DEBUG - Title exists:", !!title);
+      console.log("VALIDATION DEBUG - Title trimmed:", title?.trim());
+      console.log("VALIDATION DEBUG - Title trimmed length:", title?.trim()?.length);
+      
       if (!title?.trim()) {
         console.log("VALIDATION ERROR: Title validation failed");
+        console.log("VALIDATION ERROR - Full request body:", JSON.stringify(req.body, null, 2));
         return res.status(400).json({ message: "Title is required" });
       }
       
