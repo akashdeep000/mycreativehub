@@ -451,7 +451,7 @@ export default function SeasonalityTimeline() {
                   ) : (
                     <>
                       <span className="text-sm">
-                        {type.emoji} {type.label}
+                        {type.label}
                       </span>
                       <button
                         onClick={(e) => {
