@@ -4,7 +4,8 @@ import type { RequestHandler } from "express";
 import { storage } from "./storage";
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || "fallback-secret";
-const JWT_EXPIRES_IN = "7d";
+// Use longer expiration for preview environment to handle timing issues
+const JWT_EXPIRES_IN = process.env.NODE_ENV === 'production' ? "7d" : "30d";
 
 export interface JwtPayload {
   userId: string;

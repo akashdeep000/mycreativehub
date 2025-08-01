@@ -89,10 +89,14 @@ export default function Login() {
         console.error("Frontend - Session verification error:", error);
       }
 
-      // Force a full page reload to ensure proper authentication state
+      // Give more time for authentication state to stabilize in preview environment
+      const isPreviewEnv = window.location.hostname.includes('replit.dev');
+      const redirectDelay = isPreviewEnv ? 2000 : 1000; // 2 seconds for preview, 1 second for production
+      
       setTimeout(() => {
+        // Force a full page reload to ensure proper authentication state
         window.location.replace("/");
-      }, 1000);
+      }, redirectDelay);
     } catch (error: any) {
       toast({
         title: "Login failed",

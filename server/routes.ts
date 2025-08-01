@@ -192,12 +192,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Signup - Generating JWT token for user:", user.email);
       const token = generateToken(user.id, user.email);
       
-      // Set httpOnly cookie
+      // Set httpOnly cookie with environment-specific settings
+      const isProduction = process.env.NODE_ENV === 'production';
       res.cookie('authToken', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        secure: isProduction,
+        sameSite: isProduction ? 'strict' : 'lax',
+        maxAge: isProduction ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000, // 30 days for preview
+        path: '/',
       });
       
       console.log("Signup - JWT token generated and cookie set");
@@ -241,14 +243,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Login - JWT token generated, length:", token.length);
       console.log("Login - Token preview:", token.substring(0, 20) + "...");
       
-      // Set httpOnly cookie
+      // Set httpOnly cookie with environment-specific settings
       console.log("Login - Setting httpOnly cookie");
       console.log("Login - Cookie secure flag:", process.env.NODE_ENV === 'production');
+      const isProduction = process.env.NODE_ENV === 'production';
       const cookieOptions = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict' as const,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        secure: isProduction,
+        sameSite: isProduction ? 'strict' as const : 'lax' as const, // Use 'lax' for preview environment
+        maxAge: isProduction ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000, // 30 days for preview
         path: '/',
       };
       console.log("Login - Cookie options:", JSON.stringify(cookieOptions, null, 2));
@@ -270,8 +273,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/logout', (req, res) => {
     console.log("Logout - Clearing auth token cookie");
-    res.clearCookie('authToken');
+    res.clearCookie('authToken', { path: '/' });
     res.json({ message: "Logged out successfully" });
+  });
+
+  // Clear expired tokens endpoint for preview environment
+  app.post('/api/auth/clear-expired', (req, res) => {
+    console.log("Clear expired - Clearing all auth cookies and localStorage");
+    res.clearCookie('authToken', { path: '/' });
+    res.json({ message: "Expired tokens cleared successfully" });
   });
 
   app.get('/api/auth/user', jwtAuth, async (req, res) => {

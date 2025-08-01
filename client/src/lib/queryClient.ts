@@ -22,7 +22,7 @@ export async function apiRequest(
   const method = options?.method || 'GET';
   
   // Add JWT token from localStorage if available
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('token'); // Changed from 'authToken' to 'token' to match login.tsx
   console.log("Frontend API - Token check:", {
     tokenExists: !!token,
     tokenLength: token?.length || 0,
@@ -60,7 +60,7 @@ export const getQueryFn: <T>(options: {
     const headers: Record<string, string> = {};
     
     // Add JWT token from localStorage if available
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token'); // Changed from 'authToken' to 'token' to match login.tsx
     console.log("Frontend Query - Token check:", {
       tokenExists: !!token,
       tokenLength: token?.length || 0,
