@@ -59,17 +59,17 @@ interface PricingLibraryEntry {
 
 const MARGIN_CONFIG = {
   strong: { 
-    label: '✅ Strong Margin', 
+    label: 'Excellent Margin', 
+    color: 'bg-green-200 text-green-900 border-green-400',
+    cellColor: 'bg-green-100'
+  },
+  moderate: { 
+    label: 'Good Margin', 
     color: 'bg-green-100 text-green-800 border-green-300',
     cellColor: 'bg-green-50'
   },
-  moderate: { 
-    label: '⚠️ Moderate Margin', 
-    color: 'bg-amber-100 text-amber-800 border-amber-300',
-    cellColor: 'bg-amber-50'
-  },
   low: { 
-    label: '❌ Low Margin', 
+    label: 'Low Margin', 
     color: 'bg-red-100 text-red-800 border-red-300',
     cellColor: 'bg-red-50'
   }
