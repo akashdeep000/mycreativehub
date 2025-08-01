@@ -255,31 +255,7 @@ export default function PreLaunchTimelinePlanner() {
               <Calendar className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
-              {isEditingProjectName ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={editingProjectName}
-                    onChange={(e) => setEditingProjectName(e.target.value)}
-                    className="text-2xl font-bold border-none p-0 focus-visible:ring-0"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleProjectNameSave();
-                      if (e.key === 'Escape') setIsEditingProjectName(false);
-                    }}
-                    onBlur={handleProjectNameSave}
-                    autoFocus
-                  />
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-bold text-gray-900">{timelineData.projectName}</h1>
-                  <Button size="sm" variant="ghost" onClick={() => {
-                    setIsEditingProjectName(true);
-                    setEditingProjectName(timelineData.projectName);
-                  }}>
-                    <Edit3 className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
+              <h1 className="text-2xl font-bold text-gray-900">{timelineData.projectName}</h1>
             </div>
           </div>
           
