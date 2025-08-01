@@ -273,19 +273,7 @@ export default function LaunchGrowthPlan() {
             </div>
           </div>
 
-          {/* Intro Text */}
-          <Card className="mb-6">
-            <CardContent className="pt-4">
-              <div className="flex items-start gap-3">
-                <FileText className="w-5 h-5 text-blue-500 mt-1 flex-shrink-0" />
-                <div>
-                  <p className="text-gray-700 leading-relaxed">
-                    Use the interactive Launch Growth Plan below to pull key insights from your recent launch, in order to make improvements next time.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
 
           {/* Controls */}
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
