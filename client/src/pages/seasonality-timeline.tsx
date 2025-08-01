@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Calendar, 
   Plus, 
@@ -15,7 +16,10 @@ import {
   GripVertical,
   Lightbulb,
   ArrowLeft,
-  ZoomIn
+  ZoomIn,
+  ChevronDown,
+  ChevronUp,
+  Check
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
@@ -70,9 +74,9 @@ export default function SeasonalityTimeline() {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [eventTypes, setEventTypes] = useState(defaultEventTypes);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [selectedQuarter, setSelectedQuarter] = useState<number | null>(null);
   const [draggedEvent, setDraggedEvent] = useState<TimelineEvent | null>(null);
   const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
+  const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
   const [editingLabel, setEditingLabel] = useState('');
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
 
@@ -261,6 +265,60 @@ export default function SeasonalityTimeline() {
     setLocation(`/seasonality/q${quarterNum}`);
   };
 
+  const toggleEventExpansion = (eventId: string) => {
+    setExpandedEvents(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(eventId)) {
+        newSet.delete(eventId);
+      } else {
+        newSet.add(eventId);
+      }
+      return newSet;
+    });
+  };
+
+  const updateEventNotes = (eventId: string, notes: string) => {
+    setEvents(prev => prev.map(event => 
+      event.id === eventId ? { ...event, notes } : event
+    ));
+  };
+
+  const updateEventChecklist = (eventId: string, checklist: any[]) => {
+    // Store checklist in localStorage for persistence
+    const eventData = JSON.parse(localStorage.getItem(`event-${eventId}-data`) || '{}');
+    eventData.checklist = checklist;
+    localStorage.setItem(`event-${eventId}-data`, JSON.stringify(eventData));
+  };
+
+  const getEventChecklist = (eventId: string) => {
+    const eventData = JSON.parse(localStorage.getItem(`event-${eventId}-data`) || '{}');
+    return eventData.checklist || [];
+  };
+
+  const addChecklistItem = (eventId: string) => {
+    const checklist = getEventChecklist(eventId);
+    const newItem = {
+      id: `item-${Date.now()}`,
+      text: '',
+      completed: false
+    };
+    updateEventChecklist(eventId, [...checklist, newItem]);
+  };
+
+  const updateChecklistItem = (eventId: string, itemId: string, updates: any) => {
+    const checklist = getEventChecklist(eventId);
+    const updatedChecklist = checklist.map((item: any) => 
+      item.id === itemId ? { ...item, ...updates } : item
+    );
+    updateEventChecklist(eventId, updatedChecklist);
+  };
+
+  const deleteChecklistItem = (eventId: string, itemId: string) => {
+    const checklist = getEventChecklist(eventId);
+    const updatedChecklist = checklist.filter((item: any) => item.id !== itemId);
+    updateEventChecklist(eventId, updatedChecklist);
+  };
+
   const handleAddEvent = () => {
     if (!newEvent.type || !newEvent.date || !newEvent.title) {
       toast({
@@ -388,7 +446,7 @@ export default function SeasonalityTimeline() {
         {/* Quick-Use Summary */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <p className="text-sm text-blue-800">
-            <strong>Quick-Use Guide:</strong> Click 'Add Event' to input your details. Your colour-coded event will appear in your Year-at-a-Glance view. Click the + icon beside a quarter to expand and dive deeper into your plans.
+            <strong>Quick-Use Guide:</strong> Click 'Add Event' to input your details. Your colour-coded event will appear in your Year-at-a-Glance view. Click the chevron icon on any event to expand and dive deeper into your plans.
           </p>
         </div>
 
@@ -431,16 +489,8 @@ export default function SeasonalityTimeline() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {quarters.map((quarter) => (
                 <div key={quarter.name} className="border-2 border-gray-200 rounded-lg overflow-hidden">
-                  <div className={`bg-gradient-to-r ${quarter.color} text-white p-4 flex items-center justify-between`}>
+                  <div className={`bg-gradient-to-r ${quarter.color} text-white p-4`}>
                     <h3 className="font-semibold text-lg">{quarter.name}</h3>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-white hover:bg-white/20"
-                      onClick={() => navigateToQuarter(parseInt(quarter.name.slice(1)))}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
                   </div>
                   
                   <div className="p-4 space-y-4">
@@ -456,26 +506,116 @@ export default function SeasonalityTimeline() {
                         </h4>
                         
                         <div className="space-y-2">
-                          {getEventsForMonth(monthNum).map((event) => (
-                            <div
-                              key={event.id}
-                              className={`${event.color} text-white text-xs p-2 rounded cursor-move flex items-center gap-2 hover:opacity-80`}
-                              draggable
-                              onDragStart={(e) => handleDragStart(e, event)}
-                            >
-                              <GripVertical className="w-3 h-3" />
-                              <span>{event.emoji}</span>
-                              <span className="flex-1 truncate">{event.title}</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-white hover:bg-white/20 w-6 h-6 p-0"
-                                onClick={() => handleDeleteEvent(event.id)}
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          ))}
+                          {getEventsForMonth(monthNum).map((event) => {
+                            const isExpanded = expandedEvents.has(event.id);
+                            const checklist = getEventChecklist(event.id);
+                            
+                            return (
+                              <div key={event.id} className="bg-white rounded-lg shadow-sm border">
+                                {/* Event Header */}
+                                <div
+                                  className={`${event.color} text-white text-xs p-2 rounded-t-lg cursor-move flex items-center gap-2 hover:opacity-80`}
+                                  draggable
+                                  onDragStart={(e) => handleDragStart(e, event)}
+                                >
+                                  <GripVertical className="w-3 h-3" />
+                                  <span>{event.emoji}</span>
+                                  <span className="flex-1 truncate">{event.title}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-white hover:bg-white/20 w-5 h-5 p-0"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleEventExpansion(event.id);
+                                    }}
+                                  >
+                                    {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-white hover:bg-white/20 w-5 h-5 p-0"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteEvent(event.id);
+                                    }}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
+
+                                {/* Expanded Content */}
+                                {isExpanded && (
+                                  <div className="p-3 space-y-4 bg-white rounded-b-lg">
+                                    {/* Detailed Notes */}
+                                    <div>
+                                      <Label className="text-xs font-medium mb-1 flex items-center gap-1">
+                                        <Edit2 className="w-3 h-3" />
+                                        Detailed Notes & Strategy
+                                      </Label>
+                                      <Textarea
+                                        placeholder="Add detailed notes, strategy, requirements..."
+                                        value={event.notes || ''}
+                                        onChange={(e) => updateEventNotes(event.id, e.target.value)}
+                                        className="min-h-[60px] text-xs"
+                                      />
+                                    </div>
+
+                                    {/* Action Checklist */}
+                                    <div>
+                                      <div className="flex items-center justify-between mb-2">
+                                        <Label className="text-xs font-medium flex items-center gap-1">
+                                          <Check className="w-3 h-3" />
+                                          Action Checklist
+                                        </Label>
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm"
+                                          className="h-6 px-2 text-xs"
+                                          onClick={() => addChecklistItem(event.id)}
+                                        >
+                                          <Plus className="w-3 h-3 mr-1" />
+                                          Add
+                                        </Button>
+                                      </div>
+                                      
+                                      <div className="space-y-1">
+                                        {checklist.map((item: any) => (
+                                          <div key={item.id} className="flex items-center gap-2 p-1 bg-gray-50 rounded text-xs">
+                                            <Checkbox
+                                              checked={item.completed}
+                                              onCheckedChange={(checked) => 
+                                                updateChecklistItem(event.id, item.id, { completed: !!checked })
+                                              }
+                                            />
+                                            <Input
+                                              value={item.text}
+                                              onChange={(e) => updateChecklistItem(event.id, item.id, { text: e.target.value })}
+                                              placeholder="Enter checklist item..."
+                                              className="flex-1 h-6 text-xs"
+                                            />
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-6 w-6 p-0"
+                                              onClick={() => deleteChecklistItem(event.id, item.id)}
+                                            >
+                                              <Trash2 className="w-3 h-3 text-red-500" />
+                                            </Button>
+                                          </div>
+                                        ))}
+                                        
+                                        {checklist.length === 0 && (
+                                          <p className="text-xs text-gray-500 py-1">No checklist items yet. Add some to track your progress!</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
