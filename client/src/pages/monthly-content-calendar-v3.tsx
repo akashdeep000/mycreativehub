@@ -6,10 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, ChevronLeft, ChevronRight, Pencil, X, Download, Plus, ArrowLeft, Home } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Pencil, X, Plus, ArrowLeft, Home } from 'lucide-react';
 import { useDebounce } from '../hooks/use-debounce';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 interface ColorKey {
   id: string;
@@ -293,45 +291,6 @@ export default function MonthlyContentCalendarV3() {
     setCurrentDate(newDate);
   };
 
-  const exportToPDF = async () => {
-    const element = document.getElementById('calendar-container');
-    if (!element) return;
-
-    try {
-      const canvas = await html2canvas(element, { 
-        scale: 2,
-        useCORS: true,
-        allowTaint: false 
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('l', 'mm', 'a4');
-      
-      const imgWidth = 280;
-      const pageHeight = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      
-      let position = 10;
-      
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-      
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight + 10;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-      
-      pdf.save(`content-calendar-${year}-${month}.pdf`);
-      toast({ title: "Calendar exported successfully!" });
-    } catch (error) {
-      console.error('Export error:', error);
-      toast({ title: "Failed to export calendar", variant: "destructive" });
-    }
-  };
-
   const handleKeyEdit = (keyId: string, newValue: string) => {
     if (newValue.trim()) {
       updateColorKey(keyId, { label: newValue.trim() });
@@ -396,10 +355,6 @@ export default function MonthlyContentCalendarV3() {
               </h1>
             </div>
           </div>
-          <Button onClick={exportToPDF} variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Export PDF
-          </Button>
         </div>
 
         {/* Navigation */}
