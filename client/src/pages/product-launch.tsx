@@ -100,16 +100,11 @@ export default function ProductLaunch() {
             onClick={() => handleTemplateClick(template)}
           >
             <CardContent className="p-6 flex flex-col h-full relative">
-              {/* Icon and Badge */}
-              <div className="flex items-start justify-between mb-4">
+              {/* Icon */}
+              <div className="mb-4">
                 <div className={`w-12 h-12 bg-gradient-to-br ${template.gradient} rounded-xl flex items-center justify-center`}>
                   <template.icon className="w-5 h-5 text-white" />
                 </div>
-                {template.badge && (
-                  <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                    {template.badge}
-                  </span>
-                )}
               </div>
 
               {/* Content */}
