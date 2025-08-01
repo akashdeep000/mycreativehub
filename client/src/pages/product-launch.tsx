@@ -18,11 +18,10 @@ export default function ProductLaunch() {
     {
       id: 1,
       title: "Seasonality Timeline",
-      subtitle: "Plan your year with purpose—map your seasonal cycles, launches, and personal flow.",
+      subtitle: "Plan your year with purpose! Map your seasonal cycles, launches, and holidays.",
       icon: Calendar,
       gradient: "from-pink-400 to-rose-400",
-      route: "/seasonality-timeline",
-      badge: "Popular"
+      route: "/seasonality-timeline"
     },
     {
       id: 2,
@@ -30,8 +29,7 @@ export default function ProductLaunch() {
       subtitle: "Map out your 2–4 week pre-launch timeline with drag-and-drop content planning.",
       icon: Clock,
       gradient: "from-purple-400 to-pink-400",
-      route: "/pre-launch-timeline-planner",
-      badge: "New"
+      route: "/pre-launch-timeline-planner"
     },
     {
       id: 3,
@@ -39,8 +37,7 @@ export default function ProductLaunch() {
       subtitle: "Calculate costs, profits, and margins with color-coded margin strength indicators.",
       icon: Calculator,
       gradient: "from-green-400 to-teal-400",
-      route: "/profit-calculator",
-      badge: "New"
+      route: "/profit-calculator"
     },
     {
       id: 4,
@@ -48,8 +45,7 @@ export default function ProductLaunch() {
       subtitle: "Capture key insights and plan improvements for your next launch with interactive planning.",
       icon: BarChart3,
       gradient: "from-blue-400 to-indigo-400",
-      route: "/launch-growth-plan",
-      badge: "New"
+      route: "/launch-growth-plan"
     }
   ];
 
