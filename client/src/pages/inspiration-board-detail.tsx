@@ -257,6 +257,13 @@ export default function InspirationBoardDetail() {
     enabled: isAuthenticated && !!id,
   });
 
+  // Debug logging for images data
+  useEffect(() => {
+    console.log("Images data updated:", images);
+    console.log("Images count:", images?.length || 0);
+    console.log("Images loading state:", imagesLoading);
+  }, [images, imagesLoading]);
+
   const { data: notes, isLoading: notesLoading } = useQuery({
     queryKey: ["/api/inspiration-boards", id, "notes"],
     enabled: isAuthenticated && !!id,
