@@ -33,6 +33,7 @@ import {
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import type { UploadResult } from "@uppy/core";
 import type { InspirationBoard, InspirationBoardImage, InspirationBoardNote, ColorPalette, BoardLink } from "@shared/schema";
 
 const noteColors = [
@@ -473,22 +474,43 @@ export default function InspirationBoardDetail() {
   });
 
   const getUploadParameters = async () => {
-    const response = await apiRequest(`/api/inspiration-boards/${id}/upload`, {
-      method: "POST",
-    });
-    return {
-      method: "PUT" as const,
-      url: response.uploadURL,
-    };
+    console.log("Getting upload parameters for board:", id);
+    
+    try {
+      const response = await apiRequest(`/api/inspiration-boards/${id}/upload`, {
+        method: "POST",
+      });
+      console.log("Upload parameters response:", response);
+      
+      if (!response || !response.uploadURL) {
+        console.error("Invalid response:", response);
+        throw new Error("No upload URL received from server");
+      }
+      
+      const uploadParams = {
+        method: "PUT" as const,
+        url: response.uploadURL,
+      };
+      
+      console.log("Returning upload params:", uploadParams);
+      return uploadParams;
+    } catch (error) {
+      console.error("Error getting upload parameters:", error);
+      throw error;
+    }
   };
 
 
 
-  const handleImageUploadComplete = (result: any) => {
+  const handleImageUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
     console.log("Upload complete:", result);
+    
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
+      // The uploadURL contains the presigned URL we used for uploading
       const imageUrl = uploadedFile.uploadURL;
+      
+      console.log("Uploaded file URL:", imageUrl);
       
       // Generate random position for the image
       const position = {
@@ -504,9 +526,12 @@ export default function InspirationBoardDetail() {
         position,
       });
     } else {
+      console.error("Upload failed:", result.failed);
       toast({
-        title: "Upload Failed",
-        description: "Failed to upload image. Please try again.",
+        title: "Upload Failed", 
+        description: result.failed && result.failed.length > 0 
+          ? result.failed[0].error 
+          : "Failed to upload image. Please try again.",
         variant: "destructive",
       });
     }
