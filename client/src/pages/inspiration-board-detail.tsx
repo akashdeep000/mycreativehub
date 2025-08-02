@@ -667,6 +667,15 @@ export default function InspirationBoardDetail() {
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={() => setLocation("/")}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to main dashboard
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setLocation("/inspiration-hub")}
                 className="text-gray-600 hover:text-gray-900"
               >
