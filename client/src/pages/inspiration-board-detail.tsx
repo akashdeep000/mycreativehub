@@ -465,13 +465,19 @@ export default function InspirationBoardDetail() {
     },
     onSuccess: (data) => {
       console.log("Mutation success with data:", data);
-      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "images"] });
-      setIsImageDialogOpen(false);
-      setNewImage({ file: null, preview: null });
-      toast({
-        title: "Image Added",
-        description: "Image has been added to your board.",
-      });
+      try {
+        // Use refetch instead of invalidate to avoid timing issues
+        queryClient.refetchQueries({ queryKey: ["/api/inspiration-boards", id, "images"] });
+        console.log("Query refetch initiated");
+        setIsImageDialogOpen(false);
+        setNewImage({ file: null, preview: null });
+        toast({
+          title: "Image Added",
+          description: "Image has been added to your board.",
+        });
+      } catch (error) {
+        console.error("Error in onSuccess callback:", error);
+      }
     },
     onError: (error) => {
       console.error("Mutation error:", error);
