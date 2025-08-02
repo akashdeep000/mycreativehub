@@ -504,7 +504,7 @@ export default function InspirationBoardDetail() {
         queryClient.refetchQueries({ queryKey: ["/api/inspiration-boards", id, "images"] });
         console.log("Query refetch initiated");
         setIsImageDialogOpen(false);
-        setNewImage({ file: null, preview: null });
+        // Clear any upload state if needed
         toast({
           title: "Image Added",
           description: "Image has been added to your board.",
@@ -996,33 +996,40 @@ export default function InspirationBoardDetail() {
                 Images
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {/* Existing Images */}
-                {(images || []).map((image: InspirationBoardImage) => {
-                  // Skip invalid images that don't have a URL
-                  if (!image || !image.imageUrl) {
-                    return null;
+                {/* Grid with both images and placeholder slots */}
+                {Array.from({ length: Math.max(8, imageGridRows * 4) }).map((_, index) => {
+                  // Find if there's an image for this specific grid position
+                  const imageForThisPosition = (images as InspirationBoardImage[] || []).find((img: InspirationBoardImage) => {
+                    if (!img?.position) return false;
+                    // Calculate which grid position this image should be in based on its stored position
+                    const gridCols = 4;
+                    const tileSize = 150;
+                    const spacing = 16;
+                    const col = Math.round((img.position.x - tileSize / 2 - 50) / (tileSize + spacing));
+                    const row = Math.round((img.position.y - tileSize / 2 - 150) / (tileSize + spacing));
+                    const calculatedIndex = row * gridCols + col;
+                    return calculatedIndex === index;
+                  });
+
+                  if (imageForThisPosition && imageForThisPosition.imageUrl) {
+                    return (
+                      <ImageCard
+                        key={imageForThisPosition.id}
+                        image={imageForThisPosition}
+                        boardId={parseInt(id!)}
+                        onUpdate={() => {
+                          queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "images"] });
+                        }}
+                      />
+                    );
                   }
-                  
-                  return (
-                    <ImageCard
-                      key={image.id}
-                      image={image}
-                      boardId={parseInt(id!)}
-                      onUpdate={() => {
-                        queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "images"] });
-                      }}
-                    />
-                  );
-                }).filter(Boolean)}
-                
-                {/* Add Image Placeholder Cards */}
-                {Array.from({ length: Math.max(8, (imageGridRows * 4) - (images?.length || 0)) }).map((_, index) => {
-                  const tileIndex = (images?.length || 0) + index;
+
+                  // Show placeholder if no image is in this position
                   return (
                     <div 
                       key={`placeholder-${index}`}
                       className="aspect-square bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 cursor-pointer group flex flex-col items-center justify-center"
-                      onClick={() => handleTileClick(tileIndex)}
+                      onClick={() => handleTileClick(index)}
                     >
                       <ImageIcon className="w-8 h-8 text-gray-400 group-hover:text-gray-500 mb-2" />
                       <span className="text-sm text-gray-500 group-hover:text-gray-600 font-medium">Add Image</span>
