@@ -449,10 +449,11 @@ export default function InspirationBoardDetail() {
   const addImageMutation = useMutation({
     mutationFn: async (image: any) => {
       console.log("Adding image with data:", image);
-      return await apiRequest(`/api/inspiration-boards/${id}/images`, {
+      const response = await apiRequest(`/api/inspiration-boards/${id}/images`, {
         method: "POST",
         body: JSON.stringify(image),
       });
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "images"] });
