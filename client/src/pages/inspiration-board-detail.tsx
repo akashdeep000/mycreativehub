@@ -230,6 +230,7 @@ export default function InspirationBoardDetail() {
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [isPaletteDialogOpen, setIsPaletteDialogOpen] = useState(false);
   const [imageGridRows, setImageGridRows] = useState(2); // Start with 2 rows of placeholders
+  const [clickedTilePosition, setClickedTilePosition] = useState<{ x: number; y: number; rotation: number } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
 
   // Redirect to login if not authenticated
@@ -457,6 +458,28 @@ export default function InspirationBoardDetail() {
     }
   };
 
+  // Calculate position based on grid tile index (4 columns)
+  const calculateTilePosition = (tileIndex: number) => {
+    const gridCols = 4;
+    const tileSize = 150; // Approximate tile size
+    const spacing = 16; // Gap between tiles
+    
+    const row = Math.floor(tileIndex / gridCols);
+    const col = tileIndex % gridCols;
+    
+    const x = col * (tileSize + spacing) + tileSize / 2 + 50; // Center of tile + margin
+    const y = row * (tileSize + spacing) + tileSize / 2 + 150; // Center of tile + header offset
+    const rotation = (Math.random() - 0.5) * 0.5; // Small random rotation
+    
+    return { x, y, rotation };
+  };
+
+  const handleTileClick = (tileIndex: number) => {
+    const position = calculateTilePosition(tileIndex);
+    setClickedTilePosition(position);
+    setIsImageDialogOpen(true);
+  };
+
   const addImageMutation = useMutation({
     mutationFn: async (image: any) => {
       console.log("Adding image with data:", image);
@@ -542,8 +565,8 @@ export default function InspirationBoardDetail() {
       
       console.log("Uploaded file URL:", imageUrl);
       
-      // Generate random position for the image
-      const position = {
+      // Use the clicked tile position if available, otherwise fall back to random
+      const position = clickedTilePosition || {
         x: Math.random() * 300 + 100,
         y: Math.random() * 200 + 100,
         rotation: (Math.random() - 0.5) * 3, // -1.5 to +1.5 degrees
@@ -555,6 +578,9 @@ export default function InspirationBoardDetail() {
         caption: null,
         position,
       });
+
+      // Reset the clicked tile position after uploading
+      setClickedTilePosition(null);
     } else {
       console.error("Upload failed:", result.failed);
       toast({
@@ -990,17 +1016,20 @@ export default function InspirationBoardDetail() {
                 }).filter(Boolean)}
                 
                 {/* Add Image Placeholder Cards */}
-                {Array.from({ length: Math.max(8, (imageGridRows * 4) - (images?.length || 0)) }).map((_, index) => (
-                  <Dialog key={`placeholder-${index}`} open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-                    <DialogTrigger asChild>
-                      <div className="aspect-square bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 cursor-pointer group flex flex-col items-center justify-center">
-                        <ImageIcon className="w-8 h-8 text-gray-400 group-hover:text-gray-500 mb-2" />
-                        <span className="text-sm text-gray-500 group-hover:text-gray-600 font-medium">Add Image</span>
-                        <span className="text-xs text-gray-400 mt-1">Click to upload</span>
-                      </div>
-                    </DialogTrigger>
-                  </Dialog>
-                ))}
+                {Array.from({ length: Math.max(8, (imageGridRows * 4) - (images?.length || 0)) }).map((_, index) => {
+                  const tileIndex = (images?.length || 0) + index;
+                  return (
+                    <div 
+                      key={`placeholder-${index}`}
+                      className="aspect-square bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 cursor-pointer group flex flex-col items-center justify-center"
+                      onClick={() => handleTileClick(tileIndex)}
+                    >
+                      <ImageIcon className="w-8 h-8 text-gray-400 group-hover:text-gray-500 mb-2" />
+                      <span className="text-sm text-gray-500 group-hover:text-gray-600 font-medium">Add Image</span>
+                      <span className="text-xs text-gray-400 mt-1">Click to upload</span>
+                    </div>
+                  );
+                })}
               </div>
               
               {/* Add More Images Button */}
