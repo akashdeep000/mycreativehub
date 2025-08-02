@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { ObjectUploader } from "@/components/ObjectUploader";
 import type { InspirationBoard, InspirationBoardImage, InspirationBoardNote, ColorPalette, BoardLink } from "@shared/schema";
 
 const noteColors = [
@@ -222,10 +223,7 @@ export default function InspirationBoardDetail() {
   const [newNote, setNewNote] = useState({ title: "", content: "", color: "yellow" });
   const [newLink, setNewLink] = useState({ url: "", title: "", description: "" });
   const [newPalette, setNewPalette] = useState({ name: "", colors: ["#ffffff"] });
-  const [newImage, setNewImage] = useState({ 
-    file: null as File | null, 
-    preview: null as string | null 
-  });
+
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
@@ -474,63 +472,44 @@ export default function InspirationBoardDetail() {
     },
   });
 
-  const handleFileUpload = (file: File) => {
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Invalid File Type",
-        description: "Please upload an image file (PNG, JPG, GIF).",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate file size (10MB limit)
-    if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: "File Too Large",
-        description: "Please upload an image smaller than 10MB.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setNewImage({
-        file: file,
-        preview: e.target?.result as string,
-      });
+  const getUploadParameters = async () => {
+    const response = await apiRequest(`/api/inspiration-boards/${id}/upload`, {
+      method: "POST",
+    });
+    return {
+      method: "PUT" as const,
+      url: response.uploadURL,
     };
-    reader.readAsDataURL(file);
   };
 
-  const handleAddImage = async () => {
-    if (!newImage.file || !newImage.preview) {
+
+
+  const handleImageUploadComplete = (result: any) => {
+    console.log("Upload complete:", result);
+    if (result.successful && result.successful.length > 0) {
+      const uploadedFile = result.successful[0];
+      const imageUrl = uploadedFile.uploadURL;
+      
+      // Generate random position for the image
+      const position = {
+        x: Math.random() * 300 + 100,
+        y: Math.random() * 200 + 100,
+        rotation: (Math.random() - 0.5) * 3, // -1.5 to +1.5 degrees
+      };
+
+      addImageMutation.mutate({
+        boardId: parseInt(id!),
+        imageUrl: imageUrl,
+        caption: null,
+        position,
+      });
+    } else {
       toast({
-        title: "No Image Selected",
-        description: "Please select an image to upload.",
+        title: "Upload Failed",
+        description: "Failed to upload image. Please try again.",
         variant: "destructive",
       });
-      return;
     }
-
-    // Generate random position for the image
-    const position = {
-      x: Math.random() * 300 + 100,
-      y: Math.random() * 200 + 100,
-      rotation: (Math.random() - 0.5) * 3, // -1.5 to +1.5 degrees
-    };
-
-    addImageMutation.mutate({
-      boardId: parseInt(id!),
-      imageUrl: newImage.preview, // Use the base64 preview as the image URL
-      caption: null,
-      position,
-    });
   };
 
   const handleDragOver = (event: React.DragEvent) => {
@@ -689,58 +668,20 @@ export default function InspirationBoardDetail() {
                 </DialogHeader>
                 
                 <div className="grid gap-6 py-4">
-                  {/* Single Upload Area */}
-                  <div className="grid gap-3">
-                    <div
-                      className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer"
-                      onDragOver={handleDragOver}
-                      onDrop={handleDrop}
-                      onClick={() => document.getElementById('modal-file-upload')?.click()}
+                  <div className="text-center">
+                    <ObjectUploader
+                      maxNumberOfFiles={1}
+                      maxFileSize={10485760}
+                      onGetUploadParameters={getUploadParameters}
+                      onComplete={handleImageUploadComplete}
+                      buttonClassName="w-full"
                     >
-                      {newImage.preview ? (
-                        <div className="space-y-3">
-                          <img 
-                            src={newImage.preview} 
-                            alt="Preview" 
-                            className="max-h-32 mx-auto rounded-lg object-cover"
-                          />
-                          <p className="text-sm text-gray-600">
-                            {newImage.file?.name}
-                          </p>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setNewImage({ file: null, preview: null });
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <ImageIcon className="w-12 h-12 text-gray-400 mx-auto" />
-                          <p className="text-sm font-medium text-gray-700">
-                            Drag and drop or click to upload a photo
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            PNG, JPG, GIF up to 10MB
-                          </p>
-                        </div>
-                      )}
-                      <input
-                        id="modal-file-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleFileUpload(file);
-                        }}
-                        className="hidden"
-                      />
-                    </div>
-                    <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
+                      <div className="flex items-center justify-center gap-2 py-4">
+                        <ImageIcon className="w-5 h-5" />
+                        <span>Upload Image</span>
+                      </div>
+                    </ObjectUploader>
+                    <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg mt-4">
                       <p className="font-medium mb-1">✨ After adding the image</p>
                       <p>You can add notes and reference links directly below each image in the grid for better organization.</p>
                     </div>
@@ -752,12 +693,6 @@ export default function InspirationBoardDetail() {
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsImageDialogOpen(false)}>
                     Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleAddImage} 
-                    disabled={!newImage.file || !newImage.preview || addImageMutation.isPending}
-                  >
-                    {addImageMutation.isPending ? "Adding..." : "Add Image"}
                   </Button>
                 </DialogFooter>
               </DialogContent>

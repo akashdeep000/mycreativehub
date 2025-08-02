@@ -1290,6 +1290,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get upload URL for board image
+  app.post('/api/inspiration-boards/:id/upload', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      const { ObjectStorageService } = await import('./objectStorage');
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ message: "Failed to get upload URL" });
+    }
+  });
+
   app.post('/api/inspiration-boards/:id/images', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
@@ -1303,9 +1323,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Board not found" });
       }
       
+      // Normalize the image URL if it's from object storage
+      let { imageUrl } = req.body;
+      if (imageUrl && imageUrl.startsWith('https://storage.googleapis.com/')) {
+        const { ObjectStorageService } = await import('./objectStorage');
+        const objectStorageService = new ObjectStorageService();
+        imageUrl = objectStorageService.normalizeObjectEntityPath(imageUrl);
+      }
+      
       const image = await storage.createBoardImage({
         boardId: parseInt(id),
         ...req.body,
+        imageUrl,
       });
       console.log("Image created successfully:", image);
       res.status(201).json(image);
@@ -2182,6 +2211,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error saving calendar v3:', error);
       res.status(500).json({ message: 'Failed to save calendar data' });
+    }
+  });
+
+  // Serve object storage images
+  app.get("/objects/:objectPath(*)", async (req, res) => {
+    try {
+      const { ObjectStorageService } = await import('./objectStorage');
+      const objectStorageService = new ObjectStorageService();
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error serving object:", error);
+      res.status(404).json({ error: "Object not found" });
     }
   });
 
