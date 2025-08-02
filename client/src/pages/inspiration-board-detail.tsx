@@ -449,13 +449,22 @@ export default function InspirationBoardDetail() {
   const addImageMutation = useMutation({
     mutationFn: async (image: any) => {
       console.log("Adding image with data:", image);
-      const response = await apiRequest(`/api/inspiration-boards/${id}/images`, {
-        method: "POST",
-        body: JSON.stringify(image),
-      });
-      return await response.json();
+      try {
+        const response = await apiRequest(`/api/inspiration-boards/${id}/images`, {
+          method: "POST",
+          body: JSON.stringify(image),
+        });
+        console.log("Raw response:", response);
+        const data = await response.json();
+        console.log("Parsed response data:", data);
+        return data;
+      } catch (error) {
+        console.error("Mutation function error:", error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Mutation success with data:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "images"] });
       setIsImageDialogOpen(false);
       setNewImage({ file: null, preview: null });
@@ -465,7 +474,7 @@ export default function InspirationBoardDetail() {
       });
     },
     onError: (error) => {
-      console.error("Error adding image:", error);
+      console.error("Mutation error:", error);
       toast({
         title: "Error",
         description: "Failed to add image. Please try again.",
