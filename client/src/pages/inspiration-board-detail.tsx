@@ -480,16 +480,19 @@ export default function InspirationBoardDetail() {
       const response = await apiRequest(`/api/inspiration-boards/${id}/upload`, {
         method: "POST",
       });
-      console.log("Upload parameters response:", response);
       
-      if (!response || !response.uploadURL) {
-        console.error("Invalid response:", response);
+      // Parse JSON from the response
+      const data = await response.json();
+      console.log("Upload parameters response:", data);
+      
+      if (!data || !data.uploadURL) {
+        console.error("Invalid response:", data);
         throw new Error("No upload URL received from server");
       }
       
       const uploadParams = {
         method: "PUT" as const,
-        url: response.uploadURL,
+        url: data.uploadURL,
       };
       
       console.log("Returning upload params:", uploadParams);
