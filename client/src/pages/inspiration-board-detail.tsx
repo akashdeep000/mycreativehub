@@ -713,24 +713,7 @@ export default function InspirationBoardDetail() {
               )}
             </div>
             
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-white border-gray-200"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-white border-gray-200"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export
-              </Button>
-            </div>
+
           </div>
           
           {board.description && (

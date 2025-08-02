@@ -29,7 +29,8 @@ import {
   Grid3X3,
   Link as LinkIcon,
   StickyNote,
-  Download
+  Download,
+  ArrowLeft
 } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -217,6 +218,17 @@ export default function InspirationHub() {
       <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
         {/* Header */}
         <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation("/")}
+              className="text-gray-600 hover:text-gray-900 mb-4"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to main dashboard
+            </Button>
+          </div>
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-500 rounded-xl flex items-center justify-center">
               <Lightbulb className="w-6 h-6 text-white" />
