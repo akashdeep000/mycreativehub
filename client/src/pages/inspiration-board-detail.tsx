@@ -262,6 +262,10 @@ export default function InspirationBoardDetail() {
     console.log("Images data updated:", images);
     console.log("Images count:", images?.length || 0);
     console.log("Images loading state:", imagesLoading);
+    if (images && images.length > 0) {
+      console.log("First image object:", images[0]);
+      console.log("All image URLs:", images.map(img => img.imageUrl));
+    }
   }, [images, imagesLoading]);
 
   const { data: notes, isLoading: notesLoading } = useQuery({
