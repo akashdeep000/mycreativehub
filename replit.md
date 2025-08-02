@@ -8,7 +8,14 @@ This full-stack web application serves as a comprehensive digital workspace for 
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (Updated: August 1, 2025)
+## Recent Changes (Updated: August 2, 2025)
+
+### Individual Board Layout Alignment Fixed
+- **Issue**: Individual inspiration board view content hidden behind sidebar on deployed app
+- **Root Cause**: Missing responsive margin offset (lg:ml-64) to account for sidebar width
+- **Solution**: Applied lg:ml-64 margin to all layout states (loading, error, main content) in inspiration-board-detail.tsx
+- **Status**: ✅ RESOLVED - Board content now properly aligned with main hub page layout
+- **Date**: August 2, 2025
 
 ### Inspiration Hub Board Creation Fixed
 - **Issue**: Board creation failing with empty request body despite frontend sending correct data
