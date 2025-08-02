@@ -64,13 +64,20 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const headers: Record<string, string> = {};
     
+    // Construct URL from query key array
+    // For arrays like ["/api/inspiration-boards", "10", "images"], join them properly
+    const url = typeof queryKey[0] === 'string' && queryKey[0].startsWith('/') 
+      ? queryKey.join('/')
+      : queryKey[0] as string;
+    
     // Add JWT token from localStorage if available
     const token = localStorage.getItem('token'); // Changed from 'authToken' to 'token' to match login.tsx
     console.log("Frontend Query - Token check:", {
       tokenExists: !!token,
       tokenLength: token?.length || 0,
       tokenPreview: token?.substring(0, 30) + "..." || "none",
-      url: queryKey[0] as string
+      url: url,
+      fullQueryKey: queryKey
     });
     
     if (token) {
@@ -80,7 +87,7 @@ export const getQueryFn: <T>(options: {
       console.log("Frontend Query - No token found in localStorage");
     }
     
-    const res = await fetch(queryKey[0] as string, {
+    const res = await fetch(url, {
       headers,
       credentials: "include",
     });
