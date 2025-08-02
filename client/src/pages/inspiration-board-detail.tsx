@@ -982,6 +982,43 @@ export default function InspirationBoardDetail() {
           </div>
         </div>
 
+        {/* Notes Section - Positioned after toolbar */}
+        {(notes || []).length > 0 && (
+          <div className="bg-white border-b border-gray-200 p-4">
+            <div className="max-w-7xl mx-auto">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <StickyNote className="w-5 h-5" />
+                Notes
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {(notes as InspirationBoardNote[] || [])
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .map((note: InspirationBoardNote) => {
+                  // Skip invalid notes that don't have content
+                  if (!note || (!note.title && !note.content)) {
+                    return null;
+                  }
+                  
+                  const noteColor = noteColors.find(c => c.value === note.color) || noteColors[0];
+                  return (
+                    <div
+                      key={note.id}
+                      className={`p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow ${noteColor.class}`}
+                    >
+                      {note.title && (
+                        <h4 className="font-semibold text-sm mb-2 text-gray-800">{note.title}</h4>
+                      )}
+                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                        {note.content}
+                      </p>
+                    </div>
+                  );
+                }).filter(Boolean)}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Board Canvas */}
         <div 
           ref={boardRef}
@@ -1121,40 +1158,7 @@ export default function InspirationBoardDetail() {
               )}
             </div>
 
-            {/* Notes Section */}
-            {(notes || []).length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <StickyNote className="w-5 h-5" />
-                  Notes
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {(notes as InspirationBoardNote[] || [])
-                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                    .map((note: InspirationBoardNote) => {
-                    // Skip invalid notes that don't have content
-                    if (!note || (!note.title && !note.content)) {
-                      return null;
-                    }
-                    
-                    const noteColor = noteColors.find(c => c.value === note.color) || noteColors[0];
-                    return (
-                      <div
-                        key={note.id}
-                        className={`p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow ${noteColor.class}`}
-                      >
-                        {note.title && (
-                          <h4 className="font-semibold text-sm mb-2 text-gray-800">{note.title}</h4>
-                        )}
-                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                          {note.content}
-                        </p>
-                      </div>
-                    );
-                  }).filter(Boolean)}
-                </div>
-              </div>
-            )}
+
 
             {/* Reference Links Section */}
             <div className="mb-8">
