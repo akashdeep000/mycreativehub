@@ -20,7 +20,6 @@ import {
   Bookmark, 
   Sparkles,
   MoreHorizontal,
-  Archive,
   Copy,
   Trash2,
   Edit,
@@ -80,10 +79,7 @@ export default function InspirationHub() {
     enabled: isAuthenticated,
   });
 
-  const { data: archivedBoards = [] } = useQuery<InspirationBoard[]>({
-    queryKey: ["/api/inspiration-boards/archived"],
-    enabled: isAuthenticated,
-  });
+
 
   const createBoardMutation = useMutation({
     mutationFn: async (boardData: { title: string; description?: string }) => {
@@ -138,21 +134,7 @@ export default function InspirationHub() {
     },
   });
 
-  const archiveBoardMutation = useMutation({
-    mutationFn: async (boardId: number) => {
-      return await apiRequest(`/api/inspiration-boards/${boardId}/archive`, {
-        method: "POST",
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards/archived"] });
-      toast({
-        title: "Board Archived",
-        description: "Board has been moved to archives.",
-      });
-    },
-  });
+
 
   const deleteBoardMutation = useMutation({
     mutationFn: async (boardId: number) => {
@@ -242,13 +224,8 @@ export default function InspirationHub() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-purple-100 text-purple-700">
-                {boards.length} Active Board{boards.length !== 1 ? 's' : ''}
+                {boards.length} Board{boards.length !== 1 ? 's' : ''}
               </Badge>
-              {archivedBoards.length > 0 && (
-                <Badge variant="secondary" className="bg-gray-100 text-gray-700">
-                  {archivedBoards.length} Archived
-                </Badge>
-              )}
             </div>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
@@ -309,7 +286,7 @@ export default function InspirationHub() {
         </div>
 
         {/* Empty State */}
-        {boards.length === 0 && archivedBoards.length === 0 && (
+        {boards.length === 0 && (
           <div className="text-center py-16">
             <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Lightbulb className="w-10 h-10 text-white" />
@@ -363,10 +340,6 @@ export default function InspirationHub() {
                             <Copy className="w-4 h-4 mr-2" />
                             Duplicate
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => archiveBoardMutation.mutate(board.id)}>
-                            <Archive className="w-4 h-4 mr-2" />
-                            Archive
-                          </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => deleteBoardMutation.mutate(board.id)}
                             className="text-red-600"
@@ -407,52 +380,7 @@ export default function InspirationHub() {
           </div>
         )}
 
-        {/* Archived Boards */}
-        {archivedBoards.length > 0 && (
-          <div>
-            <h2 className="text-xl font-serif font-semibold text-gray-800 mb-6 flex items-center gap-2">
-              <Archive className="w-5 h-5" />
-              Archived Boards
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {archivedBoards.map((board: InspirationBoard) => (
-                <Card key={board.id} className="border-gray-200 hover:shadow-md transition-shadow opacity-75">
-                  <CardHeader>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="w-10 h-10 bg-gray-400 rounded-lg flex items-center justify-center">
-                        <Archive className="w-5 h-5 text-white" />
-                      </div>
-                      <Badge variant="secondary" className="bg-gray-100 text-gray-600 text-xs">
-                        Archived
-                      </Badge>
-                    </div>
-                    <CardTitle className="text-lg font-serif text-gray-700">
-                      {board.title}
-                    </CardTitle>
-                    {board.description && (
-                      <CardDescription className="line-clamp-2">
-                        {board.description}
-                      </CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-gray-500 mb-4">
-                      Archived {board.archivedAt ? new Date(board.archivedAt).toLocaleDateString() : "Unknown"}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1">
-                        Restore
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
+
 
         {/* Quick Tips */}
         {boards.length > 0 && (
