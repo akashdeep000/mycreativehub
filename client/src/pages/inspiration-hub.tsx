@@ -388,45 +388,21 @@ export default function InspirationHub() {
             <CardContent className="p-6">
               <h3 className="text-xl font-serif font-semibold text-gray-800 mb-4 flex items-center gap-2">
                 <Sparkles className="w-5 h-5" />
-                Inspiration Board Tips
+                Inspiration Hub Tips
               </h3>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                    <Image className="w-4 h-4" />
-                    Visual Moodboards
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    Drag and drop images to create flexible layouts. Pin important images to the top and add captions for context.
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                    <StickyNote className="w-4 h-4" />
-                    Quick Notes
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    Add post-it style notes to capture ideas and insights. Use different colours to categorise your thoughts.
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                    <Palette className="w-4 h-4" />
-                    Colour Palettes
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    Extract colours from images or create custom palettes. Save hex codes and name your favourite combinations.
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                    <LinkIcon className="w-4 h-4" />
-                    Reference Links
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    Bookmark external resources and inspiration. Add notes to remember why each link is valuable.
-                  </p>
-                </div>
+              <div className="text-gray-600 text-sm space-y-4">
+                <p>
+                  This isn't meant to replace Pinterest — think of it as a practical space to organise your creative ideas in one place. Use it to:
+                </p>
+                <ul className="list-disc list-inside space-y-2 ml-4">
+                  <li>Save screenshots you've taken while browsing</li>
+                  <li>Store colour palettes and keep track of hex codes you love</li>
+                  <li>Bookmark helpful websites or resources relevant to your board's theme</li>
+                  <li>Add post-it style notes to jot down ideas, reminders, or creative directions for each board</li>
+                </ul>
+                <p>
+                  Keep everything in one spot so your inspiration is easy to find when it's time to create.
+                </p>
               </div>
             </CardContent>
           </Card>
