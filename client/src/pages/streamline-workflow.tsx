@@ -260,7 +260,7 @@ export default function StreamlineWorkflow() {
     return (
       <div className="flex h-screen bg-gray-50">
         <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden ml-0 lg:ml-0">
+        <div className="flex-1 flex flex-col overflow-hidden ml-0 lg:ml-64">
           <MobileNav />
           <main className="flex-1 overflow-y-auto">
             <div className="w-full px-6 sm:px-8 lg:px-12 py-6">
