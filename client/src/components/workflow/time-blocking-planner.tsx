@@ -639,7 +639,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   {getBlocksForDayAndHour(day, hour).map(block => (
                     <div
                       key={block.id}
-                      className="absolute inset-1 rounded text-white text-sm font-medium p-2 cursor-move group shadow-sm relative overflow-hidden"
+                      className="absolute top-1 left-1 right-2 rounded text-white text-sm font-medium p-2 cursor-move group shadow-sm relative overflow-hidden"
                       style={{ backgroundColor: block.colour, height: `${Math.max(block.duration * 80 - 8, 75)}px` }}
                       draggable
                       onDragStart={() => handleDragStart(block)}
