@@ -23,7 +23,8 @@ interface TimeBlock {
   colour: string;
   colourTagId?: string;
   day: string;
-  weekKey: string; // Format: "2025-W30" (year-week number) to uniquely identify each week
+  weekKey?: string; // Format: "2025-W30" (year-week number) - only used for weekly view
+  monthKey?: string; // Format: "2025-M08" (year-month number) - only used for monthly view
 }
 
 interface TimeBlockingData {
@@ -74,9 +75,10 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [currentMonthOffset, setCurrentMonthOffset] = useState(0);
 
 
-  // Legacy data migration - Add weekKey to existing blocks
+  // Legacy data migration - Add weekKey/monthKey to existing blocks
   useEffect(() => {
     const currentWeekKey = getCurrentWeekKey();
+    const currentMonthKey = getCurrentMonthKey();
     let needsMigration = false;
     
     const migratedData = {
@@ -94,9 +96,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       monthlyView: {
         ...data.monthlyView,
         blocks: data.monthlyView.blocks.map(block => {
-          if (!block.weekKey) {
+          if (!block.monthKey) {
             needsMigration = true;
-            return { ...block, weekKey: currentWeekKey };
+            return { ...block, monthKey: currentMonthKey };
           }
           return block;
         })
@@ -138,6 +140,14 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     const year = monday.getFullYear();
     const weekNumber = getWeekNumber(monday);
     return `${year}-W${weekNumber.toString().padStart(2, '0')}`;
+  };
+
+  const getCurrentMonthKey = () => {
+    const today = new Date();
+    today.setMonth(today.getMonth() + currentMonthOffset);
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+    return `${year}-M${month.toString().padStart(2, '0')}`;
   };
 
   const getWeekNumber = (date: Date) => {
@@ -227,6 +237,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     // Auto-fill with category label if no title provided
     const blockTitle = title || selectedColourTag?.label || 'Untitled';
     
+    // Create block with appropriate key based on active view
     const newBlock: TimeBlock = {
       id: `block-${Date.now()}`,
       title: blockTitle,
@@ -235,7 +246,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       colour,
       colourTagId: useColourTagId,
       day,
-      weekKey: getCurrentWeekKey()
+      ...(activeView === 'weekly' ? { weekKey: getCurrentWeekKey() } : { monthKey: getCurrentMonthKey() })
     };
 
     setData(prev => ({
@@ -284,27 +295,39 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const handleDrop = (e: React.DragEvent, day: string, hour: number) => {
     e.preventDefault();
     if (draggedBlock) {
-      updateTimeBlock(draggedBlock.id, {
+      const updates: Partial<TimeBlock> = {
         day,
         startTime: `${hour.toString().padStart(2, '0')}:00`,
-        weekKey: getCurrentWeekKey()
-      });
+        ...(activeView === 'weekly' ? { weekKey: getCurrentWeekKey() } : { monthKey: getCurrentMonthKey() })
+      };
+      updateTimeBlock(draggedBlock.id, updates);
       setDraggedBlock(null);
     }
   };
 
   const getBlocksForDayAndHour = (day: string, hour: number) => {
     const currentBlocks = activeView === 'weekly' ? data.weeklyView.blocks : data.monthlyView.blocks;
-    const currentWeekKey = getCurrentWeekKey();
     
-    return currentBlocks.filter(block => {
-      // Handle legacy blocks without weekKey (assign them to current week for migration)
-      const blockWeekKey = block.weekKey || currentWeekKey;
-      
-      return block.day === day && 
-             parseInt(block.startTime.split(':')[0]) === hour &&
-             blockWeekKey === currentWeekKey;
-    });
+    if (activeView === 'weekly') {
+      const currentWeekKey = getCurrentWeekKey();
+      return currentBlocks.filter(block => {
+        // For weekly view, only show blocks with matching weekKey
+        const blockWeekKey = block.weekKey || currentWeekKey; // Handle legacy data
+        return block.day === day && 
+               parseInt(block.startTime.split(':')[0]) === hour &&
+               blockWeekKey === currentWeekKey;
+      });
+    } else {
+      // For monthly view, show blocks with monthKey (ignore weekKey completely)
+      const currentMonthKey = getCurrentMonthKey();
+      return currentBlocks.filter(block => {
+        // For monthly view, only show blocks with matching monthKey
+        const blockMonthKey = block.monthKey || currentMonthKey; // Handle legacy data
+        return block.day === day && 
+               parseInt(block.startTime.split(':')[0]) === hour &&
+               blockMonthKey === currentMonthKey;
+      });
+    }
   };
 
   const formatTime = (hour: number) => {
