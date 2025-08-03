@@ -23,6 +23,7 @@ interface TimeBlock {
   colour: string;
   colourTagId?: string;
   day: string;
+  weekKey: string; // Format: "2025-W30" (year-week number) to uniquely identify each week
 }
 
 interface TimeBlockingData {
@@ -73,6 +74,40 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [currentMonthOffset, setCurrentMonthOffset] = useState(0);
 
 
+  // Legacy data migration - Add weekKey to existing blocks
+  useEffect(() => {
+    const currentWeekKey = getCurrentWeekKey();
+    let needsMigration = false;
+    
+    const migratedData = {
+      ...data,
+      weeklyView: {
+        ...data.weeklyView,
+        blocks: data.weeklyView.blocks.map(block => {
+          if (!block.weekKey) {
+            needsMigration = true;
+            return { ...block, weekKey: currentWeekKey };
+          }
+          return block;
+        })
+      },
+      monthlyView: {
+        ...data.monthlyView,
+        blocks: data.monthlyView.blocks.map(block => {
+          if (!block.weekKey) {
+            needsMigration = true;
+            return { ...block, weekKey: currentWeekKey };
+          }
+          return block;
+        })
+      }
+    };
+    
+    if (needsMigration) {
+      setData(migratedData);
+    }
+  }, []); // Run only once on component mount
+
   // Auto-save functionality
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -97,6 +132,20 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     });
   };
 
+  const getCurrentWeekKey = () => {
+    const weekDates = getCurrentWeekDates();
+    const monday = weekDates[0];
+    const year = monday.getFullYear();
+    const weekNumber = getWeekNumber(monday);
+    return `${year}-W${weekNumber.toString().padStart(2, '0')}`;
+  };
+
+  const getWeekNumber = (date: Date) => {
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+  };
+
   const getCurrentMonthDates = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -115,6 +164,50 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   // Navigation functions
   const navigateWeek = (direction: 'prev' | 'next') => {
     setCurrentWeekOffset(prev => direction === 'next' ? prev + 1 : prev - 1);
+  };
+
+  // Copy blocks from previous week function
+  const copyFromPreviousWeek = () => {
+    const previousWeekOffset = currentWeekOffset - 1;
+    const tempWeekOffset = currentWeekOffset;
+    setCurrentWeekOffset(previousWeekOffset);
+    const previousWeekKey = getCurrentWeekKey();
+    setCurrentWeekOffset(tempWeekOffset);
+    const currentWeekKey = getCurrentWeekKey();
+    
+    const previousWeekBlocks = data.weeklyView.blocks.filter(block => 
+      (block.weekKey || previousWeekKey) === previousWeekKey
+    );
+    
+    if (previousWeekBlocks.length === 0) {
+      toast({
+        title: "No blocks to copy",
+        description: "The previous week doesn't have any scheduled blocks.",
+        variant: "default"
+      });
+      return;
+    }
+    
+    // Create new blocks for current week
+    const newBlocks = previousWeekBlocks.map(block => ({
+      ...block,
+      id: `block-${Date.now()}-${Math.random()}`,
+      weekKey: currentWeekKey
+    }));
+    
+    setData(prev => ({
+      ...prev,
+      weeklyView: {
+        ...prev.weeklyView,
+        blocks: [...prev.weeklyView.blocks, ...newBlocks]
+      }
+    }));
+    
+    toast({
+      title: "Blocks copied successfully",
+      description: `Copied ${previousWeekBlocks.length} block${previousWeekBlocks.length !== 1 ? 's' : ''} from the previous week.`,
+      variant: "default"
+    });
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
@@ -141,7 +234,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       duration: 1,
       colour,
       colourTagId: useColourTagId,
-      day
+      day,
+      weekKey: getCurrentWeekKey()
     };
 
     setData(prev => ({
@@ -192,7 +286,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     if (draggedBlock) {
       updateTimeBlock(draggedBlock.id, {
         day,
-        startTime: `${hour.toString().padStart(2, '0')}:00`
+        startTime: `${hour.toString().padStart(2, '0')}:00`,
+        weekKey: getCurrentWeekKey()
       });
       setDraggedBlock(null);
     }
@@ -200,10 +295,16 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
 
   const getBlocksForDayAndHour = (day: string, hour: number) => {
     const currentBlocks = activeView === 'weekly' ? data.weeklyView.blocks : data.monthlyView.blocks;
-    return currentBlocks.filter(block => 
-      block.day === day && 
-      parseInt(block.startTime.split(':')[0]) === hour
-    );
+    const currentWeekKey = getCurrentWeekKey();
+    
+    return currentBlocks.filter(block => {
+      // Handle legacy blocks without weekKey (assign them to current week for migration)
+      const blockWeekKey = block.weekKey || currentWeekKey;
+      
+      return block.day === day && 
+             parseInt(block.startTime.split(':')[0]) === hour &&
+             blockWeekKey === currentWeekKey;
+    });
   };
 
   const formatTime = (hour: number) => {
@@ -446,14 +547,27 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={goToToday}
-            className="text-blue-600 border-blue-200 hover:bg-blue-50"
-          >
-            Today
-          </Button>
+          <div className="flex items-center gap-2">
+            {currentWeekOffset !== 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={copyFromPreviousWeek}
+                className="text-green-600 border-green-200 hover:bg-green-50"
+                title="Copy all blocks from the previous week to this week"
+              >
+                Copy Previous Week
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToToday}
+              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+            >
+              Today
+            </Button>
+          </div>
         </div>
         
         <div className="grid grid-cols-8 gap-2 text-sm">

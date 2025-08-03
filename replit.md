@@ -8,7 +8,19 @@ This full-stack web application serves as a comprehensive digital workspace for 
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (Updated: August 2, 2025)
+## Recent Changes (Updated: August 3, 2025)
+
+### Time Blocking Planner Week Isolation Fixed
+- **Issue**: Time blocks duplicating across all weeks - blocks created in one week appeared in every week
+- **Root Cause**: Missing week identifier in TimeBlock data structure, causing all blocks to display globally
+- **Solution**: 
+  - Added `weekKey` field to TimeBlock interface (format: "2025-W30")
+  - Updated `getBlocksForDayAndHour` to filter by current week key
+  - Enhanced `createTimeBlock` and `handleDrop` to assign week-specific keys
+  - Added legacy data migration for existing blocks without weekKey
+  - Added "Copy from Previous Week" feature for week-to-week schedule replication
+- **Status**: ✅ RESOLVED - Each week now maintains independent schedule data
+- **Date**: August 3, 2025
 
 ### Individual Board Layout Alignment Fixed
 - **Issue**: Individual inspiration board view content hidden behind sidebar on deployed app
