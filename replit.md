@@ -10,16 +10,29 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (Updated: August 3, 2025)
 
-### Time Blocking Planner Week Isolation Fixed
-- **Issue**: Time blocks duplicating across all weeks - blocks created in one week appeared in every week
-- **Root Cause**: Missing week identifier in TimeBlock data structure, causing all blocks to display globally
+### Time Blocking Calendar UI Enhancement
+- **Issue**: Request to simplify time block interactions by removing edit icon and adding delete on hover
 - **Solution**: 
-  - Added `weekKey` field to TimeBlock interface (format: "2025-W30")
-  - Updated `getBlocksForDayAndHour` to filter by current week key
-  - Enhanced `createTimeBlock` and `handleDrop` to assign week-specific keys
-  - Added legacy data migration for existing blocks without weekKey
-  - Added "Copy from Previous Week" feature for week-to-week schedule replication
-- **Status**: ✅ RESOLVED - Each week now maintains independent schedule data
+  - Removed Edit2 (pencil) icon entirely from time blocks
+  - Replaced X icon with Trash2 (bin) icon for cleaner delete functionality
+  - Added hover-only display for delete button with red hover state
+  - Updated both weekly and monthly view time blocks for consistency
+  - Maintained click-to-edit functionality for block titles
+- **Status**: ✅ COMPLETED - Clean hover-to-delete interface implemented
+- **Date**: August 3, 2025
+
+### Time Blocking View Data Separation Fixed
+- **Issue**: Time blocks duplicating between weekly and monthly views - blocks created in one view appeared in both
+- **Root Cause**: Both views using same weekKey-based filtering logic
+- **Solution**: 
+  - Updated TimeBlock interface to support both weekKey and monthKey fields
+  - Added getCurrentMonthKey function for month-specific tracking
+  - Completely separated filtering logic in getBlocksForDayAndHour:
+    - Weekly view: Only shows blocks with matching weekKey
+    - Monthly view: Only shows blocks with matching monthKey (ignores weekKey)
+  - Enhanced createTimeBlock and handleDrop to assign correct keys based on active view
+  - Updated legacy data migration to handle both key types
+- **Status**: ✅ RESOLVED - Each view now maintains completely independent data storage
 - **Date**: August 3, 2025
 
 ### Individual Board Layout Alignment Fixed

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar as CalendarIcon, Clock, Plus, Edit2, X, GripVertical, Palette, Trash2, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Plus, GripVertical, Palette, Trash2, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
@@ -674,24 +674,14 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-4 w-4 p-0 text-white hover:bg-white/20"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingBlock(block.id);
-                          }}
-                        >
-                          <Edit2 className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-4 w-4 p-0 text-white hover:bg-white/20"
+                          className="h-4 w-4 p-0 text-white hover:bg-red-500/20"
                           onClick={(e) => {
                             e.stopPropagation();
                             deleteTimeBlock(block.id);
                           }}
+                          title="Delete time block"
                         >
-                          <X className="h-3 w-3" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
@@ -825,7 +815,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                     {blocks.slice(0, 3).map(block => (
                       <div
                         key={block.id}
-                        className="text-xs p-2 rounded text-white cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                        className="text-xs p-2 rounded text-white cursor-pointer shadow-sm hover:shadow-md transition-shadow group relative"
                         style={{ backgroundColor: block.colour }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -835,6 +825,20 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                       >
                         <div className="truncate font-medium">{block.title}</div>
                         <div className="text-xs opacity-80 mt-0.5">{block.startTime}</div>
+                        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-4 w-4 p-0 text-white hover:bg-red-500/20"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteTimeBlock(block.id);
+                            }}
+                            title="Delete time block"
+                          >
+                            <Trash2 className="h-2.5 w-2.5" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                     {blocks.length > 3 && (
