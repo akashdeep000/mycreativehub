@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar as CalendarIcon, Clock, Plus, GripVertical, Palette, Trash2, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Plus, GripVertical, Palette, Trash2, HelpCircle, ChevronLeft, ChevronRight, Edit2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
@@ -451,7 +451,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
             return (
               <div
                 key={tag.id}
-                className={`relative flex items-center gap-2 rounded-lg p-2 transition-all cursor-pointer ${
+                className={`relative flex items-center gap-2 rounded-lg p-2 transition-all cursor-pointer group ${
                   isActive 
                     ? 'bg-blue-50 border-2 border-blue-500 shadow-md ring-2 ring-blue-200' 
                     : 'bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
@@ -470,25 +470,36 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   style={{ backgroundColor: tag.colour }}
                   title={`${isActive ? 'Active: ' : 'Select '}${tag.label} colour`}
                 />
-              {editingColourTag === tag.id ? (
-                <Input
-                  value={tag.label}
-                  onChange={(e) => updateColourTag(tag.id, { label: e.target.value })}
-                  onBlur={() => setEditingColourTag(null)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') setEditingColourTag(null);
-                  }}
-                  className="h-6 text-xs w-24"
-                  autoFocus
-                />
-              ) : (
-                <span
-                  className="text-sm cursor-pointer hover:bg-gray-100 px-1 rounded"
-                  onClick={() => setEditingColourTag(tag.id)}
-                >
-                  {tag.label}
-                </span>
-              )}
+              <div className="flex items-center gap-1">
+                {editingColourTag === tag.id ? (
+                  <Input
+                    value={tag.label}
+                    onChange={(e) => updateColourTag(tag.id, { label: e.target.value })}
+                    onBlur={() => setEditingColourTag(null)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') setEditingColourTag(null);
+                    }}
+                    className="h-6 text-xs w-24"
+                    autoFocus
+                  />
+                ) : (
+                  <>
+                    <span className="text-sm px-1">
+                      {tag.label}
+                    </span>
+                    <button
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-white/20 rounded"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingColourTag(tag.id);
+                      }}
+                      title="Edit category name"
+                    >
+                      <Edit2 className="h-3 w-3 text-gray-500" />
+                    </button>
+                  </>
+                )}
+              </div>
               <Button
                 size="sm"
                 variant="ghost"
