@@ -639,13 +639,13 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   {getBlocksForDayAndHour(day, hour).map(block => (
                     <div
                       key={block.id}
-                      className="absolute inset-1 rounded text-white text-sm font-medium p-2 cursor-move flex items-center justify-between group shadow-sm"
+                      className="absolute inset-1 rounded text-white text-sm font-medium p-2 cursor-move group shadow-sm relative overflow-hidden"
                       style={{ backgroundColor: block.colour, height: `${Math.max(block.duration * 80 - 8, 75)}px` }}
                       draggable
                       onDragStart={() => handleDragStart(block)}
                       title={`${block.title}${block.colourTagId ? ` (${getColourTagLabel(block.colourTagId)})` : ''} - Click to edit`}
                     >
-                      <div className="flex-1 flex items-center justify-center text-center px-1">
+                      <div className="flex items-center justify-center text-center h-full">
                         {editingBlock === block.id ? (
                           <Input
                             value={block.title}
@@ -659,7 +659,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                           />
                         ) : (
                           <div 
-                            className="truncate cursor-pointer font-medium leading-tight hover:bg-white/10 rounded px-1 py-0.5 transition-colors text-xs"
+                            className="truncate cursor-pointer font-medium leading-tight hover:bg-white/10 rounded px-1 py-0.5 transition-colors text-xs w-full text-center"
                             onClick={(e) => {
                               e.stopPropagation();
                               setEditingBlock(block.id);
@@ -670,7 +670,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                           </div>
                         )}
                       </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           className="flex items-center justify-center w-5 h-5 rounded text-white hover:bg-red-500/30 transition-colors"
                           onClick={(e) => {
