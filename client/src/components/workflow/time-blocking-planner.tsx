@@ -671,18 +671,16 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                         )}
                       </div>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-4 w-4 p-0 text-white hover:bg-red-500/20"
+                        <button
+                          className="flex items-center justify-center w-5 h-5 rounded text-white hover:bg-red-500/30 transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             deleteTimeBlock(block.id);
                           }}
                           title="Delete time block"
                         >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -826,10 +824,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                         <div className="truncate font-medium">{block.title}</div>
                         <div className="text-xs opacity-80 mt-0.5">{block.startTime}</div>
                         <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-4 w-4 p-0 text-white hover:bg-red-500/20"
+                          <button
+                            className="flex items-center justify-center w-4 h-4 rounded text-white hover:bg-red-500/30 transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
                               deleteTimeBlock(block.id);
@@ -837,7 +833,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                             title="Delete time block"
                           >
                             <Trash2 className="h-2.5 w-2.5" />
-                          </Button>
+                          </button>
                         </div>
                       </div>
                     ))}
