@@ -5,7 +5,7 @@ import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Play, Video, Image } from "lucide-react";
+import { ArrowLeft, Play, Video, Image, Home } from "lucide-react";
 import { Link } from "wouter";
 
 export default function ReelCarouselTemplates() {
@@ -61,6 +61,12 @@ export default function ReelCarouselTemplates() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
+            <Link href="/dashboard">
+              <Button variant="outline" size="sm">
+                <Home className="w-4 h-4 mr-2" />
+                Back to Main Dashboard
+              </Button>
+            </Link>
             <Link href="/content-planning">
               <Button variant="outline" size="sm">
                 <ArrowLeft className="w-4 h-4 mr-2" />
