@@ -626,18 +626,20 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   {getBlocksForDayAndHour(day, hour).map(block => (
                     <div
                       key={block.id}
-                      className="absolute top-1 left-1 rounded text-white text-sm font-medium p-2 cursor-move group shadow-sm overflow-hidden box-border"
+                      className="absolute rounded text-white text-sm font-medium cursor-move group shadow-sm overflow-hidden box-border flex items-center justify-center"
                       style={{ 
                         backgroundColor: block.colour, 
                         height: `${Math.max(block.duration * 80 - 8, 75)}px`,
-                        width: 'calc(100% - 12px)',
-                        maxWidth: 'calc(100% - 12px)'
+                        width: 'calc(100% - 8px)',
+                        top: '4px',
+                        left: '4px',
+                        right: '4px'
                       }}
                       draggable
                       onDragStart={() => handleDragStart(block)}
                       title={`${block.title}${block.colourTagId ? ` (${getColourTagLabel(block.colourTagId)})` : ''} - Click to edit`}
                     >
-                      <div className="flex items-center justify-center text-center h-full">
+                      <div className="flex items-center justify-center text-center h-full w-full p-2">
                         {editingBlock === block.id ? (
                           <Input
                             value={block.title}
@@ -662,7 +664,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                           </div>
                         )}
                       </div>
-                      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           className="flex items-center justify-center w-5 h-5 rounded text-white hover:bg-red-500/30 transition-colors"
                           onClick={(e) => {
@@ -815,7 +817,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                       >
                         <div className="font-medium break-words hyphens-auto leading-tight">{block.title}</div>
                         <div className="text-xs opacity-80 mt-0.5">{block.startTime}</div>
-                        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             className="flex items-center justify-center w-4 h-4 rounded text-white hover:bg-red-500/30 transition-colors"
                             onClick={(e) => {
