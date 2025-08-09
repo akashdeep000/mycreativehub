@@ -112,9 +112,6 @@ export default function ReelCarouselTemplates() {
                     <div className={`w-12 h-12 bg-gradient-to-br from-${template.colour}-400 to-${template.colour}-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
                       <template.icon className="w-6 h-6 text-white" />
                     </div>
-                    <Badge variant="secondary" className="bg-pink-100 text-pink-700 text-xs">
-                      Canva Template
-                    </Badge>
                   </div>
                   <CardTitle className="text-xl font-serif">{template.name}</CardTitle>
                   <CardDescription className="text-gray-600">{template.description}</CardDescription>
