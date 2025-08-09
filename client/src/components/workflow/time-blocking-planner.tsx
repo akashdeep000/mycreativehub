@@ -651,7 +651,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                           />
                         ) : (
                           <div 
-                            className="truncate cursor-pointer font-medium leading-tight hover:bg-white/10 rounded px-1 py-0.5 transition-colors text-xs w-full text-center"
+                            className="cursor-pointer font-medium leading-tight hover:bg-white/10 rounded px-1 py-0.5 transition-colors text-xs w-full text-center break-words hyphens-auto"
                             onClick={(e) => {
                               e.stopPropagation();
                               setEditingBlock(block.id);
@@ -813,7 +813,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                         }}
                         title={`${block.title} at ${block.startTime} - Click to edit`}
                       >
-                        <div className="truncate font-medium">{block.title}</div>
+                        <div className="font-medium break-words hyphens-auto leading-tight">{block.title}</div>
                         <div className="text-xs opacity-80 mt-0.5">{block.startTime}</div>
                         <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
