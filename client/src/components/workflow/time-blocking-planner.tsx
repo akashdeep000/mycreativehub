@@ -878,13 +878,12 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Time Blocking Planner</h2>
-          <p className="text-gray-600">Organize your schedule with drag-and-drop time blocks</p>
+          <p className="text-gray-600">Use the Monthly View to map out your bigger projects and priorities, then switch to the Weekly View for detailed, hour-by-hour time blocking.</p>
         </div>
         <Badge variant="outline" className="text-green-600 border-green-200">
           Auto-saving
         </Badge>
       </div>
-
       <Tabs value={activeView} onValueChange={(value) => setActiveView(value as 'weekly' | 'monthly')}>
         <TabsList className="grid w-full grid-cols-2 max-w-md">
           <TabsTrigger value="weekly" className="flex items-center gap-2">
@@ -935,7 +934,6 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           </Card>
         </TabsContent>
       </Tabs>
-
       <div className="text-xs text-gray-500 space-y-1">
         <p><strong>Tips:</strong></p>
         <ul className="list-disc list-inside space-y-1">
