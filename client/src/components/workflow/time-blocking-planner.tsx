@@ -626,7 +626,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   {getBlocksForDayAndHour(day, hour).map(block => (
                     <div
                       key={block.id}
-                      className="absolute rounded text-white text-sm font-medium cursor-move group shadow-sm overflow-hidden box-border flex items-center justify-center"
+                      className="absolute rounded text-white text-sm font-medium cursor-move group shadow-sm overflow-hidden box-border flex items-center justify-center text-center p-2"
                       style={{ 
                         backgroundColor: block.colour, 
                         height: `${Math.max(block.duration * 80 - 8, 75)}px`,
@@ -639,31 +639,29 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                       onDragStart={() => handleDragStart(block)}
                       title={`${block.title}${block.colourTagId ? ` (${getColourTagLabel(block.colourTagId)})` : ''} - Click to edit`}
                     >
-                      <div className="flex items-center justify-center text-center h-full w-full p-2">
-                        {editingBlock === block.id ? (
-                          <Input
-                            value={block.title}
-                            onChange={(e) => updateTimeBlock(block.id, { title: e.target.value })}
-                            onBlur={() => setEditingBlock(null)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') setEditingBlock(null);
-                            }}
-                            className="h-8 text-xs bg-white text-black text-center font-medium border-0 rounded-md"
-                            autoFocus
-                          />
-                        ) : (
-                          <div 
-                            className="cursor-pointer font-medium leading-tight hover:bg-white/10 rounded px-1 py-0.5 transition-colors text-xs w-full text-center break-words hyphens-auto"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingBlock(block.id);
-                            }}
-                            title={block.title}
-                          >
-                            {block.title}
-                          </div>
-                        )}
-                      </div>
+                      {editingBlock === block.id ? (
+                        <Input
+                          value={block.title}
+                          onChange={(e) => updateTimeBlock(block.id, { title: e.target.value })}
+                          onBlur={() => setEditingBlock(null)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') setEditingBlock(null);
+                          }}
+                          className="h-8 text-xs bg-white text-black text-center font-medium border-0 rounded-md w-full"
+                          autoFocus
+                        />
+                      ) : (
+                        <div 
+                          className="cursor-pointer font-medium leading-tight hover:bg-white/10 rounded px-1 py-0.5 transition-colors text-xs w-full break-words hyphens-auto"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingBlock(block.id);
+                          }}
+                          title={block.title}
+                        >
+                          {block.title}
+                        </div>
+                      )}
                       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           className="flex items-center justify-center w-5 h-5 rounded text-white hover:bg-red-500/30 transition-colors"
