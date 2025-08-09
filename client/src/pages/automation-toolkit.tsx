@@ -24,61 +24,47 @@ import {
 
 
 
-interface PromptTemplate {
+interface AutomationFlow {
   id: string;
-  scenario: string;
-  defaultMessage: string;
-  message: string;
+  triggerWord: string;
+  dmPrompt: string;
+  linkText: string;
+  ctaButtons: string;
+  automatedReply: string;
+  followUp: string;
+  bonusUpsell: string;
 }
 
-interface PrewrittenReply {
-  id: string;
-  type: string;
-  content: string;
-}
-
-const defaultPromptTemplates: PromptTemplate[] = [
+const defaultAutomationFlows: AutomationFlow[] = [
   {
-    id: "lead-magnet",
-    scenario: "Lead Magnet Delivery",
-    defaultMessage: "Thanks for joining! 🎉 Here's your free guide: [LINK]. Want more tips like this? Reply YES for weekly insider secrets!",
-    message: "Thanks for joining! 🎉 Here's your free guide: [LINK]. Want more tips like this? Reply YES for weekly insider secrets!"
+    id: '1',
+    triggerWord: 'PROMPTS',
+    dmPrompt: 'Want my free journaling prompts? Reply \'PROMPTS\' and I\'ll send them to your inbox!',
+    linkText: 'Download Now',
+    ctaButtons: 'Grab Yours Today',
+    automatedReply: 'Thanks for asking! Here\'s your link: [LINK]',
+    followUp: 'How are you getting on with the prompts? Any questions?',
+    bonusUpsell: 'Since you grabbed the prompts, you might love our Premium Journal Set — limited-time offer inside!'
   },
   {
-    id: "faq",
-    scenario: "FAQ Response",
-    defaultMessage: "Great question! Here's what I recommend: [ANSWER]. Need more help? Type SUPPORT and I'll connect you with our team.",
-    message: "Great question! Here's what I recommend: [ANSWER]. Need more help? Type SUPPORT and I'll connect you with our team."
+    id: '2', 
+    triggerWord: 'DISCOUNT',
+    dmPrompt: 'Ready to save 30%? DM me \'DISCOUNT\' and I\'ll send you the exclusive code!',
+    linkText: 'Get My Discount',
+    ctaButtons: 'Claim Your Discount',
+    automatedReply: 'Amazing! Use code SAVE30 for 30% off: [LINK]',
+    followUp: 'Did you use your discount code? Let me know if you need help!',
+    bonusUpsell: 'Love your purchase? Get 20% off our premium bundle with code BUNDLE20!'
   },
   {
-    id: "product-followup",
-    scenario: "Product Follow-up",
-    defaultMessage: "How are you loving your new [PRODUCT]? 💕 Share a photo and tag us for a chance to be featured! Any questions? Just reply here.",
-    message: "How are you loving your new [PRODUCT]? 💕 Share a photo and tag us for a chance to be featured! Any questions? Just reply here."
-  },
-  {
-    id: "welcome-sequence",
-    scenario: "Welcome Sequence",
-    defaultMessage: "Welcome to the family! 👋 I'm here to help you succeed. What's your biggest challenge right now? Reply and let's solve it together!",
-    message: "Welcome to the family! 👋 I'm here to help you succeed. What's your biggest challenge right now? Reply and let's solve it together!"
-  }
-];
-
-const defaultPrewrittenReplies: PrewrittenReply[] = [
-  {
-    id: "delivery",
-    type: "Delivery Reply",
-    content: "Your [ITEM] is on its way! 📦 You'll receive tracking info within 24 hours. Questions? Just reply here!"
-  },
-  {
-    id: "followup",
-    type: "Follow-Up Message",
-    content: "Hey! Just checking in - how's everything going with your [PURCHASE]? I'm here if you need any help! 💪"
-  },
-  {
-    id: "bonus-offer",
-    type: "Bonus Offer or Upsell",
-    content: "Since you loved [PRODUCT], I thought you'd want to know about this exclusive offer: [SPECIAL DEAL]. Limited time only! 🔥"
+    id: '3',
+    triggerWord: 'INFO',
+    dmPrompt: 'Want more details about our services? Send me \'INFO\' and I\'ll share everything!',
+    linkText: 'See the Menu',
+    ctaButtons: 'Start Here',
+    automatedReply: 'Here\'s everything you need to know: [LINK]',
+    followUp: 'Have you had a chance to look through the info? Any questions?',
+    bonusUpsell: 'Ready to get started? Book a free consultation call: [LINK]'
   }
 ];
 
@@ -87,9 +73,8 @@ export default function AutomationToolkit() {
   const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
-  // State for different sections
-  const [prompts, setPrompts] = useState<PromptTemplate[]>(defaultPromptTemplates);
-  const [prewrittenReplies, setPrewrittenReplies] = useState<PrewrittenReply[]>(defaultPrewrittenReplies);
+  // State for automation flows
+  const [automationFlows, setAutomationFlows] = useState<AutomationFlow[]>(defaultAutomationFlows);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -124,9 +109,11 @@ export default function AutomationToolkit() {
     console.log("Auto-saving...");
   }, 1000);
 
-  // Prompt Library functions
-  const updatePrompt = (id: string, message: string) => {
-    setPrompts(prev => prev.map(p => p.id === id ? { ...p, message } : p));
+  // Automation flow functions
+  const updateFlow = (id: string, field: keyof AutomationFlow, value: string) => {
+    setAutomationFlows(prev => prev.map(flow => 
+      flow.id === id ? { ...flow, [field]: value } : flow
+    ));
     debouncedSave();
   };
 
@@ -145,13 +132,6 @@ export default function AutomationToolkit() {
         variant: "destructive",
       });
     }
-  };
-
-  const updatePrewrittenReply = (id: string, content: string) => {
-    setPrewrittenReplies(prev => prev.map(reply => 
-      reply.id === id ? { ...reply, content } : reply
-    ));
-    debouncedSave();
   };
 
   if (isLoading) {
@@ -197,7 +177,7 @@ export default function AutomationToolkit() {
                   Automation System Toolkit
                 </h1>
                 <p className="text-gray-600 max-w-2xl mx-auto">
-                  Plan out your flows and messages before building in ManyChat
+                  Complete conversation flow cheat sheet - edit any cell and copy directly to ManyChat
                 </p>
               </div>
             </div>
@@ -236,7 +216,7 @@ export default function AutomationToolkit() {
                 </CardContent>
               </Card>
               
-              {/* 1. Prompt Library */}
+              {/* Automation Flow Cheat Sheet Table */}
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-3">
@@ -244,86 +224,191 @@ export default function AutomationToolkit() {
                       <MessageSquare className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <CardTitle>Prompt Library</CardTitle>
+                      <CardTitle>Conversation Flow Cheat Sheet</CardTitle>
                       <CardDescription>
-                        Choose and edit pre-written automation message ideas
+                        Complete automation journey from trigger to upsell - edit any cell and copy to ManyChat
                       </CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {prompts.map((prompt) => (
-                      <Card key={prompt.id} className="border-2 border-gray-100">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <Badge variant="outline">{prompt.scenario}</Badge>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => copyToClipboard(prompt.message, "Prompt copied to clipboard!")}
-                            >
-                              <Copy className="w-4 h-4 mr-2" />
-                              Copy to Clipboard
-                            </Button>
+                  <div className="overflow-x-auto">
+                    <div className="min-w-[1200px]">
+                      {/* Table Header */}
+                      <div className="sticky top-0 bg-gray-50 border border-gray-200 rounded-t-lg">
+                        <div className="grid grid-cols-7 gap-px">
+                          <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
+                            Trigger Word or Phrase
                           </div>
-                        </CardHeader>
-                        <CardContent>
-                          <Textarea
-                            value={prompt.message}
-                            onChange={(e) => updatePrompt(prompt.id, e.target.value)}
-                            placeholder="Edit your message..."
-                            className="min-h-20"
-                          />
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                          <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
+                            DM Message Prompt<br />
+                            <span className="text-xs text-gray-500 font-normal">(Social Post Caption)</span>
+                          </div>
+                          <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
+                            Link Text /<br />Destination Label
+                          </div>
+                          <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
+                            Call-to-Action Buttons
+                          </div>
+                          <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
+                            Automated Replies
+                          </div>
+                          <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
+                            Follow-Up /<br />Nurture Replies
+                          </div>
+                          <div className="bg-white p-3 font-semibold text-sm text-gray-900">
+                            Bonus / Upsell Messages
+                          </div>
+                        </div>
+                      </div>
 
-              {/* 2. Pre-Written Replies Vault */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle>Pre-Written Replies Vault</CardTitle>
-                      <CardDescription>
-                        High-converting ManyChat response templates
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {prewrittenReplies.map((reply) => (
-                      <Card key={reply.id} className="border-2 border-gray-100">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <Badge variant="outline">{reply.type}</Badge>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => copyToClipboard(reply.content, `${reply.type} copied to clipboard!`)}
-                            >
-                              <Copy className="w-4 h-4 mr-2" />
-                              Copy to Clipboard
-                            </Button>
+                      {/* Table Body */}
+                      <div className="border-l border-r border-b border-gray-200 rounded-b-lg">
+                        {automationFlows.map((flow, index) => (
+                          <div key={flow.id} className={`grid grid-cols-7 gap-px ${index !== automationFlows.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                            {/* Trigger Word */}
+                            <div className="bg-white p-2 border-r border-gray-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => copyToClipboard(flow.triggerWord, "Trigger word copied!")}
+                                  className="text-xs h-6 px-2"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              <Textarea
+                                value={flow.triggerWord}
+                                onChange={(e) => updateFlow(flow.id, 'triggerWord', e.target.value)}
+                                className="min-h-16 text-sm resize-none"
+                                placeholder="KEYWORD"
+                              />
+                            </div>
+
+                            {/* DM Prompt */}
+                            <div className="bg-white p-2 border-r border-gray-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => copyToClipboard(flow.dmPrompt, "DM prompt copied!")}
+                                  className="text-xs h-6 px-2"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              <Textarea
+                                value={flow.dmPrompt}
+                                onChange={(e) => updateFlow(flow.id, 'dmPrompt', e.target.value)}
+                                className="min-h-16 text-sm resize-none"
+                                placeholder="Caption to tell followers what to DM..."
+                              />
+                            </div>
+
+                            {/* Link Text */}
+                            <div className="bg-white p-2 border-r border-gray-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => copyToClipboard(flow.linkText, "Link text copied!")}
+                                  className="text-xs h-6 px-2"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              <Textarea
+                                value={flow.linkText}
+                                onChange={(e) => updateFlow(flow.id, 'linkText', e.target.value)}
+                                className="min-h-16 text-sm resize-none"
+                                placeholder="Button text for links..."
+                              />
+                            </div>
+
+                            {/* CTA Buttons */}
+                            <div className="bg-white p-2 border-r border-gray-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => copyToClipboard(flow.ctaButtons, "CTA button copied!")}
+                                  className="text-xs h-6 px-2"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              <Textarea
+                                value={flow.ctaButtons}
+                                onChange={(e) => updateFlow(flow.id, 'ctaButtons', e.target.value)}
+                                className="min-h-16 text-sm resize-none"
+                                placeholder="Action button labels..."
+                              />
+                            </div>
+
+                            {/* Automated Reply */}
+                            <div className="bg-white p-2 border-r border-gray-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => copyToClipboard(flow.automatedReply, "Auto reply copied!")}
+                                  className="text-xs h-6 px-2"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              <Textarea
+                                value={flow.automatedReply}
+                                onChange={(e) => updateFlow(flow.id, 'automatedReply', e.target.value)}
+                                className="min-h-16 text-sm resize-none"
+                                placeholder="First automatic response..."
+                              />
+                            </div>
+
+                            {/* Follow-Up */}
+                            <div className="bg-white p-2 border-r border-gray-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => copyToClipboard(flow.followUp, "Follow-up copied!")}
+                                  className="text-xs h-6 px-2"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              <Textarea
+                                value={flow.followUp}
+                                onChange={(e) => updateFlow(flow.id, 'followUp', e.target.value)}
+                                className="min-h-16 text-sm resize-none"
+                                placeholder="Nurture message..."
+                              />
+                            </div>
+
+                            {/* Bonus/Upsell */}
+                            <div className="bg-white p-2">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => copyToClipboard(flow.bonusUpsell, "Upsell message copied!")}
+                                  className="text-xs h-6 px-2"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              <Textarea
+                                value={flow.bonusUpsell}
+                                onChange={(e) => updateFlow(flow.id, 'bonusUpsell', e.target.value)}
+                                className="min-h-16 text-sm resize-none"
+                                placeholder="Additional offer..."
+                              />
+                            </div>
                           </div>
-                        </CardHeader>
-                        <CardContent>
-                          <Textarea
-                            value={reply.content}
-                            onChange={(e) => updatePrewrittenReply(reply.id, e.target.value)}
-                            placeholder="Edit your reply template..."
-                            className="min-h-20"
-                          />
-                        </CardContent>
-                      </Card>
-                    ))}
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

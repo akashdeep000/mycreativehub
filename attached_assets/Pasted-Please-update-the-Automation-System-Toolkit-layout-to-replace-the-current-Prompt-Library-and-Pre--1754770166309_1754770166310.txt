@@ -1,0 +1,50 @@
+Please update the Automation System Toolkit layout to replace the current "Prompt Library" and "Pre-Written Replies Vault" sections with a single editable table view that auto-saves changes.
+
+Table Requirements:
+
+Each column should be editable text fields (multi-line allowed) so users can tweak examples directly.
+
+Include a "Copy to Clipboard" button in each cell for quick copy-paste into ManyChat.
+
+The table should auto-save edits to the user’s account.
+
+Columns should be responsive and stack neatly on mobile.
+
+Pre-fill the table with example text in each category.
+
+Headings:
+
+Trigger Word or Phrase – The single word or short phrase a follower sends to trigger the automation.
+
+DM Message Prompt (Social Post Caption) – How to tell the audience what to DM.
+
+Link Text / Destination Label – What to name the link/button in ManyChat for highest click-through.
+
+Call-to-Action Buttons – Button labels inside ManyChat.
+
+Automated Replies – First reply ManyChat sends automatically.
+
+Follow-Up / Nurture Replies – Sent later to re-engage.
+
+Bonus / Upsell Messages – Optional extra offers after the main message.
+
+Example content for each column (to pre-fill):
+Trigger Word or Phrase: “PROMPTS”, “DISCOUNT”, “INFO”
+DM Message Prompt (Social Post Caption): “Want my free journaling prompts? Reply ‘PROMPTS’ and I’ll send them to your inbox!”
+Link Text / Destination Label: “Download Now”, “See the Menu”, “Get My Free Guide”
+Call-to-Action Buttons: “Grab Yours Today”, “Start Here”, “Claim Your Discount”
+Automated Replies: “Thanks for asking! Here’s your link: [LINK]”
+Follow-Up / Nurture Replies: “How are you getting on with [PRODUCT]? Any questions?”
+Bonus / Upsell Messages: “Since you grabbed [PRODUCT], you might love [UPSELL PRODUCT] — limited-time offer inside!”
+
+Design Requirements:
+
+Clean, minimal grid style with light borders for clarity.
+
+Sticky header row so headings remain visible while scrolling.
+
+Compact spacing to avoid overwhelming users.
+
+Headings styled slightly larger/bolder for quick scanning.
+
+This will create a simple but powerful “conversation flow cheat sheet” so micro-business owners can fill in or copy each part of their DM automation journey without starting from scratch.
