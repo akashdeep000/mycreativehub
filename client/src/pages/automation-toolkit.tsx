@@ -258,12 +258,9 @@ export default function AutomationToolkit() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden lg:ml-64">
-        <MobileNav />
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
             
             {/* Header */}
             <div className="mb-8">
@@ -567,8 +564,6 @@ export default function AutomationToolkit() {
               </Card>
 
             </div>
-          </div>
-        </main>
       </div>
     </div>
   );

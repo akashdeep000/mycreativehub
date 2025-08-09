@@ -1,0 +1,57 @@
+Subject: Automation System Toolkit still off‑centre/under sidebar in deployed app
+
+Issue:
+On the Automation System Toolkit page, the main content container begins underneath the left sidebar and is not centered. This persists in the deployed build, even though the agent reported it fixed.
+
+Where:
+Route: /automation-toolkit (see attached screenshot 09 Aug, 20:16).
+
+Steps to reproduce:
+
+Open the deployed app (not just Preview).
+
+Navigate: Streamline Workflow → Automation System Toolkit.
+
+Observe the hero, CTA row (“Automate with ManyChat”), and “Prompt Library” cards: they start under the sidebar and the whole page is shifted left.
+
+Expected behaviour:
+
+Main content sits to the right of the sidebar with a consistent left gutter (same as pages that are correct, e.g. Content System and Resource Library).
+
+Content is centered within the available main area and uses the same max-width and horizontal padding as other sections.
+
+No elements are obscured by the sidebar at any viewport ≥1280px, 1024px, and 768px.
+
+Works in both Preview and deployed environments.
+
+Likely cause to check:
+
+The Automation Toolkit page isn’t using the same main layout wrapper as other pages (container class / grid area).
+
+Missing/incorrect left offset when the sidebar is fixed (side width ~240–260px).
+
+Different max-width/margin: 0 auto/padding on this route vs the shared layout.
+
+Z-index of sidebar overlapping the main container at larger widths.
+
+Please implement:
+
+Apply the same layout wrapper used on correctly aligned pages (same container, max-width, and horizontal padding).
+
+Ensure the main area starts after the sidebar width + standard gutter and remains centered.
+
+Keep all existing functionality and styles for buttons/cards; this is layout-only.
+
+Acceptance criteria:
+
+On /automation-toolkit, the hero, CTA row, and Prompt Library cards align exactly like Content System:
+
+Left edge of content = sidebar right edge + standard gutter.
+
+Main container uses the shared max-width and centers with equal left/right margins.
+
+No content hidden beneath the sidebar at 1280px, 1024px, 768px.
+
+Verified in deployed build (hard refresh / cache cleared).
+
+Visual consistency matches other sections.
