@@ -80,7 +80,7 @@ export default function ReelCarouselTemplates() {
             </div>
             <div>
               <h1 className="text-3xl font-serif font-semibold text-gray-800">Reel & Carousel Template Pack</h1>
-              <p className="text-gray-600">Create on-brand, scroll-stopping content with customisable Canva templates</p>
+              <p className="text-gray-600">Create on-brand, easy to edit content with customisable Canva templates</p>
             </div>
           </div>
         </div>
