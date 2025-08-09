@@ -133,28 +133,7 @@ export default function ReelCarouselTemplates() {
             ))}
           </div>
 
-          {/* Additional Info */}
-          <Card className="mt-8 shadow-md border-0 bg-white">
-            <CardContent className="p-6">
-              <h3 className="text-xl font-serif font-semibold text-gray-800 mb-4">
-                Template Usage Tips
-              </h3>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="font-semibold text-gray-700 mb-2">Reels Templates</h4>
-                  <p className="text-gray-600 text-sm">
-                    Perfect for Instagram Reels, TikTok, and YouTube Shorts. Include motion graphics, text overlays, and engaging transitions.
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-700 mb-2">Carousel Templates</h4>
-                  <p className="text-gray-600 text-sm">
-                    Ideal for multi-slide Instagram posts and LinkedIn carousels. Designed for storytelling and educational content.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          
         </div>
       </div>
     </div>
