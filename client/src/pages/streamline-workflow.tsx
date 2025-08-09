@@ -58,7 +58,7 @@ const workflowTemplates = [
   {
     id: "time-blocking",
     name: "Time Blocking Planner",
-    description: "Weekly calendar with drag-and-drop scheduling",
+    description: "Weekly and Monthly calendar with click-and-drop scheduling",
     icon: Calendar,
     colour: "bg-gradient-to-br from-blue-500 to-teal-500",
     textColor: "text-white",
