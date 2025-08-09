@@ -58,6 +58,22 @@ const BLOCK_COLOURS = [
   '#6B7280', // Gray - Additional option
 ];
 
+// New default color categories for business focus
+const DEFAULT_BUSINESS_COLOR_TAGS = [
+  { id: "tag-1", label: "Email Marketing", colour: "#3B82F6" }, // Blue
+  { id: "tag-2", label: "Content Creation", colour: "#10B981" }, // Green
+  { id: "tag-3", label: "Filming", colour: "#8B5CF6" }, // Purple
+  { id: "tag-4", label: "Editing", colour: "#F59E0B" }, // Orange/Yellow
+  { id: "tag-5", label: "Planning", colour: "#EF4444" }, // Red
+  { id: "tag-6", label: "Product Development", colour: "#14B8A6" }, // Teal
+  { id: "tag-7", label: "Creative Time", colour: "#EC4899" } // Pink
+];
+
+// Old default categories that should be replaced
+const OLD_DEFAULT_CATEGORIES = [
+  "Focus Time", "Communication", "Creative Work", "Planning", "Urgent"
+];
+
 export default function TimeBlockingPlanner({ templateId, initialData, onSave }: TimeBlockingPlannerProps) {
   const [data, setData] = useState<TimeBlockingData>(initialData);
   const [activeView, setActiveView] = useState<'weekly' | 'monthly'>('weekly');
@@ -75,14 +91,27 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [currentMonthOffset, setCurrentMonthOffset] = useState(0);
 
 
-  // Legacy data migration - Add weekKey/monthKey to existing blocks
+  // Legacy data migration - Add weekKey/monthKey to existing blocks and update color categories
   useEffect(() => {
     const currentWeekKey = getCurrentWeekKey();
     const currentMonthKey = getCurrentMonthKey();
     let needsMigration = false;
     
+    // Check if current color tags are the old defaults and replace them
+    let updatedColourTags = data.colourTags;
+    const hasOldDefaults = data.colourTags.some(tag => 
+      OLD_DEFAULT_CATEGORIES.includes(tag.label)
+    );
+    
+    // If user has old default categories, replace them with new business-focused ones
+    if (hasOldDefaults && data.colourTags.length <= 5) {
+      updatedColourTags = DEFAULT_BUSINESS_COLOR_TAGS;
+      needsMigration = true;
+    }
+    
     const migratedData = {
       ...data,
+      colourTags: updatedColourTags,
       weeklyView: {
         ...data.weeklyView,
         blocks: data.weeklyView.blocks.map(block => {
