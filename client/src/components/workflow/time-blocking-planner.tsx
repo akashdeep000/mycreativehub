@@ -48,14 +48,14 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 7); // 7 AM to 9 PM
 
 const BLOCK_COLOURS = [
-  '#3B82F6', // Blue
-  '#10B981', // Green
-  '#8B5CF6', // Purple
-  '#F59E0B', // Yellow
-  '#EF4444', // Red
-  '#6B7280', // Gray
-  '#EC4899', // Pink
-  '#14B8A6', // Teal
+  '#3B82F6', // Blue - Email Marketing
+  '#10B981', // Green - Content Creation
+  '#8B5CF6', // Purple - Filming
+  '#F59E0B', // Orange/Yellow - Editing
+  '#EF4444', // Red - Planning
+  '#14B8A6', // Teal - Product Development
+  '#EC4899', // Pink - Creative Time
+  '#6B7280', // Gray - Additional option
 ];
 
 export default function TimeBlockingPlanner({ templateId, initialData, onSave }: TimeBlockingPlannerProps) {

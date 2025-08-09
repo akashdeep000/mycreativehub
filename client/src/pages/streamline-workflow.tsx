@@ -65,20 +65,20 @@ const workflowTemplates = [
     defaultData: {
       weeklyView: {
         blocks: [
-          { id: "block-1", title: "Focus Work", startTime: "09:00", duration: 2, colour: "#3B82F6", colourTagId: "tag-1", day: "Monday" },
-          { id: "block-2", title: "Emails", startTime: "11:00", duration: 1, colour: "#10B981", colourTagId: "tag-2", day: "Monday" },
-          { id: "block-3", title: "Creative Session", startTime: "14:00", duration: 2, colour: "#8B5CF6", colourTagId: "tag-3", day: "Monday" },
-          { id: "block-4", title: "Planning", startTime: "09:00", duration: 1, colour: "#F59E0B", colourTagId: "tag-4", day: "Tuesday" },
-          { id: "block-5", title: "Client Work", startTime: "10:00", duration: 2, colour: "#EF4444", colourTagId: "tag-5", day: "Tuesday" },
-          { id: "block-6", title: "Deep Work", startTime: "09:00", duration: 3, colour: "#3B82F6", colourTagId: "tag-1", day: "Wednesday" },
-          { id: "block-7", title: "Team Meeting", startTime: "13:00", duration: 1, colour: "#10B981", colourTagId: "tag-2", day: "Wednesday" }
+          { id: "block-1", title: "Newsletter Content", startTime: "09:00", duration: 2, colour: "#3B82F6", colourTagId: "tag-1", day: "Monday" },
+          { id: "block-2", title: "Blog Post Writing", startTime: "11:00", duration: 1, colour: "#10B981", colourTagId: "tag-2", day: "Monday" },
+          { id: "block-3", title: "Instagram Reels", startTime: "14:00", duration: 2, colour: "#8B5CF6", colourTagId: "tag-3", day: "Monday" },
+          { id: "block-4", title: "Video Editing", startTime: "09:00", duration: 1, colour: "#F59E0B", colourTagId: "tag-4", day: "Tuesday" },
+          { id: "block-5", title: "Weekly Review", startTime: "10:00", duration: 2, colour: "#EF4444", colourTagId: "tag-5", day: "Tuesday" },
+          { id: "block-6", title: "Course Development", startTime: "09:00", duration: 3, colour: "#14B8A6", colourTagId: "tag-6", day: "Wednesday" },
+          { id: "block-7", title: "Brainstorming Session", startTime: "13:00", duration: 1, colour: "#EC4899", colourTagId: "tag-7", day: "Wednesday" }
         ]
       },
       monthlyView: {
         blocks: [
           { 
             id: "month-1", 
-            title: "Project Deadline", 
+            title: "Product Launch Planning", 
             startTime: "10:00", 
             duration: 1, 
             colour: "#EF4444", 
@@ -87,7 +87,7 @@ const workflowTemplates = [
           },
           { 
             id: "month-2", 
-            title: "Weekly Review", 
+            title: "Content Filming Day", 
             startTime: "15:00", 
             duration: 1, 
             colour: "#8B5CF6", 
@@ -98,11 +98,13 @@ const workflowTemplates = [
         selectedMonth: new Date().toISOString().slice(0, 7)
       },
       colourTags: [
-        { id: "tag-1", label: "Focus Time", colour: "#3B82F6" },
-        { id: "tag-2", label: "Communication", colour: "#10B981" },
-        { id: "tag-3", label: "Creative Work", colour: "#8B5CF6" },
-        { id: "tag-4", label: "Planning", colour: "#F59E0B" },
-        { id: "tag-5", label: "Urgent", colour: "#EF4444" }
+        { id: "tag-1", label: "Email Marketing", colour: "#3B82F6" }, // Blue
+        { id: "tag-2", label: "Content Creation", colour: "#10B981" }, // Green
+        { id: "tag-3", label: "Filming", colour: "#8B5CF6" }, // Purple
+        { id: "tag-4", label: "Editing", colour: "#F59E0B" }, // Orange/Yellow
+        { id: "tag-5", label: "Planning", colour: "#EF4444" }, // Red
+        { id: "tag-6", label: "Product Development", colour: "#14B8A6" }, // Teal
+        { id: "tag-7", label: "Creative Time", colour: "#EC4899" } // Pink
       ]
     }
   },
