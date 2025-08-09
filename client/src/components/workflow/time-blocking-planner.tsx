@@ -205,49 +205,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     setCurrentWeekOffset(prev => direction === 'next' ? prev + 1 : prev - 1);
   };
 
-  // Copy blocks from previous week function
-  const copyFromPreviousWeek = () => {
-    const previousWeekOffset = currentWeekOffset - 1;
-    const tempWeekOffset = currentWeekOffset;
-    setCurrentWeekOffset(previousWeekOffset);
-    const previousWeekKey = getCurrentWeekKey();
-    setCurrentWeekOffset(tempWeekOffset);
-    const currentWeekKey = getCurrentWeekKey();
-    
-    const previousWeekBlocks = data.weeklyView.blocks.filter(block => 
-      (block.weekKey || previousWeekKey) === previousWeekKey
-    );
-    
-    if (previousWeekBlocks.length === 0) {
-      toast({
-        title: "No blocks to copy",
-        description: "The previous week doesn't have any scheduled blocks.",
-        variant: "default"
-      });
-      return;
-    }
-    
-    // Create new blocks for current week
-    const newBlocks = previousWeekBlocks.map(block => ({
-      ...block,
-      id: `block-${Date.now()}-${Math.random()}`,
-      weekKey: currentWeekKey
-    }));
-    
-    setData(prev => ({
-      ...prev,
-      weeklyView: {
-        ...prev.weeklyView,
-        blocks: [...prev.weeklyView.blocks, ...newBlocks]
-      }
-    }));
-    
-    toast({
-      title: "Blocks copied successfully",
-      description: `Copied ${previousWeekBlocks.length} block${previousWeekBlocks.length !== 1 ? 's' : ''} from the previous week.`,
-      variant: "default"
-    });
-  };
+  
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentMonthOffset(prev => direction === 'next' ? prev + 1 : prev - 1);
@@ -611,17 +569,6 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            {currentWeekOffset !== 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={copyFromPreviousWeek}
-                className="text-green-600 border-green-200 hover:bg-green-50"
-                title="Copy all blocks from the previous week to this week"
-              >
-                Copy Previous Week
-              </Button>
-            )}
             <Button
               variant="outline"
               size="sm"
