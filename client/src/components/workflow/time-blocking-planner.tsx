@@ -623,7 +623,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                 Time
               </div>
               {DAYS.map(day => (
-                <div key={day} className="py-4 px-3 text-sm font-semibold text-gray-700 text-center border-r border-gray-200 last:border-r-0 min-w-[100px] flex-1">
+                <div key={day} className="py-4 px-3 text-sm font-semibold text-gray-700 text-center border-r border-gray-200 last:border-r-0 min-w-[100px] max-w-[140px] flex-1">
                   {day.slice(0, 3)}
                 </div>
               ))}
@@ -636,7 +636,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
               ...DAYS.map(day => (
                 <div
                   key={`${day}-${hour}`}
-                  className="min-h-[90px] border-r border-b border-gray-200 relative hover:bg-blue-50 transition-colors cursor-pointer group"
+                  className="min-h-[90px] border-r border-b border-gray-200 relative hover:bg-blue-50 transition-colors cursor-pointer group overflow-hidden"
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, day, hour)}
                   onClick={() => {
@@ -650,8 +650,13 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   {getBlocksForDayAndHour(day, hour).map(block => (
                     <div
                       key={block.id}
-                      className="absolute top-1 left-1 right-3 rounded text-white text-sm font-medium p-2 cursor-move group shadow-sm relative overflow-hidden"
-                      style={{ backgroundColor: block.colour, height: `${Math.max(block.duration * 80 - 8, 75)}px` }}
+                      className="absolute top-1 left-1 rounded text-white text-sm font-medium p-2 cursor-move group shadow-sm overflow-hidden box-border"
+                      style={{ 
+                        backgroundColor: block.colour, 
+                        height: `${Math.max(block.duration * 80 - 8, 75)}px`,
+                        width: 'calc(100% - 12px)',
+                        maxWidth: 'calc(100% - 12px)'
+                      }}
                       draggable
                       onDragStart={() => handleDragStart(block)}
                       title={`${block.title}${block.colourTagId ? ` (${getColourTagLabel(block.colourTagId)})` : ''} - Click to edit`}
