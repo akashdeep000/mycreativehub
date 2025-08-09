@@ -90,9 +90,7 @@ export default function ReelCarouselTemplates() {
           <CardContent className="p-6">
             <div className="text-gray-700">
               <p className="font-medium mb-2">Choose your template type to get started.</p>
-              <p className="text-sm">
-                Each template is designed to help you create professional, engaging content that aligns with your brand and drives results.
-              </p>
+              <p className="text-sm">Use the template as your starting point - then make it yours. Add your brand fonts and colours, and swap in your own footage or text overlays whenever you create new content.</p>
             </div>
           </CardContent>
         </Card>
