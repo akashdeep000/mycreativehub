@@ -101,9 +101,6 @@ export default function ReelCarouselTemplates() {
         <div className="max-w-4xl">
           <div className="flex justify-between items-center mb-6">
             <div className="flex gap-2">
-              <Badge variant="secondary" className="bg-pink-100 text-pink-700">
-                2 Templates
-              </Badge>
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 Ready to Use
               </Badge>
