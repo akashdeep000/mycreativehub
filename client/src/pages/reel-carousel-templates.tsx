@@ -99,14 +99,6 @@ export default function ReelCarouselTemplates() {
         </Card>
 
         <div className="max-w-4xl">
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex gap-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-700">
-                Ready to Use
-              </Badge>
-            </div>
-          </div>
-
           {/* Templates Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {templates.map((template) => (
