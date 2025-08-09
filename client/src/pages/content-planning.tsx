@@ -168,9 +168,7 @@ export default function ContentPlanning() {
                 <span className="text-pink-600 font-semibold">•</span>
                 <div>
                   <h4 className="font-semibold text-gray-700 mb-1">Start with Your Strategy</h4>
-                  <p className="text-gray-600 text-sm">
-                    Begin with a content plan that aligns with your goals — but don't be afraid to revisit and tweak it as your content evolves.
-                  </p>
+                  <p className="text-gray-600 text-sm">Begin with a content plan that aligns with your goals, but don't be afraid to revisit and tweak it as your content evolves!</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
