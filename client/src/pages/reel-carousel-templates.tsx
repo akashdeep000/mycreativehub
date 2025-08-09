@@ -56,7 +56,6 @@ export default function ReelCarouselTemplates() {
     <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
       <Sidebar />
       <MobileNav />
-      
       <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
         {/* Header */}
         <div className="mb-8">
@@ -118,7 +117,7 @@ export default function ReelCarouselTemplates() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Ready to customize</span>
+                    <span className="text-sm text-gray-500">Ready to customise</span>
                     <Button 
                       variant="ghost" 
                       size="sm" 
