@@ -240,7 +240,9 @@ export default function YourMoneyMap() {
         setSelectedPeriod(parsed.selectedPeriod || 'monthly');
         setCurrency(parsed.currency || 'USD');
         setMonthlySnapshots(parsed.monthlySnapshots || []);
-        setCurrentDate(parsed.currentDate ? new Date(parsed.currentDate) : new Date());
+        // Always start with current date instead of restoring saved date
+        // This ensures the money map opens on the current month/period
+        setCurrentDate(new Date());
       } catch (error) {
         console.error('Error loading saved data:', error);
       }
@@ -265,15 +267,15 @@ export default function YourMoneyMap() {
   }, [currentDate, selectedPeriod]);
 
   // Save data to localStorage whenever state changes
+  // Note: We don't save currentDate so the app always starts with current month
   useEffect(() => {
     const dataToSave = {
       selectedPeriod,
       currency,
-      monthlySnapshots,
-      currentDate: currentDate.toISOString()
+      monthlySnapshots
     };
     localStorage.setItem('your-money-map-data', JSON.stringify(dataToSave));
-  }, [selectedPeriod, currency, monthlySnapshots, currentDate]);
+  }, [selectedPeriod, currency, monthlySnapshots]);
 
   // Auto-save draft when data changes
   useEffect(() => {
