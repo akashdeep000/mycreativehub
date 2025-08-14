@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -67,6 +67,7 @@ const defaultSOPs: SOP[] = [
 export default function SOPBuilderHub() {
   const [sops, setSops] = useState<SOP[]>([]);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     const savedSOPs = localStorage.getItem('sop-builder-sops');
@@ -138,11 +139,24 @@ export default function SOPBuilderHub() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
-            <Link href="/content" className="text-gray-600 hover:text-gray-800">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <h1 className="text-3xl font-bold text-gray-900">SOP Builder Hub</h1>
+            <Button 
+              variant="ghost" 
+              onClick={() => setLocation("/dashboard")}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Main Dashboard
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => setLocation("/streamline-workflow")}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Streamline Workflow
+            </Button>
           </div>
+          <h1 className="text-3xl font-bold text-gray-900">SOP Builder Hub</h1>
           <p className="text-gray-600">Create and manage your Standard Operating Procedures to streamline your workflow</p>
         </div>
 
