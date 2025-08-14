@@ -47,10 +47,10 @@ export default function FinanceTracker() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar />
       
-      <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
+      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="mb-8">
           <BackToDashboard />
