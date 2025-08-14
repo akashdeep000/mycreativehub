@@ -134,6 +134,23 @@ export default function AutomationToolkit() {
     }
   };
 
+  // Add new flow function
+  const addNewFlow = () => {
+    const newId = (Math.max(...automationFlows.map(f => parseInt(f.id))) + 1).toString();
+    const newFlow: AutomationFlow = {
+      id: newId,
+      triggerWord: '',
+      dmPrompt: '',
+      linkText: '',
+      ctaButtons: '',
+      automatedReply: '',
+      followUp: '',
+      bonusUpsell: ''
+    };
+    setAutomationFlows(prev => [...prev, newFlow]);
+    debouncedSave();
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-rose-50 flex items-center justify-center">
@@ -409,6 +426,20 @@ export default function AutomationToolkit() {
                         ))}
                       </div>
                     </div>
+                  </div>
+                  
+                  {/* Add New Prompt Button */}
+                  <div className="mt-4 flex justify-center">
+                    <Button
+                      onClick={addNewFlow}
+                      variant="outline"
+                      className="text-purple-600 border-purple-200 hover:bg-purple-50 hover:border-purple-300"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add New Prompt
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
