@@ -81,11 +81,7 @@ export default function FinanceTracker() {
                     <div className={`w-10 h-10 bg-gradient-to-br from-${template.color}-400 to-${template.color}-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
                       <template.icon className="w-5 h-5 text-white" />
                     </div>
-                    {template.isPopular && (
-                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs">
-                        Popular
-                      </Badge>
-                    )}
+                    
                   </div>
                   <CardTitle className="text-lg font-serif">{template.name}</CardTitle>
                   <CardDescription>{template.description}</CardDescription>
