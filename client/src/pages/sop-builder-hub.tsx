@@ -141,7 +141,7 @@ export default function SOPBuilderHub() {
           <div className="flex items-center gap-4 mb-4">
             <Button 
               variant="ghost" 
-              onClick={() => setLocation("/dashboard")}
+              onClick={() => setLocation("/")}
               className="text-gray-600 hover:text-gray-800"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
