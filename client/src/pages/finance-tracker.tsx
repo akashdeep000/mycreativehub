@@ -88,7 +88,6 @@ export default function FinanceTracker() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between text-sm text-gray-500">
-                    <span>Last used: {template.lastUsed}</span>
                     <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
                       Open
                     </Button>

@@ -706,9 +706,6 @@ export default function YourMoneyMap() {
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 3 Sections
               </Badge>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                Financial Planning
-              </Badge>
             </div>
           </div>
         </div>
