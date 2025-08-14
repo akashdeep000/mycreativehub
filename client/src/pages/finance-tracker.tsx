@@ -68,9 +68,6 @@ export default function FinanceTracker() {
             <Badge variant="secondary" className="bg-green-100 text-green-700">
               1 Dashboard
             </Badge>
-            <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-              Financial
-            </Badge>
           </div>
         </div>
 
