@@ -36,7 +36,8 @@ import {
   EyeOff,
   Archive,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Pencil
 } from "lucide-react";
 
 interface BudgetItem {
@@ -123,6 +124,11 @@ export default function YourMoneyMap() {
   const [taxPercentage, setTaxPercentage] = useState(25);
   const [personalPayAmount, setPersonalPayAmount] = useState(0);
   const [savingsPercentage, setSavingsPercentage] = useState(20);
+  
+  // Category names state
+  const [taxCategoryName, setTaxCategoryName] = useState('Tax Amount');
+  const [personalPayCategoryName, setPersonalPayCategoryName] = useState('Personal Pay Amount');
+  const [savingsCategoryName, setSavingsCategoryName] = useState('Set aside for savings');
   const [trackerNotes, setTrackerNotes] = useState('');
 
 
@@ -1008,7 +1014,16 @@ export default function YourMoneyMap() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="tax-percentage">Tax Amount (%)</Label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Input
+                        type="text"
+                        value={taxCategoryName}
+                        onChange={(e) => setTaxCategoryName(e.target.value)}
+                        className="flex-1 text-sm font-medium border-none p-0 h-auto focus-visible:ring-0"
+                      />
+                      <Pencil className="h-3 w-3 text-gray-400" />
+                      <span className="text-sm font-medium">(%)</span>
+                    </div>
                     <Input
                       id="tax-percentage"
                       type="number"
@@ -1018,7 +1033,16 @@ export default function YourMoneyMap() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="personal-pay">Personal Pay Amount (%)</Label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Input
+                        type="text"
+                        value={personalPayCategoryName}
+                        onChange={(e) => setPersonalPayCategoryName(e.target.value)}
+                        className="flex-1 text-sm font-medium border-none p-0 h-auto focus-visible:ring-0"
+                      />
+                      <Pencil className="h-3 w-3 text-gray-400" />
+                      <span className="text-sm font-medium">(%)</span>
+                    </div>
                     <Input
                       id="personal-pay"
                       type="number"
@@ -1028,7 +1052,16 @@ export default function YourMoneyMap() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="savings-percentage">Set aside for savings (%)</Label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Input
+                        type="text"
+                        value={savingsCategoryName}
+                        onChange={(e) => setSavingsCategoryName(e.target.value)}
+                        className="flex-1 text-sm font-medium border-none p-0 h-auto focus-visible:ring-0"
+                      />
+                      <Pencil className="h-3 w-3 text-gray-400" />
+                      <span className="text-sm font-medium">(%)</span>
+                    </div>
                     <Input
                       id="savings-percentage"
                       type="number"
@@ -1079,19 +1112,19 @@ export default function YourMoneyMap() {
                     <div className="text-lg font-bold text-orange-600">
                       {formatCurrency(getTrackerTotals().taxAmount)}
                     </div>
-                    <div className="text-sm text-gray-600">Tax Set Aside</div>
+                    <div className="text-sm text-gray-600">{taxCategoryName}</div>
                   </div>
                   <div className="text-center p-4 bg-indigo-50 rounded-lg">
                     <div className="text-lg font-bold text-indigo-600">
                       {formatCurrency(personalPayAmount)}
                     </div>
-                    <div className="text-sm text-gray-600">Personal Pay</div>
+                    <div className="text-sm text-gray-600">{personalPayCategoryName}</div>
                   </div>
                   <div className="text-center p-4 bg-teal-50 rounded-lg">
                     <div className="text-lg font-bold text-teal-600">
                       {formatCurrency(getTrackerTotals().availableForSavings)}
                     </div>
-                    <div className="text-sm text-gray-600">Available for Savings</div>
+                    <div className="text-sm text-gray-600">{savingsCategoryName}</div>
                   </div>
                 </div>
               </CardContent>
