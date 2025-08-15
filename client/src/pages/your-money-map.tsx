@@ -108,7 +108,7 @@ export default function YourMoneyMap() {
   const { isAuthenticated, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('goals');
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('GBP');
   
   // Period navigation state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -238,7 +238,7 @@ export default function YourMoneyMap() {
       try {
         const parsed = JSON.parse(savedData);
         setSelectedPeriod(parsed.selectedPeriod || 'monthly');
-        setCurrency(parsed.currency || 'USD');
+        setCurrency(parsed.currency || 'GBP');
         setMonthlySnapshots(parsed.monthlySnapshots || []);
         // Always start with current date instead of restoring saved date
         // This ensures the money map opens on the current month/period
