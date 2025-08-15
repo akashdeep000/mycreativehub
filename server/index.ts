@@ -4,27 +4,39 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 // Environment variable validation
-console.log("=== ENVIRONMENT CHECK ===");
-console.log("NODE_ENV:", process.env.NODE_ENV);
-console.log("DATABASE_URL available:", !!process.env.DATABASE_URL);
-console.log("SESSION_SECRET available:", !!process.env.SESSION_SECRET);
-console.log("JWT_SECRET available:", !!process.env.JWT_SECRET);
-console.log("PGUSER available:", !!process.env.PGUSER);
-console.log("PGDATABASE available:", !!process.env.PGDATABASE);
-const effectiveJwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
-console.log("Effective JWT Secret available:", !!effectiveJwtSecret && effectiveJwtSecret !== "fallback-secret");
-console.log("SERVER BUILD VERSION: 3.0 - FORCED DEPLOYMENT");
-console.log("=== ENVIRONMENT CHECK END ===");
+const isProduction = process.env.NODE_ENV === 'production';
+if (!isProduction) {
+  console.log("=== DEVELOPMENT ENVIRONMENT CHECK ===");
+  console.log("NODE_ENV:", process.env.NODE_ENV);
+  console.log("DATABASE_URL available:", !!process.env.DATABASE_URL);
+  console.log("SESSION_SECRET available:", !!process.env.SESSION_SECRET);
+  console.log("JWT_SECRET available:", !!process.env.JWT_SECRET);
+  const effectiveJwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+  console.log("Effective JWT Secret available:", !!effectiveJwtSecret && effectiveJwtSecret !== "fallback-secret");
+  console.log("=== DEVELOPMENT CHECK END ===");
+} else {
+  console.log("SERVER STARTING - Production Mode");
+}
 
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy for proper session handling in deployment
 
+// Health check endpoints - must be first to avoid middleware interference
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'production',
+    version: '3.1-deployment-ready',
+  });
+});
+
 // CORS configuration for production
 app.use((req, res, next) => {
-  console.log("CORS DEBUG - Request origin:", req.headers.origin);
-  console.log("CORS DEBUG - Request method:", req.method);
-  console.log("CORS DEBUG - Request headers:", JSON.stringify(req.headers, null, 2));
-  
   const origin = req.headers.origin;
   
   // Allow all origins for now - will be restrictive in production
@@ -38,12 +50,7 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   
-  console.log("CORS DEBUG - Response headers set");
-  console.log("CORS DEBUG - Access-Control-Allow-Origin:", res.getHeader('Access-Control-Allow-Origin'));
-  console.log("CORS DEBUG - Access-Control-Allow-Headers:", res.getHeader('Access-Control-Allow-Headers'));
-  
   if (req.method === 'OPTIONS') {
-    console.log("CORS DEBUG - Handling OPTIONS preflight request");
     res.sendStatus(200);
     return;
   }
@@ -92,8 +99,16 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    // In production, don't expose sensitive error details
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Production error:', err);
+      res.status(status).json({ 
+        message: status >= 500 ? "Internal Server Error" : message,
+        status: status 
+      });
+    } else {
+      res.status(status).json({ message, stack: err.stack });
+    }
   });
 
   // importantly only setup vite in development and after
@@ -108,12 +123,12 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = 5000;
+  const port = process.env.PORT || 5000;
   server.listen({
-    port,
+    port: Number(port),
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`Server ready on port ${port}`);
   });
 })();
