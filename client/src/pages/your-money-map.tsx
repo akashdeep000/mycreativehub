@@ -1005,7 +1005,7 @@ export default function YourMoneyMap() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="tax-percentage">Tax Percentage</Label>
+                    <Label htmlFor="tax-percentage">Tax Amount (%)</Label>
                     <Input
                       id="tax-percentage"
                       type="number"
@@ -1015,7 +1015,7 @@ export default function YourMoneyMap() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="personal-pay">Personal Pay Amount</Label>
+                    <Label htmlFor="personal-pay">Personal Pay Amount (%)</Label>
                     <Input
                       id="personal-pay"
                       type="number"
