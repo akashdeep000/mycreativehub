@@ -122,6 +122,7 @@ export default function YourMoneyMap() {
   const [incomeExpenseItems, setIncomeExpenseItems] = useState<IncomeExpenseItem[]>([]);
   const [taxPercentage, setTaxPercentage] = useState(25);
   const [personalPayAmount, setPersonalPayAmount] = useState(0);
+  const [savingsPercentage, setSavingsPercentage] = useState(20);
   const [trackerNotes, setTrackerNotes] = useState('');
 
 
@@ -996,13 +997,13 @@ export default function YourMoneyMap() {
               </Card>
             </div>
 
-            {/* Tax and Personal Pay Settings */}
+            {/* Percentage Allocations */}
             <Card className="shadow-md border-0">
               <CardHeader>
-                <CardTitle>Tax & Personal Pay Settings</CardTitle>
+                <CardTitle>Percentage Allocations</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="tax-percentage">Tax Percentage</Label>
                     <Input
@@ -1021,6 +1022,16 @@ export default function YourMoneyMap() {
                       value={personalPayAmount}
                       onChange={(e) => setPersonalPayAmount(parseFloat(e.target.value) || 0)}
                       placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="savings-percentage">Set aside for savings (%)</Label>
+                    <Input
+                      id="savings-percentage"
+                      type="number"
+                      value={savingsPercentage}
+                      onChange={(e) => setSavingsPercentage(parseFloat(e.target.value) || 0)}
+                      placeholder="20"
                     />
                   </div>
                 </div>
