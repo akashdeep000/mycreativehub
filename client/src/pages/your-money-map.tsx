@@ -1060,12 +1060,24 @@ export default function YourMoneyMap() {
                   </div>
                 </div>
                 
-                <div className="mt-6 grid grid-cols-1 gap-4">
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="text-center p-4 bg-orange-50 rounded-lg">
                     <div className="text-lg font-bold text-orange-600">
                       {formatCurrency(getTrackerTotals().taxAmount)}
                     </div>
                     <div className="text-sm text-gray-600">Tax Set Aside</div>
+                  </div>
+                  <div className="text-center p-4 bg-indigo-50 rounded-lg">
+                    <div className="text-lg font-bold text-indigo-600">
+                      {formatCurrency(personalPayAmount)}
+                    </div>
+                    <div className="text-sm text-gray-600">Personal Pay</div>
+                  </div>
+                  <div className="text-center p-4 bg-teal-50 rounded-lg">
+                    <div className="text-lg font-bold text-teal-600">
+                      {formatCurrency(getTrackerTotals().availableForSavings)}
+                    </div>
+                    <div className="text-sm text-gray-600">Available for Savings</div>
                   </div>
                 </div>
               </CardContent>
