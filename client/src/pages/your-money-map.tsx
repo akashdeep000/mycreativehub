@@ -1001,6 +1001,9 @@ export default function YourMoneyMap() {
             <Card className="shadow-md border-0">
               <CardHeader>
                 <CardTitle>Percentage Allocations</CardTitle>
+                <CardDescription>
+                  Input the percentage you want to save in the following categories and they will automatically appear in your Financial Summary
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
