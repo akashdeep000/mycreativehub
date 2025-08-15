@@ -129,6 +129,11 @@ export default function YourMoneyMap() {
   const [taxCategoryName, setTaxCategoryName] = useState('Tax Amount');
   const [personalPayCategoryName, setPersonalPayCategoryName] = useState('Personal Pay Amount');
   const [savingsCategoryName, setSavingsCategoryName] = useState('Set aside for savings');
+  
+  // Edit states for category names
+  const [editingTax, setEditingTax] = useState(false);
+  const [editingPersonalPay, setEditingPersonalPay] = useState(false);
+  const [editingSavings, setEditingSavings] = useState(false);
   const [trackerNotes, setTrackerNotes] = useState('');
 
 
@@ -1015,13 +1020,25 @@ export default function YourMoneyMap() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <Input
-                        type="text"
-                        value={taxCategoryName}
-                        onChange={(e) => setTaxCategoryName(e.target.value)}
-                        className="flex-1 text-sm font-medium border-none p-0 h-auto focus-visible:ring-0"
-                      />
-                      <Pencil className="h-3 w-3 text-gray-400" />
+                      {editingTax ? (
+                        <Input
+                          type="text"
+                          value={taxCategoryName}
+                          onChange={(e) => setTaxCategoryName(e.target.value)}
+                          onBlur={() => setEditingTax(false)}
+                          onKeyDown={(e) => e.key === 'Enter' && setEditingTax(false)}
+                          className="flex-1 text-sm font-medium"
+                          autoFocus
+                        />
+                      ) : (
+                        <span className="flex-1 text-sm font-medium">{taxCategoryName}</span>
+                      )}
+                      <button
+                        onClick={() => setEditingTax(true)}
+                        className="hover:text-blue-600 transition-colors"
+                      >
+                        <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                      </button>
                       <span className="text-sm font-medium">(%)</span>
                     </div>
                     <Input
@@ -1034,13 +1051,25 @@ export default function YourMoneyMap() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <Input
-                        type="text"
-                        value={personalPayCategoryName}
-                        onChange={(e) => setPersonalPayCategoryName(e.target.value)}
-                        className="flex-1 text-sm font-medium border-none p-0 h-auto focus-visible:ring-0"
-                      />
-                      <Pencil className="h-3 w-3 text-gray-400" />
+                      {editingPersonalPay ? (
+                        <Input
+                          type="text"
+                          value={personalPayCategoryName}
+                          onChange={(e) => setPersonalPayCategoryName(e.target.value)}
+                          onBlur={() => setEditingPersonalPay(false)}
+                          onKeyDown={(e) => e.key === 'Enter' && setEditingPersonalPay(false)}
+                          className="flex-1 text-sm font-medium"
+                          autoFocus
+                        />
+                      ) : (
+                        <span className="flex-1 text-sm font-medium">{personalPayCategoryName}</span>
+                      )}
+                      <button
+                        onClick={() => setEditingPersonalPay(true)}
+                        className="hover:text-blue-600 transition-colors"
+                      >
+                        <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                      </button>
                       <span className="text-sm font-medium">(%)</span>
                     </div>
                     <Input
@@ -1053,13 +1082,25 @@ export default function YourMoneyMap() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <Input
-                        type="text"
-                        value={savingsCategoryName}
-                        onChange={(e) => setSavingsCategoryName(e.target.value)}
-                        className="flex-1 text-sm font-medium border-none p-0 h-auto focus-visible:ring-0"
-                      />
-                      <Pencil className="h-3 w-3 text-gray-400" />
+                      {editingSavings ? (
+                        <Input
+                          type="text"
+                          value={savingsCategoryName}
+                          onChange={(e) => setSavingsCategoryName(e.target.value)}
+                          onBlur={() => setEditingSavings(false)}
+                          onKeyDown={(e) => e.key === 'Enter' && setEditingSavings(false)}
+                          className="flex-1 text-sm font-medium"
+                          autoFocus
+                        />
+                      ) : (
+                        <span className="flex-1 text-sm font-medium">{savingsCategoryName}</span>
+                      )}
+                      <button
+                        onClick={() => setEditingSavings(true)}
+                        className="hover:text-blue-600 transition-colors"
+                      >
+                        <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                      </button>
                       <span className="text-sm font-medium">(%)</span>
                     </div>
                     <Input
