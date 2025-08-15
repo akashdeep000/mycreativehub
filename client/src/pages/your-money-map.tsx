@@ -238,7 +238,9 @@ export default function YourMoneyMap() {
       try {
         const parsed = JSON.parse(savedData);
         setSelectedPeriod(parsed.selectedPeriod || 'monthly');
-        setCurrency(parsed.currency || 'GBP');
+        // Force update to GBP as new default, regardless of saved currency
+        // This ensures all users get the new GBP default
+        setCurrency('GBP');
         setMonthlySnapshots(parsed.monthlySnapshots || []);
         // Always start with current date instead of restoring saved date
         // This ensures the money map opens on the current month/period
