@@ -430,20 +430,6 @@ function ResourceCard({
               {item.description && (
                 <p className="text-sm text-gray-600 mb-3 line-clamp-3">{item.description}</p>
               )}
-              {item.tags && item.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {item.tags.slice(0, 3).map((tag, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                  {item.tags.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{item.tags.length - 3}
-                    </Badge>
-                  )}
-                </div>
-              )}
             </div>
             
             <div className="mt-auto">
@@ -484,16 +470,12 @@ function AddLinkForm({ onSubmit }: { onSubmit: (data: any) => void }) {
     title: '',
     url: '',
     description: '',
-    tags: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      ...formData,
-      tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-    });
-    setFormData({ title: '', url: '', description: '', tags: '' });
+    onSubmit(formData);
+    setFormData({ title: '', url: '', description: '' });
   };
 
   return (
@@ -529,17 +511,8 @@ function AddLinkForm({ onSubmit }: { onSubmit: (data: any) => void }) {
           rows={3}
         />
       </div>
-      <div>
-        <Label htmlFor="tags">Tags (optional)</Label>
-        <Input
-          id="tags"
-          value={formData.tags}
-          onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-          placeholder="tag1, tag2, tag3"
-        />
-      </div>
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={() => setFormData({ title: '', url: '', description: '', tags: '' })}>
+        <Button type="button" variant="outline" onClick={() => setFormData({ title: '', url: '', description: '' })}>
           Cancel
         </Button>
         <Button type="submit">Add Link</Button>
@@ -556,16 +529,12 @@ function EditItemForm({ item, onSave, onCancel }: {
   const [formData, setFormData] = useState({
     title: item.title,
     description: item.description || '',
-    tags: item.tags?.join(', ') || '',
     url: item.url || '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      ...formData,
-      tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-    });
+    onSave(formData);
   };
 
   return (
@@ -595,13 +564,6 @@ function EditItemForm({ item, onSave, onCancel }: {
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="Description"
           rows={2}
-        />
-      </div>
-      <div>
-        <Input
-          value={formData.tags}
-          onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-          placeholder="Tags (comma-separated)"
         />
       </div>
       <div className="flex gap-2">
