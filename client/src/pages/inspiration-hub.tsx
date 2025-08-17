@@ -205,10 +205,19 @@ export default function InspirationHub() {
               variant="ghost"
               size="sm"
               onClick={() => setLocation("/")}
-              className="text-gray-600 hover:text-gray-900 mb-4"
+              className="text-gray-600 hover:text-gray-900"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to main dashboard
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation("/streamline-workflow")}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Streamline Your Workflow
             </Button>
           </div>
           <div className="flex items-center gap-4 mb-4">
