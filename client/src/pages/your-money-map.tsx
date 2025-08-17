@@ -658,7 +658,7 @@ export default function YourMoneyMap() {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-6">
             <BackToDashboard />
-            <Link href="/financial-management">
+            <Link href="/finance">
               <Button variant="outline" size="sm" className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
                 Back to Financial Management
