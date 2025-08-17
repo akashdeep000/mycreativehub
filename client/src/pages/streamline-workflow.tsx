@@ -277,7 +277,6 @@ export default function StreamlineWorkflow() {
                     Back to Templates
                   </Button>
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{templateConfig.name}</h1>
                     <p className="text-gray-600">{templateConfig.description}</p>
                   </div>
                 </div>
