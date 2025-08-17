@@ -280,7 +280,7 @@ export default function StreamlineWorkflow() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setLocation("/streamline-workflow")}
+                    onClick={() => setSelectedTemplate(null)}
                     className="text-gray-600 hover:text-gray-800"
                   >
                     <ArrowLeft className="h-4 w-4 mr-2" />
