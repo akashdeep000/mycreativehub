@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { routeMap } from "@/lib/navigation";
+import { routeMap, sortModulesByNavigationOrder } from "@/lib/navigation";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import ToolkitCard from "@/components/toolkit/toolkit-card";
@@ -90,7 +90,7 @@ export default function Dashboard() {
           <h3 className="text-2xl font-serif font-semibold text-gray-800 mb-6">Your Creative Toolkit</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {(toolkitModules as any[]).map((module: any) => (
+            {sortModulesByNavigationOrder(toolkitModules as any[]).map((module: any) => (
               <ToolkitCard key={module.id} module={{
                 ...module,
                 href: routeMap[module.name] || "/",
