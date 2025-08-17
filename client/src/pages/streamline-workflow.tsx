@@ -269,6 +269,24 @@ export default function StreamlineWorkflow() {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                   <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLocation("/")}
+                    className="text-gray-600 hover:text-gray-800"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Main Dashboard
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLocation("/streamline-workflow")}
+                    className="text-gray-600 hover:text-gray-800"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Streamline Workflow
+                  </Button>
+                  <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setSelectedTemplate(null)}
