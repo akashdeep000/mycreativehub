@@ -276,23 +276,9 @@ export default function StreamlineWorkflow() {
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to Templates
                   </Button>
-                  <div>
-                    <p className="text-gray-600">{templateConfig.description}</p>
-                  </div>
+                  
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleArchiveTemplate(templateInstance.id)}>
-                      <Archive className="h-4 w-4 mr-2" />
-                      Archive This Template
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                
               </div>
 
               {/* Template-specific content */}
