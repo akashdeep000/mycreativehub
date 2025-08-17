@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar as CalendarIcon, Clock, Plus, GripVertical, Palette, Trash2, HelpCircle, ChevronLeft, ChevronRight, Edit2 } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Plus, GripVertical, Palette, Trash2, HelpCircle, ChevronLeft, ChevronRight, Edit2, ArrowLeft } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
@@ -75,6 +76,7 @@ const OLD_DEFAULT_CATEGORIES = [
 ];
 
 export default function TimeBlockingPlanner({ templateId, initialData, onSave }: TimeBlockingPlannerProps) {
+  const [, setLocation] = useLocation();
   const [data, setData] = useState<TimeBlockingData>(initialData);
   const [activeView, setActiveView] = useState<'weekly' | 'monthly'>('weekly');
   const [editingBlock, setEditingBlock] = useState<string | null>(null);
@@ -851,6 +853,26 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
 
   return (
     <div className="w-full space-y-6">
+      {/* Navigation Buttons */}
+      <div className="flex items-center gap-4 mb-4">
+        <Button 
+          variant="ghost" 
+          onClick={() => setLocation("/dashboard")}
+          className="text-gray-600 hover:text-gray-800"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Main Dashboard
+        </Button>
+        <Button 
+          variant="ghost" 
+          onClick={() => setLocation("/streamline-workflow")}
+          className="text-gray-600 hover:text-gray-800"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Streamline Your Workflow
+        </Button>
+      </div>
+      
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Time Blocking Planner</h2>
