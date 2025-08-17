@@ -286,14 +286,7 @@ export default function StreamlineWorkflow() {
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to Streamline Workflow
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedTemplate(null)}
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Templates
-                  </Button>
+                  
                   
                 </div>
                 
