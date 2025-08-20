@@ -10,7 +10,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (Updated: August 20, 2025)
 
-### Systeme.io Webhook Integration for Course Access Control
+### Logout Functionality Fixed
+- **Issue**: Logout button not working in deployed app - users remained logged in after clicking logout
+- **Root Cause**: localStorage key mismatch - logout was clearing 'authToken' but app uses 'token' key
+- **Solution**: 
+  - Fixed logout to clear correct localStorage key ('token' instead of 'authToken')
+  - Enhanced error handling to ensure logout works even if server call fails
+  - Preserved complete authentication flow and security
+- **Status**: ✅ COMPLETED - Logout now properly clears authentication and redirects to login
+- **Date**: August 20, 2025
+
+### Systeme.io Webhook Integration for Course Access Control  
 - **Issue**: User requested automatic whitelist integration for course access control via Systeme.io webhooks
 - **Solution**: 
   - Created `courseWhitelist` database table with email, source, and timestamp tracking
