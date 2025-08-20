@@ -72,6 +72,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { firstName, lastName, email, password } = req.body;
       
+      // Check if email is whitelisted first
+      const isWhitelisted = await storage.isEmailWhitelisted(email);
+      if (!isWhitelisted) {
+        return res.status(403).json({ 
+          message: "Access is restricted to course members only. Please purchase the course to gain access.",
+          accessDenied: true
+        });
+      }
+      
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
@@ -123,6 +132,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Login - Request body:", { email: req.body.email, hasPassword: !!req.body.password });
       
       const { email, password } = req.body;
+      
+      // Check if email is whitelisted first
+      const isWhitelisted = await storage.isEmailWhitelisted(email);
+      if (!isWhitelisted) {
+        console.log("Login - Email not whitelisted:", email);
+        return res.status(403).json({ 
+          message: "Access is restricted to course members only. Please purchase the course to gain access.",
+          accessDenied: true
+        });
+      }
       
       // Find user
       console.log("Login - Looking up user:", email);
@@ -194,6 +213,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         console.log("Auth check - No user in middleware");
         return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Check if user's email is still whitelisted
+      const isWhitelisted = await storage.isEmailWhitelisted(user.email);
+      if (!isWhitelisted) {
+        console.log("Auth check - User not whitelisted:", user.email);
+        return res.status(403).json({ 
+          message: "Access is restricted to course members only. Please purchase the course to gain access.",
+          accessDenied: true
+        });
       }
       
       console.log("Auth check - Recording dashboard access for user:", user.email);
