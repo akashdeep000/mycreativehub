@@ -6,7 +6,8 @@ import {
   Settings, 
   LogOut,
   Palette,
-  Archive
+  Archive,
+  HelpCircle
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -97,6 +98,21 @@ export default function Sidebar() {
           >
             <Archive className="w-5 h-5 flex-shrink-0" />
             <span className="text-left text-sm">Archived Templates</span>
+          </button>
+        </div>
+
+        {/* Help Section */}
+        <div className="mb-6">
+          <button
+            onClick={() => setLocation("/help")}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colors ${
+              location === "/help"
+                ? "bg-pink-100 text-pink-600 font-medium"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            <HelpCircle className="w-5 h-5 flex-shrink-0" />
+            <span className="text-left text-sm">Help</span>
           </button>
         </div>
 

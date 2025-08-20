@@ -46,6 +46,7 @@ import PreLaunchTimelinePlanner from "@/pages/pre-launch-timeline-planner";
 import LaunchGrowthPlan from "@/pages/launch-growth-plan";
 import MonthlyContentCalendarV2 from "@/pages/monthly-content-calendar-v2";
 import MonthlyContentCalendarV3 from "@/pages/monthly-content-calendar-v3";
+import Help from "@/pages/help";
 
 
 function TimerWrapper() {
@@ -137,6 +138,7 @@ function Router() {
         <Route path="/pre-launch-timeline-planner" component={PreLaunchTimelinePlanner} />
         <Route path="/launch-growth-plan" component={LaunchGrowthPlan} />
         <Route path="/archived-templates" component={ArchivedTemplates} />
+        <Route path="/help" component={Help} />
         <Route component={NotFound} />
       </Switch>
     </>

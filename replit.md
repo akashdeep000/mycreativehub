@@ -8,7 +8,20 @@ This full-stack web application serves as a comprehensive digital workspace for 
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (Updated: August 17, 2025)
+## Recent Changes (Updated: August 20, 2025)
+
+### Help & Support Feature Addition
+- **Issue**: User requested a Help section at the bottom of the sidebar with a form to contact support
+- **Solution**: 
+  - Created new Help page component at `/help` route with comprehensive contact form
+  - Added Help button to sidebar with question mark icon (HelpCircle)
+  - Integrated Help option in mobile navigation
+  - Form includes Name, Email, and Message fields with validation
+  - Form submits to Formspree endpoint: https://formspree.io/f/xyzpqdoj
+  - Added success state with option to send another message
+  - Consistent styling with app design using existing UI components
+- **Status**: ✅ COMPLETED - Help section accessible from both desktop sidebar and mobile navigation
+- **Date**: August 20, 2025
 
 ### Navigation Enhancement - Streamline Workflow Section
 - **Issue**: Request to add 'Back to Streamline Your Workflow' button alongside existing 'Back to Main Dashboard' buttons

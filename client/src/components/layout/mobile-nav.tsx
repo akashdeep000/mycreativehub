@@ -1,15 +1,14 @@
 import { useLocation } from "wouter";
 import { navigationItems } from "@/lib/navigation";
-import { Archive } from "lucide-react";
+import { Archive, HelpCircle } from "lucide-react";
 
-// Filter for mobile navigation - show first 4 main items + archived
+// Filter for mobile navigation - show first 3 main items + archived + help
 const mobileNavigationItems = [
-  ...navigationItems.slice(0, 4).map(item => ({
+  ...navigationItems.slice(0, 3).map(item => ({
     ...item,
     label: item.label === "Dashboard" ? "Home" : 
            item.label === "Streamline Workflow" ? "Workflow" :
            item.label === "Content System" ? "Content" :
-           item.label === "Product Launch" ? "Launch" :
            item.label
   })),
   {
@@ -17,6 +16,12 @@ const mobileNavigationItems = [
     icon: Archive,
     label: "Archive",
     moduleKey: "archive"
+  },
+  {
+    href: "/help",
+    icon: HelpCircle,
+    label: "Help",
+    moduleKey: "help"
   }
 ];
 
