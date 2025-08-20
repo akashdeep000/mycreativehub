@@ -92,7 +92,11 @@ export const getQueryFn: <T>(options: {
       credentials: "include",
     });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+    if (unauthorizedBehavior === "returnNull" && (res.status === 401 || res.status === 403)) {
+      // Clear token on 403 (access denied) as well as 401
+      if (res.status === 403) {
+        localStorage.removeItem('token');
+      }
       return null;
     }
 
