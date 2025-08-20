@@ -125,11 +125,15 @@ export default function Sidebar() {
                   method: "POST",
                   credentials: "include",
                 });
-                // Clear JWT token from localStorage
-                localStorage.removeItem('authToken');
+                // Clear JWT token from localStorage (correct key)
+                localStorage.removeItem('token');
+                // Force page reload to ensure auth state is cleared
                 window.location.href = "/";
               } catch (error) {
                 console.error("Logout error:", error);
+                // Even if logout call fails, clear the token and redirect
+                localStorage.removeItem('token');
+                window.location.href = "/";
               }
             }}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors"
