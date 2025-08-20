@@ -19,6 +19,7 @@ Preferred communication style: Simple, everyday language.
   - Form includes Name, Email, and Message fields with validation
   - Form submits to Formspree endpoint: https://formspree.io/f/xyzpqdoj
   - Added success state with option to send another message
+  - Updated form subheading to specify 24-48 hour response time commitment
   - Consistent styling with app design using existing UI components
 - **Status**: ✅ COMPLETED - Help section accessible from both desktop sidebar and mobile navigation
 - **Date**: August 20, 2025

@@ -81,7 +81,7 @@ export default function Help() {
               <h1 className="text-3xl font-bold text-gray-900">Help & Support</h1>
             </div>
             <p className="text-gray-600">
-              Have a question? We're here to help. Send us a message and we'll get back to you soon.
+              Have a question? We're here to help. Send us a message and we'll aim to get back to you within 24–48 hours.
             </p>
           </div>
 
