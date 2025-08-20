@@ -2117,6 +2117,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Systeme.io webhook endpoint for course purchases
+  app.post('/api/systeme-webhook', async (req, res) => {
+    console.log('=== WEBHOOK START ===');
+    console.log('Systeme.io webhook received:', JSON.stringify(req.body, null, 2));
+    
+    try {
+      // Extract email from webhook data
+      // Systeme.io sends email in contact.email or email field
+      const email = req.body?.contact?.email || req.body?.email;
+      
+      console.log('Extracted email:', email);
+      
+      if (!email) {
+        console.error('No email found in webhook data');
+        const errorResponse = { error: 'No email found in webhook data' };
+        console.log('Sending error response:', errorResponse);
+        res.status(400).json(errorResponse);
+        return;
+      }
+      
+      // Add email to whitelist
+      console.log('Adding email to whitelist...');
+      const whitelistEntry = await storage.addEmailToWhitelist(email, 'systeme_webhook');
+      console.log('Whitelist entry created:', whitelistEntry);
+      
+      console.log(`Email ${email} added to whitelist successfully`);
+      
+      // Respond with 200 OK as required by Systeme.io
+      const response = { 
+        success: true, 
+        message: 'Email added to whitelist',
+        email: email 
+      };
+      
+      console.log('Sending response:', response);
+      res.status(200).json(response);
+      console.log('=== WEBHOOK END ===');
+      
+    } catch (error) {
+      console.error('Webhook processing error:', error);
+      const errorResponse = { error: 'Internal server error' };
+      console.log('Sending error response:', errorResponse);
+      res.status(500).json(errorResponse);
+    }
+  });
+
   // Serve object storage images
   app.get("/objects/:objectPath(*)", async (req, res) => {
     try {

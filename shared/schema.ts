@@ -26,6 +26,14 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
+// Course access whitelist
+export const courseWhitelist = pgTable("course_whitelist", {
+  id: serial("id").primaryKey(),
+  email: varchar("email").unique().notNull(),
+  source: varchar("source").default("systeme_webhook"), // Track where whitelist entry came from
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // User storage table - supports both Replit Auth and custom auth
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(), // For Replit Auth compatibility
@@ -394,6 +402,11 @@ export const insertUserToolkitDataSchema = createInsertSchema(userToolkitData).o
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertCourseWhitelistSchema = createInsertSchema(courseWhitelist).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertUserTemplateInstanceSchema = createInsertSchema(userTemplateInstances).omit({
@@ -771,6 +784,8 @@ export const insertFocusSessionLogSchema = createInsertSchema(focusSessionLogs).
 });
 
 // Types
+export type CourseWhitelist = typeof courseWhitelist.$inferSelect;
+export type InsertCourseWhitelist = z.infer<typeof insertCourseWhitelistSchema>;
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type ToolkitModule = typeof toolkitModules.$inferSelect;

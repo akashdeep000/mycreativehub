@@ -10,6 +10,20 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (Updated: August 20, 2025)
 
+### Systeme.io Webhook Integration for Course Access Control
+- **Issue**: User requested automatic whitelist integration for course access control via Systeme.io webhooks
+- **Solution**: 
+  - Created `courseWhitelist` database table with email, source, and timestamp tracking
+  - Added whitelist management methods to storage layer (isEmailWhitelisted, addEmailToWhitelist)
+  - Implemented secure webhook endpoint at `/api/systeme-webhook` listening for "Course Purchased" events
+  - Webhook automatically extracts email from Systeme.io webhook data (supports both `contact.email` and `email` fields)
+  - Returns 200 OK response as required by Systeme.io webhook specifications
+  - Added comprehensive error handling and logging for webhook debugging
+  - Successfully tested with multiple email formats and webhook payloads
+- **Webhook URL**: Your webhook endpoint is ready at: `https://your-app-domain.replit.app/api/systeme-webhook`
+- **Status**: ✅ COMPLETED - Webhook integration fully functional and tested
+- **Date**: August 20, 2025
+
 ### Help & Support Feature Addition
 - **Issue**: User requested a Help section at the bottom of the sidebar with a form to contact support
 - **Solution**: 

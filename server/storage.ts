@@ -1,4 +1,5 @@
 import {
+  courseWhitelist,
   users,
   toolkitModules,
   userToolkitData,
@@ -38,6 +39,8 @@ import {
   focusSessionLogs,
   calendarV2,
   calendarV3,
+  type CourseWhitelist,
+  type InsertCourseWhitelist,
   type User,
   type UpsertUser,
   type ToolkitModule,
@@ -123,6 +126,10 @@ export interface IStorage {
   createUser(user: UpsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUser(userId: string, updates: Partial<User>): Promise<User>;
+  
+  // Course whitelist operations
+  isEmailWhitelisted(email: string): Promise<boolean>;
+  addEmailToWhitelist(email: string, source?: string): Promise<CourseWhitelist>;
   
   // Toolkit modules
   getToolkitModules(): Promise<ToolkitModule[]>;
@@ -331,6 +338,35 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user;
+  }
+
+  // Course whitelist operations
+  async isEmailWhitelisted(email: string): Promise<boolean> {
+    const [result] = await db
+      .select({ id: courseWhitelist.id })
+      .from(courseWhitelist)
+      .where(eq(courseWhitelist.email, email))
+      .limit(1);
+    return !!result;
+  }
+
+  async addEmailToWhitelist(email: string, source = "systeme_webhook"): Promise<CourseWhitelist> {
+    const [result] = await db
+      .insert(courseWhitelist)
+      .values({ email, source })
+      .onConflictDoNothing()
+      .returning();
+    
+    // If no result (already exists), return the existing entry
+    if (!result) {
+      const [existing] = await db
+        .select()
+        .from(courseWhitelist)
+        .where(eq(courseWhitelist.email, email));
+      return existing;
+    }
+    
+    return result;
   }
 
   async getToolkitModules(): Promise<ToolkitModule[]> {
