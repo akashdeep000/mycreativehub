@@ -36,6 +36,9 @@ export const routeMap: Record<string, string> = navigationItems.reduce((map, ite
   return map;
 }, {} as Record<string, string>);
 
+// Add additional route mappings for specific modules
+routeMap["Time Blocking Planner"] = "/time-blocking-planner";
+
 // Create module order mapping for dashboard card sorting
 export const moduleOrderMap: Record<string, number> = navigationItems.reduce((map, item, index) => {
   if (item.moduleKey !== "dashboard") {
