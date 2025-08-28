@@ -234,6 +234,12 @@ export default function StreamlineWorkflow() {
       return;
     }
     
+    // Route to standalone time blocking planner for the time-blocking template
+    if (templateType === "time-blocking") {
+      setLocation("/time-blocking-planner");
+      return;
+    }
+    
     const template = getTemplateByType(templateType);
     if (template) {
       setSelectedTemplate(templateType);
