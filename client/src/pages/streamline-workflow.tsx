@@ -140,17 +140,6 @@ export default function StreamlineWorkflow() {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Check for URL parameters to auto-select template
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const templateParam = urlParams.get('template');
-    if (templateParam) {
-      setSelectedTemplate(templateParam);
-      // Clear the URL parameter
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }, []);
-
   // Fetch user's workflow templates
   const { data: templates, isLoading: templatesLoading } = useQuery({
     queryKey: ["/api/workflow-templates"],
