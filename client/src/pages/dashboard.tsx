@@ -90,13 +90,17 @@ export default function Dashboard() {
           <h3 className="text-2xl font-serif font-semibold text-gray-800 mb-6">Your Creative Toolkit</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {sortModulesByNavigationOrder(toolkitModules as any[]).map((module: any) => (
-              <ToolkitCard key={module.id} module={{
-                ...module,
-                href: routeMap[module.name] || "/",
-                lastUsed: "New"
-              }} />
-            ))}
+            {sortModulesByNavigationOrder(toolkitModules as any[]).map((module: any) => {
+              const moduleHref = routeMap[module.name] || "/";
+              console.log(`Module: ${module.name}, Route: ${moduleHref}`);
+              return (
+                <ToolkitCard key={module.id} module={{
+                  ...module,
+                  href: moduleHref,
+                  lastUsed: "New"
+                }} />
+              );
+            })}
           </div>
         </div>
 
