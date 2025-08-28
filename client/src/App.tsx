@@ -102,7 +102,11 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
-        <Route path="/inspiration-hub" component={InspirationHub} />
+        <Route path="/inspiration-hub" component={() => {
+          // Redirect to Streamline Workflow with Time Blocking template selected
+          window.location.href = "/streamline-workflow?template=time-blocking";
+          return null;
+        }} />
         <Route path="/streamline-workflow" component={StreamlineWorkflow} />
         <Route path="/content" component={ContentPlanning} />
         <Route path="/content-planning" component={ContentPlanning} />
