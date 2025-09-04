@@ -398,16 +398,16 @@ export default function DailyFocus() {
     // Set saving state to prevent duplicates
     setSavingStates(prev => ({ ...prev, [priority]: true }));
     
+    // Clear input immediately to prevent flashing in other fields
+    setTaskInputs(prev => ({ ...prev, [priority]: "" }));
+    
     try {
       console.log(`Saving task via ${source}:`, task, 'priority:', priority);
       
       // Add the task
       await addTaskMutation.mutateAsync({ task, priority });
       
-      // Clear input only after successful save
-      setTaskInputs(prev => ({ ...prev, [priority]: "" }));
-      
-      // Reset lastSavedValues after clearing input to allow new entries
+      // Reset lastSavedValues after successful save
       setLastSavedValues(prev => ({ ...prev, [priority]: "" }));
       
       // Show success feedback
@@ -419,6 +419,8 @@ export default function DailyFocus() {
       
     } catch (error) {
       console.error('Error saving task:', error);
+      // Restore input value if save failed
+      setTaskInputs(prev => ({ ...prev, [priority]: task }));
       // Error is already handled by the mutation
     } finally {
       // Reset saving state
