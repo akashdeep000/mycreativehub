@@ -203,7 +203,7 @@ export default function TimeBlocking() {
               </div>
               Time Blocking Planner
             </h1>
-            <p className="text-gray-600">Optimise your schedule for peak productivity</p>
+            <p className="text-gray-600">Colour-code your tasks and block focused time to get them done.</p>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
