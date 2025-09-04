@@ -395,8 +395,9 @@ export default function DailyFocus() {
       return;
     }
 
-    // Set saving state to prevent duplicates
+    // Set saving state to prevent duplicates and update last saved immediately
     setSavingStates(prev => ({ ...prev, [priority]: true }));
+    setLastSavedValues(prev => ({ ...prev, [priority]: task }));
     
     try {
       console.log(`Saving task via ${source}:`, task, 'priority:', priority);
@@ -404,8 +405,7 @@ export default function DailyFocus() {
       // Add the task
       await addTaskMutation.mutateAsync({ task, priority });
       
-      // Update last saved value and clear input
-      setLastSavedValues(prev => ({ ...prev, [priority]: task }));
+      // Clear input only after successful save
       setTaskInputs(prev => ({ ...prev, [priority]: "" }));
       
       // Show success feedback
@@ -417,6 +417,8 @@ export default function DailyFocus() {
       
     } catch (error) {
       console.error('Error saving task:', error);
+      // Reset last saved value on error
+      setLastSavedValues(prev => ({ ...prev, [priority]: "" }));
       // Error is already handled by the mutation
     } finally {
       // Reset saving state
@@ -439,10 +441,13 @@ export default function DailyFocus() {
       return;
     }
     
-    // Add a small delay to allow for potential Enter key press to complete first
+    // Add a delay to allow for potential Enter key press to complete first
     setTimeout(() => {
-      saveTaskIfValid(priority, "blur");
-    }, 50);
+      // Check again if we're still not saving to avoid race conditions
+      if (!savingStates[priority]) {
+        saveTaskIfValid(priority, "blur");
+      }
+    }, 100);
   };
 
   // Handle composition events for IME input (Chinese, Japanese, Korean, etc.)
@@ -454,22 +459,8 @@ export default function DailyFocus() {
     setIsComposing(false);
   };
 
-  // Autosave on component unmount for any unsaved inputs
-  useEffect(() => {
-    return () => {
-      // Save any pending tasks when component unmounts
-      Object.entries(taskInputs).forEach(([priority, value]) => {
-        if (value.trim() && !savingStates[priority as keyof typeof savingStates]) {
-          // Use the direct mutation call since we're in cleanup
-          const trimmedTask = value.trim();
-          addTaskMutation.mutate({ 
-            task: trimmedTask, 
-            priority: priority as "must" | "should" | "could" 
-          });
-        }
-      });
-    };
-  }, [taskInputs, savingStates, addTaskMutation]);
+  // Remove autosave on unmount to prevent infinite loops
+  // The blur functionality handles saving when users navigate away
 
   const handleClearDailyTasks = () => {
     clearDailyTasksMutation.mutate();
