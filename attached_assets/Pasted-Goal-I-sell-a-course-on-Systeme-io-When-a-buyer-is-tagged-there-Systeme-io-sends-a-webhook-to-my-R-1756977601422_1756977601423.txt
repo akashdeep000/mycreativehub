@@ -1,0 +1,55 @@
+Goal
+I sell a course on Systeme.io. When a buyer is tagged there, Systeme.io sends a webhook to my Replit app. I want my app to accept that webhook, verify it, and add the buyer’s email to an allow-list so only buyers can sign up/log in.
+
+What I need help with on Replit
+
+Public, always-on server
+• Please confirm the correct way (today) to keep a Replit app reachable for 3rd-party webhooks (Deployments / “Always On” equivalent).
+• I need a stable HTTPS URL that accepts POST requests from Systeme.io at path /webhooks/systeme.
+
+Correct server type & port
+• Confirm I’m using the right Replit template for a long-running server (not a static site).
+• Confirm which port Replit expects (usually process.env.PORT) and that my app is listening on it.
+
+Request body handling for HMAC verification
+• Systeme.io signs the webhook. To verify the signature I must compute HMAC-SHA256 on the raw request body (exact bytes) using my secret, and compare it to the X-Webhook-Signature header.
+• In Node/Express: I need help configuring the JSON body parser to preserve the raw body (e.g., the verify option) so the signature check doesn’t fail.
+• In Python/Flask/FastAPI: I need the equivalent way to read the raw body bytes before parsing JSON.
+
+Environment secrets
+• I will add these in Replit Secrets:
+
+SY_WEBHOOK_SECRET (the exact secret I set in Systeme.io)
+
+SY_ACCESS_TAG (the tag Systeme adds to buyers, e.g. fizzy-app-access)
+• Please confirm how to reference those env vars in my runtime.
+
+Minimal logging & debugging
+• Help me log the following for each webhook request: status code, X-Webhook-Event, X-Webhook-Message-Id, and the email field from the JSON payload.
+• Where do I view these logs in Replit Deployments?
+
+Inbound delivery test
+• I want to first test with a no-auth echo endpoint that returns 200 and logs the full body so we can confirm deliveries from Systeme.io.
+• Once confirmed, I’ll turn on signature verification and a simple allow-list store (SQLite or Replit Database—please advise which is recommended/simplest today).
+
+Common pitfalls to check
+• App sleeping / deployment not running.
+• Wrong path (/webhooks/systeme) or wrong method (must be POST).
+• Not listening on the correct port or not exposing the server.
+• Signature failures caused by not using the raw body for HMAC.
+
+Payload bits I expect from Systeme.io (so we can map fields):
+• Headers: X-Webhook-Event, X-Webhook-Message-Id, X-Webhook-Signature (HMAC-SHA256).
+• JSON includes the buyer’s email (commonly at contact.email for “Contact tag added”).
+• I only want to allow-list when the added tag equals my SY_ACCESS_TAG.
+
+Final behavior I’m aiming for
+• When Systeme.io adds my access tag to a buyer, the webhook hits /webhooks/systeme.
+• My app verifies the signature, extracts the email, stores it in a tiny allow-list DB.
+• On /auth/signup, if the email is on the allow-list, account creation succeeds; otherwise it’s blocked.
+
+Could you:
+(a) confirm the best way to deploy/keep the server reachable,
+(b) set up/confirm the endpoint receives POSTs and logs them,
+(c) show me the correct way to read raw body for signature verification in my stack (Node/Express or Python/Flask—see below), and
+(d) recommend the simplest persistent store on Replit (SQLite vs Replit DB) for a tiny allow-list?

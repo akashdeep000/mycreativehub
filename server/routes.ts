@@ -328,7 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get current user to verify password
-      const currentUser = await storage.getUserById(userId);
+      const currentUser = await storage.getUser(userId);
       if (!currentUser || !currentUser.password) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -1414,7 +1414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createActivityLog({
         userId,
         action: `Completed ${minutes} minute focus session`,
-        type: 'focus',
+        description: 'focus',
         metadata: { sessionType, taskDescription, minutes }
       });
       
@@ -1969,7 +1969,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { taskName, durationMinutes, completedAt } = req.body;
       const session = await storage.logFocusSession({
         userId,
-        taskName,
+        task: taskName,
         durationMinutes,
         completedAt: completedAt ? new Date(completedAt) : new Date()
       });
