@@ -59,6 +59,14 @@ const BLOCK_COLOURS = [
   '#6B7280', // Gray - Additional option
 ];
 
+// Color picker grid options (similar to content planner)
+const COLOR_PICKER_OPTIONS = [
+  '#FF6B9D', '#FF8E3C', '#FFD93D', '#6BCF7F', '#4ECDC4', 
+  '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FFB6C1',
+  '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+  '#F8C471', '#82E0AA', '#F1948A', '#AED6F1', '#A9DFBF'
+];
+
 // New default color categories for business focus
 const DEFAULT_BUSINESS_COLOR_TAGS = [
   { id: "tag-1", label: "Email Marketing", colour: "#3B82F6" }, // Blue
@@ -87,6 +95,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [editingColourTag, setEditingColourTag] = useState<string | null>(null);
   const [newColourTagLabel, setNewColourTagLabel] = useState('');
   const [showColourSelector, setShowColourSelector] = useState<string | null>(null);
+  const [showColorPicker, setShowColorPicker] = useState<string | null>(null);
   
   // Navigation state
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
@@ -148,6 +157,21 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     }, 1000);
     return () => clearTimeout(timer);
   }, [data, onSave]);
+
+  // Close color picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.color-picker-container') && !target.closest('[data-color-trigger]')) {
+        setShowColorPicker(null);
+      }
+    };
+
+    if (showColorPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showColorPicker]);
 
   const getCurrentWeekDates = () => {
     const today = new Date();
@@ -351,6 +375,29 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     }));
   };
 
+  const updateColourTagColor = (tagId: string, newColor: string) => {
+    updateColourTag(tagId, { colour: newColor });
+    
+    // Update all blocks using this color tag
+    setData(prev => ({
+      ...prev,
+      weeklyView: {
+        ...prev.weeklyView,
+        blocks: prev.weeklyView.blocks.map(block =>
+          block.colourTagId === tagId ? { ...block, colour: newColor } : block
+        )
+      },
+      monthlyView: {
+        ...prev.monthlyView,
+        blocks: prev.monthlyView.blocks.map(block =>
+          block.colourTagId === tagId ? { ...block, colour: newColor } : block
+        )
+      }
+    }));
+    
+    setShowColorPicker(null);
+  };
+
   const deleteColourTag = (tagId: string) => {
     setData(prev => ({
       ...prev,
@@ -452,13 +499,36 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                     Selected
                   </div>
                 )}
-                <div
-                  className={`w-4 h-4 rounded-full border transition-all ${
-                    isActive ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
-                  }`}
-                  style={{ backgroundColor: tag.colour }}
-                  title={`${isActive ? 'Active: ' : 'Select '}${tag.label} colour`}
-                />
+                <div className="relative">
+                  <div
+                    className={`w-4 h-4 rounded-full border transition-all cursor-pointer hover:ring-2 hover:ring-gray-300 ${
+                      isActive ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
+                    }`}
+                    style={{ backgroundColor: tag.colour }}
+                    title="Click to change color"
+                    data-color-trigger
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowColorPicker(showColorPicker === tag.id ? null : tag.id);
+                    }}
+                  />
+                  {/* Color Picker Grid */}
+                  {showColorPicker === tag.id && (
+                    <div className="color-picker-container absolute top-6 left-0 z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-4 min-w-[200px]">
+                      <div className="grid grid-cols-4 gap-3">
+                        {COLOR_PICKER_OPTIONS.map((color) => (
+                          <div
+                            key={color}
+                            className="w-7 h-7 rounded-full border border-gray-300 cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
+                            style={{ backgroundColor: color }}
+                            onClick={() => updateColourTagColor(tag.id, color)}
+                            title={`Change to ${color}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               <div className="flex items-center gap-1">
                 {editingColourTag === tag.id ? (
                   <Input
