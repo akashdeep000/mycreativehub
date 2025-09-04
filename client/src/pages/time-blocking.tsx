@@ -1,13 +1,18 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import BackToDashboard from "@/components/BackToDashboard";
 import TimeBlockingPlanner from "@/components/workflow/time-blocking-planner";
 
-// Default data for the standalone time blocking page
+// Helper function to generate month keys
+const getCurrentMonthKey = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  return `${year}-M${String(month).padStart(2, '0')}`;
+};
+
 const defaultTimeBlockingData = {
   colourTags: [
     { id: 'tag-1', label: 'Email Marketing', colour: '#3B82F6', selected: true },
@@ -32,124 +37,100 @@ export default function TimeBlocking() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [timeBlockingData, setTimeBlockingData] = useState(defaultTimeBlockingData);
 
-  // Remove workflow templates dependency - now using calendar API directly
-
-  // Load existing data from calendar API (load multiple months to capture all data)
+  // Load existing events using the new events API (with real persistence)
   useEffect(() => {
-    const loadTimeBlockingData = async () => {
+    const loadTimeBlockingEvents = async () => {
       try {
-        const allBlocks: any[] = [];
-        const allColorKeys: any[] = [];
+        console.log('🔄 Loading time blocking events from database...');
+        
+        // Calculate range for current month (load current and adjacent months for full view)
         const currentDate = new Date();
-        const currentYear = currentDate.getFullYear();
-        const currentMonth = currentDate.getMonth() + 1;
+        const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+        const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0);
         
-        // Load data for current month and adjacent months to capture all user data
-        const monthsToLoad = [
-          { year: currentYear, month: currentMonth - 1 === 0 ? 12 : currentMonth - 1, yearOffset: currentMonth - 1 === 0 ? -1 : 0 },
-          { year: currentYear, month: currentMonth, yearOffset: 0 },
-          { year: currentYear, month: currentMonth + 1 === 13 ? 1 : currentMonth + 1, yearOffset: currentMonth + 1 === 13 ? 1 : 0 }
-        ];
+        const startStr = startDate.toISOString().split('T')[0];
+        const endStr = endDate.toISOString().split('T')[0];
         
-        for (const monthInfo of monthsToLoad) {
-          const year = monthInfo.year + monthInfo.yearOffset;
-          const month = monthInfo.month;
-          
-          try {
-            // Use the same method as other API calls in the app
-            const response = await fetch(`/api/calendar-v3/${year}/${month}`);
-            if (response.ok) {
-              const calendarData = await response.json();
-              console.log(`✅ Loaded calendar data for ${year}-${month}:`, calendarData);
-              
-              // Collect blocks from this month
-              if (calendarData.days && Array.isArray(calendarData.days)) {
-                calendarData.days.forEach((day: any) => {
-                  if (day.entries && Array.isArray(day.entries)) {
-                    day.entries.forEach((entry: any) => {
-                      // Generate proper weekKey for weekly view compatibility
-                      const blockDate = new Date(day.date);
-                      const firstDayOfYear = new Date(blockDate.getFullYear(), 0, 1);
-                      const pastDaysOfYear = (blockDate.getTime() - firstDayOfYear.getTime()) / 86400000;
-                      const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-                      
-                      allBlocks.push({
-                        id: entry.id,
-                        title: entry.label,
-                        startTime: entry.time,
-                        duration: 1,
-                        colour: entry.color,
-                        colourTagId: entry.colorKeyId,
-                        day: day.date,
-                        monthKey: `${year}-M${String(month).padStart(2, '0')}`,
-                        weekKey: `${blockDate.getFullYear()}-W${weekNumber.toString().padStart(2, '0')}`
-                      });
-                    });
-                  }
-                });
-              }
-              
-              // Collect color keys (avoid duplicates and filter out unwanted content categories)
-              const unwantedCategories = ['Reel', 'Carousel', 'Photo', 'Promo', 'Story'];
-              if (calendarData.colorKeys && Array.isArray(calendarData.colorKeys)) {
-                calendarData.colorKeys.forEach((key: any) => {
-                  // Skip unwanted content categories and avoid duplicates
-                  if (!unwantedCategories.includes(key.label) && 
-                      !allColorKeys.find(existing => existing.id === key.id)) {
-                    allColorKeys.push(key);
-                  }
-                });
-              }
-            }
-          } catch (error) {
-            console.log(`Failed to load data for ${year}-${month}:`, error);
+        // Load events from the new events API
+        const response = await fetch(`/api/time-blocking-events?start=${startStr}&end=${endStr}`, {
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-store' // Prevent stale cache as requested
           }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to load events: ${response.status}`);
         }
         
-        // If we have any data, update the state
-        if (allBlocks.length > 0 || allColorKeys.length > 0) {
-          const colourTags = allColorKeys.map((key: any) => ({
-            id: key.id,
-            label: key.label,
-            colour: key.color || key.colour, // Handle both property names
-            selected: false
-          }));
-          
-          // Use collected blocks or fall back to defaults
-          const finalColorTags = colourTags.length > 0 ? colourTags : defaultTimeBlockingData.colourTags;
-          
-          const timeBlockData = {
-            monthlyView: {
-              blocks: allBlocks,
-              selectedMonth: `${currentYear}-${String(currentMonth).padStart(2, '0')}`
-            },
-            weeklyView: {
-              blocks: allBlocks // CRITICAL FIX: Weekly view should use the same blocks
-            },
-            colourTags: finalColorTags
-          };
-          
-          setTimeBlockingData(prev => ({
-            ...prev,
-            ...timeBlockData
-          }));
-          
-          console.log(`Time blocking data loaded successfully - Found ${allBlocks.length} blocks across multiple months`);
-        } else {
-          console.log('No existing time blocking data found, using defaults');
-          setTimeBlockingData(defaultTimeBlockingData);
+        const events = await response.json();
+        console.log(`✅ Loaded ${events.length} time blocking events from database`);
+        
+        // Convert events to time blocks format
+        const allBlocks = events.map((event: any) => ({
+          id: event.id, // Use the database UUID
+          title: event.title,
+          startTime: event.startTime,
+          duration: 1,
+          colour: event.color,
+          colourTagId: event.categoryId,
+          day: event.date,
+          monthKey: getCurrentMonthKey(new Date(event.date))
+        }));
+        
+        // Load color categories from calendar for compatibility
+        let allColorKeys = defaultTimeBlockingData.colourTags;
+        try {
+          const colorResponse = await fetch(`/api/calendar-v3/${currentDate.getFullYear()}/${currentDate.getMonth() + 1}`);
+          if (colorResponse.ok) {
+            const calendarData = await colorResponse.json();
+            if (calendarData.colorKeys && calendarData.colorKeys.length > 0) {
+              // Filter business categories only
+              const businessCategories = ['Email Marketing', 'Content Creation', 'Filming', 'Editing', 'Planning', 'Product Development', 'Creative Time'];
+              allColorKeys = calendarData.colorKeys.filter((key: any) => 
+                businessCategories.includes(key.label)
+              );
+            }
+          }
+        } catch (error) {
+          console.log('Using default color categories');
         }
+        
+        // Update state with loaded data
+        const colourTags = allColorKeys.map((key: any) => ({
+          id: key.id,
+          label: key.label,
+          colour: key.colour || key.color,
+          selected: key.id === 'tag-1' // First tag selected by default
+        }));
+        
+        setTimeBlockingData({
+          colourTags: colourTags.length > 0 ? colourTags : defaultTimeBlockingData.colourTags,
+          weeklyView: { blocks: [] }, // Legacy - keep empty
+          monthlyView: {
+            blocks: allBlocks,
+            selectedMonth: new Date().toISOString().substring(0, 7)
+          }
+        });
+        
+        console.log(`✅ Initialized time blocking data: ${allBlocks.length} blocks, ${colourTags.length} categories`);
       } catch (error) {
-        console.error('Failed to load time blocking data:', error);
+        console.error('❌ Failed to load time blocking events:', error);
+        toast({
+          title: "Load Error",
+          description: "Failed to load your saved events. Using defaults.",
+          variant: "destructive"
+        });
+        // Fall back to defaults
         setTimeBlockingData(defaultTimeBlockingData);
       }
     };
     
-    if (isAuthenticated && !isLoading) {
-      loadTimeBlockingData();
+    if (isAuthenticated && user) {
+      loadTimeBlockingEvents();
     }
-  }, [isAuthenticated, isLoading]);
-
+  }, [isAuthenticated, user, toast]);
+  
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -165,36 +146,12 @@ export default function TimeBlocking() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Save function for the time blocking planner
+  // New save function using events API (immediate saves as requested)
   const handleSave = async (data: any) => {
-    try {
-      console.log('🔄 Saving time blocking data using new events API');
-      
-      // Save color tags to calendar v3 for compatibility
-      const currentDate = new Date();
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth() + 1;
-      
-      const colorTagsOnlyData = {
-        userId: data.userId || user?.id,
-        year,
-        month,
-        colorKeys: data.colourTags || [],
-        days: [] // No blocks in calendar - using events table now
-      };
-      
-      // Save color tags
-      await fetch('/api/calendar-v3', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(colorTagsOnlyData)
-      });
-      
-      console.log('✅ Color tags saved successfully');
-    } catch (error) {
-      console.error('❌ Error saving color tags:', error);
-    }
+    // This function will handle individual event operations
+    // The actual saving will be done in the TimeBlockingPlanner component
+    // using the new events API with immediate save on every change
+    console.log('💾 Save triggered - handled by TimeBlockingPlanner component');
   };
 
   if (isLoading || !isAuthenticated) {

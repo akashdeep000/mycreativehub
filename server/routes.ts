@@ -2199,6 +2199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const event = await storage.createTimeBlockingEvent(eventData);
       
       console.log(`Created time blocking event ${event.id} for user ${userId}`);
+      res.setHeader('Cache-Control', 'no-store');
       res.status(201).json(event);
     } catch (error) {
       console.error('Error creating time blocking event:', error);
@@ -2220,6 +2221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedEvent = await storage.updateTimeBlockingEvent(id, req.body);
       
       console.log(`Updated time blocking event ${id} for user ${userId}`);
+      res.setHeader('Cache-Control', 'no-store');
       res.json(updatedEvent);
     } catch (error) {
       console.error('Error updating time blocking event:', error);
@@ -2241,6 +2243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteTimeBlockingEvent(id, userId);
       
       console.log(`Deleted time blocking event ${id} for user ${userId}`);
+      res.setHeader('Cache-Control', 'no-store');
       res.status(204).send();
     } catch (error) {
       console.error('Error deleting time blocking event:', error);

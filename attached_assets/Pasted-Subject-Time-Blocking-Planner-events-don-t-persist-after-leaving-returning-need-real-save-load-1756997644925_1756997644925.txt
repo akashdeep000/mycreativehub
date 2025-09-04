@@ -1,0 +1,70 @@
+Subject: Time-Blocking Planner — events don’t persist after leaving/returning (need real save + load)
+
+Current bug (Monthly view)
+
+I can add and delete blocks and they look correct while I stay on the page.
+
+If I leave the planner (or log out/reload) and come back, my new changes are gone.
+
+What I need
+Please make time-blocks persist across navigation and sessions for my user account.
+
+Likely cause
+Edits are only stored in client state (or debounced and not flushed) and the page doesn’t reload data on mount. Alternatively, saves are hitting a different DB/env than loads.
+
+Please implement/fix:
+
+Source of truth & scope
+
+Confirm the storage used (Replit DB / SQLite / Supabase, etc.).
+
+All events must be stored per-user: WHERE user_id = :currentUser.
+
+Save on every change (and await it)
+
+On add/update/delete, call the backend (POST/PUT/DELETE /events/:id) and await success before clearing any “unsaved” state.
+
+If saves are debounced, flush the debounce on unmount/route change so navigation doesn’t drop pending writes (e.g., in useEffect cleanup).
+
+Show a small “Saved ✓” toast when the write succeeds; show an error if it fails.
+
+Load on mount
+
+On entering /time-blocking-planner, fetch events for the visible range and hydrate the calendar before rendering empty UI:
+
+GET /events?start=:rangeStart&end=:rangeEnd  (filtered by user_id AND deleted_at IS NULL)
+
+
+Apply the same fetch when switching months/weeks.
+
+No demo reseeding / no stale cache
+
+Disable any seeding that runs on mount for my workspace.
+
+Add Cache-Control: no-store to /events* responses to avoid stale payloads from SW/CDN.
+
+Env/DB consistency
+
+Verify reads and writes use the same database/URL in the deployed environment (no dev vs prod mismatch).
+
+Confirm the deployed app has the correct env vars.
+
+Diagnostics (temporarily)
+
+Log each POST/PUT/DELETE with user_id and event id; log each GET /events with count.
+
+I should see:
+
+a POST/PUT/DELETE right when I edit, and
+
+a GET immediately on page re-entry that includes my latest events.
+
+Acceptance criteria
+
+Add a block → navigate away to another section → return → the block is still there.
+
+Same after a full reload and after logging out/in.
+
+Monthly and Weekly views both reflect the same saved data.
+
+A visible “Saved ✓” appears after successful writes; failures show an error.

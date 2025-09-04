@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar as CalendarIcon, Clock, Plus, GripVertical, Palette, Trash2, HelpCircle, ChevronLeft, ChevronRight, Edit2, ArrowLeft } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface ColourTag {
   id: string;
@@ -85,6 +85,7 @@ const OLD_DEFAULT_CATEGORIES = [
 
 export default function TimeBlockingPlanner({ templateId, initialData, onSave }: TimeBlockingPlannerProps) {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [data, setData] = useState<TimeBlockingData>(initialData);
   
   // Update component data when parent provides new data
@@ -258,7 +259,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     setCurrentMonthOffset(0);
   };
 
-  const createTimeBlock = (day: string, hour: number, title?: string, colourTagId?: string) => {
+  const createTimeBlock = async (day: string, hour: number, title?: string, colourTagId?: string) => {
     const useColourTagId = colourTagId || activeColourTagId;
     const selectedColourTag = data.colourTags.find(tag => tag.id === useColourTagId);
     const colour = selectedColourTag?.colour || BLOCK_COLOURS[Math.floor(Math.random() * BLOCK_COLOURS.length)];
@@ -266,62 +267,171 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     // Auto-fill with category label if no title provided
     const blockTitle = title || selectedColourTag?.label || 'Untitled';
     
-    // Create block for monthly view only
-    const newBlock: TimeBlock = {
-      id: `block-${Date.now()}`,
-      title: blockTitle,
-      startTime: `${hour.toString().padStart(2, '0')}:00`,
-      duration: 1,
-      colour,
-      colourTagId: useColourTagId,
-      day,
-      monthKey: getCurrentMonthKey()
-    };
+    try {
+      // Save to database immediately using events API
+      console.log(`🔄 Creating time block: ${blockTitle} on ${day} at ${hour}:00`);
+      
+      const response = await fetch('/api/time-blocking-events', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: blockTitle,
+          date: day,
+          startTime: `${hour.toString().padStart(2, '0')}:00`,
+          color: colour,
+          categoryId: useColourTagId || null
+        })
+      });
 
-    const updatedData = {
-      ...data,
-      monthlyView: {
-        ...data.monthlyView,
-        blocks: [...data.monthlyView.blocks, newBlock]
+      if (!response.ok) {
+        throw new Error(`Failed to create event: ${response.status}`);
       }
-    };
 
-    setData(updatedData);
-    setIsCreatingBlock(null);
-    setNewBlockTitle('');
-    
-    // CRITICAL FIX: Save with the updated data, not the old data
-    onSave(updatedData);
+      const savedEvent = await response.json();
+      console.log(`✅ Event created with ID: ${savedEvent.id}`);
+      
+      // Show success toast
+      toast({
+        title: "Saved ✓",
+        description: `${blockTitle} added successfully`,
+        duration: 2000
+      });
+
+      // Create block with database ID for local state
+      const newBlock: TimeBlock = {
+        id: savedEvent.id, // Use database UUID
+        title: blockTitle,
+        startTime: `${hour.toString().padStart(2, '0')}:00`,
+        duration: 1,
+        colour,
+        colourTagId: useColourTagId,
+        day,
+        monthKey: getCurrentMonthKey()
+      };
+
+      const updatedData = {
+        ...data,
+        monthlyView: {
+          ...data.monthlyView,
+          blocks: [...data.monthlyView.blocks, newBlock]
+        }
+      };
+
+      setData(updatedData);
+      setIsCreatingBlock(null);
+      setNewBlockTitle('');
+      
+    } catch (error) {
+      console.error('❌ Failed to create time block:', error);
+      toast({
+        title: "Save Failed",
+        description: "Could not save the time block. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const updateTimeBlock = (blockId: string, updates: Partial<TimeBlock>) => {
-    const updatedData = {
-      ...data,
-      monthlyView: {
-        ...data.monthlyView,
-        blocks: data.monthlyView.blocks.map(block =>
-          block.id === blockId ? { ...block, ...updates } : block
-        )
+  const updateTimeBlock = async (blockId: string, updates: Partial<TimeBlock>) => {
+    try {
+      console.log(`🔄 Updating time block: ${blockId}`);
+      
+      const response = await fetch(`/api/time-blocking-events/${blockId}`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: updates.title,
+          startTime: updates.startTime,
+          color: updates.colour,
+          categoryId: updates.colourTagId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update event: ${response.status}`);
       }
-    };
-    
-    setData(updatedData);
-    // Save immediately with updated data
-    onSave(updatedData);
+
+      console.log(`✅ Event updated: ${blockId}`);
+      
+      // Show success toast
+      toast({
+        title: "Saved ✓",
+        description: "Time block updated successfully",
+        duration: 2000
+      });
+
+      const updatedData = {
+        ...data,
+        monthlyView: {
+          ...data.monthlyView,
+          blocks: data.monthlyView.blocks.map(block =>
+            block.id === blockId ? { ...block, ...updates } : block
+          )
+        }
+      };
+      
+      setData(updatedData);
+      
+    } catch (error) {
+      console.error('❌ Failed to update time block:', error);
+      toast({
+        title: "Update Failed",
+        description: "Could not update the time block. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const deleteTimeBlock = (blockId: string) => {
-    const updatedData = {
-      ...data,
-      monthlyView: {
-        ...data.monthlyView,
-        blocks: data.monthlyView.blocks.filter(block => block.id !== blockId)
+  const deleteTimeBlock = async (blockId: string) => {
+    try {
+      console.log(`🔄 Deleting time block: ${blockId}`);
+      
+      const response = await fetch(`/api/time-blocking-events/${blockId}`, {
+        method: 'DELETE',
+        headers: { 
+          'Cache-Control': 'no-store'
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete event: ${response.status}`);
       }
-    };
-    
-    setData(updatedData);
-    // Save immediately with updated data
-    onSave(updatedData);
+
+      console.log(`✅ Event deleted: ${blockId}`);
+      
+      // Show success toast
+      toast({
+        title: "Deleted ✓",
+        description: "Time block removed successfully",
+        duration: 2000
+      });
+
+      const updatedData = {
+        ...data,
+        monthlyView: {
+          ...data.monthlyView,
+          blocks: data.monthlyView.blocks.filter(block => block.id !== blockId)
+        }
+      };
+      
+      setData(updatedData);
+      
+    } catch (error) {
+      console.error('❌ Failed to delete time block:', error);
+      toast({
+        title: "Delete Failed",
+        description: "Could not delete the time block. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDragStart = (block: TimeBlock) => {
