@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Removed tabs import - monthly view only
 import { Calendar as CalendarIcon, Clock, Plus, GripVertical, Palette, Trash2, HelpCircle, ChevronLeft, ChevronRight, Edit2, ArrowLeft } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -24,14 +24,14 @@ interface TimeBlock {
   colour: string;
   colourTagId?: string;
   day: string;
-  weekKey?: string; // Format: "2025-W30" (year-week number) - only used for weekly view
+  weekKey?: string; // Legacy field - keeping for data migration
   monthKey?: string; // Format: "2025-M08" (year-month number) - only used for monthly view
 }
 
 interface TimeBlockingData {
   weeklyView: {
     blocks: TimeBlock[];
-  };
+  }; // Legacy field - keeping for data compatibility
   monthlyView: {
     blocks: TimeBlock[];
     selectedMonth: string;
@@ -93,7 +93,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       setData(initialData);
     }
   }, [initialData]);
-  const [activeView, setActiveView] = useState<'weekly' | 'monthly'>('weekly');
+  // Only monthly view now - removed weekly view completely
   const [editingBlock, setEditingBlock] = useState<string | null>(null);
   const [editingTimeBlock, setEditingTimeBlock] = useState<string | null>(null);
   const [draggedBlock, setDraggedBlock] = useState<TimeBlock | null>(null);
@@ -105,14 +105,12 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [showColourSelector, setShowColourSelector] = useState<string | null>(null);
   const [showColorPicker, setShowColorPicker] = useState<string | null>(null);
   
-  // Navigation state
-  const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
+  // Navigation state - monthly only
   const [currentMonthOffset, setCurrentMonthOffset] = useState(0);
 
 
-  // Legacy data migration - Add weekKey/monthKey to existing blocks and update color categories
+  // Legacy data migration - Add monthKey to existing blocks and update color categories
   useEffect(() => {
-    const currentWeekKey = getCurrentWeekKey();
     const currentMonthKey = getCurrentMonthKey();
     let needsMigration = false;
     
@@ -205,29 +203,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     }
   }, [showColorPicker]);
 
-  const getCurrentWeekDates = () => {
-    const today = new Date();
-    const currentDay = today.getDay();
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - (currentDay === 0 ? 6 : currentDay - 1));
-    
-    // Apply week offset
-    monday.setDate(monday.getDate() + (currentWeekOffset * 7));
-    
-    return DAYS.map((_, index) => {
-      const date = new Date(monday);
-      date.setDate(monday.getDate() + index);
-      return date;
-    });
-  };
+  // Removed weekly functions - monthly only now
 
-  const getCurrentWeekKey = () => {
-    const weekDates = getCurrentWeekDates();
-    const monday = weekDates[0];
-    const year = monday.getFullYear();
-    const weekNumber = getWeekNumber(monday);
-    return `${year}-W${weekNumber.toString().padStart(2, '0')}`;
-  };
+  // Removed weekly key function - monthly only now
 
   const getCurrentMonthKey = () => {
     const today = new Date();
@@ -258,19 +236,12 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     return dates;
   };
 
-  // Navigation functions
-  const navigateWeek = (direction: 'prev' | 'next') => {
-    setCurrentWeekOffset(prev => direction === 'next' ? prev + 1 : prev - 1);
-  };
-
-  
-
+  // Navigation functions - monthly only
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentMonthOffset(prev => direction === 'next' ? prev + 1 : prev - 1);
   };
 
   const goToToday = () => {
-    setCurrentWeekOffset(0);
     setCurrentMonthOffset(0);
   };
 
@@ -282,7 +253,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     // Auto-fill with category label if no title provided
     const blockTitle = title || selectedColourTag?.label || 'Untitled';
     
-    // Create block with appropriate key based on active view
+    // Create block for monthly view only
     const newBlock: TimeBlock = {
       id: `block-${Date.now()}`,
       title: blockTitle,
@@ -291,14 +262,14 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       colour,
       colourTagId: useColourTagId,
       day,
-      ...(activeView === 'weekly' ? { weekKey: getCurrentWeekKey() } : { monthKey: getCurrentMonthKey() })
+      monthKey: getCurrentMonthKey()
     };
 
     const updatedData = {
       ...data,
-      [activeView === 'weekly' ? 'weeklyView' : 'monthlyView']: {
-        ...data[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'],
-        blocks: [...data[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'].blocks, newBlock]
+      monthlyView: {
+        ...data.monthlyView,
+        blocks: [...data.monthlyView.blocks, newBlock]
       }
     };
 
@@ -313,9 +284,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const updateTimeBlock = (blockId: string, updates: Partial<TimeBlock>) => {
     const updatedData = {
       ...data,
-      [activeView === 'weekly' ? 'weeklyView' : 'monthlyView']: {
-        ...data[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'],
-        blocks: data[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'].blocks.map(block =>
+      monthlyView: {
+        ...data.monthlyView,
+        blocks: data.monthlyView.blocks.map(block =>
           block.id === blockId ? { ...block, ...updates } : block
         )
       }
@@ -329,9 +300,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const deleteTimeBlock = (blockId: string) => {
     const updatedData = {
       ...data,
-      [activeView === 'weekly' ? 'weeklyView' : 'monthlyView']: {
-        ...data[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'],
-        blocks: data[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'].blocks.filter(block => block.id !== blockId)
+      monthlyView: {
+        ...data.monthlyView,
+        blocks: data.monthlyView.blocks.filter(block => block.id !== blockId)
       }
     };
     
@@ -354,7 +325,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       const updates: Partial<TimeBlock> = {
         day,
         startTime: `${hour.toString().padStart(2, '0')}:00`,
-        ...(activeView === 'weekly' ? { weekKey: getCurrentWeekKey() } : { monthKey: getCurrentMonthKey() })
+        monthKey: getCurrentMonthKey()
       };
       updateTimeBlock(draggedBlock.id, updates);
       setDraggedBlock(null);
@@ -362,28 +333,16 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   };
 
   const getBlocksForDayAndHour = (day: string, hour: number) => {
-    const currentBlocks = activeView === 'weekly' ? data.weeklyView.blocks : data.monthlyView.blocks;
+    const currentBlocks = data.monthlyView.blocks;
+    const currentMonthKey = getCurrentMonthKey();
     
-    if (activeView === 'weekly') {
-      const currentWeekKey = getCurrentWeekKey();
-      return currentBlocks.filter(block => {
-        // For weekly view, only show blocks with matching weekKey
-        const blockWeekKey = block.weekKey || currentWeekKey; // Handle legacy data
-        return block.day === day && 
-               parseInt(block.startTime.split(':')[0]) === hour &&
-               blockWeekKey === currentWeekKey;
-      });
-    } else {
-      // For monthly view, show blocks with monthKey (ignore weekKey completely)
-      const currentMonthKey = getCurrentMonthKey();
-      return currentBlocks.filter(block => {
-        // For monthly view, only show blocks with matching monthKey
-        const blockMonthKey = block.monthKey || currentMonthKey; // Handle legacy data
-        return block.day === day && 
-               parseInt(block.startTime.split(':')[0]) === hour &&
-               blockMonthKey === currentMonthKey;
-      });
-    }
+    return currentBlocks.filter(block => {
+      // For monthly view, only show blocks with matching monthKey
+      const blockMonthKey = block.monthKey || currentMonthKey; // Handle legacy data
+      return block.day === day && 
+             parseInt(block.startTime.split(':')[0]) === hour &&
+             blockMonthKey === currentMonthKey;
+    });
   };
 
   const formatTime = (hour: number) => {
@@ -1027,59 +986,27 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Time Blocking Planner</h2>
-          <p className="text-gray-600">Use the Monthly View to map out your bigger projects and priorities, then switch to the Weekly View for detailed, hour-by-hour time blocking.</p>
+          <p className="text-gray-600">Plan your schedule and manage your time with this monthly calendar view.</p>
         </div>
       </div>
-      <Tabs value={activeView} onValueChange={(value) => setActiveView(value as 'weekly' | 'monthly')}>
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
-          <TabsTrigger value="weekly" className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            <span className="hidden sm:inline">Weekly View</span>
-            <span className="sm:hidden">Week</span>
-          </TabsTrigger>
-          <TabsTrigger value="monthly" className="flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Monthly View</span>
-            <span className="sm:hidden">Month</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="weekly" className="space-y-4">
-          {renderColourKeyPanel()}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Weekly Schedule
-              </CardTitle>
-              <CardDescription>
-                Click on any time slot to create a block, or drag existing blocks to reschedule
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {renderWeeklyView()}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="monthly" className="space-y-4">
-          {renderColourKeyPanel()}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5" />
-                Monthly Calendar
-              </CardTitle>
-              <CardDescription>
-                Click on any date to add events and appointments
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {renderMonthlyView()}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      
+      <div className="space-y-4">
+        {renderColourKeyPanel()}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5" />
+              Monthly Calendar
+            </CardTitle>
+            <CardDescription>
+              Click on any date to add events and appointments
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {renderMonthlyView()}
+          </CardContent>
+        </Card>
+      </div>
       <div className="text-xs text-gray-500 space-y-1">
         <p><strong>Tips:</strong></p>
         <ul className="list-disc list-inside space-y-1">
