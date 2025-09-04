@@ -108,7 +108,7 @@ export default function TimeBlocking() {
           const colourTags = allColorKeys.map((key: any) => ({
             id: key.id,
             label: key.label,
-            colour: key.color,
+            colour: key.color || key.colour, // Handle both property names
             selected: false
           }));
           

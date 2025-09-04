@@ -484,7 +484,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           >
             <div
               className="w-3 h-3 rounded-full border border-gray-300 flex-shrink-0"
-              style={{ backgroundColor: tag.colour }}
+              style={{ backgroundColor: tag.colour || tag.color || BLOCK_COLOURS[0] }}
             />
             <span className="truncate">{tag.label}</span>
           </button>
@@ -547,7 +547,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                     className={`w-4 h-4 rounded-full border transition-all cursor-pointer hover:ring-2 hover:ring-gray-300 ${
                       isActive ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
                     }`}
-                    style={{ backgroundColor: tag.colour }}
+                    style={{ backgroundColor: tag.colour || tag.color || BLOCK_COLOURS[0] }}
                     title="Click to change color"
                     data-color-trigger
                     onClick={(e) => {
@@ -921,7 +921,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                       <div
                         key={block.id}
                         className="text-xs p-2 rounded text-white cursor-pointer shadow-sm hover:shadow-md transition-shadow group relative"
-                        style={{ backgroundColor: block.colour }}
+                        style={{ backgroundColor: block.colour || block.color || BLOCK_COLOURS[0] }}
                         onClick={(e) => {
                           e.stopPropagation();
                           setEditingBlock(block.id);
