@@ -39,6 +39,7 @@ import {
   focusSessionLogs,
   calendarV2,
   calendarV3,
+  timeBlockingEvents,
   type CourseWhitelist,
   type InsertCourseWhitelist,
   type User,
@@ -111,13 +112,15 @@ import {
   type CalendarV2,
   type CalendarV3,
   type InsertCalendarV3,
+  type TimeBlockingEvent,
+  type InsertTimeBlockingEvent,
   type ColorKeyV3,
   type CalendarEntryV3,
   type CalendarDayV3,
   type InsertCalendarV2,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, gte, lte, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, asc, gte, lte, sql, inArray, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // User operations - supports both Replit Auth and custom auth
@@ -295,6 +298,13 @@ export interface IStorage {
   // Calendar V3 Operations
   getCalendarV3(userId: string, year: number, month: number): Promise<CalendarV3 | undefined>;
   upsertCalendarV3(data: InsertCalendarV3): Promise<CalendarV3>;
+  
+  // Time Blocking Events Operations
+  getTimeBlockingEvents(userId: string, startDate: Date, endDate: Date): Promise<TimeBlockingEvent[]>;
+  getTimeBlockingEvent(id: string): Promise<TimeBlockingEvent | undefined>;
+  createTimeBlockingEvent(event: InsertTimeBlockingEvent): Promise<TimeBlockingEvent>;
+  updateTimeBlockingEvent(id: string, updates: Partial<InsertTimeBlockingEvent>): Promise<TimeBlockingEvent>;
+  deleteTimeBlockingEvent(id: string, userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1753,6 +1763,92 @@ export class DatabaseStorage implements IStorage {
     });
     
     return calendar;
+  }
+
+  // Time Blocking Events Operations
+  async getTimeBlockingEvents(userId: string, startDate: Date, endDate: Date): Promise<TimeBlockingEvent[]> {
+    const events = await db
+      .select()
+      .from(timeBlockingEvents)
+      .where(
+        and(
+          eq(timeBlockingEvents.userId, userId),
+          gte(timeBlockingEvents.startTime, startDate),
+          lte(timeBlockingEvents.startTime, endDate),
+          isNull(timeBlockingEvents.deletedAt)
+        )
+      )
+      .orderBy(asc(timeBlockingEvents.startTime));
+    
+    return events;
+  }
+
+  async getTimeBlockingEvent(id: string): Promise<TimeBlockingEvent | undefined> {
+    const [event] = await db
+      .select()
+      .from(timeBlockingEvents)
+      .where(
+        and(
+          eq(timeBlockingEvents.id, id),
+          isNull(timeBlockingEvents.deletedAt)
+        )
+      );
+    
+    return event;
+  }
+
+  async createTimeBlockingEvent(eventData: InsertTimeBlockingEvent): Promise<TimeBlockingEvent> {
+    const eventId = `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const [event] = await db
+      .insert(timeBlockingEvents)
+      .values({
+        ...eventData,
+        id: eventId,
+      })
+      .returning();
+    
+    return event;
+  }
+
+  async updateTimeBlockingEvent(id: string, updates: Partial<InsertTimeBlockingEvent>): Promise<TimeBlockingEvent> {
+    const [event] = await db
+      .update(timeBlockingEvents)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(timeBlockingEvents.id, id),
+          isNull(timeBlockingEvents.deletedAt)
+        )
+      )
+      .returning();
+    
+    if (!event) {
+      throw new Error('Event not found or already deleted');
+    }
+    
+    return event;
+  }
+
+  async deleteTimeBlockingEvent(id: string, userId: string): Promise<void> {
+    const result = await db
+      .update(timeBlockingEvents)
+      .set({
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(timeBlockingEvents.id, id),
+          eq(timeBlockingEvents.userId, userId),
+          isNull(timeBlockingEvents.deletedAt)
+        )
+      );
+    
+    console.log(`Time blocking event ${id} soft deleted for user ${userId}`);
   }
 }
 

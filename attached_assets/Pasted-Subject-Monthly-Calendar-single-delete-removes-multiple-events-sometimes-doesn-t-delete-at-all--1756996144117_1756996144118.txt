@@ -1,0 +1,115 @@
+Subject: Monthly Calendar – single delete removes multiple events / sometimes doesn’t delete at all (IDs, seeding, and query issues)
+
+What I’m seeing (Monthly view)
+
+I previously added blocks (e.g., Email Marketing, Carousel).
+
+When I try to delete one block:
+
+Sometimes multiple blocks on that day vanish at once,
+
+Sometimes the whole stack on that day disappears,
+
+Sometimes the block doesn’t delete (reappears on reload).
+
+After leaving the planner and returning, some of those deleted items reappear.
+
+How to reproduce
+
+Open Monthly calendar in /time-blocking-planner.
+
+Delete a single event (e.g., one Email Marketing at 09:00).
+
+Many events disappear at once or the event returns after page reload or route change.
+
+Expected
+
+Deleting one event removes only that event, stays deleted across navigation and page reload, and doesn’t affect other events.
+
+Likely root causes (please check)
+
+Event ID collisions / non-unique IDs
+
+Multiple rows share the same id (or UI uses the same id for several blocks), so a “delete by id” acts on many.
+
+React render uses array index as key instead of a stable event.id, causing mismatches.
+
+Bulk delete query
+
+Backend delete uses a broad filter (e.g., by title, date, category, or series_id) instead of a single event id, so it wipes several at once.
+
+Missing user_id predicate may also delete across user scope.
+
+Soft delete not filtered / seeding re-inserts
+
+deleted_at set but Monthly fetch doesn’t apply WHERE deleted_at IS NULL.
+
+A seeding/demo routine runs on mount and re-adds old events.
+
+No DB uniqueness → seeding inserts duplicates repeatedly.
+
+Double-fired handlers / event delegation
+
+Click handler for delete fires twice or is attached to a container (day cell) and applies to multiple events.
+
+Missing stopPropagation() on the event delete button.
+
+Please implement these fixes
+
+A) Data model & DB
+
+Ensure each event has a true unique ID (UUID primary key):
+
+events(
+  id uuid primary key,
+  user_id uuid not null,
+  title text,
+  color text,
+  start timestamptz not null,
+  end   timestamptz not null,
+  deleted_at timestamptz
+)
+
+
+Add indexes: (user_id, start) and (user_id, id).
+
+If you seed demo data, make it idempotent (UPSERT) or feature-flag it off for my workspace.
+
+Run a one-time cleanup for my user to:
+
+Remove duplicate rows,
+
+Remove any demo/seed rows,
+
+Ensure all existing rows have unique ids.
+
+B) API (must be id-scoped)
+
+Delete: DELETE /events/:id (or PATCH /events/:id { deleted_at: now })
+
+Query must include WHERE id = :id AND user_id = :currentUser.
+
+List (both Weekly & Monthly):
+
+SELECT * FROM events
+WHERE user_id = :currentUser
+  AND deleted_at IS NULL
+  AND start >= :rangeStart AND start < :rangeEnd
+ORDER BY start;
+
+
+Add Cache-Control: no-store to /events* responses (avoid stale payloads).
+
+C) Frontend (React / FullCalendar or equivalent)
+
+Make sure each event object includes a unique id and the component uses key={event.id} (not array index).
+
+The delete button for a specific event must call the id-scoped endpoint above—no deletes by title/date/category.
+
+Ensure only one delete request fires on click; add stopPropagation() on the delete button and guard against double-clicks.
+
+After a successful delete, optimistically remove only that event from state; on next load, the GET should not include it.
+
+D) Verify “no reseed on mount”
+
+Remove any auto-seeding on route enter/mount for my workspace/user. If seeding is necessary, ensure it never duplicates and never runs in production for me.

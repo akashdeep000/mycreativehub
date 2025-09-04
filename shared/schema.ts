@@ -921,3 +921,30 @@ export const insertCalendarV3Schema = createInsertSchema(calendarV3).omit({
 
 export type CalendarV3 = typeof calendarV3.$inferSelect;
 export type InsertCalendarV3 = z.infer<typeof insertCalendarV3Schema>;
+
+// Time Blocking Events - Proper normalized table for events
+export const timeBlockingEvents = pgTable("time_blocking_events", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  title: varchar("title").notNull(),
+  color: varchar("color").notNull(),
+  colorKeyId: varchar("color_key_id"),
+  notes: text("notes").default(''),
+  startTime: timestamp("start_time", { withTimezone: true }).notNull(),
+  endTime: timestamp("end_time", { withTimezone: true }).notNull(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("time_blocking_events_user_start_idx").on(table.userId, table.startTime),
+  index("time_blocking_events_user_id_idx").on(table.userId, table.id),
+]);
+
+export const insertTimeBlockingEventSchema = createInsertSchema(timeBlockingEvents).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type TimeBlockingEvent = typeof timeBlockingEvents.$inferSelect;
+export type InsertTimeBlockingEvent = z.infer<typeof insertTimeBlockingEventSchema>;

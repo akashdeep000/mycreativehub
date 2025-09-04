@@ -2146,6 +2146,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Time Blocking Events API Routes
+  app.get('/api/time-blocking-events', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { startDate, endDate } = req.query;
+      
+      if (!startDate || !endDate) {
+        return res.status(400).json({ message: 'startDate and endDate are required' });
+      }
+      
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      const events = await storage.getTimeBlockingEvents(userId, start, end);
+      
+      res.setHeader('Cache-Control', 'no-store');
+      res.json(events);
+    } catch (error) {
+      console.error('Error fetching time blocking events:', error);
+      res.status(500).json({ message: 'Failed to fetch events' });
+    }
+  });
+
+  app.get('/api/time-blocking-events/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const event = await storage.getTimeBlockingEvent(id);
+      
+      if (!event) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+      
+      // Verify ownership
+      if (event.userId !== req.user.id) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      res.setHeader('Cache-Control', 'no-store');
+      res.json(event);
+    } catch (error) {
+      console.error('Error fetching time blocking event:', error);
+      res.status(500).json({ message: 'Failed to fetch event' });
+    }
+  });
+
+  app.post('/api/time-blocking-events', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const eventData = { ...req.body, userId };
+      
+      const event = await storage.createTimeBlockingEvent(eventData);
+      
+      console.log(`Created time blocking event ${event.id} for user ${userId}`);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error('Error creating time blocking event:', error);
+      res.status(500).json({ message: 'Failed to create event' });
+    }
+  });
+
+  app.patch('/api/time-blocking-events/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      // Verify ownership first
+      const existingEvent = await storage.getTimeBlockingEvent(id);
+      if (!existingEvent || existingEvent.userId !== userId) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+      
+      const updatedEvent = await storage.updateTimeBlockingEvent(id, req.body);
+      
+      console.log(`Updated time blocking event ${id} for user ${userId}`);
+      res.json(updatedEvent);
+    } catch (error) {
+      console.error('Error updating time blocking event:', error);
+      res.status(500).json({ message: 'Failed to update event' });
+    }
+  });
+
+  app.delete('/api/time-blocking-events/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      // Verify ownership first
+      const existingEvent = await storage.getTimeBlockingEvent(id);
+      if (!existingEvent || existingEvent.userId !== userId) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+      
+      await storage.deleteTimeBlockingEvent(id, userId);
+      
+      console.log(`Deleted time blocking event ${id} for user ${userId}`);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting time blocking event:', error);
+      res.status(500).json({ message: 'Failed to delete event' });
+    }
+  });
+
   // Systeme.io webhook endpoint for course purchases
   app.post('/api/systeme-webhook', async (req, res) => {
     console.log('=== WEBHOOK START ===');

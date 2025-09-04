@@ -168,123 +168,32 @@ export default function TimeBlocking() {
   // Save function for the time blocking planner
   const handleSave = async (data: any) => {
     try {
-      // Convert time blocking data to calendar v3 format
-      const convertTimeBlockingToCalendarV3 = (timeBlockData: any) => {
-        const calendarData: any = {};
-        
-        // Process monthly view blocks
-        if (timeBlockData.monthlyView?.blocks) {
-          timeBlockData.monthlyView.blocks.forEach((block: any) => {
-            const blockDate = new Date(block.day);
-            const year = blockDate.getFullYear();
-            const month = blockDate.getMonth() + 1;
-            const dateStr = block.day;
-            
-            const monthKey = `${year}-${month}`;
-            
-            if (!calendarData[monthKey]) {
-              calendarData[monthKey] = {
-                year,
-                month,
-                colorKeys: timeBlockData.colourTags || [],
-                days: []
-              };
-            }
-            
-            // Find or create day entry
-            let dayEntry = calendarData[monthKey].days.find((d: any) => d.date === dateStr);
-            if (!dayEntry) {
-              dayEntry = { date: dateStr, entries: [] };
-              calendarData[monthKey].days.push(dayEntry);
-            }
-            
-            // Add time block as calendar entry
-            dayEntry.entries.push({
-              id: block.id,
-              colorKeyId: block.colourTagId || block.id,
-              label: block.title,
-              color: block.colour,
-              notes: '',
-              time: block.startTime
-            });
-          });
-        }
-        
-        // Process weekly view blocks (CRITICAL FIX - was missing!)
-        if (timeBlockData.weeklyView?.blocks) {
-          timeBlockData.weeklyView.blocks.forEach((block: any) => {
-            const blockDate = new Date(block.day);
-            const year = blockDate.getFullYear();
-            const month = blockDate.getMonth() + 1;
-            const dateStr = block.day;
-            
-            const monthKey = `${year}-${month}`;
-            
-            if (!calendarData[monthKey]) {
-              calendarData[monthKey] = {
-                year,
-                month,
-                colorKeys: timeBlockData.colourTags || [],
-                days: []
-              };
-            }
-            
-            // Find or create day entry
-            let dayEntry = calendarData[monthKey].days.find((d: any) => d.date === dateStr);
-            if (!dayEntry) {
-              dayEntry = { date: dateStr, entries: [] };
-              calendarData[monthKey].days.push(dayEntry);
-            }
-            
-            // Add time block as calendar entry
-            dayEntry.entries.push({
-              id: block.id,
-              colorKeyId: block.colourTagId || block.id,
-              label: block.title,
-              color: block.colour,
-              notes: '',
-              time: block.startTime
-            });
-          });
-        }
-        
-        return calendarData;
+      console.log('🔄 Saving time blocking data using new events API');
+      
+      // Save color tags to calendar v3 for compatibility
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth() + 1;
+      
+      const colorTagsOnlyData = {
+        userId: data.userId || user?.id,
+        year,
+        month,
+        colorKeys: data.colourTags || [],
+        days: [] // No blocks in calendar - using events table now
       };
       
-      const calendarData = convertTimeBlockingToCalendarV3(data);
+      // Save color tags
+      await fetch('/api/calendar-v3', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(colorTagsOnlyData)
+      });
       
-      // Save each month's data separately with proper authentication
-      let savedCount = 0;
-      for (const monthKey in calendarData) {
-        const monthData = calendarData[monthKey];
-        console.log(`💾 Saving time blocks for ${monthKey}:`, {
-          blocks: monthData.days?.length || 0,
-          colorKeys: monthData.colorKeys?.length || 0
-        });
-        
-        const response = await fetch('/api/calendar-v3', {
-          method: 'PUT',
-          headers: { 
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include', // Include session cookies for authentication
-          body: JSON.stringify(monthData)
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to save data for ${monthKey}: ${response.status}`);
-        }
-        
-        savedCount++;
-        console.log(`✅ Successfully saved ${monthKey}`);
-      }
-      
-      console.log(`🎉 Time blocking data saved successfully! (${savedCount} months saved)`);
-      
-      // Save notification removed as requested by user
+      console.log('✅ Color tags saved successfully');
     } catch (error) {
-      console.error('Failed to save time blocking data:', error);
-      // Error toast removed to prevent flickering - errors logged to console instead
+      console.error('❌ Error saving color tags:', error);
     }
   };
 
