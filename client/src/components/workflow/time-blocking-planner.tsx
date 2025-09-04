@@ -148,7 +148,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         blocks: data.weeklyView.blocks.map(block => {
           if (!block.weekKey) {
             needsMigration = true;
-            return { ...block, weekKey: currentWeekKey };
+            return { ...block, weekKey: getCurrentMonthKey() };
           }
           return block;
         })
@@ -579,7 +579,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           >
             <div
               className="w-3 h-3 rounded-full border border-gray-300 flex-shrink-0"
-              style={{ backgroundColor: tag.colour || tag.color || BLOCK_COLOURS[0] }}
+              style={{ backgroundColor: tag.colour }}
             />
             <span className="truncate">{tag.label}</span>
           </button>
@@ -642,7 +642,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                     className={`w-4 h-4 rounded-full border transition-all cursor-pointer hover:ring-2 hover:ring-gray-300 ${
                       isActive ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
                     }`}
-                    style={{ backgroundColor: tag.colour || tag.color || BLOCK_COLOURS[0] }}
+                    style={{ backgroundColor: tag.colour }}
                     title="Click to change color"
                     data-color-trigger
                     onClick={(e) => {
@@ -748,7 +748,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   );
 
   const renderWeeklyView = () => {
-    const weekDates = getCurrentWeekDates();
+    // Remove weekly view - this function is not used
+    const weekDates: Date[] = [];
     const weekStart = weekDates[0];
     const weekEnd = weekDates[6];
     const weekRange = `${weekStart.toLocaleDateString('en', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}`;
@@ -761,7 +762,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigateWeek('prev')}
+              onClick={() => navigateMonth('prev')}
               className="h-8 w-8 p-0"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -772,7 +773,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigateWeek('next')}
+              onClick={() => navigateMonth('next')}
               className="h-8 w-8 p-0"
             >
               <ChevronRight className="h-4 w-4" />
@@ -1016,7 +1017,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                       <div
                         key={block.id}
                         className="text-xs p-2 rounded text-white cursor-pointer shadow-sm hover:shadow-md transition-shadow group relative"
-                        style={{ backgroundColor: block.colour || block.color || BLOCK_COLOURS[0] }}
+                        style={{ backgroundColor: block.colour }}
                         onClick={(e) => {
                           e.stopPropagation();
                           setEditingBlock(block.id);

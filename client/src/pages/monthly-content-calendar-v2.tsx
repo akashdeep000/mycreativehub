@@ -10,8 +10,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import Sidebar from '@/components/Sidebar';
-import MobileNav from '@/components/MobileNav';
+import Sidebar from '@/components/layout/sidebar';
+import MobileNav from '@/components/layout/mobile-nav';
 import BackToDashboard from '@/components/BackToDashboard';
 
 // Types
@@ -104,13 +104,13 @@ export default function MonthlyContentCalendarV2() {
 
   // Get current calendar data or use defaults
   const currentCalendarData: CalendarData = {
-    userId: calendarData?.userId || '',
+    userId: (calendarData as any)?.userId || '',
     year,
     month,
-    colorKeys: Array.isArray(calendarData?.colorKeys) && calendarData.colorKeys.length > 0 
-      ? calendarData.colorKeys 
+    colorKeys: Array.isArray((calendarData as any)?.colorKeys) && (calendarData as any).colorKeys.length > 0 
+      ? (calendarData as any).colorKeys 
       : DEFAULT_COLOR_KEYS,
-    days: Array.isArray(calendarData?.days) ? calendarData.days : []
+    days: Array.isArray((calendarData as any)?.days) ? (calendarData as any).days : []
   };
 
   // Calendar calculations
