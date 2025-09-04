@@ -88,6 +88,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [data, setData] = useState<TimeBlockingData>(initialData);
   const [activeView, setActiveView] = useState<'weekly' | 'monthly'>('weekly');
   const [editingBlock, setEditingBlock] = useState<string | null>(null);
+  const [editingTimeBlock, setEditingTimeBlock] = useState<string | null>(null);
   const [draggedBlock, setDraggedBlock] = useState<TimeBlock | null>(null);
   const [newBlockTitle, setNewBlockTitle] = useState('');
   const [activeColourTagId, setActiveColourTagId] = useState<string>(initialData.colourTags[0]?.id || '');
@@ -885,8 +886,48 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                         }}
                         title={`${block.title} at ${block.startTime} - Click to edit`}
                       >
-                        <div className="font-medium break-words hyphens-auto leading-tight">{block.title}</div>
-                        <div className="text-xs opacity-80 mt-0.5">{block.startTime}</div>
+                        <div className="font-medium break-words hyphens-auto leading-tight">
+                          {editingBlock === block.id ? (
+                            <Input
+                              value={block.title}
+                              onChange={(e) => updateTimeBlock(block.id, { title: e.target.value })}
+                              onBlur={() => setEditingBlock(null)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') setEditingBlock(null);
+                              }}
+                              className="h-6 text-xs bg-white text-black font-medium border-0 rounded w-full px-1"
+                              autoFocus
+                            />
+                          ) : (
+                            block.title
+                          )}
+                        </div>
+                        <div className="text-xs opacity-80 mt-0.5">
+                          {editingTimeBlock === block.id ? (
+                            <Input
+                              value={block.startTime}
+                              onChange={(e) => updateTimeBlock(block.id, { startTime: e.target.value })}
+                              onBlur={() => setEditingTimeBlock(null)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') setEditingTimeBlock(null);
+                              }}
+                              className="h-5 text-xs bg-white text-black border-0 rounded w-full px-1"
+                              placeholder="9:00"
+                              autoFocus
+                            />
+                          ) : (
+                            <span 
+                              className="cursor-pointer hover:underline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingTimeBlock(block.id);
+                              }}
+                              title="Click to edit time"
+                            >
+                              {block.startTime}
+                            </span>
+                          )}
+                        </div>
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             className="flex items-center justify-center w-4 h-4 rounded text-white hover:bg-red-500/30 transition-colors"
