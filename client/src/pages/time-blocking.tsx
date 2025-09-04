@@ -56,9 +56,11 @@ export default function TimeBlocking() {
           const month = monthInfo.month;
           
           try {
+            // Use the same method as other API calls in the app
             const response = await fetch(`/api/calendar-v3/${year}/${month}`);
             if (response.ok) {
               const calendarData = await response.json();
+              console.log(`✅ Loaded calendar data for ${year}-${month}:`, calendarData);
               
               // Collect blocks from this month
               if (calendarData.days && Array.isArray(calendarData.days)) {
