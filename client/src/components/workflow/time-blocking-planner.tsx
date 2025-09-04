@@ -95,7 +95,6 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     }
   }, [initialData]);
   // Only monthly view now - removed weekly view completely
-  const [editingBlock, setEditingBlock] = useState<string | null>(null);
   const [editingTimeBlock, setEditingTimeBlock] = useState<string | null>(null);
   const [draggedBlock, setDraggedBlock] = useState<TimeBlock | null>(null);
   const [newBlockTitle, setNewBlockTitle] = useState('');
@@ -848,31 +847,11 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                       }}
                       draggable
                       onDragStart={() => handleDragStart(block)}
-                      title={`${block.title}${block.colourTagId ? ` (${getColourTagLabel(block.colourTagId)})` : ''} - Click to edit`}
+                      title={`${block.title}${block.colourTagId ? ` (${getColourTagLabel(block.colourTagId)})` : ''}`}
                     >
-                      {editingBlock === block.id ? (
-                        <Input
-                          value={block.title}
-                          onChange={(e) => updateTimeBlock(block.id, { title: e.target.value })}
-                          onBlur={() => setEditingBlock(null)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') setEditingBlock(null);
-                          }}
-                          className="h-8 text-xs bg-white text-black text-center font-medium border-0 rounded-md w-full"
-                          autoFocus
-                        />
-                      ) : (
-                        <div 
-                          className="cursor-pointer font-medium leading-tight hover:bg-white/10 rounded px-1 py-0.5 transition-colors text-xs w-full break-words hyphens-auto"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingBlock(block.id);
-                          }}
-                          title={block.title}
-                        >
-                          {block.title}
-                        </div>
-                      )}
+                      <div className="font-medium leading-tight text-xs w-full break-words hyphens-auto">
+                        {block.title}
+                      </div>
                       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           className="flex items-center justify-center w-5 h-5 rounded text-white hover:bg-red-500/30 transition-colors"
@@ -1020,25 +999,11 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                         style={{ backgroundColor: block.colour }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setEditingBlock(block.id);
                         }}
-                        title={`${block.title} at ${block.startTime} - Click to edit`}
+                        title={`${block.title} at ${block.startTime}`}
                       >
                         <div className="font-medium break-words hyphens-auto leading-tight">
-                          {editingBlock === block.id ? (
-                            <Input
-                              value={block.title}
-                              onChange={(e) => updateTimeBlock(block.id, { title: e.target.value })}
-                              onBlur={() => setEditingBlock(null)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') setEditingBlock(null);
-                              }}
-                              className="h-6 text-xs bg-white text-black font-medium border-0 rounded w-full px-1"
-                              autoFocus
-                            />
-                          ) : (
-                            block.title
-                          )}
+                          {block.title}
                         </div>
                         <div className="text-xs opacity-80 mt-0.5">
                           {editingTimeBlock === block.id ? (
