@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,20 @@ export default function DailyFocus() {
   const [showClearConfirmation, setShowClearConfirmation] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editingTaskText, setEditingTaskText] = useState("");
+  
+  // State for handling composition events and preventing duplicate saves
+  const [isComposing, setIsComposing] = useState(false);
+  const [savingStates, setSavingStates] = useState({
+    must: false,
+    should: false,
+    could: false,
+  });
+  const [lastSavedValues, setLastSavedValues] = useState({
+    must: "",
+    should: "",
+    could: "",
+  });
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -125,7 +139,7 @@ export default function DailyFocus() {
       
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousTasks) {
-        queryClient.setQueryData(["/api/daily-focus", today], context.previousTasks);
+        queryClient.setQueryData(["/api/daily-focus"], context.previousTasks);
       }
       
       if (isUnauthorizedError(error)) {
@@ -367,21 +381,95 @@ export default function DailyFocus() {
     updateTaskMutation.mutate({ id, completed });
   };
 
+  // Enhanced function to save a task with duplicate prevention
+  const saveTaskIfValid = async (priority: "must" | "should" | "could", source: "enter" | "blur" = "blur") => {
+    const task = taskInputs[priority].trim();
+    
+    // Don't save if already saving, empty, or unchanged
+    if (savingStates[priority] || !task || task === lastSavedValues[priority]) {
+      return;
+    }
+
+    // Don't save during composition (IME input)
+    if (isComposing && source === "enter") {
+      return;
+    }
+
+    // Set saving state to prevent duplicates
+    setSavingStates(prev => ({ ...prev, [priority]: true }));
+    
+    try {
+      console.log(`Saving task via ${source}:`, task, 'priority:', priority);
+      
+      // Add the task
+      await addTaskMutation.mutateAsync({ task, priority });
+      
+      // Update last saved value and clear input
+      setLastSavedValues(prev => ({ ...prev, [priority]: task }));
+      setTaskInputs(prev => ({ ...prev, [priority]: "" }));
+      
+      // Show success feedback
+      toast({ 
+        title: "Task added ✓", 
+        description: `Added to ${priority === "must" ? "Must Do" : priority === "should" ? "Should Do" : "Could Do"}`,
+        duration: 2000 
+      });
+      
+    } catch (error) {
+      console.error('Error saving task:', error);
+      // Error is already handled by the mutation
+    } finally {
+      // Reset saving state
+      setSavingStates(prev => ({ ...prev, [priority]: false }));
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, priority: "must" | "should" | "could") => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const task = taskInputs[priority].trim();
-      console.log('Enter pressed, task:', task, 'priority:', priority);
-      
-      if (task) {
-        console.log('Submitting task:', task);
-        // Add the task
-        addTaskMutation.mutate({ task, priority });
-        // Clear the input field immediately
-        setTaskInputs(prev => ({ ...prev, [priority]: "" }));
-      }
+      // Use the enhanced save function that prevents duplicates
+      saveTaskIfValid(priority, "enter");
     }
   };
+
+  // Handle blur events for saving tasks when clicking away
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>, priority: "must" | "should" | "could") => {
+    // Don't save during composition
+    if (isComposing) {
+      return;
+    }
+    
+    // Add a small delay to allow for potential Enter key press to complete first
+    setTimeout(() => {
+      saveTaskIfValid(priority, "blur");
+    }, 50);
+  };
+
+  // Handle composition events for IME input (Chinese, Japanese, Korean, etc.)
+  const handleCompositionStart = () => {
+    setIsComposing(true);
+  };
+
+  const handleCompositionEnd = () => {
+    setIsComposing(false);
+  };
+
+  // Autosave on component unmount for any unsaved inputs
+  useEffect(() => {
+    return () => {
+      // Save any pending tasks when component unmounts
+      Object.entries(taskInputs).forEach(([priority, value]) => {
+        if (value.trim() && !savingStates[priority as keyof typeof savingStates]) {
+          // Use the direct mutation call since we're in cleanup
+          const trimmedTask = value.trim();
+          addTaskMutation.mutate({ 
+            task: trimmedTask, 
+            priority: priority as "must" | "should" | "could" 
+          });
+        }
+      });
+    };
+  }, [taskInputs, savingStates, addTaskMutation]);
 
   const handleClearDailyTasks = () => {
     clearDailyTasksMutation.mutate();
@@ -668,6 +756,9 @@ export default function DailyFocus() {
                 value={taskInputs.must}
                 onChange={(e) => setTaskInputs(prev => ({ ...prev, must: e.target.value }))}
                 onKeyDown={(e) => handleKeyDown(e, "must")}
+                onBlur={(e) => handleBlur(e, "must")}
+                onCompositionStart={handleCompositionStart}
+                onCompositionEnd={handleCompositionEnd}
                 className="border-red-300 focus:border-red-500"
               />
             </form>
@@ -734,6 +825,9 @@ export default function DailyFocus() {
                 value={taskInputs.should}
                 onChange={(e) => setTaskInputs(prev => ({ ...prev, should: e.target.value }))}
                 onKeyDown={(e) => handleKeyDown(e, "should")}
+                onBlur={(e) => handleBlur(e, "should")}
+                onCompositionStart={handleCompositionStart}
+                onCompositionEnd={handleCompositionEnd}
                 className="border-green-300 focus:border-green-500"
               />
             </form>
@@ -800,6 +894,9 @@ export default function DailyFocus() {
                 value={taskInputs.could}
                 onChange={(e) => setTaskInputs(prev => ({ ...prev, could: e.target.value }))}
                 onKeyDown={(e) => handleKeyDown(e, "could")}
+                onBlur={(e) => handleBlur(e, "could")}
+                onCompositionStart={handleCompositionStart}
+                onCompositionEnd={handleCompositionEnd}
                 className="border-yellow-300 focus:border-yellow-500"
               />
             </form>
