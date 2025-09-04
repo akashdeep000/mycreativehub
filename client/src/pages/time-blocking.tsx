@@ -32,11 +32,7 @@ export default function TimeBlocking() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [timeBlockingData, setTimeBlockingData] = useState(defaultTimeBlockingData);
 
-  // Fetch the user's time blocking template if it exists
-  const { data: templates } = useQuery({
-    queryKey: ["/api/workflow-templates"],
-    enabled: !!user,
-  });
+  // Remove workflow templates dependency - now using calendar API directly
 
   // Load existing data from calendar API (load multiple months to capture all data)
   useEffect(() => {
