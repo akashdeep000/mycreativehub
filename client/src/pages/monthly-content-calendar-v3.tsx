@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, ChevronLeft, ChevronRight, Pencil, X, Plus, ArrowLeft, Home } from 'lucide-react';
 import { useDebounce } from '../hooks/use-debounce';
+import Sidebar from '@/components/layout/sidebar';
+import MobileNav from '@/components/layout/mobile-nav';
 
 interface ColorKey {
   id: string;
@@ -319,8 +321,10 @@ export default function MonthlyContentCalendarV3() {
   const totalCells = Math.ceil((daysInMonth + firstDayOfWeek) / 7) * 7;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <Sidebar />
+      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
+        <div className="max-w-7xl mx-auto">
         {/* Navigation Buttons */}
         <div className="flex items-center gap-3 mb-6">
           <Button 
@@ -681,6 +685,8 @@ export default function MonthlyContentCalendarV3() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
+        <MobileNav />
       </div>
     </div>
   );
