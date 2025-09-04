@@ -7,7 +7,7 @@ import MobileNav from "@/components/layout/mobile-nav";
 import BackToDashboard from "@/components/BackToDashboard";
 import TimeBlockingPlanner from "@/components/workflow/time-blocking-planner";
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Calendar } from 'lucide-react';
 
 // Helper function to generate month keys
 const getCurrentMonthKey = (date = new Date()) => {
@@ -197,7 +197,10 @@ export default function TimeBlocking() {
                 Back to Streamline Your Workflow
               </Button>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Time Blocking Planner</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+              <Calendar className="w-8 h-8 text-blue-600" />
+              Time Blocking Planner
+            </h1>
             <p className="text-gray-600">Optimise your schedule for peak productivity</p>
           </div>
 
