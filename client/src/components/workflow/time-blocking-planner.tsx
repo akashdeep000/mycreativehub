@@ -86,6 +86,13 @@ const OLD_DEFAULT_CATEGORIES = [
 export default function TimeBlockingPlanner({ templateId, initialData, onSave }: TimeBlockingPlannerProps) {
   const [, setLocation] = useLocation();
   const [data, setData] = useState<TimeBlockingData>(initialData);
+  
+  // Update component data when parent provides new data
+  useEffect(() => {
+    if (initialData && initialData !== data) {
+      setData(initialData);
+    }
+  }, [initialData]);
   const [activeView, setActiveView] = useState<'weekly' | 'monthly'>('weekly');
   const [editingBlock, setEditingBlock] = useState<string | null>(null);
   const [editingTimeBlock, setEditingTimeBlock] = useState<string | null>(null);

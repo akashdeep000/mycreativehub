@@ -254,6 +254,7 @@ export default function TimeBlocking() {
               templateId={1}
               initialData={timeBlockingData}
               onSave={handleSave}
+              key={`timeblocking-${JSON.stringify(timeBlockingData).substring(0, 50)}`}
             />
           </div>
         </main>
