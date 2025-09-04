@@ -82,7 +82,11 @@ export default function MonthlyContentCalendarV3() {
     refetchOnMount: true, // Always refetch when component mounts
   });
 
-  const colorKeys: ColorKey[] = (calendarData as any)?.colorKeys || [];
+  // Map colorKeys with correct property names (API returns 'colour', interface expects 'color')
+  const colorKeys: ColorKey[] = ((calendarData as any)?.colorKeys || []).map((key: any) => ({
+    ...key,
+    color: key.colour || key.color // Handle both API response format and local format
+  }));
   const days: CalendarDay[] = (calendarData as any)?.days || [];
 
   // Debug logging
