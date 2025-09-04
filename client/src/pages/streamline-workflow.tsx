@@ -19,7 +19,7 @@ import {
   Archive, 
   Clock, 
   Lightbulb, 
-  Calendar, 
+  CalendarDays, 
   CheckSquare, 
   Bot, 
   Settings,
@@ -59,7 +59,7 @@ const workflowTemplates = [
     id: "time-blocking",
     name: "Time Blocking Planner",
     description: "Weekly and Monthly calendar with click-and-drop scheduling",
-    icon: Calendar,
+    icon: CalendarDays,
     colour: "bg-gradient-to-br from-blue-500 to-teal-500",
     textColor: "text-white",
     defaultData: {
