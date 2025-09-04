@@ -10,6 +10,9 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import Sidebar from '@/components/Sidebar';
+import MobileNav from '@/components/MobileNav';
+import BackToDashboard from '@/components/BackToDashboard';
 
 // Types
 interface ColorKey {
@@ -304,8 +307,15 @@ export default function MonthlyContentCalendarV2() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <Sidebar />
+      <MobileNav />
+      <div className="lg:ml-64 max-w-full overflow-x-hidden">
+        <main className="px-4 sm:px-6 lg:px-8 py-6">
+          <div className="mb-6">
+            <BackToDashboard />
+          </div>
+          <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
@@ -517,6 +527,8 @@ export default function MonthlyContentCalendarV2() {
             </div>
           </div>
         )}
+          </div>
+        </main>
       </div>
     </div>
   );
