@@ -114,15 +114,28 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     const currentMonthKey = getCurrentMonthKey();
     let needsMigration = false;
     
-    // Check if current color tags are the old defaults and replace them
+    // Check if current color tags contain unwanted content categories or old defaults
+    const unwantedCategories = ['Reel', 'Carousel', 'Photo', 'Promo', 'Story'];
     let updatedColourTags = data.colourTags;
+    
     const hasOldDefaults = data.colourTags.some(tag => 
       OLD_DEFAULT_CATEGORIES.includes(tag.label)
     );
     
-    // If user has old default categories, replace them with new business-focused ones
-    if (hasOldDefaults && data.colourTags.length <= 5) {
-      updatedColourTags = DEFAULT_BUSINESS_COLOR_TAGS;
+    const hasUnwantedContentCategories = data.colourTags.some(tag => 
+      unwantedCategories.includes(tag.label)
+    );
+    
+    // If user has old defaults or unwanted content categories, replace with business-focused ones
+    if (hasOldDefaults || hasUnwantedContentCategories) {
+      // Filter out unwanted categories and keep only user-created ones + business defaults
+      const userCreatedTags = data.colourTags.filter(tag => 
+        !OLD_DEFAULT_CATEGORIES.includes(tag.label) &&
+        !unwantedCategories.includes(tag.label) &&
+        !tag.id.startsWith('tag-') // Exclude default business tags to avoid duplicates
+      );
+      
+      updatedColourTags = [...DEFAULT_BUSINESS_COLOR_TAGS, ...userCreatedTags];
       needsMigration = true;
     }
     

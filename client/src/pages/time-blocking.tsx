@@ -89,10 +89,13 @@ export default function TimeBlocking() {
                 });
               }
               
-              // Collect color keys (avoid duplicates)
+              // Collect color keys (avoid duplicates and filter out unwanted content categories)
+              const unwantedCategories = ['Reel', 'Carousel', 'Photo', 'Promo', 'Story'];
               if (calendarData.colorKeys && Array.isArray(calendarData.colorKeys)) {
                 calendarData.colorKeys.forEach((key: any) => {
-                  if (!allColorKeys.find(existing => existing.id === key.id)) {
+                  // Skip unwanted content categories and avoid duplicates
+                  if (!unwantedCategories.includes(key.label) && 
+                      !allColorKeys.find(existing => existing.id === key.id)) {
                     allColorKeys.push(key);
                   }
                 });
