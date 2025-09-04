@@ -52,7 +52,7 @@ export default function TimeBlocking() {
         const endStr = endDate.toISOString().split('T')[0];
         
         // Load events from the new events API
-        const response = await fetch(`/api/time-blocking-events?start=${startStr}&end=${endStr}`, {
+        const response = await fetch(`/api/time-blocking-events?startDate=${startStr}&endDate=${endStr}`, {
           credentials: 'include',
           headers: {
             'Cache-Control': 'no-store' // Prevent stale cache as requested

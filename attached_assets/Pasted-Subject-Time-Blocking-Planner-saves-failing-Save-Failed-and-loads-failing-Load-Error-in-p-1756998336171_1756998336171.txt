@@ -1,0 +1,70 @@
+Subject: Time-Blocking Planner — saves failing (“Save Failed”) and loads failing (“Load Error”) in production
+
+What I see (with screenshots):
+
+On /time-blocking-planner I get a toast: “Load Error — Failed to load your saved events. Using defaults.”
+
+When I try to add a block, I get: “Save Failed — Could not save the time block. Please try again.”
+
+No blocks appear; nothing persists after navigation.
+
+Environment:
+
+Domain: mycreativehub.app (custom domain)
+
+Browser: Chrome (Mac)
+
+This was working briefly earlier (add/delete), then stopped persisting after leaving the page, and now both GET (load) and POST (save) are failing.
+
+Please check & fix the following
+1) API requests & auth (likely culprit given new custom domain)
+
+In DevTools/Logs, confirm the status codes for:
+
+GET /events?start=…&end=… (load)
+
+POST /events (create)
+
+If 401/403, this is an auth/session cookie issue:
+
+Ensure the session/JWT cookies are issued for the custom domain (e.g., Domain=.mycreativehub.app, Secure, SameSite=Lax or None if cross-site).
+
+If frontend and API use different hosts, configure CORS with credentials and withCredentials: true on the client, and set proper cookie attributes.
+
+If you recently switched from a *.replit.app URL, the old cookie domain will not authenticate requests on mycreativehub.app.
+
+2) Backend route reachability
+
+Confirm the API routes exist in the deployment (not dev-only):
+
+GET /events returns 200 + JSON list for the user and date range.
+
+POST /events returns 201 + new event id.
+
+If 404: the routes aren’t mounted or the frontend is calling the wrong base URL (env var mismatch).
+
+3) Database connectivity & migrations
+
+Verify the server can connect to the production DB from the deployed environment:
+
+Check DB URL/credentials env vars.
+
+Run a quick health query from the app pod (e.g., SELECT 1).
+
+Ensure required tables/columns exist (events with id, user_id, title, color, start, end, deleted_at):
+
+If migrations didn’t run in prod, INSERT/SELECT will fail → 500.
+
+4) Request payload validation
+
+If 400 on POST /events, the server is likely rejecting the payload:
+
+Confirm the client sends { title, color, start, end } (ISO times), and server determines user_id from the session server-side (do not trust user_id from the client).
+
+5) CSRF / anti-forgery
+
+If you’re enforcing CSRF, confirm the client includes the token and server validates it. A missing/invalid token often yields 403.
+
+6) Caching / service worker
+
+Ensure /events* responses set Cache-Control: no-store. Disable any SW caching for API calls (stale responses can trigger the Load Error fallback).
