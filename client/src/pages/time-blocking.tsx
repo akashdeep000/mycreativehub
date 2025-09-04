@@ -67,6 +67,12 @@ export default function TimeBlocking() {
                 calendarData.days.forEach((day: any) => {
                   if (day.entries && Array.isArray(day.entries)) {
                     day.entries.forEach((entry: any) => {
+                      // Generate proper weekKey for weekly view compatibility
+                      const blockDate = new Date(day.date);
+                      const firstDayOfYear = new Date(blockDate.getFullYear(), 0, 1);
+                      const pastDaysOfYear = (blockDate.getTime() - firstDayOfYear.getTime()) / 86400000;
+                      const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+                      
                       allBlocks.push({
                         id: entry.id,
                         title: entry.label,
@@ -75,7 +81,8 @@ export default function TimeBlocking() {
                         colour: entry.color,
                         colourTagId: entry.colorKeyId,
                         day: day.date,
-                        monthKey: `${year}-M${String(month).padStart(2, '0')}`
+                        monthKey: `${year}-M${String(month).padStart(2, '0')}`,
+                        weekKey: `${blockDate.getFullYear()}-W${weekNumber.toString().padStart(2, '0')}`
                       });
                     });
                   }
