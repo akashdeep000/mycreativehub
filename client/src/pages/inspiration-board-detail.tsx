@@ -74,7 +74,7 @@ const isValidUrl = (url: string) => {
 };
 
 // Individual Image Card Component
-function ImageCard({ image, boardId, onUpdate }: { image: InspirationBoardImage; boardId: number; onUpdate: () => void }) {
+function ImageCard({ image, boardId, onUpdate, onDelete }: { image: InspirationBoardImage; boardId: number; onUpdate: () => void; onDelete: (imageId: number) => void }) {
   const { toast } = useToast();
   const [notes, setNotes] = useState(image.notes || "");
   const [referenceUrl, setReferenceUrl] = useState(image.referenceUrl || "");
@@ -149,8 +149,14 @@ function ImageCard({ image, boardId, onUpdate }: { image: InspirationBoardImage;
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 bg-white/90 hover:bg-white shadow-sm">
-            <MoreHorizontal className="w-4 h-4" />
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            className="h-8 w-8 p-0 bg-white/90 hover:bg-white shadow-sm"
+            onClick={() => onDelete(image.id)}
+            title="Delete image"
+          >
+            <Trash2 className="w-4 h-4 text-red-600" />
           </Button>
         </div>
         {image.caption && (
@@ -230,6 +236,8 @@ export default function InspirationBoardDetail() {
   const [editingNote, setEditingNote] = useState<InspirationBoardNote | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<number | null>(null);
   const [editNoteData, setEditNoteData] = useState({ title: "", content: "", color: "yellow" });
+  const [isDeleteImageConfirmOpen, setIsDeleteImageConfirmOpen] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState<number | null>(null);
 
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
@@ -397,6 +405,21 @@ export default function InspirationBoardDetail() {
     },
   });
 
+  const deleteImageMutation = useMutation({
+    mutationFn: async (imageId: number) => {
+      return await apiRequest(`/api/inspiration-boards/${id}/images/${imageId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "images"] });
+      toast({
+        title: "Image Deleted",
+        description: "The image has been removed from your board.",
+      });
+    },
+  });
+
   const handleTitleSave = () => {
     if (boardTitle.trim() && boardTitle !== board?.title) {
       updateBoardMutation.mutate({ title: boardTitle.trim() });
@@ -488,6 +511,19 @@ export default function InspirationBoardDetail() {
         color: editNoteData.color
       }
     });
+  };
+
+  const handleDeleteImage = (imageId: number) => {
+    setImageToDelete(imageId);
+    setIsDeleteImageConfirmOpen(true);
+  };
+
+  const handleConfirmDeleteImage = () => {
+    if (imageToDelete) {
+      deleteImageMutation.mutate(imageToDelete);
+      setIsDeleteImageConfirmOpen(false);
+      setImageToDelete(null);
+    }
   };
 
   const handleAddPalette = () => {
@@ -1151,6 +1187,7 @@ export default function InspirationBoardDetail() {
                         onUpdate={() => {
                           queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "images"] });
                         }}
+                        onDelete={handleDeleteImage}
                       />
                     );
                   }
@@ -1433,6 +1470,28 @@ export default function InspirationBoardDetail() {
               disabled={deleteNoteMutation.isPending}
             >
               {deleteNoteMutation.isPending ? "Deleting..." : "Delete Note"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Image Confirmation Dialog */}
+      <Dialog open={isDeleteImageConfirmOpen} onOpenChange={setIsDeleteImageConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Image</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this image? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteImageConfirmOpen(false)}>Cancel</Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmDeleteImage} 
+              disabled={deleteImageMutation.isPending}
+            >
+              {deleteImageMutation.isPending ? "Deleting..." : "Delete Image"}
             </Button>
           </DialogFooter>
         </DialogContent>

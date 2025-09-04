@@ -1293,6 +1293,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/inspiration-boards/:id/images/:imageId', jwtAuth, async (req: any, res) => {
+    try {
+      const { id, imageId } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      await storage.deleteBoardImage(parseInt(imageId));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting board image:", error);
+      res.status(500).json({ message: "Failed to delete board image" });
+    }
+  });
+
   app.get('/api/inspiration-boards/:id/notes', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
