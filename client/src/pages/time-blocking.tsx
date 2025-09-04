@@ -38,73 +38,101 @@ export default function TimeBlocking() {
     enabled: !!user,
   });
 
-  // Load existing data from calendar API
+  // Load existing data from calendar API (load multiple months to capture all data)
   useEffect(() => {
     const loadTimeBlockingData = async () => {
       try {
+        const allBlocks: any[] = [];
+        const allColorKeys: any[] = [];
         const currentDate = new Date();
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth() + 1;
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1;
         
-        // Load calendar data for current month
-        const response = await fetch(`/api/calendar-v3/${year}/${month}`);
-        if (response.ok) {
-          const calendarData = await response.json();
+        // Load data for current month and adjacent months to capture all user data
+        const monthsToLoad = [
+          { year: currentYear, month: currentMonth - 1 === 0 ? 12 : currentMonth - 1, yearOffset: currentMonth - 1 === 0 ? -1 : 0 },
+          { year: currentYear, month: currentMonth, yearOffset: 0 },
+          { year: currentYear, month: currentMonth + 1 === 13 ? 1 : currentMonth + 1, yearOffset: currentMonth + 1 === 13 ? 1 : 0 }
+        ];
+        
+        for (const monthInfo of monthsToLoad) {
+          const year = monthInfo.year + monthInfo.yearOffset;
+          const month = monthInfo.month;
           
-          // Convert calendar v3 format back to time blocking format
-          const convertCalendarToTimeBlocking = (calData: any) => {
-            const blocks: any[] = [];
-            
-            if (calData.days && Array.isArray(calData.days)) {
-              calData.days.forEach((day: any) => {
-                if (day.entries && Array.isArray(day.entries)) {
-                  day.entries.forEach((entry: any) => {
-                    blocks.push({
-                      id: entry.id,
-                      title: entry.label,
-                      startTime: entry.time,
-                      duration: 1, // Default duration
-                      colour: entry.color,
-                      colourTagId: entry.colorKeyId,
-                      day: day.date,
-                      monthKey: `${calData.year}-M${String(calData.month).padStart(2, '0')}`
+          try {
+            const response = await fetch(`/api/calendar-v3/${year}/${month}`);
+            if (response.ok) {
+              const calendarData = await response.json();
+              
+              // Collect blocks from this month
+              if (calendarData.days && Array.isArray(calendarData.days)) {
+                calendarData.days.forEach((day: any) => {
+                  if (day.entries && Array.isArray(day.entries)) {
+                    day.entries.forEach((entry: any) => {
+                      allBlocks.push({
+                        id: entry.id,
+                        title: entry.label,
+                        startTime: entry.time,
+                        duration: 1,
+                        colour: entry.color,
+                        colourTagId: entry.colorKeyId,
+                        day: day.date,
+                        monthKey: `${year}-M${String(month).padStart(2, '0')}`
+                      });
                     });
-                  });
-                }
-              });
+                  }
+                });
+              }
+              
+              // Collect color keys (avoid duplicates)
+              if (calendarData.colorKeys && Array.isArray(calendarData.colorKeys)) {
+                calendarData.colorKeys.forEach((key: any) => {
+                  if (!allColorKeys.find(existing => existing.id === key.id)) {
+                    allColorKeys.push(key);
+                  }
+                });
+              }
             }
-            
-            // Convert colorKeys to colourTags format
-            const colourTags = calData.colorKeys?.map((key: any) => ({
-              id: key.id,
-              label: key.label,
-              colour: key.color,
-              selected: false
-            })) || defaultTimeBlockingData.colourTags;
-            
-            return {
-              monthlyView: {
-                blocks,
-                selectedMonth: `${calData.year}-${String(calData.month).padStart(2, '0')}`
-              },
-              weeklyView: {
-                blocks: [] // For now, focus on monthly view
-              },
-              colourTags
-            };
+          } catch (error) {
+            console.log(`Failed to load data for ${year}-${month}:`, error);
+          }
+        }
+        
+        // If we have any data, update the state
+        if (allBlocks.length > 0 || allColorKeys.length > 0) {
+          const colourTags = allColorKeys.map((key: any) => ({
+            id: key.id,
+            label: key.label,
+            colour: key.color,
+            selected: false
+          }));
+          
+          // Use collected blocks or fall back to defaults
+          const finalColorTags = colourTags.length > 0 ? colourTags : defaultTimeBlockingData.colourTags;
+          
+          const timeBlockData = {
+            monthlyView: {
+              blocks: allBlocks,
+              selectedMonth: `${currentYear}-${String(currentMonth).padStart(2, '0')}`
+            },
+            weeklyView: {
+              blocks: [] // For now, focus on monthly view
+            },
+            colourTags: finalColorTags
           };
           
-          const timeBlockData = convertCalendarToTimeBlocking(calendarData);
           setTimeBlockingData(prev => ({
             ...prev,
             ...timeBlockData
           }));
           
-          console.log('Time blocking data loaded successfully from calendar API');
+          console.log(`Time blocking data loaded successfully - Found ${allBlocks.length} blocks across multiple months`);
+        } else {
+          console.log('No existing time blocking data found, using defaults');
+          setTimeBlockingData(defaultTimeBlockingData);
         }
       } catch (error) {
         console.error('Failed to load time blocking data:', error);
-        // Fall back to default data if loading fails
         setTimeBlockingData(defaultTimeBlockingData);
       }
     };
