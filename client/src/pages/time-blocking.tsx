@@ -67,16 +67,23 @@ export default function TimeBlocking() {
         console.log(`✅ Loaded ${events.length} time blocking events from database`);
         
         // Convert events to time blocks format
-        const allBlocks = events.map((event: any) => ({
-          id: event.id, // Use the database UUID
-          title: event.title,
-          startTime: event.startTime,
-          duration: 1,
-          colour: event.color,
-          colourTagId: event.categoryId,
-          day: event.date,
-          monthKey: getCurrentMonthKey(new Date(event.date))
-        }));
+        const allBlocks = events.map((event: any) => {
+          // Extract date and time from the timestamp
+          const startDateTime = new Date(event.startTime);
+          const dateStr = startDateTime.toISOString().split('T')[0]; // YYYY-MM-DD
+          const timeStr = startDateTime.toTimeString().split(' ')[0].substring(0, 5); // HH:mm
+          
+          return {
+            id: event.id, // Use the database UUID
+            title: event.title,
+            startTime: timeStr, // Just the time portion (HH:mm)
+            duration: 1,
+            colour: event.color,
+            colourTagId: event.colorKeyId, // Fixed field name
+            day: dateStr, // Date in YYYY-MM-DD format
+            monthKey: getCurrentMonthKey(startDateTime)
+          };
+        });
         
         // Load color categories from calendar for compatibility
         let allColorKeys = defaultTimeBlockingData.colourTags;
