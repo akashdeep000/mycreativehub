@@ -281,11 +281,7 @@ export default function TimeBlocking() {
       // Save notification removed as requested by user
     } catch (error) {
       console.error('Failed to save time blocking data:', error);
-      toast({
-        title: "Save Error",
-        description: "Failed to save your time blocks. Please try again.",
-        variant: "destructive",
-      });
+      // Error toast removed to prevent flickering - errors logged to console instead
     }
   };
 
