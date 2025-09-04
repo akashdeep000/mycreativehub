@@ -37,7 +37,7 @@ export const routeMap: Record<string, string> = navigationItems.reduce((map, ite
 }, {} as Record<string, string>);
 
 // Add additional route mappings for specific modules
-routeMap["Time Blocking Planner"] = "/time-blocking-planner";
+// routeMap["Time Blocking Planner"] = "/time-blocking-planner"; // Removed - now handled within Streamline Workflow
 
 // Create module order mapping for dashboard card sorting
 export const moduleOrderMap: Record<string, number> = navigationItems.reduce((map, item, index) => {
