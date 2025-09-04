@@ -280,10 +280,10 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         credentials: 'include',
         body: JSON.stringify({
           title: blockTitle,
-          date: day,
-          startTime: `${hour.toString().padStart(2, '0')}:00`,
+          startTime: `${day}T${hour.toString().padStart(2, '0')}:00:00.000Z`,
+          endTime: `${day}T${(hour + 1).toString().padStart(2, '0')}:00:00.000Z`,
           color: colour,
-          categoryId: useColourTagId || null
+          colorKeyId: useColourTagId || null
         })
       });
 
@@ -348,9 +348,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         credentials: 'include',
         body: JSON.stringify({
           title: updates.title,
-          startTime: updates.startTime,
           color: updates.colour,
-          categoryId: updates.colourTagId
+          colorKeyId: updates.colourTagId
         })
       });
 
