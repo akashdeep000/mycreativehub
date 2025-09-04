@@ -321,17 +321,16 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       const savedEvent = await response.json();
       console.log(`✅ Event created with ID: ${savedEvent.id}`);
       
-      // Update the block with real database ID
-      const finalUpdatedData = {
-        ...data,
+      // Update the block with real database ID - use setData callback to get current state
+      setData(currentData => ({
+        ...currentData,
         monthlyView: {
-          ...data.monthlyView,
-          blocks: data.monthlyView.blocks.map(block => 
+          ...currentData.monthlyView,
+          blocks: currentData.monthlyView.blocks.map(block => 
             block.id === tempId ? { ...block, id: savedEvent.id } : block
           )
         }
-      };
-      setData(finalUpdatedData);
+      }));
       
       // Show success toast
       toast({
