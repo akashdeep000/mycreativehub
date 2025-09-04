@@ -2109,6 +2109,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Calendar V3 - Migration endpoint to update color key labels
+  app.post('/api/calendar-v3/migrate-labels', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { year, month } = req.body;
+      
+      const calendar = await storage.getCalendarV3(userId, year, month);
+      
+      if (calendar && calendar.colorKeys) {
+        // Map old labels to new labels
+        const labelMap = {
+          'Email Marketing': 'Email',
+          'Content Creation': 'Reel', 
+          'Filming': 'Carousel',
+          'Editing': 'Post',
+          'Planning': 'Story',
+          'Product Development': 'YouTube Video',
+          'Creative Time': 'Long Form'
+        };
+        
+        const updatedColorKeys = calendar.colorKeys.map((key: any) => ({
+          ...key,
+          label: labelMap[key.label as keyof typeof labelMap] || key.label
+        }));
+        
+        // Add missing labels if we have fewer than 9 keys
+        const newLabels = ['Email', 'Reel', 'Carousel', 'Post', 'Story', 'YouTube Video', 'Long Form', 'TikTok', 'Shorts'];
+        const existingLabels = updatedColorKeys.map((k: any) => k.label);
+        const colors = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#14B8A6', '#EC4899', '#6366F1', '#F97316'];
+        
+        let nextId = Math.max(...updatedColorKeys.map((k: any) => parseInt(k.id.replace(/\D/g, '')) || 0)) + 1;
+        
+        newLabels.forEach((label, index) => {
+          if (!existingLabels.includes(label)) {
+            updatedColorKeys.push({
+              id: `tag-${nextId++}`,
+              label,
+              color: colors[index] || '#3B82F6'
+            });
+          }
+        });
+        
+        await storage.upsertCalendarV3({
+          userId,
+          year,
+          month,
+          colorKeys: updatedColorKeys,
+          days: calendar.days || []
+        });
+        
+        res.json({ success: true, updatedKeys: updatedColorKeys.length });
+      } else {
+        res.json({ success: false, message: 'No calendar found' });
+      }
+    } catch (error) {
+      console.error('Error migrating calendar labels:', error);
+      res.status(500).json({ message: 'Failed to migrate labels' });
+    }
+  });
+
   app.put('/api/calendar-v3', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;

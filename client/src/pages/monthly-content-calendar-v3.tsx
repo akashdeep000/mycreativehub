@@ -75,6 +75,29 @@ export default function MonthlyContentCalendarV3() {
       const response = await apiRequest(`/api/calendar-v3/${year}/${month}`);
       const data = await response.json();
       console.log('V3Calendar - Raw API response:', data);
+      
+      // Check if we need to migrate old labels
+      if (data?.colorKeys && data.colorKeys.some((key: any) => 
+        ['Email Marketing', 'Content Creation', 'Filming', 'Editing', 'Planning', 'Product Development', 'Creative Time'].includes(key.label)
+      )) {
+        console.log('V3Calendar - Migrating old labels to new content types');
+        try {
+          await apiRequest('/api/calendar-v3/migrate-labels', {
+            method: 'POST',
+            body: JSON.stringify({ year, month }),
+            headers: { 'Content-Type': 'application/json' }
+          });
+          // Refetch data after migration
+          const migratedResponse = await apiRequest(`/api/calendar-v3/${year}/${month}`);
+          const migratedData = await migratedResponse.json();
+          console.log('V3Calendar - Migration complete, using updated data');
+          return migratedData;
+        } catch (error) {
+          console.error('V3Calendar - Migration failed:', error);
+          return data; // Return original data if migration fails
+        }
+      }
+      
       return data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
