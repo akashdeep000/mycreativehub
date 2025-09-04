@@ -38,18 +38,81 @@ export default function TimeBlocking() {
     enabled: !!user,
   });
 
-  // Load user's existing time blocking data if available
+  // Load existing data from calendar API
   useEffect(() => {
-    if (templates && Array.isArray(templates)) {
-      const timeBlockingTemplate = templates.find((t: any) => t.templateType === 'time-blocking');
-      if (timeBlockingTemplate && timeBlockingTemplate.data) {
-        setTimeBlockingData(prev => ({
-          ...prev,
-          ...timeBlockingTemplate.data
-        }));
+    const loadTimeBlockingData = async () => {
+      try {
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth() + 1;
+        
+        // Load calendar data for current month
+        const response = await fetch(`/api/calendar-v3/${year}/${month}`);
+        if (response.ok) {
+          const calendarData = await response.json();
+          
+          // Convert calendar v3 format back to time blocking format
+          const convertCalendarToTimeBlocking = (calData: any) => {
+            const blocks: any[] = [];
+            
+            if (calData.days && Array.isArray(calData.days)) {
+              calData.days.forEach((day: any) => {
+                if (day.entries && Array.isArray(day.entries)) {
+                  day.entries.forEach((entry: any) => {
+                    blocks.push({
+                      id: entry.id,
+                      title: entry.label,
+                      startTime: entry.time,
+                      duration: 1, // Default duration
+                      colour: entry.color,
+                      colourTagId: entry.colorKeyId,
+                      day: day.date,
+                      monthKey: `${calData.year}-M${String(calData.month).padStart(2, '0')}`
+                    });
+                  });
+                }
+              });
+            }
+            
+            // Convert colorKeys to colourTags format
+            const colourTags = calData.colorKeys?.map((key: any) => ({
+              id: key.id,
+              label: key.label,
+              colour: key.color,
+              selected: false
+            })) || defaultTimeBlockingData.colourTags;
+            
+            return {
+              monthlyView: {
+                blocks,
+                selectedMonth: `${calData.year}-${String(calData.month).padStart(2, '0')}`
+              },
+              weeklyView: {
+                blocks: [] // For now, focus on monthly view
+              },
+              colourTags
+            };
+          };
+          
+          const timeBlockData = convertCalendarToTimeBlocking(calendarData);
+          setTimeBlockingData(prev => ({
+            ...prev,
+            ...timeBlockData
+          }));
+          
+          console.log('Time blocking data loaded successfully from calendar API');
+        }
+      } catch (error) {
+        console.error('Failed to load time blocking data:', error);
+        // Fall back to default data if loading fails
+        setTimeBlockingData(defaultTimeBlockingData);
       }
+    };
+    
+    if (isAuthenticated && !isLoading) {
+      loadTimeBlockingData();
     }
-  }, [templates]);
+  }, [isAuthenticated, isLoading]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -68,19 +131,72 @@ export default function TimeBlocking() {
 
   // Save function for the time blocking planner
   const handleSave = async (data: any) => {
-    if (!templates || !Array.isArray(templates)) return;
-    
-    const timeBlockingTemplate = templates.find((t: any) => t.templateType === 'time-blocking');
-    if (timeBlockingTemplate) {
-      try {
-        await fetch(`/api/workflow-templates/${timeBlockingTemplate.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data }),
+    try {
+      // Convert time blocking data to calendar v3 format
+      const convertTimeBlockingToCalendarV3 = (timeBlockData: any) => {
+        const calendarData: any = {};
+        
+        // Process monthly view blocks
+        if (timeBlockData.monthlyView?.blocks) {
+          timeBlockData.monthlyView.blocks.forEach((block: any) => {
+            const blockDate = new Date(block.day);
+            const year = blockDate.getFullYear();
+            const month = blockDate.getMonth() + 1;
+            const dateStr = block.day;
+            
+            const monthKey = `${year}-${month}`;
+            
+            if (!calendarData[monthKey]) {
+              calendarData[monthKey] = {
+                year,
+                month,
+                colorKeys: timeBlockData.colourTags || [],
+                days: []
+              };
+            }
+            
+            // Find or create day entry
+            let dayEntry = calendarData[monthKey].days.find((d: any) => d.date === dateStr);
+            if (!dayEntry) {
+              dayEntry = { date: dateStr, entries: [] };
+              calendarData[monthKey].days.push(dayEntry);
+            }
+            
+            // Add time block as calendar entry
+            dayEntry.entries.push({
+              id: block.id,
+              colorKeyId: block.colourTagId || block.id,
+              label: block.title,
+              color: block.colour,
+              notes: '',
+              time: block.startTime
+            });
+          });
+        }
+        
+        return calendarData;
+      };
+      
+      const calendarData = convertTimeBlockingToCalendarV3(data);
+      
+      // Save each month's data separately
+      for (const monthKey in calendarData) {
+        const monthData = calendarData[monthKey];
+        await fetch('/api/calendar-v3', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(monthData)
         });
-      } catch (error) {
-        console.error('Failed to save time blocking data:', error);
       }
+      
+      console.log('Time blocking data saved successfully');
+    } catch (error) {
+      console.error('Failed to save time blocking data:', error);
+      toast({
+        title: "Save Error",
+        description: "Failed to save your time blocks. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
