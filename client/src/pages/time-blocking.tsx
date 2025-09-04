@@ -19,37 +19,10 @@ const defaultTimeBlockingData = {
     { id: 'tag-7', label: 'Creative Time', colour: '#EC4899', selected: false }
   ],
   weeklyView: {
-    blocks: [
-      { id: "block-1", title: "Newsletter Content", startTime: "09:00", duration: 2, colour: "#3B82F6", colourTagId: "tag-1", day: "Monday" },
-      { id: "block-2", title: "Blog Post Writing", startTime: "11:00", duration: 1, colour: "#10B981", colourTagId: "tag-2", day: "Monday" },
-      { id: "block-3", title: "Instagram Reels", startTime: "14:00", duration: 2, colour: "#8B5CF6", colourTagId: "tag-3", day: "Monday" },
-      { id: "block-4", title: "Video Editing", startTime: "09:00", duration: 1, colour: "#F59E0B", colourTagId: "tag-4", day: "Tuesday" },
-      { id: "block-5", title: "Weekly Review", startTime: "10:00", duration: 2, colour: "#EF4444", colourTagId: "tag-5", day: "Tuesday" },
-      { id: "block-6", title: "Course Development", startTime: "09:00", duration: 3, colour: "#14B8A6", colourTagId: "tag-6", day: "Wednesday" },
-      { id: "block-7", title: "Brainstorming Session", startTime: "13:00", duration: 1, colour: "#EC4899", colourTagId: "tag-7", day: "Wednesday" }
-    ]
+    blocks: []
   },
   monthlyView: {
-    blocks: [
-      { 
-        id: "month-1", 
-        title: "Product Launch Planning", 
-        startTime: "10:00", 
-        duration: 1, 
-        colour: "#EF4444", 
-        colourTagId: "tag-5",
-        day: new Date().toISOString().split('T')[0]
-      },
-      { 
-        id: "month-2", 
-        title: "Content Filming Day", 
-        startTime: "09:00", 
-        duration: 4, 
-        colour: "#8B5CF6", 
-        colourTagId: "tag-3",
-        day: new Date(Date.now() + 86400000).toISOString().split('T')[0]
-      }
-    ],
+    blocks: [],
     selectedMonth: new Date().toISOString().substring(0, 7)
   }
 };
