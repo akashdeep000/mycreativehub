@@ -267,8 +267,35 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     // Auto-fill with category label if no title provided
     const blockTitle = title || selectedColourTag?.label || 'Untitled';
     
+    // Create temporary ID for optimistic update
+    const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Create block for immediate UI update (optimistic)
+    const newBlock: TimeBlock = {
+      id: tempId,
+      title: blockTitle,
+      startTime: `${hour.toString().padStart(2, '0')}:00`,
+      duration: 1,
+      colour,
+      colourTagId: useColourTagId,
+      day,
+      monthKey: getCurrentMonthKey()
+    };
+
+    // Update UI immediately (optimistic update)
+    const updatedData = {
+      ...data,
+      monthlyView: {
+        ...data.monthlyView,
+        blocks: [...data.monthlyView.blocks, newBlock]
+      }
+    };
+    setData(updatedData);
+    setIsCreatingBlock(null);
+    setNewBlockTitle('');
+    
     try {
-      // Save to database immediately using events API
+      // Save to database in background
       console.log(`🔄 Creating time block: ${blockTitle} on ${day} at ${hour}:00`);
       
       const response = await fetch('/api/time-blocking-events', {
@@ -294,36 +321,24 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       const savedEvent = await response.json();
       console.log(`✅ Event created with ID: ${savedEvent.id}`);
       
+      // Update the block with real database ID
+      const finalUpdatedData = {
+        ...data,
+        monthlyView: {
+          ...data.monthlyView,
+          blocks: data.monthlyView.blocks.map(block => 
+            block.id === tempId ? { ...block, id: savedEvent.id } : block
+          )
+        }
+      };
+      setData(finalUpdatedData);
+      
       // Show success toast
       toast({
         title: "Saved ✓",
         description: `${blockTitle} added successfully`,
         duration: 2000
       });
-
-      // Create block with database ID for local state
-      const newBlock: TimeBlock = {
-        id: savedEvent.id, // Use database UUID
-        title: blockTitle,
-        startTime: `${hour.toString().padStart(2, '0')}:00`,
-        duration: 1,
-        colour,
-        colourTagId: useColourTagId,
-        day,
-        monthKey: getCurrentMonthKey()
-      };
-
-      const updatedData = {
-        ...data,
-        monthlyView: {
-          ...data.monthlyView,
-          blocks: [...data.monthlyView.blocks, newBlock]
-        }
-      };
-
-      setData(updatedData);
-      setIsCreatingBlock(null);
-      setNewBlockTitle('');
       
     } catch (error) {
       console.error('❌ Failed to create time block:', error);
