@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Upload, X, Edit, Palette, Image } from "lucide-react";
+import { Plus, Upload, X, Edit, Edit2, Trash2, Palette, Image } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Image {
@@ -310,15 +310,17 @@ export default function CreativeInspirationHub({ templateId, initialData, onSave
                         size="sm"
                         variant="ghost"
                         onClick={() => setEditingNote(note.id)}
+                        title="Edit note"
                       >
-                        <Edit className="h-3 w-3" />
+                        <Edit2 className="h-3 w-3" />
                       </Button>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => handleNoteRemove(note.id)}
+                        title="Delete note"
                       >
-                        <X className="h-3 w-3" />
+                        <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
                   </>
