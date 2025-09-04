@@ -1330,6 +1330,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/inspiration-boards/:id/notes/:noteId', jwtAuth, async (req: any, res) => {
+    try {
+      const { id, noteId } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      const updatedNote = await storage.updateBoardNote(parseInt(noteId), req.body);
+      if (!updatedNote) {
+        return res.status(404).json({ message: "Note not found" });
+      }
+      
+      res.json(updatedNote);
+    } catch (error) {
+      console.error("Error updating board note:", error);
+      res.status(500).json({ message: "Failed to update board note" });
+    }
+  });
+
+  app.delete('/api/inspiration-boards/:id/notes/:noteId', jwtAuth, async (req: any, res) => {
+    try {
+      const { id, noteId } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      await storage.deleteBoardNote(parseInt(noteId));
+      res.json({ message: "Note deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting board note:", error);
+      res.status(500).json({ message: "Failed to delete board note" });
+    }
+  });
+
   app.get('/api/inspiration-boards/:id/palettes', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;

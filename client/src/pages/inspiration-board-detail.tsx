@@ -225,6 +225,11 @@ export default function InspirationBoardDetail() {
   const [newNote, setNewNote] = useState({ title: "", content: "", color: "yellow" });
   const [newLink, setNewLink] = useState({ url: "", title: "", description: "" });
   const [newPalette, setNewPalette] = useState({ name: "", colors: ["#ffffff"] });
+  const [isEditNoteDialogOpen, setIsEditNoteDialogOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState<InspirationBoardNote | null>(null);
+  const [noteToDelete, setNoteToDelete] = useState<number | null>(null);
+  const [editNoteData, setEditNoteData] = useState({ title: "", content: "", color: "yellow" });
 
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
@@ -365,9 +370,29 @@ export default function InspirationBoardDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "notes"] });
+      setIsDeleteConfirmOpen(false);
+      setNoteToDelete(null);
       toast({
         title: "Note Deleted",
         description: "The note has been removed from your board.",
+      });
+    },
+  });
+
+  const updateNoteMutation = useMutation({
+    mutationFn: async ({ noteId, data }: { noteId: number; data: any }) => {
+      return await apiRequest(`/api/inspiration-boards/${id}/notes/${noteId}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "notes"] });
+      setIsEditNoteDialogOpen(false);
+      setEditingNote(null);
+      toast({
+        title: "Note Updated",
+        description: "Your note has been updated successfully.",
       });
     },
   });
@@ -425,22 +450,44 @@ export default function InspirationBoardDetail() {
   };
 
   const handleEditNote = (note: InspirationBoardNote) => {
-    // For now, just show a simple prompt - could be enhanced with a proper edit dialog
-    const newContent = prompt("Edit note content:", note.content);
-    if (newContent !== null && newContent.trim() !== note.content) {
-      // Note: We'd need an update note mutation, for now we'll implement delete
-      toast({
-        title: "Edit not implemented",
-        description: "Edit functionality coming soon. You can delete and recreate the note.",
-        variant: "destructive",
-      });
-    }
+    setEditingNote(note);
+    setEditNoteData({
+      title: note.title || "",
+      content: note.content,
+      color: note.color
+    });
+    setIsEditNoteDialogOpen(true);
   };
 
   const handleDeleteNote = (noteId: number) => {
-    if (confirm("Are you sure you want to delete this note?")) {
-      deleteNoteMutation.mutate(noteId);
+    setNoteToDelete(noteId);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (noteToDelete) {
+      deleteNoteMutation.mutate(noteToDelete);
     }
+  };
+
+  const handleUpdateNote = () => {
+    if (!editingNote || !editNoteData.content.trim()) {
+      toast({
+        title: "Content Required",
+        description: "Please enter some content for your note.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateNoteMutation.mutate({
+      noteId: editingNote.id,
+      data: {
+        title: editNoteData.title.trim() || null,
+        content: editNoteData.content.trim(),
+        color: editNoteData.color
+      }
+    });
   };
 
   const handleAddPalette = () => {
@@ -1310,6 +1357,86 @@ export default function InspirationBoardDetail() {
       </div>
 
       <MobileNav />
+
+      {/* Edit Note Dialog */}
+      <Dialog open={isEditNoteDialogOpen} onOpenChange={setIsEditNoteDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Note</DialogTitle>
+            <DialogDescription>
+              Update your inspiration note content and styling.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Title (Optional)</label>
+              <Input
+                value={editNoteData.title}
+                onChange={(e) => setEditNoteData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="e.g. Color inspiration for logo"
+              />
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Content</label>
+              <Textarea
+                value={editNoteData.content}
+                onChange={(e) => setEditNoteData(prev => ({ ...prev, content: e.target.value }))}
+                placeholder="Your inspiration thoughts..."
+                rows={4}
+              />
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Color</label>
+              <Select
+                value={editNoteData.color}
+                onValueChange={(value) => setEditNoteData(prev => ({ ...prev, color: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {noteColors.map((color) => (
+                    <SelectItem key={color.value} value={color.value}>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-4 h-4 rounded-full ${color.class}`} />
+                        {color.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditNoteDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdateNote} disabled={updateNoteMutation.isPending}>
+              {updateNoteMutation.isPending ? "Updating..." : "Update Note"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Note</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this note? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmDelete} 
+              disabled={deleteNoteMutation.isPending}
+            >
+              {deleteNoteMutation.isPending ? "Deleting..." : "Delete Note"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
