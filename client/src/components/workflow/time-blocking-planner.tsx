@@ -1144,7 +1144,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       <div className="text-xs text-gray-500 space-y-1">
         <p><strong>Tips:</strong></p>
         <ul className="list-disc list-inside space-y-1">
-          <li className="text-[14px]">Try blocking similar tasks on the same days so your brain isn't constantly context-switching - stay in one mode, focus deeper, and boost productivity.</li>
+          <li className="text-[14px]">Try blocking similar tasks on the same days so your brain isn't constantly context-switching. Stay in one mode, focus deeper, and boost productivity.</li>
           <li>Use the hover menu to delete blocks</li>
         </ul>
       </div>
