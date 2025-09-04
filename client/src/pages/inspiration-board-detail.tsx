@@ -22,6 +22,7 @@ import {
   Pin,
   Trash2,
   Edit,
+  Edit2,
   Save,
   X,
   Download,
@@ -356,6 +357,21 @@ export default function InspirationBoardDetail() {
     },
   });
 
+  const deleteNoteMutation = useMutation({
+    mutationFn: async (noteId: number) => {
+      return await apiRequest(`/api/inspiration-boards/${id}/notes/${noteId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "notes"] });
+      toast({
+        title: "Note Deleted",
+        description: "The note has been removed from your board.",
+      });
+    },
+  });
+
   const handleTitleSave = () => {
     if (boardTitle.trim() && boardTitle !== board?.title) {
       updateBoardMutation.mutate({ title: boardTitle.trim() });
@@ -406,6 +422,25 @@ export default function InspirationBoardDetail() {
       description: newLink.description.trim() || null,
       position: links.length,
     });
+  };
+
+  const handleEditNote = (note: InspirationBoardNote) => {
+    // For now, just show a simple prompt - could be enhanced with a proper edit dialog
+    const newContent = prompt("Edit note content:", note.content);
+    if (newContent !== null && newContent.trim() !== note.content) {
+      // Note: We'd need an update note mutation, for now we'll implement delete
+      toast({
+        title: "Edit not implemented",
+        description: "Edit functionality coming soon. You can delete and recreate the note.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteNote = (noteId: number) => {
+    if (confirm("Are you sure you want to delete this note?")) {
+      deleteNoteMutation.mutate(noteId);
+    }
   };
 
   const handleAddPalette = () => {
@@ -995,7 +1030,7 @@ export default function InspirationBoardDetail() {
                   return (
                     <div
                       key={note.id}
-                      className={`p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow ${noteColor.class}`}
+                      className={`relative group p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow ${noteColor.class}`}
                     >
                       {note.title && (
                         <h4 className="font-semibold text-sm mb-2 text-gray-800">{note.title}</h4>
@@ -1003,6 +1038,26 @@ export default function InspirationBoardDetail() {
                       <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                         {note.content}
                       </p>
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEditNote(note)}
+                          title="Edit note"
+                          className="h-6 w-6 p-0"
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteNote(note.id)}
+                          title="Delete note"
+                          className="h-6 w-6 p-0"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   );
                 }).filter(Boolean)}
