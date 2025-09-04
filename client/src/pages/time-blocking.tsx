@@ -106,9 +106,7 @@ export default function TimeBlocking() {
           <div className="mb-8">
             <BackToDashboard />
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Time Blocking Planner</h1>
-            <p className="text-gray-600">
-              Optimize your schedule for peak productivity
-            </p>
+            <p className="text-gray-600">Optimise your schedule for peak productivity</p>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
