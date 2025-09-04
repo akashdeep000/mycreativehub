@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from 'wouter';
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import BackToDashboard from "@/components/BackToDashboard";
 import TimeBlockingPlanner from "@/components/workflow/time-blocking-planner";
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 // Helper function to generate month keys
 const getCurrentMonthKey = (date = new Date()) => {
@@ -35,6 +38,7 @@ const defaultTimeBlockingData = {
 export default function TimeBlocking() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [, setLocation] = useLocation();
   const [timeBlockingData, setTimeBlockingData] = useState(defaultTimeBlockingData);
 
   // Load existing events using the new events API (with real persistence)
@@ -181,7 +185,18 @@ export default function TimeBlocking() {
       <div className="lg:ml-64 max-w-full overflow-x-hidden">
         <main className="px-4 sm:px-6 lg:px-8 py-6">
           <div className="mb-8">
-            <BackToDashboard />
+            <div className="flex flex-wrap gap-2 mb-2">
+              <BackToDashboard />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation('/streamline-workflow')}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Streamline Your Workflow
+              </Button>
+            </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Time Blocking Planner</h1>
             <p className="text-gray-600">Optimise your schedule for peak productivity</p>
           </div>
