@@ -904,17 +904,35 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                         </div>
                         <div className="text-xs opacity-80 mt-0.5">
                           {editingTimeBlock === block.id ? (
-                            <Input
+                            <Select
                               value={block.startTime}
-                              onChange={(e) => updateTimeBlock(block.id, { startTime: e.target.value })}
-                              onBlur={() => setEditingTimeBlock(null)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') setEditingTimeBlock(null);
+                              onValueChange={(value) => {
+                                updateTimeBlock(block.id, { startTime: value });
+                                setEditingTimeBlock(null);
                               }}
-                              className="h-5 text-xs bg-white text-black border-0 rounded w-full px-1"
-                              placeholder="9:00"
-                              autoFocus
-                            />
+                            >
+                              <SelectTrigger className="h-5 text-xs bg-white text-black border-0 rounded w-full px-1">
+                                <SelectValue placeholder="Select time" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Array.from({ length: 24 }, (_, i) => {
+                                  const hour = i.toString().padStart(2, '0');
+                                  return (
+                                    <SelectItem key={`${hour}:00`} value={`${hour}:00`}>
+                                      {`${hour}:00`}
+                                    </SelectItem>
+                                  );
+                                })}
+                                {Array.from({ length: 24 }, (_, i) => {
+                                  const hour = i.toString().padStart(2, '0');
+                                  return (
+                                    <SelectItem key={`${hour}:30`} value={`${hour}:30`}>
+                                      {`${hour}:30`}
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
                           ) : (
                             <span 
                               className="cursor-pointer hover:underline"
