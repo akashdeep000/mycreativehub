@@ -294,39 +294,50 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       ...(activeView === 'weekly' ? { weekKey: getCurrentWeekKey() } : { monthKey: getCurrentMonthKey() })
     };
 
-    setData(prev => ({
-      ...prev,
+    const updatedData = {
+      ...data,
       [activeView === 'weekly' ? 'weeklyView' : 'monthlyView']: {
-        ...prev[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'],
-        blocks: [...prev[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'].blocks, newBlock]
+        ...data[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'],
+        blocks: [...data[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'].blocks, newBlock]
       }
-    }));
+    };
 
+    setData(updatedData);
     setIsCreatingBlock(null);
     setNewBlockTitle('');
-    onSave(data);
+    
+    // CRITICAL FIX: Save with the updated data, not the old data
+    onSave(updatedData);
   };
 
   const updateTimeBlock = (blockId: string, updates: Partial<TimeBlock>) => {
-    setData(prev => ({
-      ...prev,
+    const updatedData = {
+      ...data,
       [activeView === 'weekly' ? 'weeklyView' : 'monthlyView']: {
-        ...prev[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'],
-        blocks: prev[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'].blocks.map(block =>
+        ...data[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'],
+        blocks: data[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'].blocks.map(block =>
           block.id === blockId ? { ...block, ...updates } : block
         )
       }
-    }));
+    };
+    
+    setData(updatedData);
+    // Save immediately with updated data
+    onSave(updatedData);
   };
 
   const deleteTimeBlock = (blockId: string) => {
-    setData(prev => ({
-      ...prev,
+    const updatedData = {
+      ...data,
       [activeView === 'weekly' ? 'weeklyView' : 'monthlyView']: {
-        ...prev[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'],
-        blocks: prev[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'].blocks.filter(block => block.id !== blockId)
+        ...data[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'],
+        blocks: data[activeView === 'weekly' ? 'weeklyView' : 'monthlyView'].blocks.filter(block => block.id !== blockId)
       }
-    }));
+    };
+    
+    setData(updatedData);
+    // Save immediately with updated data
+    onSave(updatedData);
   };
 
   const handleDragStart = (block: TimeBlock) => {
