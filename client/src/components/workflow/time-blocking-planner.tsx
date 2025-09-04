@@ -1121,7 +1121,6 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Time Blocking Planner</h2>
           <p className="text-gray-600">Plan your schedule and manage your time with this monthly calendar view.</p>
         </div>
       </div>
