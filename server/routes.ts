@@ -1422,6 +1422,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/inspiration-boards/:id/palettes/:paletteId', jwtAuth, async (req: any, res) => {
+    try {
+      const { id, paletteId } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      const palette = await storage.updateColorPalette(parseInt(paletteId), req.body);
+      res.json(palette);
+    } catch (error) {
+      console.error("Error updating color palette:", error);
+      res.status(500).json({ message: "Failed to update color palette" });
+    }
+  });
+
+  app.delete('/api/inspiration-boards/:id/palettes/:paletteId', jwtAuth, async (req: any, res) => {
+    try {
+      const { id, paletteId } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      await storage.deleteColorPalette(parseInt(paletteId));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting color palette:", error);
+      res.status(500).json({ message: "Failed to delete color palette" });
+    }
+  });
+
   app.get('/api/inspiration-boards/:id/links', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;

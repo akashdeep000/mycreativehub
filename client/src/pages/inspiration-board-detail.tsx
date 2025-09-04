@@ -238,6 +238,11 @@ export default function InspirationBoardDetail() {
   const [editNoteData, setEditNoteData] = useState({ title: "", content: "", color: "yellow" });
   const [isDeleteImageConfirmOpen, setIsDeleteImageConfirmOpen] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<number | null>(null);
+  const [isEditPaletteDialogOpen, setIsEditPaletteDialogOpen] = useState(false);
+  const [isDeletePaletteConfirmOpen, setIsDeletePaletteConfirmOpen] = useState(false);
+  const [editingPalette, setEditingPalette] = useState<ColorPalette | null>(null);
+  const [paletteToDelete, setPaletteToDelete] = useState<number | null>(null);
+  const [editPaletteData, setEditPaletteData] = useState({ name: "", colors: ["#ffffff"] });
 
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
@@ -370,6 +375,41 @@ export default function InspirationBoardDetail() {
     },
   });
 
+  const updatePaletteMutation = useMutation({
+    mutationFn: async ({ paletteId, data }: { paletteId: number; data: any }) => {
+      return await apiRequest(`/api/inspiration-boards/${id}/palettes/${paletteId}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "palettes"] });
+      setIsEditPaletteDialogOpen(false);
+      setEditingPalette(null);
+      toast({
+        title: "Palette Updated",
+        description: "Your color palette has been updated successfully.",
+      });
+    },
+  });
+
+  const deletePaletteMutation = useMutation({
+    mutationFn: async (paletteId: number) => {
+      return await apiRequest(`/api/inspiration-boards/${id}/palettes/${paletteId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "palettes"] });
+      setIsDeletePaletteConfirmOpen(false);
+      setPaletteToDelete(null);
+      toast({
+        title: "Palette Deleted",
+        description: "The color palette has been removed from your board.",
+      });
+    },
+  });
+
   const deleteNoteMutation = useMutation({
     mutationFn: async (noteId: number) => {
       return await apiRequest(`/api/inspiration-boards/${id}/notes/${noteId}`, {
@@ -491,6 +531,55 @@ export default function InspirationBoardDetail() {
     if (noteToDelete) {
       deleteNoteMutation.mutate(noteToDelete);
     }
+  };
+
+  const handleEditPalette = (palette: ColorPalette) => {
+    setEditingPalette(palette);
+    setEditPaletteData({
+      name: palette.name,
+      colors: Array.isArray(palette.colors) ? (palette.colors as any[]).map((c: any) => c.color || c) : ["#ffffff"]
+    });
+    setIsEditPaletteDialogOpen(true);
+  };
+
+  const handleDeletePalette = (paletteId: number) => {
+    setPaletteToDelete(paletteId);
+    setIsDeletePaletteConfirmOpen(true);
+  };
+
+  const handleConfirmDeletePalette = () => {
+    if (paletteToDelete) {
+      deletePaletteMutation.mutate(paletteToDelete);
+    }
+  };
+
+  const handleUpdatePalette = () => {
+    if (!editingPalette || !editPaletteData.name.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter a name for your color palette.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const colors = editPaletteData.colors.filter(color => color.trim());
+    if (colors.length === 0) {
+      toast({
+        title: "Colors Required",
+        description: "Please add at least one color to your palette.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updatePaletteMutation.mutate({
+      paletteId: editingPalette.id,
+      data: {
+        name: editPaletteData.name.trim(),
+        colors: colors.map(color => ({ color }))
+      }
+    });
   };
 
   const handleUpdateNote = () => {
@@ -1246,9 +1335,31 @@ export default function InspirationBoardDetail() {
                     }
                     
                     return (
-                      <Card key={palette.id} className="bg-white shadow-sm hover:shadow-md transition-shadow">
+                      <Card key={palette.id} className="bg-white shadow-sm hover:shadow-md transition-shadow group">
                         <CardHeader className="pb-3">
-                          <CardTitle className="text-base">{palette.name}</CardTitle>
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-base">{palette.name}</CardTitle>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0 hover:bg-gray-100"
+                                onClick={() => handleEditPalette(palette)}
+                                title="Edit palette"
+                              >
+                                <Edit2 className="w-3 h-3 text-gray-500" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0 hover:bg-gray-100"
+                                onClick={() => handleDeletePalette(palette.id)}
+                                title="Delete palette"
+                              >
+                                <Trash2 className="w-3 h-3 text-red-600" />
+                              </Button>
+                            </div>
+                          </div>
                         </CardHeader>
                         <CardContent>
                           <div className="grid grid-cols-5 gap-2">
@@ -1492,6 +1603,107 @@ export default function InspirationBoardDetail() {
               disabled={deleteImageMutation.isPending}
             >
               {deleteImageMutation.isPending ? "Deleting..." : "Delete Image"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Palette Dialog */}
+      <Dialog open={isEditPaletteDialogOpen} onOpenChange={setIsEditPaletteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Color Palette</DialogTitle>
+            <DialogDescription>
+              Update the name and colors for your palette.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Palette Name</label>
+              <Input
+                value={editPaletteData.name}
+                onChange={(e) => setEditPaletteData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="e.g. Brand Colors"
+              />
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Colors</label>
+              <div className="space-y-2">
+                {editPaletteData.colors.map((color, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      type="color"
+                      value={color}
+                      onChange={(e) => {
+                        const newColors = [...editPaletteData.colors];
+                        newColors[index] = e.target.value;
+                        setEditPaletteData(prev => ({ ...prev, colors: newColors }));
+                      }}
+                      className="w-16 h-10 p-1 border rounded"
+                    />
+                    <Input
+                      value={color}
+                      onChange={(e) => {
+                        const newColors = [...editPaletteData.colors];
+                        newColors[index] = e.target.value;
+                        setEditPaletteData(prev => ({ ...prev, colors: newColors }));
+                      }}
+                      placeholder="#000000"
+                      className="flex-1"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        const newColors = editPaletteData.colors.filter((_, i) => i !== index);
+                        setEditPaletteData(prev => ({ ...prev, colors: newColors }));
+                      }}
+                      disabled={editPaletteData.colors.length <= 1}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setEditPaletteData(prev => ({ ...prev, colors: [...prev.colors, "#ffffff"] }));
+                  }}
+                  className="w-full"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Color
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditPaletteDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdatePalette} disabled={updatePaletteMutation.isPending}>
+              {updatePaletteMutation.isPending ? "Updating..." : "Update Palette"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Palette Confirmation Dialog */}
+      <Dialog open={isDeletePaletteConfirmOpen} onOpenChange={setIsDeletePaletteConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Color Palette</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this color palette? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeletePaletteConfirmOpen(false)}>Cancel</Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmDeletePalette} 
+              disabled={deletePaletteMutation.isPending}
+            >
+              {deletePaletteMutation.isPending ? "Deleting..." : "Delete Palette"}
             </Button>
           </DialogFooter>
         </DialogContent>
