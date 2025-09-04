@@ -31,6 +31,7 @@ export default function TimeBlocking() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [timeBlockingData, setTimeBlockingData] = useState(defaultTimeBlockingData);
+  const [saveToastTimer, setSaveToastTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Remove workflow templates dependency - now using calendar API directly
 
@@ -114,7 +115,7 @@ export default function TimeBlocking() {
               selectedMonth: `${currentYear}-${String(currentMonth).padStart(2, '0')}`
             },
             weeklyView: {
-              blocks: [] // For now, focus on monthly view
+              blocks: allBlocks // CRITICAL FIX: Weekly view should use the same blocks
             },
             colourTags: finalColorTags
           };
@@ -200,6 +201,44 @@ export default function TimeBlocking() {
           });
         }
         
+        // Process weekly view blocks (CRITICAL FIX - was missing!)
+        if (timeBlockData.weeklyView?.blocks) {
+          timeBlockData.weeklyView.blocks.forEach((block: any) => {
+            const blockDate = new Date(block.day);
+            const year = blockDate.getFullYear();
+            const month = blockDate.getMonth() + 1;
+            const dateStr = block.day;
+            
+            const monthKey = `${year}-${month}`;
+            
+            if (!calendarData[monthKey]) {
+              calendarData[monthKey] = {
+                year,
+                month,
+                colorKeys: timeBlockData.colourTags || [],
+                days: []
+              };
+            }
+            
+            // Find or create day entry
+            let dayEntry = calendarData[monthKey].days.find((d: any) => d.date === dateStr);
+            if (!dayEntry) {
+              dayEntry = { date: dateStr, entries: [] };
+              calendarData[monthKey].days.push(dayEntry);
+            }
+            
+            // Add time block as calendar entry
+            dayEntry.entries.push({
+              id: block.id,
+              colorKeyId: block.colourTagId || block.id,
+              label: block.title,
+              color: block.colour,
+              notes: '',
+              time: block.startTime
+            });
+          });
+        }
+        
         return calendarData;
       };
       
@@ -233,12 +272,20 @@ export default function TimeBlocking() {
       
       console.log(`🎉 Time blocking data saved successfully! (${savedCount} months saved)`);
       
-      // Show success toast to user
-      toast({
-        title: "Saved ✓",
-        description: `Your time blocks have been saved successfully.`,
-        duration: 2000,
-      });
+      // Debounced success toast to prevent flickering
+      if (saveToastTimer) {
+        clearTimeout(saveToastTimer);
+      }
+      
+      const newTimer = setTimeout(() => {
+        toast({
+          title: "Saved ✓",
+          description: `Your time blocks have been saved successfully.`,
+          duration: 2000,
+        });
+      }, 300); // 300ms debounce
+      
+      setSaveToastTimer(newTimer);
     } catch (error) {
       console.error('Failed to save time blocking data:', error);
       toast({
