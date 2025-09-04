@@ -1800,11 +1800,17 @@ export class DatabaseStorage implements IStorage {
   async createTimeBlockingEvent(eventData: InsertTimeBlockingEvent): Promise<TimeBlockingEvent> {
     const eventId = `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
+    // Convert string timestamps to Date objects if needed
+    const startTime = typeof eventData.startTime === 'string' ? new Date(eventData.startTime) : eventData.startTime;
+    const endTime = typeof eventData.endTime === 'string' ? new Date(eventData.endTime) : eventData.endTime;
+    
     const [event] = await db
       .insert(timeBlockingEvents)
       .values({
         ...eventData,
         id: eventId,
+        startTime,
+        endTime,
       })
       .returning();
     
