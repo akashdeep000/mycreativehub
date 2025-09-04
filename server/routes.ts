@@ -2087,11 +2087,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           year,
           month,
           colorKeys: [
-            { id: '1', label: 'Reel', color: '#FF6B9D' },
-            { id: '2', label: 'Carousel', color: '#FF8E3C' },
-            { id: '3', label: 'Photo', color: '#4ECDC4' },
-            { id: '4', label: 'Promo', color: '#6BCF7F' },
-            { id: '5', label: 'Story', color: '#BB8FCE' }
+            { id: '1', label: 'Email', color: '#3B82F6' },
+            { id: '2', label: 'Reel', color: '#10B981' },
+            { id: '3', label: 'Carousel', color: '#8B5CF6' },
+            { id: '4', label: 'Post', color: '#F59E0B' },
+            { id: '5', label: 'Story', color: '#EF4444' },
+            { id: '6', label: 'YouTube Video', color: '#14B8A6' },
+            { id: '7', label: 'Long Form', color: '#EC4899' },
+            { id: '8', label: 'TikTok', color: '#6366F1' },
+            { id: '9', label: 'Shorts', color: '#F97316' }
           ],
           days: []
         };
