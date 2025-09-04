@@ -1,0 +1,59 @@
+Planner blocks not persisting across route changes (likely missing/failed save + missing load)
+
+What I’m seeing
+
+On the Time Blocking page, my coloured blocks appear and persist while I switch views (week/month) on that page.
+
+If I navigate away from the planner and then come back, all new blocks are gone.
+
+What I think is wrong
+
+Changes are only stored in client state and not persisted, or the save request gets cancelled when the component unmounts (navigation away).
+
+On mount, the planner likely isn’t reloading saved data for the current user.
+
+Please help me with these checks/fixes
+
+Source of truth
+
+Confirm where planner data is supposed to live (Replit DB / SQLite / Supabase / localStorage).
+
+If it’s a backend DB, confirm the API endpoints used to save (POST/PUT) and load (GET) blocks.
+
+Save on change
+
+Ensure every edit/add/delete triggers a persisted write (not just setState).
+
+If saves are debounced, flush the debounce on unmount so navigation doesn’t drop pending writes.
+
+Await the save (or use navigator.sendBeacon) before route change.
+
+Load on mount
+
+On entering the planner route, fetch the saved blocks for the logged-in user and hydrate the calendar before rendering empty state.
+
+Environment mismatch
+
+Verify the planner writes and reads from the same database/URL in Deployment (no dev vs prod DB mismatch, and env vars are correct).
+
+If using Replit DB, confirm the REPLIT_DB_URL in the deployed service is the one the app reads from.
+
+Add temporary diagnostics
+
+Log to console + server whenever a save happens (user id, number of blocks, timestamp).
+
+In the browser Network tab, I should see a POST/PUT to the save endpoint right when I add a block, and a GET on page load to fetch them.
+
+If you see POSTs while editing but no GET on page load, implement the load. If you see neither, wire up both.
+
+Acceptance criteria
+
+Add a block → navigate to a different route → return to planner → the block is still there after a full reload.
+
+Turn on an explicit “Saved ✓” toast after successful write to make this visible.
+
+(Optional) If you’re using localStorage/sessionStorage instead of a DB, please:
+
+Switch to localStorage (not sessionStorage), and
+
+Guard SSR: only read/write storage inside useEffect on the client.

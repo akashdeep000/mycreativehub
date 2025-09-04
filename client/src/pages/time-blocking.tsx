@@ -205,17 +205,40 @@ export default function TimeBlocking() {
       
       const calendarData = convertTimeBlockingToCalendarV3(data);
       
-      // Save each month's data separately
+      // Save each month's data separately with proper authentication
+      let savedCount = 0;
       for (const monthKey in calendarData) {
         const monthData = calendarData[monthKey];
-        await fetch('/api/calendar-v3', {
+        console.log(`💾 Saving time blocks for ${monthKey}:`, {
+          blocks: monthData.days?.length || 0,
+          colorKeys: monthData.colorKeys?.length || 0
+        });
+        
+        const response = await fetch('/api/calendar-v3', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include', // Include session cookies for authentication
           body: JSON.stringify(monthData)
         });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to save data for ${monthKey}: ${response.status}`);
+        }
+        
+        savedCount++;
+        console.log(`✅ Successfully saved ${monthKey}`);
       }
       
-      console.log('Time blocking data saved successfully');
+      console.log(`🎉 Time blocking data saved successfully! (${savedCount} months saved)`);
+      
+      // Show success toast to user
+      toast({
+        title: "Saved ✓",
+        description: `Your time blocks have been saved successfully.`,
+        duration: 2000,
+      });
     } catch (error) {
       console.error('Failed to save time blocking data:', error);
       toast({

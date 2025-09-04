@@ -158,13 +158,37 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     }
   }, []); // Run only once on component mount
 
-  // Auto-save functionality
+  // Auto-save functionality with immediate save and cleanup
   useEffect(() => {
-    const timer = setTimeout(() => {
+    let timer: NodeJS.Timeout;
+    
+    // Save immediately for critical changes, debounce for minor ones
+    const shouldSaveImmediately = data.monthlyView.blocks.length > 0 || data.weeklyView.blocks.length > 0;
+    
+    if (shouldSaveImmediately) {
+      // Save immediately when blocks exist
       onSave(data);
-    }, 1000);
-    return () => clearTimeout(timer);
+    } else {
+      // Debounce for other changes
+      timer = setTimeout(() => {
+        onSave(data);
+      }, 1000);
+    }
+    
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [data, onSave]);
+  
+  // Flush any pending saves on unmount
+  useEffect(() => {
+    return () => {
+      // Final save before component unmounts
+      if (data.monthlyView.blocks.length > 0 || data.weeklyView.blocks.length > 0) {
+        onSave(data);
+      }
+    };
+  }, []);
 
   // Close color picker when clicking outside
   useEffect(() => {
