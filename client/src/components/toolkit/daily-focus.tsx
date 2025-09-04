@@ -385,7 +385,7 @@ export default function DailyFocus() {
   const saveTaskIfValid = async (priority: "must" | "should" | "could", source: "enter" | "blur" = "blur") => {
     const task = taskInputs[priority].trim();
     
-    // Don't save if already saving, empty, or unchanged
+    // Don't save if already saving, empty, or unchanged from last successful save
     if (savingStates[priority] || !task || task === lastSavedValues[priority]) {
       return;
     }
@@ -395,9 +395,8 @@ export default function DailyFocus() {
       return;
     }
 
-    // Set saving state to prevent duplicates and update last saved immediately
+    // Set saving state to prevent duplicates
     setSavingStates(prev => ({ ...prev, [priority]: true }));
-    setLastSavedValues(prev => ({ ...prev, [priority]: task }));
     
     try {
       console.log(`Saving task via ${source}:`, task, 'priority:', priority);
@@ -408,6 +407,9 @@ export default function DailyFocus() {
       // Clear input only after successful save
       setTaskInputs(prev => ({ ...prev, [priority]: "" }));
       
+      // Reset lastSavedValues after clearing input to allow new entries
+      setLastSavedValues(prev => ({ ...prev, [priority]: "" }));
+      
       // Show success feedback
       toast({ 
         title: "Task added ✓", 
@@ -417,8 +419,6 @@ export default function DailyFocus() {
       
     } catch (error) {
       console.error('Error saving task:', error);
-      // Reset last saved value on error
-      setLastSavedValues(prev => ({ ...prev, [priority]: "" }));
       // Error is already handled by the mutation
     } finally {
       // Reset saving state
