@@ -2152,11 +2152,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Systeme.io webhook received:', JSON.stringify(req.body, null, 2));
     
     try {
-      // Extract email from webhook data
-      // Systeme.io sends email in contact.email or email field
-      const email = req.body?.contact?.email || req.body?.email;
+      // Extract email from webhook data with comprehensive search
+      // Systeme.io can send email in various formats
+      let email = null;
+      
+      // Try different possible email field locations
+      if (req.body?.contact?.email) {
+        email = req.body.contact.email;
+      } else if (req.body?.email) {
+        email = req.body.email;
+      } else if (req.body?.customer?.email) {
+        email = req.body.customer.email;
+      } else if (req.body?.user?.email) {
+        email = req.body.user.email;
+      } else {
+        // Search for any email field in the entire object
+        const searchForEmail = (obj) => {
+          for (const key in obj) {
+            if (key.toLowerCase().includes('email') && typeof obj[key] === 'string' && obj[key].includes('@')) {
+              return obj[key];
+            }
+            if (typeof obj[key] === 'object' && obj[key] !== null) {
+              const found = searchForEmail(obj[key]);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+        email = searchForEmail(req.body);
+      }
       
       console.log('Extracted email:', email);
+      console.log('Email extraction method: comprehensive search');
       
       if (!email) {
         console.error('No email found in webhook data');
