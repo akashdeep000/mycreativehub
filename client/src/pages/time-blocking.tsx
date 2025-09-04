@@ -31,7 +31,6 @@ export default function TimeBlocking() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [timeBlockingData, setTimeBlockingData] = useState(defaultTimeBlockingData);
-  const [saveToastTimer, setSaveToastTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Remove workflow templates dependency - now using calendar API directly
 
@@ -272,20 +271,7 @@ export default function TimeBlocking() {
       
       console.log(`🎉 Time blocking data saved successfully! (${savedCount} months saved)`);
       
-      // Debounced success toast to prevent flickering
-      if (saveToastTimer) {
-        clearTimeout(saveToastTimer);
-      }
-      
-      const newTimer = setTimeout(() => {
-        toast({
-          title: "Saved ✓",
-          description: `Your time blocks have been saved successfully.`,
-          duration: 2000,
-        });
-      }, 300); // 300ms debounce
-      
-      setSaveToastTimer(newTimer);
+      // Save notification removed as requested by user
     } catch (error) {
       console.error('Failed to save time blocking data:', error);
       toast({
