@@ -1003,7 +1003,7 @@ export default function InspirationBoardDetail() {
                     <Textarea
                       value={newNote.content}
                       onChange={(e) => setNewNote(prev => ({ ...prev, content: e.target.value }))}
-                      placeholder="Add description (Optional)"
+                      placeholder="Add description"
                       rows={4}
                     />
                   </div>
