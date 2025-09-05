@@ -660,16 +660,6 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         <CardTitle className="flex items-center gap-2 text-lg">
           <Palette className="h-5 w-5" />
           Colour Key
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Click any colour tag to activate it. When you click a calendar block, the selected tag is applied automatically with editable text.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </CardTitle>
         <CardDescription>
           Select a colour category, then click a calendar block to apply it. The block will auto-fill with the category name, which you can edit anytime.
