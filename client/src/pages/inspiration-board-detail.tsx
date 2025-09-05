@@ -1073,14 +1073,7 @@ export default function InspirationBoardDetail() {
 
                   {/* Color picker section */}
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm font-medium flex items-center gap-2">
-                        <div 
-                          className="w-4 h-4 rounded border border-gray-300"
-                          style={{ backgroundColor: currentPickerColor || '#3b82f6' }}
-                        />
-                        Choose a New Colour
-                      </div>
+                    <div className="flex items-center justify-end">
                       <Button 
                         size="sm" 
                         variant="outline"
