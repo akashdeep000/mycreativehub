@@ -1601,9 +1601,7 @@ export default function InspirationBoardDetail() {
                 <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
                   <LinkIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600 font-medium mb-2">No links yet</p>
-                  <p className="text-sm text-gray-500 mb-4 max-w-md mx-auto">
-                    Use this section to save websites, Reels, or videos you want to revisit later.
-                  </p>
+                  <p className="text-sm text-gray-500 mb-4 max-w-md mx-auto">Use this section to save websites, links to Reels, or videos you want to revisit later.</p>
                   <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
                     <DialogTrigger asChild>
                       <Button variant="outline">
@@ -1882,7 +1880,6 @@ export default function InspirationBoardDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
       {/* Edit Link Dialog */}
       <Dialog open={isEditLinkDialogOpen} onOpenChange={setIsEditLinkDialogOpen}>
         <DialogContent>
@@ -1926,7 +1923,6 @@ export default function InspirationBoardDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       {/* Delete Link Confirmation Dialog */}
       <Dialog open={isDeleteLinkConfirmOpen} onOpenChange={setIsDeleteLinkConfirmOpen}>
         <DialogContent className="max-w-md">
