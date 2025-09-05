@@ -428,9 +428,29 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   };
 
   const deleteTimeBlock = async (blockId: string) => {
+    console.log(`🔄 Deleting time block: ${blockId}`);
+    
+    // Optimistic update - remove from UI immediately
+    const updatedData = {
+      ...data,
+      monthlyView: {
+        ...data.monthlyView,
+        blocks: data.monthlyView.blocks.filter(block => block.id !== blockId)
+      }
+    };
+    
+    setData(updatedData);
+    onSave(updatedData);
+    
+    // Show success toast immediately
+    toast({
+      title: "Deleted ✓",
+      description: "Time block removed successfully",
+      duration: 2000
+    });
+
     try {
-      console.log(`🔄 Deleting time block: ${blockId}`);
-      
+      // Delete from server in background
       const response = await fetch(`/api/time-blocking-events/${blockId}`, {
         method: 'DELETE',
         headers: { 
@@ -445,29 +465,24 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
 
       console.log(`✅ Event deleted: ${blockId}`);
       
-      // Show success toast
-      toast({
-        title: "Deleted ✓",
-        description: "Time block removed successfully",
-        duration: 2000
-      });
-
-      const updatedData = {
+    } catch (error) {
+      console.error('❌ Failed to delete time block:', error);
+      
+      // If server delete failed, restore the block
+      const restoredData = {
         ...data,
         monthlyView: {
           ...data.monthlyView,
-          blocks: data.monthlyView.blocks.filter(block => block.id !== blockId)
+          blocks: [...data.monthlyView.blocks]
         }
       };
       
-      setData(updatedData);
-      onSave(updatedData);
+      setData(restoredData);
+      onSave(restoredData);
       
-    } catch (error) {
-      console.error('❌ Failed to delete time block:', error);
       toast({
         title: "Delete Failed",
-        description: "Could not delete the time block. Please try again.",
+        description: "Could not delete the time block. It has been restored.",
         variant: "destructive"
       });
     }
