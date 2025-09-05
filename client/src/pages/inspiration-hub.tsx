@@ -330,10 +330,10 @@ export default function InspirationHub() {
                     }`}
                   />
                   <CardHeader className="relative z-10">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Lightbulb className="w-5 h-5 text-white" />
-                      </div>
+                    <div className="flex items-center justify-between mb-4">
+                      <CardTitle className="text-xl font-serif group-hover:text-purple-600 transition-colors">
+                        {board.title}
+                      </CardTitle>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -359,9 +359,6 @@ export default function InspirationHub() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                    <CardTitle className="text-lg font-serif group-hover:text-purple-600 transition-colors">
-                      {board.title}
-                    </CardTitle>
                     {board.description && (
                       <CardDescription className="line-clamp-2">
                         {board.description}
