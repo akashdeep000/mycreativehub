@@ -353,6 +353,26 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const updateTimeBlock = async (blockId: string, updates: Partial<TimeBlock>) => {
     console.log(`🔄 Updating time block: ${blockId}`, updates);
     
+    // Check if this is a temporary ID (still being created)
+    if (blockId.startsWith('temp_')) {
+      console.log('⏳ Block still being created, skipping server update');
+      
+      // Only update UI for temporary blocks, don't attempt server update
+      const updatedData = {
+        ...data,
+        monthlyView: {
+          ...data.monthlyView,
+          blocks: data.monthlyView.blocks.map(block =>
+            block.id === blockId ? { ...block, ...updates } : block
+          )
+        }
+      };
+      
+      setData(updatedData);
+      onSave(updatedData);
+      return;
+    }
+    
     // Optimistic update - update UI immediately
     const updatedData = {
       ...data,
