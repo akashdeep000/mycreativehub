@@ -1068,17 +1068,117 @@ export default function InspirationBoardDetail() {
                   <DialogTitle>Create Colour Palette</DialogTitle>
                   <DialogDescription>Build a custom colour palette for your inspiration board using our advanced colour picker.</DialogDescription>
                 </DialogHeader>
-                <div className="space-y-6 py-4">
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">Palette Name</label>
-                    <Input
-                      value={newPalette.name}
-                      onChange={(e) => setNewPalette(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g. Brand Colours, Collection Palette..."
-                    />
+                <div className="grid lg:grid-cols-2 gap-6 py-4">
+                  {/* Left side - Palette management */}
+                  <div className="space-y-6">
+                    <div className="grid gap-2">
+                      <label className="text-sm font-medium">Palette Name</label>
+                      <Input
+                        value={newPalette.name}
+                        onChange={(e) => setNewPalette(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g. Brand Colours, Collection Palette..."
+                      />
+                    </div>
+                    
+                    <div className="grid gap-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">Colours ({newPalette.colours.length})</label>
+                        <Button size="sm" variant="outline" onClick={addColourToPalette}>
+                          <Plus className="w-3 h-3 mr-1" />
+                          Add Colour
+                        </Button>
+                      </div>
+                      
+                      <div className="grid gap-3 max-h-80 overflow-y-auto">
+                        {newPalette.colours.map((colour, index) => (
+                          <div key={index} className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-colors cursor-pointer ${
+                            selectedColorIndex === index 
+                              ? 'border-blue-500 bg-blue-50' 
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`} onClick={() => selectColorForEditing(index)}>
+                            <div className="relative">
+                              <div 
+                                className="w-12 h-12 rounded-lg border-2 border-white shadow-sm"
+                                style={{ backgroundColor: colour }}
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <Input
+                                value={colour}
+                                onChange={(e) => updatePaletteColour(index, e.target.value)}
+                                onFocus={() => selectColorForEditing(index)}
+                                placeholder="#ffffff"
+                                className="font-mono text-sm"
+                              />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigator.clipboard.writeText(colour);
+                                  toast({
+                                    title: "Copied!",
+                                    description: `${colour} copied to clipboard`,
+                                  });
+                                }}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                              {newPalette.colours.length > 1 && (
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removePaletteColour(index);
+                                    if (selectedColorIndex === index) {
+                                      setSelectedColorIndex(null);
+                                    } else if (selectedColorIndex !== null && selectedColorIndex > index) {
+                                      setSelectedColorIndex(selectedColorIndex - 1);
+                                    }
+                                  }}
+                                  className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Colour Palette Preview */}
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h4 className="text-sm font-medium mb-3">Preview</h4>
+                        <div className="flex gap-2 flex-wrap">
+                          {newPalette.colours.map((colour, index) => (
+                            <div
+                              key={index}
+                              className={`w-10 h-10 rounded-full border-2 shadow-sm cursor-pointer transition-all ${
+                                selectedColorIndex === index 
+                                  ? 'border-blue-500 ring-2 ring-blue-200' 
+                                  : 'border-white hover:border-gray-300'
+                              }`}
+                              style={{ backgroundColor: colour }}
+                              title={colour}
+                              onClick={() => selectColorForEditing(index)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {selectedColorIndex === null && (
+                        <div className="text-center py-6 text-gray-500">
+                          <div className="text-sm">Click on a colour above to edit it with the colour picker</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Color picker section */}
+                  {/* Right side - Color picker */}
                   <div className="space-y-4">
                     {selectedColorIndex !== null ? (
                       <>
@@ -1097,105 +1197,14 @@ export default function InspirationBoardDetail() {
                         />
                       </>
                     ) : (
-                      <div className="flex items-center justify-center h-64 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
+                      <div className="flex items-center justify-center h-full min-h-96 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
                         <div className="text-center">
                           <Pipette className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                          <div className="text-sm">Select a colour below to start editing</div>
-                          <div className="text-xs text-gray-400 mt-1">Or add a new colour to get started</div>
+                          <div className="text-sm">Select a colour to start editing</div>
+                          <div className="text-xs text-gray-400 mt-1">Click any colour swatch on the left</div>
                         </div>
                       </div>
                     )}
-                  </div>
-                  
-                  <div className="grid gap-4">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium">Selected Colours ({newPalette.colours.length})</label>
-                      <Button size="sm" variant="outline" onClick={addColourToPalette}>
-                        <Plus className="w-3 h-3 mr-1" />
-                        Add Colour
-                      </Button>
-                    </div>
-                    
-                    <div className="grid gap-3 max-h-60 overflow-y-auto">
-                      {newPalette.colours.map((colour, index) => (
-                        <div key={index} className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-colors cursor-pointer ${
-                          selectedColorIndex === index 
-                            ? 'border-blue-500 bg-blue-50' 
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`} onClick={() => selectColorForEditing(index)}>
-                          <div className="relative">
-                            <div 
-                              className="w-12 h-12 rounded-lg border-2 border-white shadow-sm"
-                              style={{ backgroundColor: colour }}
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <Input
-                              value={colour}
-                              onChange={(e) => updatePaletteColour(index, e.target.value)}
-                              onFocus={() => selectColorForEditing(index)}
-                              placeholder="#ffffff"
-                              className="font-mono text-sm"
-                            />
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigator.clipboard.writeText(colour);
-                                toast({
-                                  title: "Copied!",
-                                  description: `${colour} copied to clipboard`,
-                                });
-                              }}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Copy className="w-4 h-4" />
-                            </Button>
-                            {newPalette.colours.length > 1 && (
-                              <Button 
-                                size="sm" 
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removePaletteColour(index);
-                                  if (selectedColorIndex === index) {
-                                    setSelectedColorIndex(null);
-                                  } else if (selectedColorIndex !== null && selectedColorIndex > index) {
-                                    setSelectedColorIndex(selectedColorIndex - 1);
-                                  }
-                                }}
-                                className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Colour Palette Preview */}
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <h4 className="text-sm font-medium mb-3">Preview</h4>
-                      <div className="flex gap-2 flex-wrap">
-                        {newPalette.colours.map((colour, index) => (
-                          <div
-                            key={index}
-                            className={`w-10 h-10 rounded-full border-2 shadow-sm cursor-pointer transition-all ${
-                              selectedColorIndex === index 
-                                ? 'border-blue-500 ring-2 ring-blue-200' 
-                                : 'border-white hover:border-gray-300'
-                            }`}
-                            style={{ backgroundColor: colour }}
-                            title={colour}
-                            onClick={() => selectColorForEditing(index)}
-                          />
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 </div>
                 <DialogFooter>
