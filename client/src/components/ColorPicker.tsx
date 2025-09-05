@@ -386,7 +386,7 @@ export function ColorPicker({ value, onChange, recentColors = [], onAddToRecent 
             onClick={handleEyeDropper}
             className="ml-auto"
           >
-            🎨
+            <Pipette className="w-4 h-4" />
           </Button>
         )}
       </div>
