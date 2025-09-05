@@ -638,7 +638,7 @@ export default function InspirationBoardDetail() {
     addPaletteMutation.mutate({
       boardId: parseInt(id!),
       name: newPalette.name.trim(),
-      colours: colours.map(colour => ({ colour: colour.trim() })),
+      colors: colours.map(colour => ({ color: colour.trim() })),
     });
   };
 
