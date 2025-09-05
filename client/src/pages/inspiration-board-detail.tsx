@@ -1098,7 +1098,7 @@ export default function InspirationBoardDetail() {
                     ) : (
                       <div className="flex items-center justify-center h-64 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
                         <div className="text-center">
-                          <div className="text-4xl mb-2">🎨</div>
+                          <Pipette className="w-12 h-12 mx-auto mb-2 text-gray-400" />
                           <div className="text-sm">Select a colour below to start editing</div>
                           <div className="text-xs text-gray-400 mt-1">Or add a new colour to get started</div>
                         </div>
