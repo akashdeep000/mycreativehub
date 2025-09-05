@@ -661,9 +661,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           <Palette className="h-5 w-5" />
           Colour Key
         </CardTitle>
-        <CardDescription>
-          Select a colour category, then click a calendar block to apply it. The block will auto-fill with the category name, which you can edit anytime.
-        </CardDescription>
+        <CardDescription>Select a colour category, then click a calendar block to apply it. The block will auto-fill with the category name.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-3 items-center">
