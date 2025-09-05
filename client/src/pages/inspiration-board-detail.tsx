@@ -233,6 +233,11 @@ export default function InspirationBoardDetail() {
   const [boardTitle, setBoardTitle] = useState("");
   const [newNote, setNewNote] = useState({ title: "", content: "", color: "yellow" });
   const [newLink, setNewLink] = useState({ url: "", title: "", description: "" });
+  const [editingLink, setEditingLink] = useState<BoardLink | null>(null);
+  const [editLinkData, setEditLinkData] = useState({ url: "", title: "", description: "" });
+  const [isEditLinkDialogOpen, setIsEditLinkDialogOpen] = useState(false);
+  const [linkToDelete, setLinkToDelete] = useState<number | null>(null);
+  const [isDeleteLinkConfirmOpen, setIsDeleteLinkConfirmOpen] = useState(false);
   const [newPalette, setNewPalette] = useState({ name: "", colours: [] });
   const [selectedColorIndex, setSelectedColorIndex] = useState<number | null>(null);
   const [currentPickerColor, setCurrentPickerColor] = useState<string>('#3b82f6');
@@ -359,6 +364,41 @@ export default function InspirationBoardDetail() {
       toast({
         title: "Link Added",
         description: "Reference link has been added to your board.",
+      });
+    },
+  });
+
+  const updateLinkMutation = useMutation({
+    mutationFn: async ({ linkId, data }: { linkId: number; data: any }) => {
+      return await apiRequest(`/api/inspiration-boards/${id}/links/${linkId}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "links"] });
+      setIsEditLinkDialogOpen(false);
+      setEditingLink(null);
+      toast({
+        title: "Link Updated",
+        description: "Your reference link has been updated successfully.",
+      });
+    },
+  });
+
+  const deleteLinkMutation = useMutation({
+    mutationFn: async (linkId: number) => {
+      return await apiRequest(`/api/inspiration-boards/${id}/links/${linkId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "links"] });
+      setIsDeleteLinkConfirmOpen(false);
+      setLinkToDelete(null);
+      toast({
+        title: "Link Deleted",
+        description: "The reference link has been removed from your board.",
       });
     },
   });
@@ -516,6 +556,47 @@ export default function InspirationBoardDetail() {
       description: newLink.description.trim() || null,
       position: links.length,
     });
+  };
+
+  const handleEditLink = (link: BoardLink) => {
+    setEditingLink(link);
+    setEditLinkData({
+      url: link.url,
+      title: link.title || "",
+      description: link.description || "",
+    });
+    setIsEditLinkDialogOpen(true);
+  };
+
+  const handleUpdateLink = () => {
+    if (!editingLink || !editLinkData.url.trim()) {
+      toast({
+        title: "URL Required",
+        description: "Please enter a URL for the reference link.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateLinkMutation.mutate({
+      linkId: editingLink.id,
+      data: {
+        url: editLinkData.url.trim(),
+        title: editLinkData.title.trim() || null,
+        description: editLinkData.description.trim() || null,
+      }
+    });
+  };
+
+  const handleDeleteLink = (linkId: number) => {
+    setLinkToDelete(linkId);
+    setIsDeleteLinkConfirmOpen(true);
+  };
+
+  const handleConfirmDeleteLink = () => {
+    if (linkToDelete) {
+      deleteLinkMutation.mutate(linkToDelete);
+    }
   };
 
   const handleEditNote = (note: InspirationBoardNote) => {
@@ -1491,9 +1572,26 @@ export default function InspirationBoardDetail() {
                               {link.url.length > 60 ? `${link.url.substring(0, 60)}...` : link.url}
                             </a>
                           </div>
-                          <Button size="sm" variant="ghost" className="text-gray-400 hover:text-gray-600">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="text-gray-400 hover:text-blue-600"
+                              onClick={() => handleEditLink(link)}
+                              title="Edit link"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="text-gray-400 hover:text-red-600"
+                              onClick={() => handleDeleteLink(link.id)}
+                              title="Delete link"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1780,6 +1878,72 @@ export default function InspirationBoardDetail() {
               disabled={deletePaletteMutation.isPending}
             >
               {deletePaletteMutation.isPending ? "Deleting..." : "Delete Palette"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Link Dialog */}
+      <Dialog open={isEditLinkDialogOpen} onOpenChange={setIsEditLinkDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Reference Link</DialogTitle>
+            <DialogDescription>Update your reference link details.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Description</label>
+              <Input
+                value={editLinkData.title}
+                onChange={(e) => setEditLinkData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="e.g. Reel about painting techniques"
+              />
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">URL</label>
+              <Input
+                value={editLinkData.url}
+                onChange={(e) => setEditLinkData(prev => ({ ...prev, url: e.target.value }))}
+                placeholder="https://example.com"
+                type="url"
+              />
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Notes (Optional)</label>
+              <Textarea
+                value={editLinkData.description}
+                onChange={(e) => setEditLinkData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Additional notes about this resource..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditLinkDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdateLink} disabled={updateLinkMutation.isPending}>
+              {updateLinkMutation.isPending ? "Updating..." : "Update Link"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Link Confirmation Dialog */}
+      <Dialog open={isDeleteLinkConfirmOpen} onOpenChange={setIsDeleteLinkConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Reference Link</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this reference link? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteLinkConfirmOpen(false)}>Cancel</Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmDeleteLink} 
+              disabled={deleteLinkMutation.isPending}
+            >
+              {deleteLinkMutation.isPending ? "Deleting..." : "Delete Link"}
             </Button>
           </DialogFooter>
         </DialogContent>

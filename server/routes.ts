@@ -1493,6 +1493,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/inspiration-boards/:id/links/:linkId', jwtAuth, async (req: any, res) => {
+    try {
+      const { id, linkId } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      const link = await storage.updateBoardLink(parseInt(linkId), req.body);
+      res.json(link);
+    } catch (error) {
+      console.error("Error updating board link:", error);
+      res.status(500).json({ message: "Failed to update board link" });
+    }
+  });
+
+  app.delete('/api/inspiration-boards/:id/links/:linkId', jwtAuth, async (req: any, res) => {
+    try {
+      const { id, linkId } = req.params;
+      const board = await storage.getInspirationBoard(parseInt(id));
+      
+      if (!board || board.userId !== req.user.id) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      
+      await storage.deleteBoardLink(parseInt(linkId));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting board link:", error);
+      res.status(500).json({ message: "Failed to delete board link" });
+    }
+  });
+
   // Focus session logging
   app.post('/api/focus/log', jwtAuth, async (req: any, res) => {
     try {
