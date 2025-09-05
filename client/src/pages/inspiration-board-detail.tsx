@@ -41,9 +41,7 @@ const noteColours = [
   { value: "yellow", class: "bg-yellow-200 border-yellow-300", label: "Yellow" },
   { value: "pink", class: "bg-pink-200 border-pink-300", label: "Pink" },
   { value: "blue", class: "bg-blue-200 border-blue-300", label: "Blue" },
-  { value: "green", class: "bg-green-200 border-green-300", label: "Green" },
-  { value: "purple", class: "bg-purple-200 border-purple-300", label: "Purple" },
-  { value: "orange", class: "bg-orange-200 border-orange-300", label: "Orange" },
+  { value: "lilac", class: "bg-purple-200 border-purple-300", label: "Lilac" },
 ];
 
 const backgroundOptions = [
@@ -228,14 +226,14 @@ export default function InspirationBoardDetail() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [boardTitle, setBoardTitle] = useState("");
-  const [newNote, setNewNote] = useState({ title: "", content: "", colour: "yellow" });
+  const [newNote, setNewNote] = useState({ title: "", content: "", color: "yellow" });
   const [newLink, setNewLink] = useState({ url: "", title: "", description: "" });
   const [newPalette, setNewPalette] = useState({ name: "", colours: ["#ffffff"] });
   const [isEditNoteDialogOpen, setIsEditNoteDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<InspirationBoardNote | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<number | null>(null);
-  const [editNoteData, setEditNoteData] = useState({ title: "", content: "", colour: "yellow" });
+  const [editNoteData, setEditNoteData] = useState({ title: "", content: "", color: "yellow" });
   const [isDeleteImageConfirmOpen, setIsDeleteImageConfirmOpen] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<number | null>(null);
   const [isEditPaletteDialogOpen, setIsEditPaletteDialogOpen] = useState(false);
@@ -331,7 +329,7 @@ export default function InspirationBoardDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "notes"] });
       setIsNoteDialogOpen(false);
-      setNewNote({ title: "", content: "", colour: "yellow" });
+      setNewNote({ title: "", content: "", color: "yellow" });
       toast({
         title: "Note Added",
         description: "Your inspiration note has been added to the board.",
@@ -488,7 +486,7 @@ export default function InspirationBoardDetail() {
       boardId: parseInt(id!),
       title: newNote.title.trim() || null,
       content: newNote.content.trim() || null,
-      colour: newNote.colour,
+      color: newNote.color,
       position,
     });
   };
@@ -517,7 +515,7 @@ export default function InspirationBoardDetail() {
     setEditNoteData({
       title: note.title || "",
       content: note.content,
-      colour: note.colour
+      color: note.color
     });
     setIsEditNoteDialogOpen(true);
   };
@@ -597,7 +595,7 @@ export default function InspirationBoardDetail() {
       data: {
         title: editNoteData.title.trim() || null,
         content: editNoteData.content.trim(),
-        colour: editNoteData.colour
+        color: editNoteData.color
       }
     });
   };
@@ -1007,7 +1005,7 @@ export default function InspirationBoardDetail() {
                   </div>
                   <div className="grid gap-2">
                     <label className="text-sm font-medium">Colour</label>
-                    <Select value={newNote.colour} onValueChange={(value) => setNewNote(prev => ({ ...prev, colour: value }))}>
+                    <Select value={newNote.color} onValueChange={(value) => setNewNote(prev => ({ ...prev, color: value }))}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -1195,7 +1193,7 @@ export default function InspirationBoardDetail() {
                     return null;
                   }
                   
-                  const noteColour = noteColours.find(c => c.value === note.colour) || noteColours[0];
+                  const noteColour = noteColours.find(c => c.value === note.color) || noteColours[0];
                   return (
                     <div
                       key={note.id}
@@ -1531,8 +1529,8 @@ export default function InspirationBoardDetail() {
             <div className="grid gap-2">
               <label className="text-sm font-medium">Colour</label>
               <Select
-                value={editNoteData.colour}
-                onValueChange={(value) => setEditNoteData(prev => ({ ...prev, colour: value }))}
+                value={editNoteData.color}
+                onValueChange={(value) => setEditNoteData(prev => ({ ...prev, color: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />
