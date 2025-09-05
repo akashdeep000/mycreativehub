@@ -1383,7 +1383,7 @@ export default function InspirationBoardDetail() {
               ) : (
                 <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
                   <Palette className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 font-medium mb-2">No color palettes yet</p>
+                  <p className="text-gray-600 font-medium mb-2">No colour palettes yet</p>
                   <p className="text-sm text-gray-500 mb-4">Add color palettes to organize your inspiration</p>
                   <Dialog open={isPaletteDialogOpen} onOpenChange={setIsPaletteDialogOpen}>
                     <DialogTrigger asChild>
