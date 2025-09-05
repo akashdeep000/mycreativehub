@@ -1,0 +1,65 @@
+Subject: Monthly Time-Blocking — events only add in September (won’t add in other months)
+
+What’s happening
+
+In September, clicking a day with a selected colour creates and saves a block correctly.
+
+If I navigate to any other month (past or future), clicking a day does nothing (no block appears, nothing saves).
+
+Expected
+
+The same “click day → create coloured block → save → persist” behaviour should work for every month, indefinitely.
+
+Repro
+
+Go to /time-blocking-planner → Monthly view.
+
+September works.
+
+Click > to October (or < to August).
+
+Select a colour key and click any day → no block created.
+
+Please check/fix (minimal, targeted changes):
+
+View range/state not updating after month navigation
+
+If using FullCalendar: wire datesSet to update visibleStart/visibleEnd in state, and re-run the load query for the new range.
+
+If using react-big-calendar: handle onNavigate/onRangeChange to update the range and reload events.
+
+Create handler still using September’s year/month (stale closure)
+
+Ensure the create code uses the date from the click event (full ISO with year/month/day), not a stored currentMonth captured on mount.
+
+Example issue: constructing YYYY-MM from a stale viewDate. Fix by taking start/end directly from the click/select payload.
+
+Valid range accidentally constrained
+
+Remove or widen any validRange/min/max config that limits creation to Sept only. There should be no date limit.
+
+POST succeeds but not displayed (range filter)
+
+After navigating months, GET /events must be called for the new start/end range and hydrate the calendar.
+
+After a successful create, optimistically add the event to local state so it appears immediately.
+
+Timezone sanity
+
+Create using ISO strings with timezone consistency (start at 09:00 local).
+
+Server should not reject dates outside the current month; remove any such validation.
+
+Diagnostics (temporary)
+
+Log dateClick/select payloads when I click in October to confirm the handler runs and which date it sees.
+
+Log the POST /events body and response; log GET /events call/response after month navigation.
+
+Acceptance criteria
+
+I can add a block in any month, navigate away and back, and it persists.
+
+Month navigation automatically loads the correct events for the visible range.
+
+Monthly and Weekly views both reflect the saved data for the selected date range.

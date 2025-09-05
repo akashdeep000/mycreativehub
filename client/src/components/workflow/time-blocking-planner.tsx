@@ -1060,21 +1060,23 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
             {weeks.map((week, weekIndex) =>
               week.map((date, dayIndex) => {
                 const today = new Date();
+                const displayedDate = new Date();
+                displayedDate.setMonth(displayedDate.getMonth() + currentMonthOffset);
                 const dayName = date.toLocaleDateString('en', { weekday: 'long' });
                 const dateString = date.toISOString().split('T')[0];
-                const isCurrentMonth = date.getMonth() === today.getMonth();
+                const isDisplayedMonth = date.getMonth() === displayedDate.getMonth() && date.getFullYear() === displayedDate.getFullYear();
                 const blocks = data.monthlyView.blocks.filter(block => block.day === dateString);
 
                 return (
                   <div
                     key={`${weekIndex}-${dayIndex}`}
                     className={`min-h-[140px] border-r border-b border-gray-200 p-3 transition-colors cursor-pointer ${
-                      isCurrentMonth 
+                      isDisplayedMonth 
                         ? 'bg-white hover:bg-blue-50' 
                         : 'bg-gray-50 text-gray-400'
                     }`}
                     onClick={() => {
-                      if (isCurrentMonth) {
+                      if (isDisplayedMonth) {
                         if (activeColourTagId) {
                           // Auto-create block with selected colour category
                           createTimeBlock(dateString, 9);
