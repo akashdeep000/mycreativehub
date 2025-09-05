@@ -29,7 +29,8 @@ import {
   Settings,
   MoreHorizontal,
   Move,
-  Copy
+  Copy,
+  Pipette
 } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
