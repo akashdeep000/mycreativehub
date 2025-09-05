@@ -399,7 +399,7 @@ export default function InspirationHub() {
               <div className="text-gray-600 text-sm space-y-4">
                 <p>This isn't meant to replace Pinterest - think of it as a practical space to organise your creative ideas in one place. Use it to:</p>
                 <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li>Save screenshots you've taken while browsing</li>
+                  <li>Save screenshots you've taken whilst browsing</li>
                   <li>Store colour palettes and keep track of hex codes you love</li>
                   <li>Bookmark helpful websites or resources relevant to your board's theme</li>
                   <li>Add post-it style notes to jot down ideas, reminders, or creative directions for each board</li>
