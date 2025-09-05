@@ -468,10 +468,10 @@ export default function InspirationBoardDetail() {
   };
 
   const handleAddNote = () => {
-    if (!newNote.content.trim()) {
+    if (!newNote.title.trim() && !newNote.content.trim()) {
       toast({
-        title: "Content Required",
-        description: "Please enter some content for your note.",
+        title: "Title or Content Required",
+        description: "Please enter either a title or content for your note.",
         variant: "destructive",
       });
       return;
@@ -487,7 +487,7 @@ export default function InspirationBoardDetail() {
     addNoteMutation.mutate({
       boardId: parseInt(id!),
       title: newNote.title.trim() || null,
-      content: newNote.content.trim(),
+      content: newNote.content.trim() || null,
       color: newNote.color,
       position,
     });
