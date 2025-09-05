@@ -1152,39 +1152,42 @@ export default function InspirationBoardDetail() {
                     />
                   </div>
 
-                  {/* Color picker section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-end">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => {
-                          // Always use the current picker color, not the selected palette color
-                          const currentColor = currentPickerColor || '#3b82f6';
-                          // Always add as a new color, regardless of selection state
-                          setNewPalette(prev => ({ ...prev, colours: [...prev.colours, currentColor] }));
-                          // Deselect any current selection but keep the picker color the same
-                          setSelectedColorIndex(null);
-                          // Don't reset the picker color - let user continue from where they were
-                          // Add to recent colors when user commits the color to their palette
-                          addToRecentColors(currentColor);
-                        }}
-                      >
-                        <Plus className="w-3 h-3 mr-1" />
-                        Add This Colour
-                      </Button>
+                  {/* Color picker and selected colors side by side */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Color picker section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-end">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            // Always use the current picker color, not the selected palette color
+                            const currentColor = currentPickerColor || '#3b82f6';
+                            // Always add as a new color, regardless of selection state
+                            setNewPalette(prev => ({ ...prev, colours: [...prev.colours, currentColor] }));
+                            // Deselect any current selection but keep the picker color the same
+                            setSelectedColorIndex(null);
+                            // Don't reset the picker color - let user continue from where they were
+                            // Add to recent colors when user commits the color to their palette
+                            addToRecentColors(currentColor);
+                          }}
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          Add This Colour
+                        </Button>
+                      </div>
+                      <ColorPicker
+                        value={currentPickerColor || '#3b82f6'}
+                        onChange={setCurrentPickerColor}
+                        recentColors={recentColors}
+                      />
                     </div>
-                    <ColorPicker
-                      value={currentPickerColor || '#3b82f6'}
-                      onChange={setCurrentPickerColor}
-                      recentColors={recentColors}
-                    />
-                  </div>
-                  
-                  <div className="grid gap-4">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium">Selected Colours ({newPalette.colours.length})</label>
-                    </div>
+                    
+                    {/* Selected colors section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">Selected Colours ({newPalette.colours.length})</label>
+                      </div>
                     
                     <div className="grid gap-3 max-h-60 overflow-y-auto">
                       {newPalette.colours.map((colour, index) => (
@@ -1245,6 +1248,7 @@ export default function InspirationBoardDetail() {
                           </div>
                         </div>
                       ))}
+                    </div>
                     </div>
                   </div>
                 </div>
