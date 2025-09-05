@@ -1682,9 +1682,9 @@ export default function InspirationBoardDetail() {
       <Dialog open={isDeletePaletteConfirmOpen} onOpenChange={setIsDeletePaletteConfirmOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete Color Palette</DialogTitle>
+            <DialogTitle>Delete Colour Palette</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this color palette? This action cannot be undone.
+              Are you sure you want to delete this colour palette? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
