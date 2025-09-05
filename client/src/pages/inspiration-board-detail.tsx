@@ -1403,13 +1403,13 @@ export default function InspirationBoardDetail() {
                         </CardHeader>
                         <CardContent>
                           <div className="grid grid-cols-5 gap-2">
-                            {palette.colours && Array.isArray(palette.colours) && (palette.colours as any[]).length > 0 ? (
-                              (palette.colours as any[]).map((colourObj: any, index: number) => (
+                            {palette.colors && Array.isArray(palette.colors) && (palette.colors as any[]).length > 0 ? (
+                              (palette.colors as any[]).map((colorObj: any, index: number) => (
                                 <div
                                   key={index}
                                   className="aspect-square rounded-lg border-2 border-white shadow-sm cursor-pointer hover:scale-105 transition-transform"
-                                  style={{ backgroundColor: colourObj.colour }}
-                                  title={`${colourObj.colour}${colourObj.name ? ` - ${colourObj.name}` : ''}`}
+                                  style={{ backgroundColor: colorObj.color }}
+                                  title={`${colorObj.color}${colorObj.name ? ` - ${colorObj.name}` : ''}`}
                                 />
                               ))
                             ) : (
