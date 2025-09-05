@@ -400,9 +400,7 @@ export default function InspirationHub() {
                 Inspiration Hub Tips
               </h3>
               <div className="text-gray-600 text-sm space-y-4">
-                <p>
-                  This isn't meant to replace Pinterest — think of it as a practical space to organise your creative ideas in one place. Use it to:
-                </p>
+                <p>This isn't meant to replace Pinterest - think of it as a practical space to organise your creative ideas in one place. Use it to:</p>
                 <ul className="list-disc list-inside space-y-2 ml-4">
                   <li>Save screenshots you've taken while browsing</li>
                   <li>Store colour palettes and keep track of hex codes you love</li>
