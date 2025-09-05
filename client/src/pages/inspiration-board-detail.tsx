@@ -961,7 +961,7 @@ export default function InspirationBoardDetail() {
                     </ObjectUploader>
                     <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg mt-4">
                       <p className="font-medium mb-1">✨ After adding the image</p>
-                      <p>You can add notes and reference links directly below each image in the grid for better organization.</p>
+                      <p>After adding the image, you can add notes and reference links directly below each image in the grid for better organisation.</p>
                     </div>
                   </div>
 
