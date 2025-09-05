@@ -352,9 +352,7 @@ export default function StreamlineWorkflow() {
             <div className="mb-8">
               <BackToDashboard />
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Streamline Your Workflow</h1>
-              <p className="text-gray-600">
-                Pre-built templates to organise your creative business processes
-              </p>
+              <p className="text-gray-600">Simple systems for busy weeks: organise ideas, block time and keep work moving.</p>
             </div>
 
             <div className="space-y-6">
