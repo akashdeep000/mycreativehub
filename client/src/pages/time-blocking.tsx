@@ -72,10 +72,10 @@ export default function TimeBlocking() {
         
         // Convert events to time blocks format
         const allBlocks = events.map((event: any) => {
-          // Extract date and time from the timestamp
+          // Extract date and time from the timestamp using UTC to avoid timezone issues
           const startDateTime = new Date(event.startTime);
           const dateStr = startDateTime.toISOString().split('T')[0]; // YYYY-MM-DD
-          const timeStr = startDateTime.toTimeString().split(' ')[0].substring(0, 5); // HH:mm
+          const timeStr = startDateTime.toISOString().split('T')[1].substring(0, 5); // HH:mm from UTC
           
           return {
             id: event.id, // Use the database UUID
