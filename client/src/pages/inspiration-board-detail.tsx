@@ -865,7 +865,6 @@ export default function InspirationBoardDetail() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-cream">
       <Sidebar />
-      
       <div className="flex-1 flex flex-col min-h-screen lg:ml-64">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 p-4 lg:p-6">
@@ -1008,7 +1007,7 @@ export default function InspirationBoardDetail() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium">Color</label>
+                    <label className="text-sm font-medium">Colour</label>
                     <Select value={newNote.color} onValueChange={(value) => setNewNote(prev => ({ ...prev, color: value }))}>
                       <SelectTrigger>
                         <SelectValue />
@@ -1502,9 +1501,7 @@ export default function InspirationBoardDetail() {
           </div>
         </div>
       </div>
-
       <MobileNav />
-
       {/* Edit Note Dialog */}
       <Dialog open={isEditNoteDialogOpen} onOpenChange={setIsEditNoteDialogOpen}>
         <DialogContent className="max-w-lg">
@@ -1562,7 +1559,6 @@ export default function InspirationBoardDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
         <DialogContent className="max-w-md">
@@ -1584,7 +1580,6 @@ export default function InspirationBoardDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       {/* Delete Image Confirmation Dialog */}
       <Dialog open={isDeleteImageConfirmOpen} onOpenChange={setIsDeleteImageConfirmOpen}>
         <DialogContent className="max-w-md">
@@ -1606,7 +1601,6 @@ export default function InspirationBoardDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       {/* Edit Palette Dialog */}
       <Dialog open={isEditPaletteDialogOpen} onOpenChange={setIsEditPaletteDialogOpen}>
         <DialogContent className="max-w-md">
@@ -1685,7 +1679,6 @@ export default function InspirationBoardDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       {/* Delete Palette Confirmation Dialog */}
       <Dialog open={isDeletePaletteConfirmOpen} onOpenChange={setIsDeletePaletteConfirmOpen}>
         <DialogContent className="max-w-md">
