@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 // Removed tabs import - monthly view only
 import { Calendar as CalendarIcon, Clock, Plus, GripVertical, Palette, Trash2, HelpCircle, ChevronLeft, ChevronRight, Edit2, ArrowLeft } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -104,6 +105,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [newColourTagLabel, setNewColourTagLabel] = useState('');
   const [showColourSelector, setShowColourSelector] = useState<string | null>(null);
   const [showColorPicker, setShowColorPicker] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   // Navigation state - monthly only
   const [currentMonthOffset, setCurrentMonthOffset] = useState(0);
@@ -441,6 +443,62 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       toast({
         title: "Delete Failed",
         description: "Could not delete the time block. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteEntireCalendar = async () => {
+    try {
+      console.log('🔄 Deleting entire calendar...');
+      
+      // Get current month key to only delete blocks for this month
+      const currentMonthKey = getCurrentMonthKey();
+      
+      // Delete all blocks for the current month from the database
+      const deletePromises = data.monthlyView.blocks
+        .filter(block => block.monthKey === currentMonthKey)
+        .map(block => 
+          fetch(`/api/time-blocking-events/${block.id}`, {
+            method: 'DELETE',
+            headers: { 
+              'Cache-Control': 'no-store'
+            },
+            credentials: 'include'
+          })
+        );
+
+      await Promise.all(deletePromises);
+
+      console.log('✅ Calendar deleted successfully');
+      
+      // Show success toast
+      toast({
+        title: "Calendar Deleted ✓",
+        description: "All time blocks for this month have been removed",
+        duration: 3000
+      });
+
+      // Remove all blocks for this month from local state
+      const updatedData = {
+        ...data,
+        monthlyView: {
+          ...data.monthlyView,
+          blocks: data.monthlyView.blocks.filter(block => block.monthKey !== currentMonthKey)
+        }
+      };
+      
+      setData(updatedData);
+      onSave(updatedData);
+      
+      // Close the dialog
+      setIsDeleteDialogOpen(false);
+      
+    } catch (error) {
+      console.error('❌ Failed to delete calendar:', error);
+      toast({
+        title: "Delete Failed",
+        description: "Could not delete the calendar. Please try again.",
         variant: "destructive"
       });
     }
@@ -935,14 +993,51 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={goToToday}
-            className="text-blue-600 border-blue-200 hover:bg-blue-50"
-          >
-            Today
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToToday}
+              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+            >
+              Today
+            </Button>
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Delete entire calendar
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Entire Calendar</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to permanently delete this calendar? This will remove all time blocks from the current month and cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsDeleteDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    onClick={deleteEntireCalendar}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Calendar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <div className="grid grid-cols-7 gap-2 text-sm">
