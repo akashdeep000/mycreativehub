@@ -649,8 +649,9 @@ export default function InspirationBoardDetail() {
   };
 
   const addColourToPalette = () => {
+    const newColor = "#ffffff";
     setNewPalette(prev => {
-      const newColours = [...prev.colours, "#ffffff"];
+      const newColours = [...prev.colours, newColor];
       return {
         ...prev,
         colours: newColours
@@ -658,6 +659,8 @@ export default function InspirationBoardDetail() {
     });
     // Automatically select the newly added color
     setSelectedColorIndex(newPalette.colours.length);
+    // Add to recent colors when user adds a new color to their palette
+    addToRecentColors(newColor);
   };
 
   const updatePaletteColour = (index: number, colour: string) => {
@@ -686,7 +689,7 @@ export default function InspirationBoardDetail() {
   const handleColorChange = (color: string) => {
     if (selectedColorIndex !== null) {
       updatePaletteColour(selectedColorIndex, color);
-      addToRecentColors(color);
+      // Only add to recent colors when user actually commits the color (not while experimenting)
     }
   };
 
@@ -1067,6 +1070,8 @@ export default function InspirationBoardDetail() {
               if (!open) {
                 setSelectedColorIndex(null);
                 setCurrentPickerColor('#3b82f6');
+                // Clear recent colors when dialog closes so they start fresh next time
+                setRecentColors([]);
               }
             }}>
               <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
@@ -1111,6 +1116,8 @@ export default function InspirationBoardDetail() {
                             const currentColor = currentPickerColor || '#3b82f6';
                             setNewPalette(prev => ({ ...prev, colours: [...prev.colours, currentColor] }));
                             setSelectedColorIndex(newPalette.colours.length);
+                            // Add to recent colors when user commits the color to their palette
+                            addToRecentColors(currentColor);
                           }}
                         >
                           <Plus className="w-3 h-3 mr-1" />
@@ -1122,7 +1129,6 @@ export default function InspirationBoardDetail() {
                       value={selectedColorIndex !== null ? newPalette.colours[selectedColorIndex] : (currentPickerColor || '#3b82f6')}
                       onChange={selectedColorIndex !== null ? handleColorChange : setCurrentPickerColor}
                       recentColors={recentColors}
-                      onAddToRecent={addToRecentColors}
                     />
                   </div>
                   
