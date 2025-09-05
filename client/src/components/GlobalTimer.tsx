@@ -352,9 +352,22 @@ export default function GlobalTimer({
   };
 
   const handleStopAlarm = () => {
+    const completedMinutes = Math.floor((totalTime - timeLeft) / 60);
+    if (completedMinutes > 0) {
+      logFocusMutation.mutate({ 
+        minutes: completedMinutes, 
+        taskDescription: currentTask 
+      });
+    }
+    
     stopAlarm();
     setShowCompleteDialog(false);
     onStop();
+    
+    toast({
+      title: "Task Completed!",
+      description: "Great work! Your progress has been logged.",
+    });
   };
 
   const formatTime = (seconds: number) => {
@@ -485,12 +498,9 @@ export default function GlobalTimer({
             <p className="text-gray-600 dark:text-gray-400">
               Great work on "<span className="font-medium">{currentTask}</span>"!
             </p>
-            <div className="flex justify-center gap-3">
-              <Button onClick={handleMarkComplete} className="flex-1">
-                Mark Complete
-              </Button>
-              <Button onClick={handleStopAlarm} variant="outline" className="flex-1">
-                Stop Alarm
+            <div className="flex justify-center">
+              <Button onClick={handleStopAlarm} className="px-8">
+                Stop Timer
               </Button>
             </div>
           </div>
