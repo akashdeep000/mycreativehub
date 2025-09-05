@@ -543,7 +543,7 @@ export default function InspirationBoardDetail() {
     setEditingPalette(palette);
     setEditPaletteData({
       name: palette.name,
-      colours: Array.isArray(palette.colours) ? (palette.colours as any[]).map((c: any) => c.colour || c) : ["#ffffff"]
+      colours: Array.isArray(palette.colors) ? (palette.colors as any[]).map((c: any) => c.color || c) : ["#ffffff"]
     });
     setIsEditPaletteDialogOpen(true);
   };
@@ -583,7 +583,7 @@ export default function InspirationBoardDetail() {
       paletteId: editingPalette.id,
       data: {
         name: editPaletteData.name.trim(),
-        colours: colours.map(colour => ({ colour }))
+        colors: colours.map(colour => ({ color: colour }))
       }
     });
   };
@@ -1644,72 +1644,114 @@ export default function InspirationBoardDetail() {
         </DialogContent>
       </Dialog>
       {/* Edit Palette Dialog */}
-      <Dialog open={isEditPaletteDialogOpen} onOpenChange={setIsEditPaletteDialogOpen}>
-        <DialogContent className="max-w-md">
+      <Dialog open={isEditPaletteDialogOpen} onOpenChange={(open) => {
+        setIsEditPaletteDialogOpen(open);
+        if (!open) {
+          setSelectedColorIndex(null);
+          setCurrentPickerColor('#3b82f6');
+        }
+      }}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Colour Palette</DialogTitle>
-            <DialogDescription>
-              Update the name and colours for your palette.
-            </DialogDescription>
+            <DialogDescription>Update your colour palette using our advanced colour picker.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="space-y-6 py-4">
             <div className="grid gap-2">
               <label className="text-sm font-medium">Palette Name</label>
               <Input
                 value={editPaletteData.name}
                 onChange={(e) => setEditPaletteData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g. Brand Colors"
+                placeholder="e.g. Brand Colours, Collection Palette..."
               />
             </div>
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Colours</label>
-              <div className="space-y-2">
-                {editPaletteData.colours.map((colour, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input
-                      type="color"
-                      value={colour}
-                      onChange={(e) => {
-                        const newColours = [...editPaletteData.colours];
-                        newColours[index] = e.target.value;
-                        setEditPaletteData(prev => ({ ...prev, colours: newColours }));
-                      }}
-                      className="w-16 h-10 p-1 border rounded"
-                    />
-                    <Input
-                      value={colour}
-                      onChange={(e) => {
-                        const newColours = [...editPaletteData.colours];
-                        newColours[index] = e.target.value;
-                        setEditPaletteData(prev => ({ ...prev, colours: newColours }));
-                      }}
-                      placeholder="#000000"
-                      className="flex-1"
-                    />
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        const newColours = editPaletteData.colours.filter((_, i) => i !== index);
-                        setEditPaletteData(prev => ({ ...prev, colours: newColours }));
-                      }}
-                      disabled={editPaletteData.colours.length <= 1}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  size="sm"
+
+            {/* Color picker section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-end">
+                <Button 
+                  size="sm" 
                   variant="outline"
                   onClick={() => {
-                    setEditPaletteData(prev => ({ ...prev, colours: [...prev.colours, "#ffffff"] }));
+                    // Always use the current picker color, not the selected palette color
+                    const currentColor = currentPickerColor || '#3b82f6';
+                    // Always add as a new color, regardless of selection state
+                    setEditPaletteData(prev => ({ ...prev, colours: [...prev.colours, currentColor] }));
+                    // Deselect any current selection but keep the picker color the same
+                    setSelectedColorIndex(null);
+                    // Don't reset the picker color - let user continue from where they were
+                    // Add to recent colors when user commits the color to their palette
+                    addToRecentColors(currentColor);
                   }}
-                  className="w-full"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Colour
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add This Colour
                 </Button>
+              </div>
+              <ColorPicker
+                value={currentPickerColor || '#3b82f6'}
+                onChange={setCurrentPickerColor}
+                recentColors={recentColors}
+              />
+            </div>
+            
+            <div className="grid gap-4">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Selected Colours ({editPaletteData.colours.length})</label>
+              </div>
+              
+              <div className="grid gap-3 max-h-60 overflow-y-auto">
+                {editPaletteData.colours.length === 0 ? (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                    <Palette className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">The colours you choose will be displayed here</p>
+                  </div>
+                ) : (
+                  editPaletteData.colours.map((colour, index) => (
+                    <div key={index} className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-colors cursor-pointer ${
+                      selectedColorIndex === index 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`} onClick={() => selectColorForEditing(index)}>
+                      <div className="relative">
+                        <div 
+                          className="w-12 h-12 rounded-lg border-2 border-white shadow-sm"
+                          style={{ backgroundColor: colour }}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <Input
+                          value={colour}
+                          onChange={(e) => {
+                            const newColours = [...editPaletteData.colours];
+                            newColours[index] = e.target.value;
+                            setEditPaletteData(prev => ({ ...prev, colours: newColours }));
+                          }}
+                          placeholder="#000000"
+                          className="font-mono text-sm"
+                        />
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const newColours = editPaletteData.colours.filter((_, i) => i !== index);
+                          setEditPaletteData(prev => ({ ...prev, colours: newColours }));
+                          // Reset selection if we deleted the selected color
+                          if (selectedColorIndex === index) {
+                            setSelectedColorIndex(null);
+                          } else if (selectedColorIndex !== null && selectedColorIndex > index) {
+                            setSelectedColorIndex(selectedColorIndex - 1);
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
