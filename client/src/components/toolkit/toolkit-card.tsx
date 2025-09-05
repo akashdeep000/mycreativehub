@@ -80,7 +80,7 @@ export default function ToolkitCard({ module }: ToolkitCardProps) {
              module.name === "Product Launch System" ? "4 Systems" :
              module.name === "The Affiliate Link Hub" ? "1 System" :
              module.name === "Streamline Your Workflow" ? "4 Systems" :
-             module.name === "Your Resource Library" ? "1 Template" :
+             module.name === "Your Resource Library" ? "1 System" :
              module.name === "Financial Management" ? "1 Template" :
              module.templateCount === 1 ? "1 template" :
              module.templateCount > 1 ? `${module.templateCount} Templates` : "New"}
