@@ -1045,7 +1045,7 @@ export default function InspirationBoardDetail() {
                     <Input
                       value={newPalette.name}
                       onChange={(e) => setNewPalette(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g. Brand Colors, Sunset Vibes..."
+                      placeholder="e.g. Brand Colours, Collection Palette..."
                     />
                   </div>
                   <div className="grid gap-4">
