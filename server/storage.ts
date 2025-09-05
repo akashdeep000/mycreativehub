@@ -1743,14 +1743,14 @@ export class DatabaseStorage implements IStorage {
       .insert(calendarV3)
       .values({
         ...data,
-        colorKeys: Array.isArray(data.colorKeys) ? data.colorKeys : [],
-        days: Array.isArray(data.days) ? data.days : [],
+        colorKeys: (Array.isArray(data.colorKeys) ? data.colorKeys : []) as any,
+        days: (Array.isArray(data.days) ? data.days : []) as any,
       })
       .onConflictDoUpdate({
         target: [calendarV3.userId, calendarV3.year, calendarV3.month],
         set: {
-          colorKeys: Array.isArray(data.colorKeys) ? data.colorKeys : [],
-          days: Array.isArray(data.days) ? data.days : [],
+          colorKeys: (Array.isArray(data.colorKeys) ? data.colorKeys : []) as any,
+          days: (Array.isArray(data.days) ? data.days : []) as any,
           updatedAt: new Date(),
         },
       })

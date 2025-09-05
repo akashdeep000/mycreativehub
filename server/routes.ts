@@ -2090,11 +2090,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const { taskName, durationMinutes, completedAt } = req.body;
+      const sessionDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
       const session = await storage.logFocusSession({
         userId,
         task: taskName,
-        durationMinutes,
-        completedAt: completedAt ? new Date(completedAt) : new Date()
+        duration: durationMinutes,
+        completedAt: completedAt ? new Date(completedAt) : new Date(),
+        sessionDate
       });
       res.json(session);
     } catch (error) {
@@ -2459,13 +2461,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email = req.body.user.email;
       } else {
         // Search for any email field in the entire object
-        const searchForEmail = (obj) => {
+        const searchForEmail = (obj: any): string | null => {
           for (const key in obj) {
             if (key.toLowerCase().includes('email') && typeof obj[key] === 'string' && obj[key].includes('@')) {
               return obj[key];
             }
             if (typeof obj[key] === 'object' && obj[key] !== null) {
-              const found = searchForEmail(obj[key]);
+              const found: string | null = searchForEmail(obj[key]);
               if (found) return found;
             }
           }
