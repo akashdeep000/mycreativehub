@@ -1189,7 +1189,7 @@ export default function InspirationBoardDetail() {
                         <label className="text-sm font-medium">Selected Colours ({newPalette.colours.length})</label>
                       </div>
                     
-                    <div className="grid gap-3 max-h-60 overflow-y-auto">
+                    <div className={`grid gap-3 ${newPalette.colours.length > 8 ? 'max-h-96 overflow-y-auto' : ''}`}>
                       {newPalette.colours.map((colour, index) => (
                         <div key={index} className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-colors cursor-pointer ${
                           selectedColorIndex === index 
