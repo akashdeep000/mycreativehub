@@ -233,7 +233,7 @@ export default function InspirationBoardDetail() {
   const [boardTitle, setBoardTitle] = useState("");
   const [newNote, setNewNote] = useState({ title: "", content: "", color: "yellow" });
   const [newLink, setNewLink] = useState({ url: "", title: "", description: "" });
-  const [newPalette, setNewPalette] = useState({ name: "", colours: ["#ffffff"] });
+  const [newPalette, setNewPalette] = useState({ name: "", colours: [] });
   const [selectedColorIndex, setSelectedColorIndex] = useState<number | null>(null);
   const [currentPickerColor, setCurrentPickerColor] = useState<string>('#3b82f6');
   const [recentColors, setRecentColors] = useState<string[]>([]);
@@ -1058,6 +1058,8 @@ export default function InspirationBoardDetail() {
                 setCurrentPickerColor('#3b82f6');
                 // Clear recent colors when dialog closes so they start fresh next time
                 setRecentColors([]);
+                // Reset palette to empty state
+                setNewPalette({ name: "", colours: [] });
               }
             }}>
               <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
