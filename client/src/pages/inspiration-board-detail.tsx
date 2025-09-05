@@ -981,7 +981,7 @@ export default function InspirationBoardDetail() {
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
                   <StickyNote className="w-4 h-4 mr-2" />
-                  Add Note
+                  Add Sticky Note
                 </Button>
               </DialogTrigger>
               <DialogContent>
