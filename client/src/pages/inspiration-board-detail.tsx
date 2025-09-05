@@ -1172,28 +1172,6 @@ export default function InspirationBoardDetail() {
                         </div>
                       ))}
                     </div>
-                    
-                    {/* Colour Palette Preview */}
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <h4 className="text-sm font-medium mb-3">
-                        {newPalette.colours.length === 0 ? "The colours you choose will be displayed here" : "Preview"}
-                      </h4>
-                      <div className="flex gap-2 flex-wrap">
-                        {newPalette.colours.map((colour, index) => (
-                          <div
-                            key={index}
-                            className={`w-10 h-10 rounded-full border-2 shadow-sm cursor-pointer transition-all ${
-                              selectedColorIndex === index 
-                                ? 'border-blue-500 ring-2 ring-blue-200' 
-                                : 'border-white hover:border-gray-300'
-                            }`}
-                            style={{ backgroundColor: colour }}
-                            title={colour}
-                            onClick={() => selectColorForEditing(index)}
-                          />
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 </div>
                 <DialogFooter>
