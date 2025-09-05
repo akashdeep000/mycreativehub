@@ -37,7 +37,7 @@ import { ObjectUploader } from "@/components/ObjectUploader";
 import type { UploadResult } from "@uppy/core";
 import type { InspirationBoard, InspirationBoardImage, InspirationBoardNote, ColorPalette, BoardLink } from "@shared/schema";
 
-const noteColors = [
+const noteColours = [
   { value: "yellow", class: "bg-yellow-200 border-yellow-300", label: "Yellow" },
   { value: "pink", class: "bg-pink-200 border-pink-300", label: "Pink" },
   { value: "blue", class: "bg-blue-200 border-blue-300", label: "Blue" },
@@ -228,21 +228,21 @@ export default function InspirationBoardDetail() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [boardTitle, setBoardTitle] = useState("");
-  const [newNote, setNewNote] = useState({ title: "", content: "", color: "yellow" });
+  const [newNote, setNewNote] = useState({ title: "", content: "", colour: "yellow" });
   const [newLink, setNewLink] = useState({ url: "", title: "", description: "" });
-  const [newPalette, setNewPalette] = useState({ name: "", colors: ["#ffffff"] });
+  const [newPalette, setNewPalette] = useState({ name: "", colours: ["#ffffff"] });
   const [isEditNoteDialogOpen, setIsEditNoteDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<InspirationBoardNote | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<number | null>(null);
-  const [editNoteData, setEditNoteData] = useState({ title: "", content: "", color: "yellow" });
+  const [editNoteData, setEditNoteData] = useState({ title: "", content: "", colour: "yellow" });
   const [isDeleteImageConfirmOpen, setIsDeleteImageConfirmOpen] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<number | null>(null);
   const [isEditPaletteDialogOpen, setIsEditPaletteDialogOpen] = useState(false);
   const [isDeletePaletteConfirmOpen, setIsDeletePaletteConfirmOpen] = useState(false);
   const [editingPalette, setEditingPalette] = useState<ColorPalette | null>(null);
   const [paletteToDelete, setPaletteToDelete] = useState<number | null>(null);
-  const [editPaletteData, setEditPaletteData] = useState({ name: "", colors: ["#ffffff"] });
+  const [editPaletteData, setEditPaletteData] = useState({ name: "", colours: ["#ffffff"] });
 
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
@@ -331,7 +331,7 @@ export default function InspirationBoardDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "notes"] });
       setIsNoteDialogOpen(false);
-      setNewNote({ title: "", content: "", color: "yellow" });
+      setNewNote({ title: "", content: "", colour: "yellow" });
       toast({
         title: "Note Added",
         description: "Your inspiration note has been added to the board.",
@@ -367,7 +367,7 @@ export default function InspirationBoardDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inspiration-boards", id, "palettes"] });
       setIsPaletteDialogOpen(false);
-      setNewPalette({ name: "", colors: ["#ffffff"] });
+      setNewPalette({ name: "", colours: ["#ffffff"] });
       toast({
         title: "Palette Added",
         description: "Color palette has been added to your board.",
@@ -488,7 +488,7 @@ export default function InspirationBoardDetail() {
       boardId: parseInt(id!),
       title: newNote.title.trim() || null,
       content: newNote.content.trim() || null,
-      color: newNote.color,
+      colour: newNote.colour,
       position,
     });
   };
@@ -517,7 +517,7 @@ export default function InspirationBoardDetail() {
     setEditNoteData({
       title: note.title || "",
       content: note.content,
-      color: note.color
+      colour: note.colour
     });
     setIsEditNoteDialogOpen(true);
   };
@@ -537,7 +537,7 @@ export default function InspirationBoardDetail() {
     setEditingPalette(palette);
     setEditPaletteData({
       name: palette.name,
-      colors: Array.isArray(palette.colors) ? (palette.colors as any[]).map((c: any) => c.color || c) : ["#ffffff"]
+      colours: Array.isArray(palette.colours) ? (palette.colours as any[]).map((c: any) => c.colour || c) : ["#ffffff"]
     });
     setIsEditPaletteDialogOpen(true);
   };
@@ -563,11 +563,11 @@ export default function InspirationBoardDetail() {
       return;
     }
 
-    const colors = editPaletteData.colors.filter(color => color.trim());
-    if (colors.length === 0) {
+    const colours = editPaletteData.colours.filter(colour => colour.trim());
+    if (colours.length === 0) {
       toast({
-        title: "Colors Required",
-        description: "Please add at least one color to your palette.",
+        title: "Colours Required",
+        description: "Please add at least one colour to your palette.",
         variant: "destructive",
       });
       return;
@@ -577,7 +577,7 @@ export default function InspirationBoardDetail() {
       paletteId: editingPalette.id,
       data: {
         name: editPaletteData.name.trim(),
-        colors: colors.map(color => ({ color }))
+        colours: colours.map(colour => ({ colour }))
       }
     });
   };
@@ -597,7 +597,7 @@ export default function InspirationBoardDetail() {
       data: {
         title: editNoteData.title.trim() || null,
         content: editNoteData.content.trim(),
-        color: editNoteData.color
+        colour: editNoteData.colour
       }
     });
   };
@@ -625,11 +625,11 @@ export default function InspirationBoardDetail() {
       return;
     }
 
-    const colors = newPalette.colors.filter(color => color.trim());
-    if (colors.length === 0) {
+    const colours = newPalette.colours.filter(colour => colour.trim());
+    if (colours.length === 0) {
       toast({
-        title: "Colors Required",
-        description: "Please add at least one color to your palette.",
+        title: "Colours Required",
+        description: "Please add at least one colour to your palette.",
         variant: "destructive",
       });
       return;
@@ -638,29 +638,29 @@ export default function InspirationBoardDetail() {
     addPaletteMutation.mutate({
       boardId: parseInt(id!),
       name: newPalette.name.trim(),
-      colors: colors.map(color => ({ color: color.trim() })),
+      colours: colours.map(colour => ({ colour: colour.trim() })),
     });
   };
 
-  const addColorToPalette = () => {
+  const addColourToPalette = () => {
     setNewPalette(prev => ({
       ...prev,
-      colors: [...prev.colors, "#ffffff"]
+      colours: [...prev.colours, "#ffffff"]
     }));
   };
 
-  const updatePaletteColor = (index: number, color: string) => {
+  const updatePaletteColour = (index: number, colour: string) => {
     setNewPalette(prev => ({
       ...prev,
-      colors: prev.colors.map((c, i) => i === index ? color : c)
+      colours: prev.colours.map((c, i) => i === index ? colour : c)
     }));
   };
 
-  const removePaletteColor = (index: number) => {
-    if (newPalette.colors.length > 1) {
+  const removePaletteColour = (index: number) => {
+    if (newPalette.colours.length > 1) {
       setNewPalette(prev => ({
         ...prev,
-        colors: prev.colors.filter((_, i) => i !== index)
+        colours: prev.colours.filter((_, i) => i !== index)
       }));
     }
   };
@@ -1007,16 +1007,16 @@ export default function InspirationBoardDetail() {
                   </div>
                   <div className="grid gap-2">
                     <label className="text-sm font-medium">Colour</label>
-                    <Select value={newNote.color} onValueChange={(value) => setNewNote(prev => ({ ...prev, color: value }))}>
+                    <Select value={newNote.colour} onValueChange={(value) => setNewNote(prev => ({ ...prev, colour: value }))}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {noteColors.map(color => (
-                          <SelectItem key={color.value} value={color.value}>
+                        {noteColours.map(colour => (
+                          <SelectItem key={colour.value} value={colour.value}>
                             <div className="flex items-center gap-2">
-                              <div className={`w-4 h-4 rounded ${color.class}`} />
-                              {color.label}
+                              <div className={`w-4 h-4 rounded ${colour.class}`} />
+                              {colour.label}
                             </div>
                           </SelectItem>
                         ))}
@@ -1036,8 +1036,8 @@ export default function InspirationBoardDetail() {
             <Dialog open={isPaletteDialogOpen} onOpenChange={setIsPaletteDialogOpen}>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Create Color Palette</DialogTitle>
-                  <DialogDescription>Build a custom color palette for your inspiration board.</DialogDescription>
+                  <DialogTitle>Create Colour Palette</DialogTitle>
+                  <DialogDescription>Build a custom colour palette for your inspiration board.</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
                   <div className="grid gap-2">
@@ -1050,31 +1050,31 @@ export default function InspirationBoardDetail() {
                   </div>
                   <div className="grid gap-4">
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium">Colors</label>
-                      <Button size="sm" variant="outline" onClick={addColorToPalette}>
+                      <label className="text-sm font-medium">Colours</label>
+                      <Button size="sm" variant="outline" onClick={addColourToPalette}>
                         <Plus className="w-3 h-3 mr-1" />
-                        Add Color
+                        Add Colour
                       </Button>
                     </div>
                     <div className="grid gap-3">
-                      {newPalette.colors.map((color, index) => (
+                      {newPalette.colours.map((colour, index) => (
                         <div key={index} className="flex items-center gap-3">
                           <div className="relative">
                             <input
                               type="color"
-                              value={color}
-                              onChange={(e) => updatePaletteColor(index, e.target.value)}
+                              value={colour}
+                              onChange={(e) => updatePaletteColour(index, e.target.value)}
                               className="w-12 h-12 rounded-lg border border-gray-300 cursor-pointer bg-white"
-                              style={{ backgroundColor: color }}
+                              style={{ backgroundColor: colour }}
                             />
                             <div 
                               className="absolute inset-0 rounded-lg border-2 border-white shadow-sm pointer-events-none"
-                              style={{ backgroundColor: color }}
+                              style={{ backgroundColor: colour }}
                             />
                           </div>
                           <Input
-                            value={color}
-                            onChange={(e) => updatePaletteColor(index, e.target.value)}
+                            value={colour}
+                            onChange={(e) => updatePaletteColour(index, e.target.value)}
                             placeholder="#ffffff"
                             className="flex-1 font-mono text-sm"
                           />
@@ -1083,21 +1083,21 @@ export default function InspirationBoardDetail() {
                               size="sm" 
                               variant="ghost" 
                               onClick={() => {
-                                navigator.clipboard.writeText(color);
+                                navigator.clipboard.writeText(colour);
                                 toast({
                                   title: "Copied!",
-                                  description: `Color ${color} copied to clipboard`,
+                                  description: `Colour ${colour} copied to clipboard`,
                                 });
                               }}
                               className="h-8 w-8 p-0"
                             >
                               <Copy className="w-4 h-4" />
                             </Button>
-                            {newPalette.colors.length > 1 && (
+                            {newPalette.colours.length > 1 && (
                               <Button 
                                 size="sm" 
                                 variant="ghost" 
-                                onClick={() => removePaletteColor(index)}
+                                onClick={() => removePaletteColour(index)}
                                 className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
                               >
                                 <X className="w-4 h-4" />
@@ -1108,16 +1108,16 @@ export default function InspirationBoardDetail() {
                       ))}
                     </div>
                     
-                    {/* Color Palette Preview */}
+                    {/* Colour Palette Preview */}
                     <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                       <h4 className="text-sm font-medium mb-3">Preview</h4>
                       <div className="flex gap-2 flex-wrap">
-                        {newPalette.colors.map((color, index) => (
+                        {newPalette.colours.map((colour, index) => (
                           <div
                             key={index}
                             className="w-10 h-10 rounded-full border-2 border-white shadow-sm"
-                            style={{ backgroundColor: color }}
-                            title={color}
+                            style={{ backgroundColor: colour }}
+                            title={colour}
                           />
                         ))}
                       </div>
@@ -1195,11 +1195,11 @@ export default function InspirationBoardDetail() {
                     return null;
                   }
                   
-                  const noteColor = noteColors.find(c => c.value === note.color) || noteColors[0];
+                  const noteColour = noteColours.find(c => c.value === note.colour) || noteColours[0];
                   return (
                     <div
                       key={note.id}
-                      className={`relative group p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow ${noteColor.class}`}
+                      className={`relative group p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow ${noteColour.class}`}
                     >
                       {note.title && (
                         <h4 className="font-semibold text-sm mb-2 text-gray-800">{note.title}</h4>
@@ -1360,18 +1360,18 @@ export default function InspirationBoardDetail() {
                         </CardHeader>
                         <CardContent>
                           <div className="grid grid-cols-5 gap-2">
-                            {palette.colors && Array.isArray(palette.colors) && (palette.colors as any[]).length > 0 ? (
-                              (palette.colors as any[]).map((colorObj: any, index: number) => (
+                            {palette.colours && Array.isArray(palette.colours) && (palette.colours as any[]).length > 0 ? (
+                              (palette.colours as any[]).map((colourObj: any, index: number) => (
                                 <div
                                   key={index}
                                   className="aspect-square rounded-lg border-2 border-white shadow-sm cursor-pointer hover:scale-105 transition-transform"
-                                  style={{ backgroundColor: colorObj.color }}
-                                  title={`${colorObj.color}${colorObj.name ? ` - ${colorObj.name}` : ''}`}
+                                  style={{ backgroundColor: colourObj.colour }}
+                                  title={`${colourObj.colour}${colourObj.name ? ` - ${colourObj.name}` : ''}`}
                                 />
                               ))
                             ) : (
                               <div className="col-span-5 text-center py-4">
-                                <p className="text-sm text-gray-500 italic">No colors in this palette</p>
+                                <p className="text-sm text-gray-500 italic">No colours in this palette</p>
                               </div>
                             )}
                           </div>
@@ -1529,20 +1529,20 @@ export default function InspirationBoardDetail() {
               />
             </div>
             <div className="grid gap-2">
-              <label className="text-sm font-medium">Color</label>
+              <label className="text-sm font-medium">Colour</label>
               <Select
-                value={editNoteData.color}
-                onValueChange={(value) => setEditNoteData(prev => ({ ...prev, color: value }))}
+                value={editNoteData.colour}
+                onValueChange={(value) => setEditNoteData(prev => ({ ...prev, colour: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {noteColors.map((color) => (
-                    <SelectItem key={color.value} value={color.value}>
+                  {noteColours.map((colour) => (
+                    <SelectItem key={colour.value} value={colour.value}>
                       <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded-full ${color.class}`} />
-                        {color.label}
+                        <div className={`w-4 h-4 rounded-full ${colour.class}`} />
+                        {colour.label}
                       </div>
                     </SelectItem>
                   ))}
@@ -1604,9 +1604,9 @@ export default function InspirationBoardDetail() {
       <Dialog open={isEditPaletteDialogOpen} onOpenChange={setIsEditPaletteDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Color Palette</DialogTitle>
+            <DialogTitle>Edit Colour Palette</DialogTitle>
             <DialogDescription>
-              Update the name and colors for your palette.
+              Update the name and colours for your palette.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -1619,26 +1619,26 @@ export default function InspirationBoardDetail() {
               />
             </div>
             <div className="grid gap-2">
-              <label className="text-sm font-medium">Colors</label>
+              <label className="text-sm font-medium">Colours</label>
               <div className="space-y-2">
-                {editPaletteData.colors.map((color, index) => (
+                {editPaletteData.colours.map((colour, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <Input
                       type="color"
-                      value={color}
+                      value={colour}
                       onChange={(e) => {
-                        const newColors = [...editPaletteData.colors];
-                        newColors[index] = e.target.value;
-                        setEditPaletteData(prev => ({ ...prev, colors: newColors }));
+                        const newColours = [...editPaletteData.colours];
+                        newColours[index] = e.target.value;
+                        setEditPaletteData(prev => ({ ...prev, colours: newColours }));
                       }}
                       className="w-16 h-10 p-1 border rounded"
                     />
                     <Input
-                      value={color}
+                      value={colour}
                       onChange={(e) => {
-                        const newColors = [...editPaletteData.colors];
-                        newColors[index] = e.target.value;
-                        setEditPaletteData(prev => ({ ...prev, colors: newColors }));
+                        const newColours = [...editPaletteData.colours];
+                        newColours[index] = e.target.value;
+                        setEditPaletteData(prev => ({ ...prev, colours: newColours }));
                       }}
                       placeholder="#000000"
                       className="flex-1"
@@ -1647,10 +1647,10 @@ export default function InspirationBoardDetail() {
                       size="sm"
                       variant="ghost"
                       onClick={() => {
-                        const newColors = editPaletteData.colors.filter((_, i) => i !== index);
-                        setEditPaletteData(prev => ({ ...prev, colors: newColors }));
+                        const newColours = editPaletteData.colours.filter((_, i) => i !== index);
+                        setEditPaletteData(prev => ({ ...prev, colours: newColours }));
                       }}
-                      disabled={editPaletteData.colors.length <= 1}
+                      disabled={editPaletteData.colours.length <= 1}
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -1660,12 +1660,12 @@ export default function InspirationBoardDetail() {
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    setEditPaletteData(prev => ({ ...prev, colors: [...prev.colors, "#ffffff"] }));
+                    setEditPaletteData(prev => ({ ...prev, colours: [...prev.colours, "#ffffff"] }));
                   }}
                   className="w-full"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Color
+                  Add Colour
                 </Button>
               </div>
             </div>
