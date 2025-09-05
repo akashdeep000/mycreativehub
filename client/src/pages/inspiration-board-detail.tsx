@@ -999,11 +999,11 @@ export default function InspirationBoardDetail() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium">Content</label>
+                    <label className="text-sm font-medium">Content (Optional)</label>
                     <Textarea
                       value={newNote.content}
                       onChange={(e) => setNewNote(prev => ({ ...prev, content: e.target.value }))}
-                      placeholder={inspirationPrompts[Math.floor(Math.random() * inspirationPrompts.length)]}
+                      placeholder="Add description (Optional)"
                       rows={4}
                     />
                   </div>
