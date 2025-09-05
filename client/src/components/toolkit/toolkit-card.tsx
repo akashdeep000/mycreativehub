@@ -136,6 +136,14 @@ export default function ToolkitCard({ module }: ToolkitCardProps) {
             </ul>
           </div>
         )}
+        {module.name === "Your Resource Library" && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <h4 className="text-sm font-medium text-gray-800 mb-2">What's Inside:</h4>
+            <ul className="text-xs text-gray-600 space-y-1">
+              <li>• PDF Download Guides</li>
+            </ul>
+          </div>
+        )}
       </CardHeader>
       
     </Card>
