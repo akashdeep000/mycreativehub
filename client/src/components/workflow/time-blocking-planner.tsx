@@ -461,6 +461,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       };
       
       setData(updatedData);
+      onSave(updatedData);
       
     } catch (error) {
       console.error('❌ Failed to delete time block:', error);
