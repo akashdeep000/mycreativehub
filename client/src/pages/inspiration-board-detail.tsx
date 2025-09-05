@@ -649,10 +649,15 @@ export default function InspirationBoardDetail() {
   };
 
   const addColourToPalette = () => {
-    setNewPalette(prev => ({
-      ...prev,
-      colours: [...prev.colours, "#ffffff"]
-    }));
+    setNewPalette(prev => {
+      const newColours = [...prev.colours, "#ffffff"];
+      return {
+        ...prev,
+        colours: newColours
+      };
+    });
+    // Automatically select the newly added color
+    setSelectedColorIndex(newPalette.colours.length);
   };
 
   const updatePaletteColour = (index: number, colour: string) => {
