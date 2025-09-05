@@ -352,7 +352,34 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
 
   const updateTimeBlock = async (blockId: string, updates: Partial<TimeBlock>) => {
     try {
-      console.log(`🔄 Updating time block: ${blockId}`);
+      console.log(`🔄 Updating time block: ${blockId}`, updates);
+      
+      // Build the update payload
+      const updatePayload: any = {
+        title: updates.title,
+        color: updates.colour,
+        colorKeyId: updates.colourTagId
+      };
+      
+      // If startTime is being updated, we need to format it properly and calculate endTime
+      if (updates.startTime) {
+        // Find the current block to get the day
+        const currentBlock = data.monthlyView.blocks.find(block => block.id === blockId);
+        if (currentBlock) {
+          // Create ISO timestamp for startTime (use the block's existing day)
+          const startTimeISO = `${currentBlock.day}T${updates.startTime}:00.000Z`;
+          
+          // Calculate endTime (1 hour later)
+          const startDate = new Date(startTimeISO);
+          const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Add 1 hour
+          const endTimeISO = endDate.toISOString();
+          
+          updatePayload.startTime = startTimeISO;
+          updatePayload.endTime = endTimeISO;
+          
+          console.log(`🕐 Time update: ${updates.startTime} -> ${startTimeISO} to ${endTimeISO}`);
+        }
+      }
       
       const response = await fetch(`/api/time-blocking-events/${blockId}`, {
         method: 'PATCH',
@@ -361,11 +388,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           'Cache-Control': 'no-store'
         },
         credentials: 'include',
-        body: JSON.stringify({
-          title: updates.title,
-          color: updates.colour,
-          colorKeyId: updates.colourTagId
-        })
+        body: JSON.stringify(updatePayload)
       });
 
       if (!response.ok) {
