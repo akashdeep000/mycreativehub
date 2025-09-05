@@ -672,12 +672,6 @@ export default function InspirationBoardDetail() {
     });
   };
 
-  const handleColorChange = (color: string) => {
-    if (selectedColorIndex !== null) {
-      updatePaletteColour(selectedColorIndex, color);
-      // Only add to recent colors when user actually commits the color (not while experimenting)
-    }
-  };
 
   const selectColorForEditing = (index: number) => {
     setSelectedColorIndex(index);
@@ -1081,36 +1075,23 @@ export default function InspirationBoardDetail() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="text-sm font-medium flex items-center gap-2">
-                        {selectedColorIndex !== null ? (
-                          <>
-                            <div 
-                              className="w-4 h-4 rounded border border-gray-300"
-                              style={{ backgroundColor: newPalette.colours[selectedColorIndex] }}
-                            />
-                            Editing Colour {selectedColorIndex + 1}
-                          </>
-                        ) : (
-                          <>
-                            <div className="w-4 h-4 rounded border border-gray-300 bg-blue-500" />
-                            Choose a New Colour
-                          </>
-                        )}
+                        <div 
+                          className="w-4 h-4 rounded border border-gray-300"
+                          style={{ backgroundColor: currentPickerColor || '#3b82f6' }}
+                        />
+                        Choose a New Colour
                       </div>
                       <Button 
                         size="sm" 
                         variant="outline"
                         onClick={() => {
-                          const currentColor = selectedColorIndex !== null ? newPalette.colours[selectedColorIndex] : (currentPickerColor || '#3b82f6');
-                          if (selectedColorIndex === null) {
-                            // Adding a new color
-                            setNewPalette(prev => ({ ...prev, colours: [...prev.colours, currentColor] }));
-                            setSelectedColorIndex(newPalette.colours.length);
-                          } else {
-                            // Adding another new color (deselect current and add new)
-                            setNewPalette(prev => ({ ...prev, colours: [...prev.colours, currentColor] }));
-                            setSelectedColorIndex(null);
-                            setCurrentPickerColor('#3b82f6');
-                          }
+                          // Always use the current picker color, not the selected palette color
+                          const currentColor = currentPickerColor || '#3b82f6';
+                          // Always add as a new color, regardless of selection state
+                          setNewPalette(prev => ({ ...prev, colours: [...prev.colours, currentColor] }));
+                          // Deselect any current selection and reset picker for next color
+                          setSelectedColorIndex(null);
+                          setCurrentPickerColor('#3b82f6');
                           // Add to recent colors when user commits the color to their palette
                           addToRecentColors(currentColor);
                         }}
@@ -1120,8 +1101,8 @@ export default function InspirationBoardDetail() {
                       </Button>
                     </div>
                     <ColorPicker
-                      value={selectedColorIndex !== null ? newPalette.colours[selectedColorIndex] : (currentPickerColor || '#3b82f6')}
-                      onChange={selectedColorIndex !== null ? handleColorChange : setCurrentPickerColor}
+                      value={currentPickerColor || '#3b82f6'}
+                      onChange={setCurrentPickerColor}
                       recentColors={recentColors}
                     />
                   </div>
