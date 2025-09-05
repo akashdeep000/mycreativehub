@@ -1022,7 +1022,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   className="text-red-600 border-red-200 hover:bg-red-50"
                 >
                   <Trash2 className="w-4 h-4 mr-1" />
-                  Delete entire calendar
+                  Clear Current Month
                 </Button>
               </DialogTrigger>
               <DialogContent>
