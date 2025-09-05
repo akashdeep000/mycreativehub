@@ -877,7 +877,7 @@ export default function InspirationBoardDetail() {
               className="text-gray-600 hover:text-gray-900"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to main dashboard
+              Back to Main Dashboard
             </Button>
             <Button
               variant="ghost"
