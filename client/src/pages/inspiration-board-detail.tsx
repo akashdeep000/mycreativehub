@@ -42,6 +42,10 @@ const noteColours = [
   { value: "pink", class: "bg-pink-200 border-pink-300", label: "Pink" },
   { value: "blue", class: "bg-blue-200 border-blue-300", label: "Blue" },
   { value: "lilac", class: "bg-purple-200 border-purple-300", label: "Lilac" },
+  { value: "green", class: "bg-green-200 border-green-300", label: "Green" },
+  { value: "orange", class: "bg-orange-200 border-orange-300", label: "Orange" },
+  { value: "teal", class: "bg-teal-200 border-teal-300", label: "Teal" },
+  { value: "red", class: "bg-red-200 border-red-300", label: "Red" },
 ];
 
 const backgroundOptions = [
