@@ -351,10 +351,31 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   };
 
   const updateTimeBlock = async (blockId: string, updates: Partial<TimeBlock>) => {
+    console.log(`🔄 Updating time block: ${blockId}`, updates);
+    
+    // Optimistic update - update UI immediately
+    const updatedData = {
+      ...data,
+      monthlyView: {
+        ...data.monthlyView,
+        blocks: data.monthlyView.blocks.map(block =>
+          block.id === blockId ? { ...block, ...updates } : block
+        )
+      }
+    };
+    
+    setData(updatedData);
+    onSave(updatedData);
+    
+    // Show success toast immediately
+    toast({
+      title: "Saved ✓",
+      description: "Time block updated successfully",
+      duration: 2000
+    });
+
     try {
-      console.log(`🔄 Updating time block: ${blockId}`, updates);
-      
-      // Build the update payload
+      // Build the update payload for server
       const updatePayload: any = {
         title: updates.title,
         color: updates.colour,
@@ -382,6 +403,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         }
       }
       
+      // Update server in background
       const response = await fetch(`/api/time-blocking-events/${blockId}`, {
         method: 'PATCH',
         headers: { 
@@ -398,30 +420,24 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
 
       console.log(`✅ Event updated: ${blockId}`);
       
-      // Show success toast
-      toast({
-        title: "Saved ✓",
-        description: "Time block updated successfully",
-        duration: 2000
-      });
-
-      const updatedData = {
+    } catch (error) {
+      console.error('❌ Failed to update time block:', error);
+      
+      // If server update failed, restore the original data
+      const restoredData = {
         ...data,
         monthlyView: {
           ...data.monthlyView,
-          blocks: data.monthlyView.blocks.map(block =>
-            block.id === blockId ? { ...block, ...updates } : block
-          )
+          blocks: [...data.monthlyView.blocks]
         }
       };
       
-      setData(updatedData);
+      setData(restoredData);
+      onSave(restoredData);
       
-    } catch (error) {
-      console.error('❌ Failed to update time block:', error);
       toast({
         title: "Update Failed",
-        description: "Could not update the time block. Please try again.",
+        description: "Could not update the time block. Changes have been reverted.",
         variant: "destructive"
       });
     }
