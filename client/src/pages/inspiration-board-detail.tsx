@@ -1089,9 +1089,9 @@ export default function InspirationBoardDetail() {
                           const currentColor = currentPickerColor || '#3b82f6';
                           // Always add as a new color, regardless of selection state
                           setNewPalette(prev => ({ ...prev, colours: [...prev.colours, currentColor] }));
-                          // Deselect any current selection and reset picker for next color
+                          // Deselect any current selection but keep the picker color the same
                           setSelectedColorIndex(null);
-                          setCurrentPickerColor('#3b82f6');
+                          // Don't reset the picker color - let user continue from where they were
                           // Add to recent colors when user commits the color to their palette
                           addToRecentColors(currentColor);
                         }}
