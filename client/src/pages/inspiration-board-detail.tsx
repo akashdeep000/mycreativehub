@@ -1194,7 +1194,9 @@ export default function InspirationBoardDetail() {
                     
                     {/* Colour Palette Preview */}
                     <div className="p-4 bg-gray-50 rounded-lg">
-                      <h4 className="text-sm font-medium mb-3">Preview</h4>
+                      <h4 className="text-sm font-medium mb-3">
+                        {newPalette.colours.length === 0 ? "The colours you choose will be displayed here" : "Preview"}
+                      </h4>
                       <div className="flex gap-2 flex-wrap">
                         {newPalette.colours.map((colour, index) => (
                           <div
