@@ -81,7 +81,8 @@ export default function ToolkitCard({ module }: ToolkitCardProps) {
              module.name === "The Affiliate Link Hub" ? "1 System" :
              module.name === "Streamline Your Workflow" ? "4 Systems" :
              module.name === "Your Resource Library" ? "1 System" :
-             module.templateCount > 0 ? `${module.templateCount} Templates` : "New"}
+             module.templateCount === 1 ? "1 template" :
+             module.templateCount > 1 ? `${module.templateCount} Templates` : "New"}
           </Badge>
         </div>
         <CardTitle className="text-lg font-serif">{module.name}</CardTitle>
