@@ -86,6 +86,17 @@ export default function ToolkitCard({ module }: ToolkitCardProps) {
         </div>
         <CardTitle className="text-lg font-serif">{module.name}</CardTitle>
         <p className="text-gray-600 text-sm">{module.description}</p>
+        {module.name === "Streamline Your Workflow" && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <h4 className="text-sm font-medium text-gray-800 mb-2">What's Inside:</h4>
+            <ul className="text-xs text-gray-600 space-y-1">
+              <li>• Creative Inspiration Hub</li>
+              <li>• Time Blocking Planner</li>
+              <li>• Automation System Toolkit</li>
+              <li>• SOP Builder</li>
+            </ul>
+          </div>
+        )}
       </CardHeader>
       
     </Card>
