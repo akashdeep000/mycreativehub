@@ -322,16 +322,52 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       const savedEvent = await response.json();
       console.log(`✅ Event created with ID: ${savedEvent.id}`);
       
-      // Update the block with real database ID - use setData callback to get current state
-      setData(currentData => ({
-        ...currentData,
-        monthlyView: {
-          ...currentData.monthlyView,
-          blocks: currentData.monthlyView.blocks.map(block => 
-            block.id === tempId ? { ...block, id: savedEvent.id } : block
-          )
+      // Update the block with real database ID and sync any changes made during creation
+      setData(currentData => {
+        const tempBlock = currentData.monthlyView.blocks.find(block => block.id === tempId);
+        if (tempBlock && (tempBlock.startTime !== `${hour.toString().padStart(2, '0')}:00` || tempBlock.title !== blockTitle)) {
+          // Block was modified during creation, need to update the server with current state
+          console.log('🔄 Syncing modified block to server after creation');
+          
+          // Update server with the current block state
+          const updatePayload: any = {
+            title: tempBlock.title,
+            color: tempBlock.colour,
+            colorKeyId: tempBlock.colourTagId
+          };
+          
+          if (tempBlock.startTime) {
+            const startTimeISO = `${tempBlock.day}T${tempBlock.startTime}:00.000Z`;
+            const startDate = new Date(startTimeISO);
+            const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+            updatePayload.startTime = startTimeISO;
+            updatePayload.endTime = endDate.toISOString();
+          }
+          
+          // Send update to server
+          fetch(`/api/time-blocking-events/${savedEvent.id}`, {
+            method: 'PATCH',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store'
+            },
+            credentials: 'include',
+            body: JSON.stringify(updatePayload)
+          }).catch(error => {
+            console.error('❌ Failed to sync modified block:', error);
+          });
         }
-      }));
+        
+        return {
+          ...currentData,
+          monthlyView: {
+            ...currentData.monthlyView,
+            blocks: currentData.monthlyView.blocks.map(block => 
+              block.id === tempId ? { ...block, id: savedEvent.id } : block
+            )
+          }
+        };
+      });
       
       // Show success toast
       toast({
