@@ -1818,10 +1818,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTimeBlockingEvent(id: string, updates: Partial<InsertTimeBlockingEvent>): Promise<TimeBlockingEvent> {
+    // Convert string timestamps to Date objects if needed (same as create function)
+    const processedUpdates = { ...updates };
+    if (updates.startTime && typeof updates.startTime === 'string') {
+      processedUpdates.startTime = new Date(updates.startTime);
+    }
+    if (updates.endTime && typeof updates.endTime === 'string') {
+      processedUpdates.endTime = new Date(updates.endTime);
+    }
+    
     const [event] = await db
       .update(timeBlockingEvents)
       .set({
-        ...updates,
+        ...processedUpdates,
         updatedAt: new Date(),
       })
       .where(

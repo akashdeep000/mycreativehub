@@ -374,6 +374,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Add 1 hour
           const endTimeISO = endDate.toISOString();
           
+          // Send as ISO strings (backend will convert to Date objects)
           updatePayload.startTime = startTimeISO;
           updatePayload.endTime = endTimeISO;
           
