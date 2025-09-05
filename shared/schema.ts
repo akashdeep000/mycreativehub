@@ -212,7 +212,7 @@ export const inspirationBoardNotes = pgTable("inspiration_board_notes", {
   id: serial("id").primaryKey(),
   boardId: integer("board_id").references(() => inspirationBoards.id, { onDelete: "cascade" }),
   title: varchar("title"),
-  content: text("content").notNull(),
+  content: text("content"),
   color: varchar("color").default("yellow"), // yellow, pink, blue, lilac
   position: jsonb("position"), // { x: number, y: number, rotation: number }
   createdAt: timestamp("created_at").defaultNow(),
