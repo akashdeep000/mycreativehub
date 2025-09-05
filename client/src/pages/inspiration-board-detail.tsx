@@ -869,67 +869,66 @@ export default function InspirationBoardDetail() {
       <div className="flex-1 flex flex-col min-h-screen lg:ml-64">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 p-4 lg:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation("/")}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to main dashboard
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation("/inspiration-hub")}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Hub
-              </Button>
-              {isEditingTitle ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={boardTitle}
-                    onChange={(e) => setBoardTitle(e.target.value)}
-                    className="text-2xl font-serif font-semibold"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleTitleSave();
-                      if (e.key === "Escape") {
-                        setBoardTitle(board.title);
-                        setIsEditingTitle(false);
-                      }
-                    }}
-                  />
-                  <Button size="sm" onClick={handleTitleSave}>
-                    <Save className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    onClick={() => {
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation("/")}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to main dashboard
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation("/inspiration-hub")}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Hub
+            </Button>
+          </div>
+          
+          <div className="mb-4">
+            {isEditingTitle ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={boardTitle}
+                  onChange={(e) => setBoardTitle(e.target.value)}
+                  className="text-2xl font-serif font-semibold"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleTitleSave();
+                    if (e.key === "Escape") {
                       setBoardTitle(board.title);
                       setIsEditingTitle(false);
-                    }}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ) : (
-                <h1 
-                  className="text-2xl font-serif font-semibold text-gray-800 cursor-pointer hover:text-purple-600 transition-colors"
-                  onClick={() => setIsEditingTitle(true)}
+                    }
+                  }}
+                />
+                <Button size="sm" onClick={handleTitleSave}>
+                  <Save className="w-4 h-4" />
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={() => {
+                    setBoardTitle(board.title);
+                    setIsEditingTitle(false);
+                  }}
                 >
-                  {board.title}
-                  <Edit className="w-4 h-4 inline ml-2 opacity-50" />
-                </h1>
-              )}
-            </div>
-            
-
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <h1 
+                className="text-2xl font-serif font-semibold text-gray-800 cursor-pointer hover:text-purple-600 transition-colors"
+                onClick={() => setIsEditingTitle(true)}
+              >
+                {board.title}
+                <Edit className="w-4 h-4 inline ml-2 opacity-50" />
+              </h1>
+            )}
           </div>
           
           {board.description && (
