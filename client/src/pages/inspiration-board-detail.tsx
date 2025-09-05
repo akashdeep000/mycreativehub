@@ -235,6 +235,7 @@ export default function InspirationBoardDetail() {
   const [newLink, setNewLink] = useState({ url: "", title: "", description: "" });
   const [newPalette, setNewPalette] = useState({ name: "", colours: ["#ffffff"] });
   const [selectedColorIndex, setSelectedColorIndex] = useState<number | null>(null);
+  const [currentPickerColor, setCurrentPickerColor] = useState<string>('#3b82f6');
   const [recentColors, setRecentColors] = useState<string[]>([]);
   const [isEditNoteDialogOpen, setIsEditNoteDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -1060,6 +1061,7 @@ export default function InspirationBoardDetail() {
               setIsPaletteDialogOpen(open);
               if (!open) {
                 setSelectedColorIndex(null);
+                setCurrentPickerColor('#3b82f6');
               }
             }}>
               <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
@@ -1079,31 +1081,44 @@ export default function InspirationBoardDetail() {
 
                   {/* Color picker section */}
                   <div className="space-y-4">
-                    {selectedColorIndex !== null ? (
-                      <>
-                        <div className="text-sm font-medium flex items-center gap-2">
-                          <div 
-                            className="w-4 h-4 rounded border border-gray-300"
-                            style={{ backgroundColor: newPalette.colours[selectedColorIndex] }}
-                          />
-                          Editing Colour {selectedColorIndex + 1}
-                        </div>
-                        <ColorPicker
-                          value={newPalette.colours[selectedColorIndex]}
-                          onChange={handleColorChange}
-                          recentColors={recentColors}
-                          onAddToRecent={addToRecentColors}
-                        />
-                      </>
-                    ) : (
-                      <div className="flex items-center justify-center h-64 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
-                        <div className="text-center">
-                          <div className="text-4xl mb-2">🎨</div>
-                          <div className="text-sm">Select a colour below to start editing</div>
-                          <div className="text-xs text-gray-400 mt-1">Or add a new colour to get started</div>
-                        </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium flex items-center gap-2">
+                        {selectedColorIndex !== null ? (
+                          <>
+                            <div 
+                              className="w-4 h-4 rounded border border-gray-300"
+                              style={{ backgroundColor: newPalette.colours[selectedColorIndex] }}
+                            />
+                            Editing Colour {selectedColorIndex + 1}
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-4 h-4 rounded border border-gray-300 bg-blue-500" />
+                            Choose a New Colour
+                          </>
+                        )}
                       </div>
-                    )}
+                      {selectedColorIndex === null && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            const currentColor = currentPickerColor || '#3b82f6';
+                            setNewPalette(prev => ({ ...prev, colours: [...prev.colours, currentColor] }));
+                            setSelectedColorIndex(newPalette.colours.length);
+                          }}
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          Add This Colour
+                        </Button>
+                      )}
+                    </div>
+                    <ColorPicker
+                      value={selectedColorIndex !== null ? newPalette.colours[selectedColorIndex] : (currentPickerColor || '#3b82f6')}
+                      onChange={selectedColorIndex !== null ? handleColorChange : setCurrentPickerColor}
+                      recentColors={recentColors}
+                      onAddToRecent={addToRecentColors}
+                    />
                   </div>
                   
                   <div className="grid gap-4">
