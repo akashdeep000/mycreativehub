@@ -648,20 +648,6 @@ export default function InspirationBoardDetail() {
     });
   };
 
-  const addColourToPalette = () => {
-    const newColor = "#ffffff";
-    setNewPalette(prev => {
-      const newColours = [...prev.colours, newColor];
-      return {
-        ...prev,
-        colours: newColours
-      };
-    });
-    // Automatically select the newly added color
-    setSelectedColorIndex(newPalette.colours.length);
-    // Add to recent colors when user adds a new color to their palette
-    addToRecentColors(newColor);
-  };
 
   const updatePaletteColour = (index: number, colour: string) => {
     setNewPalette(prev => ({
@@ -1108,22 +1094,28 @@ export default function InspirationBoardDetail() {
                           </>
                         )}
                       </div>
-                      {selectedColorIndex === null && (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => {
-                            const currentColor = currentPickerColor || '#3b82f6';
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          const currentColor = selectedColorIndex !== null ? newPalette.colours[selectedColorIndex] : (currentPickerColor || '#3b82f6');
+                          if (selectedColorIndex === null) {
+                            // Adding a new color
                             setNewPalette(prev => ({ ...prev, colours: [...prev.colours, currentColor] }));
                             setSelectedColorIndex(newPalette.colours.length);
-                            // Add to recent colors when user commits the color to their palette
-                            addToRecentColors(currentColor);
-                          }}
-                        >
-                          <Plus className="w-3 h-3 mr-1" />
-                          Add This Colour
-                        </Button>
-                      )}
+                          } else {
+                            // Adding another new color (deselect current and add new)
+                            setNewPalette(prev => ({ ...prev, colours: [...prev.colours, currentColor] }));
+                            setSelectedColorIndex(null);
+                            setCurrentPickerColor('#3b82f6');
+                          }
+                          // Add to recent colors when user commits the color to their palette
+                          addToRecentColors(currentColor);
+                        }}
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Add This Colour
+                      </Button>
                     </div>
                     <ColorPicker
                       value={selectedColorIndex !== null ? newPalette.colours[selectedColorIndex] : (currentPickerColor || '#3b82f6')}
@@ -1135,10 +1127,6 @@ export default function InspirationBoardDetail() {
                   <div className="grid gap-4">
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium">Selected Colours ({newPalette.colours.length})</label>
-                      <Button size="sm" variant="outline" onClick={addColourToPalette}>
-                        <Plus className="w-3 h-3 mr-1" />
-                        Add Colour
-                      </Button>
                     </div>
                     
                     <div className="grid gap-3 max-h-60 overflow-y-auto">
