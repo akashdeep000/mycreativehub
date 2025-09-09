@@ -236,7 +236,7 @@ export default function SOPEditor() {
             value={sop.title}
             onChange={(e) => updateSOPTitle(e.target.value)}
             className="text-7xl font-bold border-none bg-transparent p-0 focus:ring-0 text-gray-900 text-center resize-none w-full"
-            style={{ fontSize: '6rem', lineHeight: '1.2' }}
+            style={{ fontSize: '1.5rem', lineHeight: '1.2' }}
             placeholder="SOP Title"
             rows={1}
           />
