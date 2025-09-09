@@ -172,7 +172,7 @@ export default function SOPEditor() {
             <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">SOP Not Found</h2>
             <p className="text-gray-600 mb-6">The SOP you're looking for doesn't exist.</p>
-            <Link href="/sop-builder">
+            <Link href="/sop-builder-hub">
               <Button className="bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-white">
                 Back to SOP Builder
               </Button>
@@ -191,7 +191,7 @@ export default function SOPEditor() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Link href="/sop-builder" className="text-gray-600 hover:text-gray-800">
+            <Link href="/sop-builder-hub" className="text-gray-600 hover:text-gray-800">
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">SOP Editor</h1>
