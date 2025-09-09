@@ -172,14 +172,26 @@ export default function SOPEditor() {
       <div className="lg:ml-64 max-w-full overflow-x-hidden">
         <main className="px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Link href="/sop-builder-hub" className="text-gray-600 hover:text-gray-800">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900">SOP Editor</h1>
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => window.location.href = "/"}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Main Dashboard
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => window.location.href = "/sop-builder-hub"}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to SOP Builder Hub
+            </Button>
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 text-center">
             {stats.completed}/{stats.total} steps completed
           </div>
         </div>
