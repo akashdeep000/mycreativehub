@@ -162,8 +162,8 @@ export default function SOPBuilderHub() {
               </Button>
             </div>
             <div className="flex items-start gap-3">
-              <div className="bg-gradient-to-br from-indigo-500 to-purple-500 p-2 rounded-lg">
-                <FileText className="h-6 w-6 text-white" />
+              <div className="bg-gradient-to-br from-indigo-500 to-purple-500 p-3 rounded-lg">
+                <FileText className="h-8 w-8 text-white" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">SOP Builder Hub</h1>
