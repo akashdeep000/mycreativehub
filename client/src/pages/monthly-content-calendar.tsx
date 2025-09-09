@@ -911,9 +911,9 @@ export default function MonthlyContentCalendar() {
                                     removeTagFromDate(cellData.date, tag.id);
                                   }}
                                   className="p-0.5 hover:bg-red-100 rounded text-red-600 hover:text-red-800"
-                                  title="Remove tag"
+                                  title="Delete tag"
                                 >
-                                  <X className="w-3 h-3" />
+                                  <Trash2 className="w-3 h-3" />
                                 </button>
                               </div>
                             </div>
