@@ -170,6 +170,20 @@ export default function SOPBuilderHub() {
             <p className="text-gray-600">Create and manage your Standard Operating Procedures to streamline your workflow</p>
           </div>
 
+          {/* Information Box */}
+          <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">What's an SOP?</h3>
+                <p className="text-gray-600">A Standard Operating Procedure is a step-by-step checklist for repeat tasks, so that you're not starting from scratch every single time.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">How to use this hub:</h3>
+                <p className="text-gray-600">The first three SOPs (Email Funnel, Product Launch, Batching Content) are examples. Open one, edit the steps to fit your business, or click Add New SOP to create your own. Mark steps complete to track progress.</p>
+              </div>
+            </div>
+          </div>
+
         {/* SOP Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sops.map((sop) => {
