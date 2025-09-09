@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { Plus, FileText, CheckCircle, Circle, ArrowLeft } from 'lucide-react';
+import Sidebar from '@/components/layout/sidebar';
+import MobileNav from '@/components/layout/mobile-nav';
 
 interface SOPStep {
   id: string;
@@ -134,31 +136,34 @@ export default function SOPBuilderHub() {
   };
 
   return (
-    <div className="min-h-screen bg-white p-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <Button 
-              variant="ghost" 
-              onClick={() => setLocation("/")}
-              className="text-gray-600 hover:text-gray-800"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Main Dashboard
-            </Button>
-            <Button 
-              variant="ghost" 
-              onClick={() => setLocation("/streamline-workflow")}
-              className="text-gray-600 hover:text-gray-800"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Streamline Workflow
-            </Button>
+    <div className="min-h-screen bg-gray-50">
+      <Sidebar />
+      <MobileNav />
+      <div className="lg:ml-64 max-w-full overflow-x-hidden">
+        <main className="px-4 sm:px-6 lg:px-8 py-6">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-4 mb-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => setLocation("/")}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Main Dashboard
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={() => setLocation("/streamline-workflow")}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Streamline Workflow
+              </Button>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900">SOP Builder Hub</h1>
+            <p className="text-gray-600">Create and manage your Standard Operating Procedures to streamline your workflow</p>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">SOP Builder Hub</h1>
-          <p className="text-gray-600">Create and manage your Standard Operating Procedures to streamline your workflow</p>
-        </div>
 
         {/* SOP Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -223,7 +228,8 @@ export default function SOPBuilderHub() {
               <p className="text-sm text-gray-500 text-center">Create a new Standard Operating Procedure</p>
             </CardContent>
           </Card>
-        </div>
+          </div>
+        </main>
       </div>
     </div>
   );
