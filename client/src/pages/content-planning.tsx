@@ -175,9 +175,7 @@ export default function ContentPlanning() {
                 <span className="text-pink-600 font-semibold">•</span>
                 <div>
                   <h4 className="font-semibold text-gray-700 mb-1">Fill Out Your Monthly Planner</h4>
-                  <p className="text-gray-600 text-sm">
-                    Use the calendar to map out content types, assign post statuses, and mark batching days to stay on track.
-                  </p>
+                  <p className="text-gray-600 text-sm">Use the calendar to map out content types and assign post statuses to stay on track.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
