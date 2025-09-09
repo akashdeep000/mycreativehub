@@ -322,6 +322,11 @@ export default function SocialMediaStrategy() {
                           id={`pillar-title-${pillar.id}`}
                           value={pillar.title}
                           onChange={(e) => updatePillar(pillar.id, 'title', e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.currentTarget.blur();
+                            }
+                          }}
                           placeholder="e.g., Behind the Scenes"
                           className="mt-1"
                         />
@@ -334,6 +339,11 @@ export default function SocialMediaStrategy() {
                           id={`pillar-cta-${pillar.id}`}
                           value={pillar.cta}
                           onChange={(e) => updatePillar(pillar.id, 'cta', e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.currentTarget.blur();
+                            }
+                          }}
                           placeholder="e.g., Shop, Newsletter, Podcast..."
                           className="mt-1"
                         />
