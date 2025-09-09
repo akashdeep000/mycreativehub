@@ -7,6 +7,7 @@ import {
   Users,
   Link,
   FolderOpen,
+  Camera,
   LucideIcon 
 } from "lucide-react";
 
@@ -21,7 +22,7 @@ export interface NavigationItem {
 export const navigationItems: NavigationItem[] = [
   { href: "/", icon: Home, label: "Dashboard", moduleKey: "dashboard" },
   { href: "/streamline-workflow", icon: Workflow, label: "Streamline Workflow", moduleKey: "Streamline Your Workflow" },
-  { href: "/content", icon: FileText, label: "Content System", moduleKey: "Content Creation System" },
+  { href: "/content", icon: Camera, label: "Content System", moduleKey: "Content Creation System" },
   { href: "/launch", icon: Rocket, label: "Product Launch", moduleKey: "Product Launch System" },
   { href: "/finance", icon: TrendingUp, label: "Finance", moduleKey: "Financial Management" },
   { href: "/affiliate-marketing", icon: Link, label: "Affiliate Hub", moduleKey: "The Affiliate Link Hub" },
