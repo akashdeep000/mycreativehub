@@ -10,7 +10,7 @@ export default function BackToDashboard() {
       variant="ghost"
       size="sm"
       onClick={() => setLocation('/')}
-      className="text-gray-600 hover:text-gray-800 mb-2"
+      className="text-gray-600 hover:text-gray-800"
     >
       <Home className="w-4 h-4 mr-2" />
       Back to Main Dashboard
