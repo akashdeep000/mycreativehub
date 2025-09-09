@@ -200,7 +200,6 @@ export default function SocialMediaStrategy() {
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
       <MobileNav />
-      
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="mb-8">
@@ -220,7 +219,7 @@ export default function SocialMediaStrategy() {
             </div>
             <div>
               <h1 className="text-3xl font-serif font-semibold text-gray-800">My Social Media Strategy</h1>
-              <p className="text-gray-600">Define your content goals and organize your content pillars</p>
+              <p className="text-gray-600">Define your content goals and organise your content pillars</p>
             </div>
           </div>
         </div>
