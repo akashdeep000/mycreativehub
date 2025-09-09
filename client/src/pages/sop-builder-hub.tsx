@@ -227,14 +227,6 @@ export default function SOPBuilderHub() {
                         Open SOP
                       </Button>
                     </Link>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => clearSOPChecklist(sop.id)}
-                      className="border-pink-200 text-pink-600 hover:bg-pink-50"
-                    >
-                      Clear
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
