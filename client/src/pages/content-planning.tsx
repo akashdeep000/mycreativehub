@@ -134,19 +134,6 @@ export default function ContentPlanning() {
                 <CardDescription>{template.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-end text-sm text-gray-500">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className={`${template.isExternal ? 'text-pink-600 hover:text-pink-700 bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100' : 'text-blue-600 hover:text-blue-700'}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleTemplateClick(template);
-                    }}
-                  >
-                    {template.isExternal ? 'Open in Canva' : 'Open'}
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           ))}
