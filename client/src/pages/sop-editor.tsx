@@ -153,7 +153,7 @@ export default function SOPEditor() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-pink-50 p-4">
+      <div className="min-h-screen bg-gray-50 p-4">
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded mb-4"></div>
@@ -166,7 +166,7 @@ export default function SOPEditor() {
 
   if (!sop) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-pink-50 p-4">
+      <div className="min-h-screen bg-gray-50 p-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
             <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -186,7 +186,7 @@ export default function SOPEditor() {
   const stats = getCompletionStats();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-pink-50 p-4">
+    <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
