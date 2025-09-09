@@ -60,7 +60,7 @@ export default function ReelCarouselTemplates() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
-            <Link href="/dashboard">
+            <Link href="/">
               <Button variant="outline" size="sm">
                 <Home className="w-4 h-4 mr-2" />
                 Back to Main Dashboard
