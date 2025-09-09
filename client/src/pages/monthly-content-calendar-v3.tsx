@@ -637,6 +637,7 @@ export default function MonthlyContentCalendarV3() {
                             <div
                               key={entry.id}
                               className="flex items-center gap-1 group"
+                              title={entry.notes ? `Notes: ${entry.notes}` : undefined}
                             >
                               <div
                                 className="w-3 h-3 rounded-full flex-shrink-0"
