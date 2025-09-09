@@ -173,12 +173,10 @@ export default function SocialMediaStrategy() {
   };
 
   const removePillar = (id: string) => {
-    if (strategy.pillars.length > 3) {
-      setStrategy(prev => ({
-        ...prev,
-        pillars: prev.pillars.filter(pillar => pillar.id !== id)
-      }));
-    }
+    setStrategy(prev => ({
+      ...prev,
+      pillars: prev.pillars.filter(pillar => pillar.id !== id)
+    }));
   };
 
 
@@ -284,24 +282,35 @@ export default function SocialMediaStrategy() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {strategy.pillars.map((pillar, index) => (
+              {strategy.pillars.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 mb-4">No content pillars yet. Add your first pillar to get started!</p>
+                  <Button
+                    onClick={addPillar}
+                    variant="outline"
+                    className="border-orange-200 text-orange-600 hover:bg-orange-50"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add First Pillar
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {strategy.pillars.map((pillar, index) => (
                   <Card key={pillar.id} className="shadow-md border-0 bg-white">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold text-gray-800">
                           Pillar {index + 1}
                         </h3>
-                        {strategy.pillars.length > 3 && (
-                          <Button
-                            onClick={() => removePillar(pillar.id)}
-                            size="sm"
-                            variant="ghost"
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
+                        <Button
+                          onClick={() => removePillar(pillar.id)}
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-500 hover:text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -331,8 +340,9 @@ export default function SocialMediaStrategy() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
