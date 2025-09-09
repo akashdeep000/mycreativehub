@@ -636,8 +636,7 @@ export default function MonthlyContentCalendarV3() {
                           return (
                             <div
                               key={entry.id}
-                              className="flex items-center gap-1 group"
-                              title={entry.notes ? `Notes: ${entry.notes}` : undefined}
+                              className="flex items-center gap-1 group relative"
                             >
                               <div
                                 className="w-3 h-3 rounded-full flex-shrink-0"
@@ -668,6 +667,12 @@ export default function MonthlyContentCalendarV3() {
                               >
                                 <Trash2 className="w-3 h-3 text-red-600" />
                               </button>
+                              {/* Custom instant tooltip */}
+                              {entry.notes && (
+                                <div className="absolute left-0 bottom-full mb-1 bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap max-w-xs">
+                                  Notes: {entry.notes}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
