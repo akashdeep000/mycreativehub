@@ -235,7 +235,8 @@ export default function SOPEditor() {
           <Input
             value={sop.title}
             onChange={(e) => updateSOPTitle(e.target.value)}
-            className="text-8xl font-bold border-none bg-transparent p-0 focus:ring-0 text-gray-900 text-center"
+            className="font-bold border-none bg-transparent p-0 focus:ring-0 text-gray-900 text-center"
+            style={{ fontSize: '20rem' }}
             placeholder="SOP Title"
           />
         </div>
