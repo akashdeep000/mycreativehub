@@ -38,7 +38,7 @@ export default function ContentPlanning() {
     {
       id: 1,
       name: "My Social Media Strategy",
-      description: "Define your content goals, segment your content pillars, and match each pillar with a clear CTA",
+      description: "Define your content goals, segment your content pillars, and match each pillar with a clear Call-to-Action (CTA)",
       icon: Smartphone,
       colour: "orange",
       bgGradient: "from-orange-400 to-orange-500",
