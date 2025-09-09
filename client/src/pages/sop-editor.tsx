@@ -26,6 +26,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import Sidebar from '@/components/layout/sidebar';
+import MobileNav from '@/components/layout/mobile-nav';
 
 interface SOPStep {
   id: string;
@@ -186,8 +188,11 @@ export default function SOPEditor() {
   const stats = getCompletionStats();
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <Sidebar />
+      <MobileNav />
+      <div className="lg:ml-64 max-w-full overflow-x-hidden">
+        <main className="px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -319,6 +324,7 @@ export default function SOPEditor() {
             </div>
           </CardContent>
         </Card>
+        </main>
       </div>
     </div>
   );
