@@ -62,7 +62,7 @@ export default function ContentPlanning() {
     {
       id: 8,
       name: "Reel & Carousel Template Pack",
-      description: "Create on-brand, scroll-stopping content with customisable Canva templates for Reels and Carousels.",
+      description: "Create on-brand content with customisable Canva templates for Reels and Carousels",
       icon: Play,
       colour: "rose",
       bgGradient: "from-rose-400 to-rose-500",
