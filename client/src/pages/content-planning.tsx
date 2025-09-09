@@ -184,9 +184,7 @@ export default function ContentPlanning() {
                 <span className="text-pink-600 font-semibold">•</span>
                 <div>
                   <h4 className="font-semibold text-gray-700 mb-1">Grab the Canva Templates</h4>
-                  <p className="text-gray-600 text-sm">
-                    Once your calendar's filled in, head to the template pack to start creating and batching efficiently.
-                  </p>
+                  <p className="text-gray-600 text-sm">Once your calendar's filled in, head to the template pack to start creating.</p>
                 </div>
               </div>
             </div>
