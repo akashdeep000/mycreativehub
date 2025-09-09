@@ -15,17 +15,7 @@ import {
   GripVertical,
   AlertCircle 
 } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+
 import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
 
@@ -132,19 +122,7 @@ export default function SOPEditor() {
     }
   };
 
-  const clearAllCheckboxes = () => {
-    if (sop) {
-      const updatedSOP = {
-        ...sop,
-        steps: sop.steps.map(step => ({ ...step, completed: false }))
-      };
-      saveSOPToStorage(updatedSOP);
-      toast({
-        title: "Checklist Cleared",
-        description: "All steps have been unchecked.",
-      });
-    }
-  };
+  
 
   const getCompletionStats = () => {
     if (!sop) return { completed: 0, total: 0, percentage: 0 };
@@ -201,37 +179,8 @@ export default function SOPEditor() {
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">SOP Editor</h1>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-gray-600">
-              {stats.completed}/{stats.total} steps completed
-            </div>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="border-pink-200 text-pink-600 hover:bg-pink-50"
-                >
-                  Clear Checklist
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Clear All Checkboxes?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will uncheck all completed steps in your SOP. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={clearAllCheckboxes}
-                    className="bg-pink-600 hover:bg-pink-700"
-                  >
-                    Clear Checklist
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+          <div className="text-sm text-gray-600">
+            {stats.completed}/{stats.total} steps completed
           </div>
         </div>
 
