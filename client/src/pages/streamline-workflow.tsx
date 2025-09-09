@@ -127,7 +127,7 @@ const workflowTemplates = [
     colour: "bg-gradient-to-br from-indigo-500 to-purple-500",
     textColor: "text-white",
     isExternal: true,
-    externalRoute: "/sop-builder",
+    externalRoute: "/sop-builder-hub",
     defaultData: {}
   }
 ];
