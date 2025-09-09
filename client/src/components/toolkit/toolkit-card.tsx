@@ -10,6 +10,7 @@ import {
   TrendingUp,
   Users,
   Link,
+  Camera,
   LucideIcon
 } from "lucide-react";
 
@@ -31,6 +32,7 @@ interface ToolkitCardProps {
 const iconMap: Record<string, LucideIcon> = {
   "Workflow": Workflow,
   "FileText": FileText,
+  "Camera": Camera,
   "Mail": Mail,
   "Rocket": Rocket,
   "TrendingUp": TrendingUp,
