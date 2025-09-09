@@ -698,32 +698,18 @@ export default function MonthlyContentCalendarV3() {
                 placeholder="Add notes about this content..."
                 rows={4}
               />
-              <div className="flex justify-between gap-2">
-                <Button 
-                  variant="destructive" 
-                  onClick={() => {
-                    if (showNotesPopup && currentEntryId) {
-                      const date = parseInt(showNotesPopup.split('-')[0]);
-                      deleteEntry(date, currentEntryId);
-                      setShowNotesPopup(null);
-                    }
-                  }}
-                >
-                  Delete Note
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowNotesPopup(null)}>
+                  Cancel
                 </Button>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setShowNotesPopup(null)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={() => {
-                    if (showNotesPopup && currentEntryId) {
-                      const date = parseInt(showNotesPopup.split('-')[0]);
-                      handleNotesEdit(date, currentEntryId, notesValue);
-                    }
-                  }}>
-                    Save
-                  </Button>
-                </div>
+                <Button onClick={() => {
+                  if (showNotesPopup && currentEntryId) {
+                    const date = parseInt(showNotesPopup.split('-')[0]);
+                    handleNotesEdit(date, currentEntryId, notesValue);
+                  }
+                }}>
+                  Save
+                </Button>
               </div>
             </div>
           </DialogContent>
