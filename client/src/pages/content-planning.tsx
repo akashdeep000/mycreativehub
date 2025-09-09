@@ -7,7 +7,7 @@ import BackToDashboard from '@/components/BackToDashboard';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck, Recycle, BookOpen, BarChart3, Lightbulb, Smartphone } from "lucide-react";
+import { Calendar, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck, Recycle, BookOpen, BarChart3, Lightbulb, Smartphone, Camera } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function ContentPlanning() {
@@ -101,7 +101,7 @@ export default function ContentPlanning() {
           <BackToDashboard />
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-white" />
+              <Camera className="w-6 h-6 text-white" />
             </div>
             <div>
               <h1 className="text-3xl font-serif font-semibold text-gray-800">Content Creation System</h1>
