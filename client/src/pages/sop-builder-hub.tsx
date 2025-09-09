@@ -161,7 +161,10 @@ export default function SOPBuilderHub() {
                 Back to Streamline Workflow
               </Button>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">SOP Builder Hub</h1>
+            <div className="flex items-center gap-3">
+              <FileText className="h-8 w-8 text-purple-600" />
+              <h1 className="text-3xl font-bold text-gray-900">SOP Builder Hub</h1>
+            </div>
             <p className="text-gray-600">Create and manage your Standard Operating Procedures to streamline your workflow</p>
           </div>
 
