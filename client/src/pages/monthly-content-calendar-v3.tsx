@@ -385,7 +385,7 @@ export default function MonthlyContentCalendarV3() {
                 Monthly Content Calendar
               </h1>
               <p className="text-gray-600 mt-1 text-sm">
-                Plan your month's content in one place
+                Using your Content Strategy and Pillars to guide you, plan your Content Creation in one place
               </p>
             </div>
           </div>
