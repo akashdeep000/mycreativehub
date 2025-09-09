@@ -243,7 +243,14 @@ export default function MonthlyContentCalendarV3() {
 
     const updatedData = { ...(calendarData as any), days: updatedDays };
     queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
-    debouncedSave();
+    
+    // Save immediately for deletes (no debounce delay)
+    saveCalendarData.mutate({
+      year,
+      month,
+      colorKeys: updatedData.colorKeys,
+      days: updatedData.days,
+    });
   };
 
   // New helper functions for editing and custom tags
