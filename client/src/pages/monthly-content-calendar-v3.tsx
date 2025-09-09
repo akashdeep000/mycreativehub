@@ -669,7 +669,7 @@ export default function MonthlyContentCalendarV3() {
                               </button>
                               {/* Custom instant tooltip */}
                               {entry.notes && (
-                                <div className="absolute left-0 bottom-full mb-1 bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap max-w-xs">
+                                <div className="absolute left-0 bottom-full mb-2 bg-gray-900 text-white text-sm px-4 py-2 rounded-md shadow-xl z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap max-w-sm border border-gray-700">
                                   Notes: {entry.notes}
                                 </div>
                               )}
