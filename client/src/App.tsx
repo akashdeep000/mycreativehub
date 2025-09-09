@@ -120,7 +120,7 @@ function Router() {
         <Route path="/affiliate-marketing" component={AffiliateMarketing} />
         <Route path="/daily-focus" component={DailyFocusPage} />
         <Route path="/automation-toolkit" component={AutomationToolkit} />
-        <Route path="/sop-builder" component={SOPBuilderHub} />
+        <Route path="/sop-builder-hub" component={SOPBuilderHub} />
         <Route path="/sop/:id" component={SOPEditor} />
         <Route path="/content-status-tracker" component={ContentStatusTracker} />
         <Route path="/repurposing-toolkit" component={RepurposingToolkit} />
