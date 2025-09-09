@@ -230,17 +230,19 @@ export default function SOPEditor() {
           </div>
         </div>
 
+        {/* SOP Title */}
+        <div className="mb-6">
+          <Input
+            value={sop.title}
+            onChange={(e) => updateSOPTitle(e.target.value)}
+            className="text-4xl font-bold border-none bg-transparent p-0 focus:ring-0 text-gray-900"
+            placeholder="SOP Title"
+          />
+        </div>
+
         {/* SOP Content */}
         <Card className="mb-8">
-          <CardHeader>
-            <Input
-              value={sop.title}
-              onChange={(e) => updateSOPTitle(e.target.value)}
-              className="text-2xl font-bold border-none bg-transparent p-0 focus:ring-0 text-gray-900"
-              placeholder="SOP Title"
-            />
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {/* Steps List */}
             <div className="space-y-4">
               {sop.steps.map((step, index) => (
