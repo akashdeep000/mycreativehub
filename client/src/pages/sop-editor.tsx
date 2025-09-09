@@ -232,11 +232,13 @@ export default function SOPEditor() {
 
         {/* SOP Title */}
         <div className="mb-8 text-center">
-          <Input
+          <textarea
             value={sop.title}
             onChange={(e) => updateSOPTitle(e.target.value)}
-            className="text-7xl font-bold border-none bg-transparent p-0 focus:ring-0 text-gray-900 text-center"
+            className="text-7xl font-bold border-none bg-transparent p-0 focus:ring-0 text-gray-900 text-center resize-none w-full"
+            style={{ fontSize: '6rem', lineHeight: '1.2' }}
             placeholder="SOP Title"
+            rows={1}
           />
         </div>
 
