@@ -391,27 +391,6 @@ export default function MonthlyContentCalendarV3() {
           </div>
         </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-center gap-4 mb-6">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => navigateMonth('prev')}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <h2 className="text-xl font-semibold text-gray-900 min-w-48 text-center">
-            {MONTH_NAMES[month - 1]} {year}
-          </h2>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => navigateMonth('next')}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-
         {/* Color Keys - Time Blocking Style */}
         <div className="bg-white rounded-lg shadow-md border-0 p-6 mb-6">
           <div className="flex items-center gap-2 mb-4">
@@ -603,6 +582,27 @@ export default function MonthlyContentCalendarV3() {
           <p className="text-sm text-blue-800">
             <span className="font-medium">Note:</span> Within your calendar, you can edit each entry to add additional information. To quickly view it, simply hover over each element you've added.
           </p>
+        </div>
+
+        {/* Month Navigation */}
+        <div className="flex items-center justify-center gap-4 mb-6">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigateMonth('prev')}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <h2 className="text-xl font-semibold text-gray-900 min-w-48 text-center">
+            {MONTH_NAMES[month - 1]} {year}
+          </h2>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigateMonth('next')}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
         </div>
 
         {/* Calendar */}
