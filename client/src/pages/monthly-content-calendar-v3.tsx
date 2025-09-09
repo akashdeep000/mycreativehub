@@ -384,7 +384,7 @@ export default function MonthlyContentCalendarV3() {
               <h1 className="text-2xl font-serif font-semibold text-gray-900">
                 Monthly Content Calendar
               </h1>
-              <p className="text-gray-600 mt-1 text-sm">
+              <p className="text-gray-600 mt-1 text-base">
                 Using your Content Strategy and Pillars to guide you, plan your Content Creation in one place
               </p>
             </div>
