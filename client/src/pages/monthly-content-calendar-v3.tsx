@@ -595,6 +595,13 @@ export default function MonthlyContentCalendarV3() {
           </div>
         </div>
 
+        {/* Tip Section */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <p className="text-sm text-blue-800">
+            <span className="font-medium">Note:</span> Within your calendar, you can edit each entry to add additional information. To quickly view it, simply hover over each element you've added.
+          </p>
+        </div>
+
         {/* Calendar */}
         <div className="bg-white rounded-lg shadow-md border-0 p-6" id="calendar-container">
           <div className="grid grid-cols-7 gap-2 mb-4">
