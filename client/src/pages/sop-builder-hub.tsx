@@ -134,7 +134,7 @@ export default function SOPBuilderHub() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-pink-50 p-4">
+    <div className="min-h-screen bg-white p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
