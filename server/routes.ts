@@ -547,6 +547,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /auth/verify-reset-code { email, code }
+  app.post('/auth/verify-reset-code', async (req, res) => {
+    try {
+      const { email, code } = req.body;
+      
+      // Validate input
+      if (!email || !code) {
+        return res.status(400).json({ 
+          ok: false, 
+          error: 'invalid_input',
+          message: 'Email and code are required' 
+        });
+      }
+
+      const normalizedEmail = String(email).trim().toLowerCase();
+      const normalizedCode = String(code).trim();
+
+      console.log('[verify-reset-code] attempting verification', { email: normalizedEmail });
+
+      // Verify code and create reset session
+      const result = await storage.verifyResetCode(normalizedEmail, normalizedCode);
+
+      if (result.success) {
+        console.log('[verify-reset-code] code verified successfully');
+        return res.json({ 
+          ok: true, 
+          resetSessionId: result.resetSessionId 
+        });
+      } else {
+        console.log('[verify-reset-code] verification failed:', result.message);
+        
+        // Map storage errors to user-friendly messages
+        let userMessage = 'Invalid or expired code. Please try again.';
+        let errorType = result.message;
+        
+        if (result.message === 'too_many_attempts') {
+          userMessage = 'Too many attempts. Please wait and request a new code.';
+        } else if (result.message === 'expired_code') {
+          userMessage = 'Code has expired. Please request a new one.';
+        } else if (result.message === 'invalid_code') {
+          userMessage = 'Invalid code. Please check and try again.';
+        }
+        
+        return res.status(400).json({ 
+          ok: false, 
+          error: errorType,
+          message: userMessage 
+        });
+      }
+    } catch (e: any) {
+      console.error('[verify-reset-code] error', e?.message || e);
+      return res.status(500).json({ 
+        ok: false, 
+        error: 'server_error',
+        message: 'An error occurred. Please try again.' 
+      });
+    }
+  });
+
+  // POST /auth/complete-reset { resetSessionId, newPassword }
+  app.post('/auth/complete-reset', async (req, res) => {
+    try {
+      const { resetSessionId, newPassword } = req.body;
+      
+      // Validate input
+      if (!resetSessionId || !newPassword) {
+        return res.status(400).json({ 
+          ok: false, 
+          error: 'invalid_input',
+          message: 'Reset session ID and new password are required' 
+        });
+      }
+
+      // Validate password strength
+      if (newPassword.length < 6) {
+        return res.status(400).json({ 
+          ok: false, 
+          error: 'weak_password',
+          message: 'Password must be at least 6 characters long' 
+        });
+      }
+
+      // Hash password using the same method as signup/login
+      const hashedPassword = await hashPassword(newPassword);
+
+      console.log('[complete-reset] attempting password reset', { resetSessionId });
+
+      // Complete password reset using storage method
+      const result = await storage.completePasswordReset(resetSessionId, hashedPassword);
+
+      if (result.success) {
+        console.log('[complete-reset] password reset successful');
+        return res.json({ ok: true, message: 'Password updated successfully' });
+      } else {
+        console.log('[complete-reset] failed:', result.message);
+        
+        return res.status(400).json({ 
+          ok: false, 
+          error: 'session_invalid',
+          message: 'Reset session invalid or expired. Please start over.' 
+        });
+      }
+    } catch (e: any) {
+      console.error('[complete-reset] error', e?.message || e);
+      return res.status(500).json({ 
+        ok: false, 
+        error: 'server_error',
+        message: 'An error occurred. Please try again.' 
+      });
+    }
+  });
+
   // Legacy routes removed (now using 6-digit code system)
 
   // Toolkit modules
