@@ -133,9 +133,25 @@ app.use((req, res, next) => {
     
     if (process.env.NODE_ENV === 'production') {
       const path = require('path');
-      const indexPath = path.resolve(import.meta.dirname, 'public/index.html');
-      console.log(`[MOBILE FIX] Serving production index.html from: ${indexPath}`);
-      return res.sendFile(indexPath);
+      const fs = require('fs');
+      
+      // Try multiple possible locations for the index.html file
+      const possiblePaths = [
+        path.resolve(import.meta.dirname, 'public/index.html'),
+        path.resolve(process.cwd(), 'server/public/index.html'),
+        path.resolve(process.cwd(), 'public/index.html'),
+        path.resolve(__dirname, 'public/index.html')
+      ];
+      
+      for (const indexPath of possiblePaths) {
+        if (fs.existsSync(indexPath)) {
+          console.log(`[MOBILE FIX] Serving production index.html from: ${indexPath}`);
+          return res.sendFile(indexPath);
+        }
+      }
+      
+      console.error(`[MOBILE FIX ERROR] No index.html found in any location:`, possiblePaths);
+      return res.status(404).send('Reset password page not available');
     }
     
     // In development, let Vite handle it
