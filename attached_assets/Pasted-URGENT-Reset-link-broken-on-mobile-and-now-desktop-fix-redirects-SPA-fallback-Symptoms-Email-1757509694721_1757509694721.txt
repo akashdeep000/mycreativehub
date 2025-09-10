@@ -1,0 +1,90 @@
+URGENT: Reset link broken on mobile and now desktop – fix redirects + SPA fallback
+
+Symptoms:
+
+Email link is correct (https://mycreativehub.app/reset-password?token=...).
+
+On iPhone, tapping the button often opens just the root (no path/query).
+
+Now we’re also getting {"message":"Internal Server Error","status":500} on load.
+
+Please do the following exactly:
+
+Preserve full URL in redirects
+
+We’re likely forcing HTTPS / canonical host in a way that drops the path/query or crashes.
+
+After app.set('trust proxy', 1);, implement HTTPS/host redirects that keep req.originalUrl:
+
+app.set('trust proxy', 1);
+app.use((req, res, next) => {
+  // Force HTTPS but PRESERVE full path + query
+  if (req.headers['x-forwarded-proto'] !== 'https') {
+    return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
+  }
+  next();
+});
+// If we normalize host, also preserve req.originalUrl
+// e.g., if (req.headers.host === 'www.mycreativehub.app') res.redirect(301, `https://mycreativehub.app${req.originalUrl}`);
+
+
+Remove/replace any middleware that does res.redirect('/') or constructs a redirect without req.originalUrl.
+
+Correct SPA fallback (serve, don’t redirect)
+
+After API routes, serve index.html for non-API GETs without changing the URL:
+
+app.use('/api', apiRouter);
+
+app.use(express.static(path.join(__dirname, 'dist')));
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
+
+Do not redirect to / for unknown routes; that drops query strings like ?token=.
+
+Harden the error handler (stop 500 JSON on pages)
+
+Put a final error handler after everything so crashes don’t dump JSON to users:
+
+app.use((err, req, res, next) => {
+  console.error('Unhandled error', err);
+  if (req.path.startsWith('/api')) {
+    res.status(500).json({ message: 'Internal Server Error' });
+  } else {
+    res.status(500).send('Something went wrong');
+  }
+});
+
+
+Verify env + email link builder
+
+Ensure these secrets exist and are linked to Production:
+
+APP_BASE_URL = https://mycreativehub.app
+
+EMAIL_FROM = no-reply@mail.mycreativehub.app
+
+The reset link must be built with:
+
+const RESET_URL = `${process.env.APP_BASE_URL}/reset-password?token=${token}`;
+
+
+Use RESET_URL for both the button href and the plain-text fallback.
+
+Add temporary logging to track the issue
+
+Log req.method, req.originalUrl, and user-agent for requests that contain /reset-password.
+
+From iPhone, we must see /reset-password?token=... arrive; if a redirect occurs, confirm the target keeps the query.
+
+Acceptance test:
+
+Visit https://mycreativehub.app/reset-password?token=test → page loads (no redirect to /, no 500).
+
+Request a fresh reset email → tap the button on iPhone → address bar shows /reset-password?token=... and the form appears.
+
+Submit → password changes; reusing the same link is rejected.
+
+Desktop continues to work.

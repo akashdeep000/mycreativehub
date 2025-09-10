@@ -13,15 +13,19 @@ if (!isProduction) {
   console.log("JWT_SECRET available:", !!process.env.JWT_SECRET);
   const effectiveJwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
   console.log("Effective JWT Secret available:", !!effectiveJwtSecret && effectiveJwtSecret !== "fallback-secret");
+  console.log("APP_BASE_URL:", process.env.APP_BASE_URL || 'NOT SET');
+  console.log("EMAIL_FROM:", process.env.EMAIL_FROM || 'NOT SET');
   console.log("=== DEVELOPMENT CHECK END ===");
 } else {
   console.log("SERVER STARTING - Production Mode");
+  console.log("APP_BASE_URL:", process.env.APP_BASE_URL || 'NOT SET');
+  console.log("EMAIL_FROM:", process.env.EMAIL_FROM || 'NOT SET');
 }
 
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy for proper session handling in deployment
 
-// HTTPS redirect middleware - preserves full URL including query parameters
+// Force HTTPS but PRESERVE full path + query
 app.use((req, res, next) => {
   if (req.headers['x-forwarded-proto'] !== 'https' && process.env.NODE_ENV === 'production') {
     return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
@@ -29,10 +33,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Debug logging for reset-password requests to track mobile issues
+// Temporary logging to track reset-password issues
 app.use((req, res, next) => {
   if (req.originalUrl.includes('/reset-password')) {
-    console.log(`[RESET PASSWORD DEBUG] ${req.method} ${req.originalUrl} - User-Agent: ${req.headers['user-agent']?.substring(0, 50)}...`);
+    console.log(`[RESET-PASSWORD] ${req.method} ${req.originalUrl}`);
+    console.log(`[RESET-PASSWORD] User-Agent: ${req.headers['user-agent']}`);
+    console.log(`[RESET-PASSWORD] Host: ${req.headers.host}`);
+    console.log(`[RESET-PASSWORD] X-Forwarded-Proto: ${req.headers['x-forwarded-proto']}`);
   }
   next();
 });
@@ -111,52 +118,16 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  // Mobile-specific SPA route handler for reset password - MUST be before error handler
-  app.get('/reset-password', (req, res, next) => {
-    console.log(`[MOBILE RESET PASSWORD FIX] Handling: ${req.originalUrl}`);
-    console.log(`[MOBILE FIX] User-Agent: ${req.headers['user-agent']}`);
-    
-    if (process.env.NODE_ENV === 'production') {
-      const path = require('path');
-      const fs = require('fs');
-      
-      // Try multiple possible locations for the index.html file
-      const possiblePaths = [
-        path.resolve(import.meta.dirname, 'public/index.html'),
-        path.resolve(process.cwd(), 'server/public/index.html'),
-        path.resolve(process.cwd(), 'public/index.html'),
-        path.resolve(__dirname, 'public/index.html')
-      ];
-      
-      for (const indexPath of possiblePaths) {
-        if (fs.existsSync(indexPath)) {
-          console.log(`[MOBILE FIX] Serving production index.html from: ${indexPath}`);
-          return res.sendFile(indexPath);
-        }
-      }
-      
-      console.error(`[MOBILE FIX ERROR] No index.html found in any location:`, possiblePaths);
-      return res.status(404).send('Reset password page not available');
-    }
-    
-    // In development, let Vite handle it BUT make sure it gets to Vite properly
-    console.log(`[MOBILE FIX] Development mode - passing to Vite`);
-    next();
-  });
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  // Final error handler - don't send JSON for non-API routes
+  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+    console.error('Unhandled error', err);
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    // In production, don't expose sensitive error details
-    if (process.env.NODE_ENV === 'production') {
-      console.error('Production error:', err);
-      res.status(status).json({ 
-        message: status >= 500 ? "Internal Server Error" : message,
-        status: status 
-      });
+    
+    if (req.path.startsWith('/api')) {
+      res.status(status).json({ message: 'Internal Server Error' });
     } else {
-      res.status(status).json({ message, stack: err.stack });
+      res.status(status).send('Something went wrong');
     }
   });
 
