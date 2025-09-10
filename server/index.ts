@@ -118,6 +118,17 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // SPA fallback for reset-password route - MUST be before static files
+  app.get('/reset-password', (req, res, next) => {
+    if (process.env.NODE_ENV === 'production') {
+      const path = require('path');
+      const distPath = path.resolve(import.meta.dirname, "public");
+      res.sendFile(path.resolve(distPath, "index.html"));
+    } else {
+      next(); // Let Vite handle it in development
+    }
+  });
+
 
   // Final error handler - don't send JSON for non-API routes
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
