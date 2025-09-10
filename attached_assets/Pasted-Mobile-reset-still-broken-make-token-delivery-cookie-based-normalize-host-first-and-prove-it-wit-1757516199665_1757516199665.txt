@@ -1,0 +1,102 @@
+Mobile reset still broken — make token delivery cookie-based, normalize host first, and prove it with headers
+
+Mobile links work inconsistently because the token in the query string gets lost or the cookie isn’t sticking after redirects. Please implement the robust flow below and show the headers to prove it’s correct.
+
+1) Normalize scheme/host before any reset routes
+
+Make sure every request hits the same host over HTTPS and keeps the full URL (no path/query loss) before the reset flow:
+
+app.set('trust proxy', 1);
+app.use((req, res, next) => {
+  // Force HTTPS
+  if (req.headers['x-forwarded-proto'] !== 'https') {
+    return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
+  }
+  // Force apex (no www), preserving full path + query
+  if (req.headers.host === 'www.mycreativehub.app') {
+    return res.redirect(301, `https://mycreativehub.app${req.originalUrl}`);
+  }
+  next();
+});
+
+2) Cookie-handoff endpoint (no query strings in the final page)
+
+Set the reset token in a first-party cookie and then redirect to a clean page:
+
+// GET /rp/:token  (short link used in emails)
+app.get('/rp/:token', (req, res) => {
+  const token = req.params.token;
+  if (!token) return res.status(400).send('Missing token');
+
+  res.cookie('reset_token', token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    domain: '.mycreativehub.app', // <-- IMPORTANT: covers apex and subdomains
+    path: '/',
+    maxAge: 1000 * 60 * 15
+  });
+
+  return res.redirect(302, '/reset-password'); // no token in the URL
+});
+
+3) Use the short link in the email (no ?token=...)
+const BASE = process.env.APP_BASE_URL; // https://mycreativehub.app
+const link = `${BASE}/rp/${token}`;
+// Use `link` for the button and the plaintext fallback
+
+4) SPA fallback & ESM imports (avoid server 500s)
+
+Server must be ESM-safe (no require('path') errors):
+
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
+
+
+After API routes, serve the SPA for non-API GETs without redirecting:
+
+app.use('/api', apiRouter);
+app.use(express.static(path.join(__dirname, 'dist')));
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
+
+Error handler: JSON for /api/*, SPA shell for everything else.
+
+5) Backend reads cookie on reset submit & clears it
+// POST /api/auth/reset-password  (body: { password })
+app.post('/api/auth/reset-password', async (req, res) => {
+  const token = req.cookies.reset_token;
+  if (!token) return res.status(400).json({ message: 'Missing reset token' });
+  // ...validate token, set new password...
+  res.clearCookie('reset_token', { domain: '.mycreativehub.app', path: '/', httpOnly: true, secure: true, sameSite: 'lax' });
+  return res.json({ ok: true });
+});
+
+6) Prove it with headers (mobile test)
+
+From your iPhone, tap the email button once.
+
+In server logs, show:
+
+The initial request to something like GET /rp/<token> (user-agent iPhone).
+
+The response headers include:
+
+Set-Cookie: reset_token=...; Domain=.mycreativehub.app; Path=/; HttpOnly; Secure; SameSite=Lax
+
+Location: /reset-password with status 302
+
+The next request is GET /reset-password (same host), and the request headers include Cookie: reset_token=....
+
+Acceptance: On iPhone Mail and desktop, the reset page loads (no JSON 500), submitting a new password succeeds, reusing the link is rejected.
+
+If any redirect occurs after /rp/:token to a different host (e.g., www → apex) or if the cookie lacks Domain=.mycreativehub.app, the cookie will be lost on mobile. Please verify the normalize-host middleware runs before /rp/:token and that the cookie Domain is set exactly as above.
+
+Tiny fallback you can keep in the email (optional)
+
+Add a line under the button:
+“Having trouble on your phone? Press and hold the button, Copy Link, and paste it into Safari.”

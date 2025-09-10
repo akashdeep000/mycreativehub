@@ -28,12 +28,19 @@ if (!isProduction) {
 }
 
 const app = express();
-app.set('trust proxy', 1); // Trust first proxy for proper session handling in deployment
 
-// Force HTTPS but PRESERVE full path + query
+// Trust proxy for proper header handling
+app.set('trust proxy', 1);
+
+// Host normalization middleware - MUST run before any other routes
 app.use((req, res, next) => {
+  // Force HTTPS in production
   if (req.headers['x-forwarded-proto'] !== 'https' && process.env.NODE_ENV === 'production') {
     return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
+  }
+  // Force apex domain (no www), preserving full path + query
+  if (req.headers.host === 'www.mycreativehub.app') {
+    return res.redirect(301, `https://mycreativehub.app${req.originalUrl}`);
   }
   next();
 });
