@@ -79,6 +79,17 @@ export const passwordResetCodes = pgTable("password_reset_codes", {
   index("password_reset_codes_email_expires_idx").on(table.email, table.expiresAt),
 ]);
 
+// Reset sessions for two-step password reset flow
+export const resetSessions = pgTable("reset_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: varchar("email").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  used: boolean("used").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("reset_sessions_email_expires_idx").on(table.email, table.expiresAt),
+]);
+
 // Toolkit modules
 export const toolkitModules = pgTable("toolkit_modules", {
   id: serial("id").primaryKey(),
@@ -552,9 +563,18 @@ export const insertPasswordResetCodeSchema = createInsertSchema(passwordResetCod
   createdAt: true,
 });
 
+export const insertResetSessionSchema = createInsertSchema(resetSessions).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types for password reset codes
 export type PasswordResetCode = typeof passwordResetCodes.$inferSelect;
 export type InsertPasswordResetCode = z.infer<typeof insertPasswordResetCodeSchema>;
+
+// Types for reset sessions
+export type ResetSession = typeof resetSessions.$inferSelect;
+export type InsertResetSession = z.infer<typeof insertResetSessionSchema>;
 
 // Content Creation System Tables
 export const monthlyContentCalendar = pgTable("monthly_content_calendar", {
