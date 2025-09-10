@@ -12,14 +12,12 @@ import { inspirationBoards } from "@shared/schema";
 
 // Standardize environment variable reads
 const RESEND_KEY = process.env.RESEND_API_KEY || process.env.EMAIL_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_FROM;
-const APP_BASE_URL = process.env.APP_BASE_URL;
 
-// Boot-time logging
-console.log('[boot] email config:', {
+// Boot-time logging (masked for security)
+console.log('[boot] email config', {
   hasKey: !!RESEND_KEY,
-  from: EMAIL_FROM,
-  baseUrl: APP_BASE_URL
+  from: process.env.EMAIL_FROM,
+  baseUrl: process.env.APP_BASE_URL
 });
 
 // Initialize Resend client
@@ -27,11 +25,11 @@ const resend = new Resend(RESEND_KEY);
 
 // Send password reset email
 const sendPasswordResetEmail = async (email: string, token: string, host: string) => {
-  const resetUrl = `${APP_BASE_URL || `https://${host}`}/reset-password?token=${token}`;
+  const resetUrl = `${process.env.APP_BASE_URL || `https://${host}`}/reset-password?token=${token}`;
   
   try {
     const { data, error } = await resend.emails.send({
-      from: EMAIL_FROM || 'onboarding@resend.dev',
+      from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
       to: [email],
       subject: 'Reset Your Password - Creative Business Toolkit',
       html: `
