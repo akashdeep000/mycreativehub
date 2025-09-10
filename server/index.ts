@@ -1,8 +1,12 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
-import path from "path";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Environment variable validation
 const isProduction = process.env.NODE_ENV === 'production';

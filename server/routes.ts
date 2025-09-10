@@ -25,7 +25,8 @@ const resend = new Resend(RESEND_KEY);
 
 // Send password reset email
 const sendPasswordResetEmail = async (email: string, token: string, host: string) => {
-  const resetUrl = `${process.env.APP_BASE_URL || `https://${host}`}/reset-password?token=${token}`;
+  const BASE = process.env.APP_BASE_URL || `https://${host}`;
+  const resetUrl = `${BASE}/rp/${token}`;
   
   try {
     const { data, error } = await resend.emails.send({
