@@ -552,6 +552,10 @@ export const insertPasswordResetCodeSchema = createInsertSchema(passwordResetCod
   createdAt: true,
 });
 
+// Types for password reset codes
+export type PasswordResetCode = typeof passwordResetCodes.$inferSelect;
+export type InsertPasswordResetCode = z.infer<typeof insertPasswordResetCodeSchema>;
+
 // Content Creation System Tables
 export const monthlyContentCalendar = pgTable("monthly_content_calendar", {
   id: serial("id").primaryKey(),

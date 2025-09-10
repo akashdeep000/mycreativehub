@@ -21,6 +21,7 @@ import {
   resourceLibrary,
   affiliateLinks,
   passwordResets,
+  passwordResetCodes,
   // New persistent data tables
   monthlyContentCalendar,
   contentBatchingPlanner,
@@ -79,6 +80,8 @@ import {
   type InsertAffiliateLink,
   type PasswordReset,
   type InsertPasswordReset,
+  type PasswordResetCode,
+  type InsertPasswordResetCode,
   // New persistent data types
   type MonthlyContentCalendar,
   type InsertMonthlyContentCalendar,
@@ -123,7 +126,7 @@ import {
   type InsertCalendarV2,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, gte, lte, sql, inArray, isNull } from "drizzle-orm";
+import { eq, and, desc, asc, gte, lte, sql, inArray, isNull, gt, ne } from "drizzle-orm";
 import crypto from "crypto";
 import { nanoid } from "nanoid";
 
@@ -1950,6 +1953,207 @@ export class DatabaseStorage implements IStorage {
       .where(eq(passwordResets.id, passwordReset.id));
     
     return updatedUser;
+  }
+
+  // Password Reset Code Operations (6-digit system)
+  async createPasswordResetCode(email: string, requestedIp?: string, userAgent?: string): Promise<{ code: string; record: PasswordResetCode }> {
+    // Generate 6-digit code with leading zeros
+    const code = String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
+    
+    // Hash the code for storage using SHA-256
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+    
+    // Set expiration to 15 minutes from now
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    
+    // Optional: Clean up old unused codes for this email
+    await db
+      .delete(passwordResetCodes)
+      .where(
+        and(
+          eq(passwordResetCodes.email, email.toLowerCase().trim()),
+          isNull(passwordResetCodes.usedAt)
+        )
+      );
+    
+    // Create password reset code record
+    const [passwordResetCode] = await db.insert(passwordResetCodes).values({
+      id: nanoid(),
+      email: email.toLowerCase().trim(),
+      codeHash,
+      expiresAt,
+      requestedIp,
+      userAgent,
+    }).returning();
+    
+    return {
+      code, // Return the plain code for email sending
+      record: passwordResetCode
+    };
+  }
+
+  async getPasswordResetCodeByEmail(email: string): Promise<PasswordResetCode | undefined> {
+    const [passwordResetCode] = await db
+      .select()
+      .from(passwordResetCodes)
+      .where(
+        and(
+          eq(passwordResetCodes.email, email.toLowerCase().trim()),
+          isNull(passwordResetCodes.usedAt), // Only get unused codes
+          gt(passwordResetCodes.expiresAt, new Date()) // Only get non-expired codes
+        )
+      )
+      .orderBy(desc(passwordResetCodes.createdAt)) // Get most recent
+      .limit(1);
+    
+    return passwordResetCode;
+  }
+
+  async incrementCodeAttempts(codeId: string): Promise<void> {
+    await db
+      .update(passwordResetCodes)
+      .set({ 
+        attempts: sql`${passwordResetCodes.attempts} + 1`
+      })
+      .where(eq(passwordResetCodes.id, codeId));
+  }
+
+  async verifyResetCodeAndUpdatePassword(email: string, code: string, newPasswordHash: string): Promise<{ success: boolean; message: string; user?: User }> {
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    // Find the most recent unused code for this email
+    const passwordResetCode = await this.getPasswordResetCodeByEmail(normalizedEmail);
+    
+    if (!passwordResetCode) {
+      return { success: false, message: "Code invalid or expired" };
+    }
+    
+    // Check if too many attempts (5+ attempts locks for 10 minutes)
+    if (passwordResetCode.attempts >= 5) {
+      const lockoutTime = new Date(passwordResetCode.createdAt.getTime() + 10 * 60 * 1000); // 10 minutes from creation
+      if (new Date() < lockoutTime) {
+        return { success: false, message: "Too many attempts. Please try again later." };
+      }
+    }
+    
+    // Hash the provided code for comparison
+    const providedCodeHash = crypto.createHash('sha256').update(code).digest('hex');
+    
+    // Constant-time comparison using Node.js crypto
+    const isValidCode = crypto.timingSafeEqual(
+      Buffer.from(passwordResetCode.codeHash, 'hex'),
+      Buffer.from(providedCodeHash, 'hex')
+    );
+    
+    if (!isValidCode) {
+      // Increment attempts on invalid code
+      await this.incrementCodeAttempts(passwordResetCode.id);
+      return { success: false, message: "Code invalid or expired" };
+    }
+    
+    // Check if code is expired
+    const now = new Date();
+    if (now > passwordResetCode.expiresAt) {
+      return { success: false, message: "Code invalid or expired" };
+    }
+    
+    // Find user by email
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, normalizedEmail));
+    
+    if (!user) {
+      return { success: false, message: "User not found" };
+    }
+    
+    // Update user's password
+    const [updatedUser] = await db
+      .update(users)
+      .set({ 
+        password: newPasswordHash,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, user.id))
+      .returning();
+    
+    // Mark the code as used
+    await db
+      .update(passwordResetCodes)
+      .set({ usedAt: new Date() })
+      .where(eq(passwordResetCodes.id, passwordResetCode.id));
+    
+    // Clean up any other pending codes for this email
+    await db
+      .delete(passwordResetCodes)
+      .where(
+        and(
+          eq(passwordResetCodes.email, normalizedEmail),
+          isNull(passwordResetCodes.usedAt),
+          ne(passwordResetCodes.id, passwordResetCode.id) // Don't delete the one we just used
+        )
+      );
+    
+    return { 
+      success: true, 
+      message: "Password reset successfully",
+      user: updatedUser 
+    };
+  }
+
+  async checkEmailResetRateLimit(email: string, ipAddress?: string): Promise<{ allowed: boolean; message?: string }> {
+    const normalizedEmail = email.toLowerCase().trim();
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    
+    // Check email rate limit (5 per hour)
+    const emailCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(passwordResetCodes)
+      .where(
+        and(
+          eq(passwordResetCodes.email, normalizedEmail),
+          gt(passwordResetCodes.createdAt, oneHourAgo)
+        )
+      );
+    
+    if (emailCount[0]?.count >= 5) {
+      return { allowed: false, message: "Too many reset attempts. Please try again later." };
+    }
+    
+    // Check IP rate limit if provided (5 per hour)
+    if (ipAddress) {
+      const ipCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(passwordResetCodes)
+        .where(
+          and(
+            eq(passwordResetCodes.requestedIp, ipAddress),
+            gt(passwordResetCodes.createdAt, oneHourAgo)
+          )
+        );
+      
+      if (ipCount[0]?.count >= 5) {
+        return { allowed: false, message: "Too many reset attempts from this location. Please try again later." };
+      }
+    }
+    
+    // Check cooldown (60 seconds since last request for this email)
+    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+    const recentCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(passwordResetCodes)
+      .where(
+        and(
+          eq(passwordResetCodes.email, normalizedEmail),
+          gt(passwordResetCodes.createdAt, oneMinuteAgo)
+        )
+      );
+    
+    if (recentCount[0]?.count > 0) {
+      return { allowed: false, message: "Please wait 60 seconds before requesting another code." };
+    }
+    
+    return { allowed: true };
   }
 }
 
