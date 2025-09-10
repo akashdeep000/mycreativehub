@@ -23,81 +23,18 @@ const resend = new Resend(RESEND_KEY);
 
 // Send password reset code email (6-digit system)
 const sendPasswordResetCodeEmail = async (email: string, code: string) => {
-  const BASE = process.env.APP_BASE_URL || 'https://mycreativehub.app';
-  const resetUrl = `${BASE}/reset`; // Clean URL without tokens
-  
   try {
     const { data, error } = await resend.emails.send({
       from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
       to: [email],
-      subject: `Your MyCreativeHub reset code: ${code} (valid 15 min)`,
+      subject: `Your MyCreativeHub reset code: ${code}`,
       html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Your Password Reset Code</title>
-        </head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">Password Reset Code</h1>
-            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">MyCreativeHub</p>
-          </div>
-          
-          <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
-            <p style="font-size: 16px; margin-bottom: 20px;">Hi there,</p>
-            
-            <p style="font-size: 16px; margin-bottom: 30px;">We received a request to reset your password. Use the code below to reset your password:</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <div style="display: inline-block; background: #f8f9fa; border: 2px solid #667eea; padding: 20px 30px; border-radius: 10px; font-family: 'Courier New', monospace;">
-                <div style="font-size: 36px; font-weight: bold; color: #667eea; letter-spacing: 8px; margin-bottom: 10px;">${code}</div>
-                <div style="font-size: 14px; color: #666;">Valid for 15 minutes</div>
-              </div>
-            </div>
-            
-            <p style="font-size: 16px; margin-bottom: 20px;">Enter this code on the reset page to continue.</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; font-size: 16px;">Go to Reset Page</a>
-            </div>
-            
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-              <p style="font-size: 14px; color: #666; margin-bottom: 10px;"><strong>Important:</strong></p>
-              <ul style="font-size: 14px; color: #666; margin: 0; padding-left: 20px;">
-                <li>This code expires in 15 minutes</li>
-                <li>Can only be used once</li>
-                <li>If you didn't request this, ignore this email</li>
-              </ul>
-            </div>
-          </div>
-          
-          <div style="text-align: center; color: #666; font-size: 14px;">
-            <p style="margin: 0;">MyCreativeHub - Creative Business Toolkit</p>
-            <p style="margin: 5px 0 0 0;">This email was sent because a password reset was requested for your account.</p>
-          </div>
-        </body>
-        </html>
+        <p>Your reset code is: <strong>${code}</strong></p>
+        <p>Go to https://mycreativehub.app/reset and enter this code with your email.</p>
       `,
-      text: `
-Your MyCreativeHub Password Reset Code
+      text: `Your reset code is: ${code}
 
-Hi there,
-
-We received a request to reset your password. Use this 6-digit code to reset your password:
-
-${code}
-
-This code is valid for 15 minutes and can only be used once.
-
-Go to ${resetUrl} and enter your email, this code, and your new password.
-
-If you didn't request this password reset, you can safely ignore this email.
-
----
-MyCreativeHub - Creative Business Toolkit
-      `.trim()
+Go to https://mycreativehub.app/reset and enter this code with your email.`
     });
 
     if (error) {
