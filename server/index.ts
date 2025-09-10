@@ -143,7 +143,22 @@ app.use((req, res, next) => {
     await setupVite(app, server);
   } else {
     console.log('Setting up static file serving for production...');
-    serveStatic(app);
+    // Enhanced production static serving
+    const path = require('path');
+    const distPath = path.resolve(import.meta.dirname, "public");
+    
+    // Serve static files
+    app.use(express.static(distPath));
+    
+    // SPA fallback - serve index.html for ALL non-API routes (including reset-password)
+    app.get('*', (req, res) => {
+      if (!req.path.startsWith('/api')) {
+        console.log(`[SPA FALLBACK] Serving index.html for: ${req.path}`);
+        res.sendFile(path.resolve(distPath, "index.html"));
+      } else {
+        res.status(404).json({ error: 'API endpoint not found' });
+      }
+    });
   }
 
   // ALWAYS serve the app on port 5000
