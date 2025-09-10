@@ -111,25 +111,10 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    // In production, don't expose sensitive error details
-    if (process.env.NODE_ENV === 'production') {
-      console.error('Production error:', err);
-      res.status(status).json({ 
-        message: status >= 500 ? "Internal Server Error" : message,
-        status: status 
-      });
-    } else {
-      res.status(status).json({ message, stack: err.stack });
-    }
-  });
-
-  // Mobile-specific SPA route handler for reset password
+  // Mobile-specific SPA route handler for reset password - MUST be before error handler
   app.get('/reset-password', (req, res, next) => {
     console.log(`[MOBILE RESET PASSWORD FIX] Handling: ${req.originalUrl}`);
+    console.log(`[MOBILE FIX] User-Agent: ${req.headers['user-agent']}`);
     
     if (process.env.NODE_ENV === 'production') {
       const path = require('path');
@@ -154,8 +139,25 @@ app.use((req, res, next) => {
       return res.status(404).send('Reset password page not available');
     }
     
-    // In development, let Vite handle it
+    // In development, let Vite handle it BUT make sure it gets to Vite properly
+    console.log(`[MOBILE FIX] Development mode - passing to Vite`);
     next();
+  });
+
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+
+    // In production, don't expose sensitive error details
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Production error:', err);
+      res.status(status).json({ 
+        message: status >= 500 ? "Internal Server Error" : message,
+        status: status 
+      });
+    } else {
+      res.status(status).json({ message, stack: err.stack });
+    }
   });
 
   // importantly only setup vite in development and after
