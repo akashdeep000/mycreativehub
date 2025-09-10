@@ -22,6 +22,7 @@ import {
   affiliateLinks,
   passwordResets,
   passwordResetCodes,
+  resetSessions,
   // New persistent data tables
   monthlyContentCalendar,
   contentBatchingPlanner,
@@ -82,6 +83,8 @@ import {
   type InsertPasswordReset,
   type PasswordResetCode,
   type InsertPasswordResetCode,
+  type ResetSession,
+  type InsertResetSession,
   // New persistent data types
   type MonthlyContentCalendar,
   type InsertMonthlyContentCalendar,
@@ -314,7 +317,18 @@ export interface IStorage {
   updateTimeBlockingEvent(id: string, updates: Partial<InsertTimeBlockingEvent>): Promise<TimeBlockingEvent>;
   deleteTimeBlockingEvent(id: string, userId: string): Promise<void>;
   
-  // Password Reset Operations (removed old token-based methods - now using 6-digit codes)
+  // Password Reset Operations
+  createPasswordResetCode(email: string, requestedIp?: string, userAgent?: string): Promise<{ code: string; record: PasswordResetCode }>;
+  getPasswordResetCodeByEmail(email: string): Promise<PasswordResetCode | undefined>;
+  incrementCodeAttempts(codeId: string): Promise<void>;
+  verifyResetCodeAndUpdatePassword(email: string, code: string, newPasswordHash: string): Promise<{ success: boolean; message: string; user?: User }>;
+  checkEmailResetRateLimit(email: string, ipAddress?: string): Promise<{ allowed: boolean; message?: string }>;
+  
+  // Reset Session Operations (Two-step flow)
+  verifyResetCode(email: string, code: string): Promise<{ success: boolean; message: string; resetSessionId?: string }>;
+  createResetSession(email: string): Promise<ResetSession>;
+  getResetSession(resetSessionId: string): Promise<ResetSession | undefined>;
+  completePasswordReset(resetSessionId: string, newPasswordHash: string): Promise<{ success: boolean; message: string; user?: User }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2077,6 +2091,156 @@ export class DatabaseStorage implements IStorage {
     }
     
     return { allowed: true };
+  }
+
+  // Reset Session Operations (Two-step flow)
+  async verifyResetCode(email: string, code: string): Promise<{ success: boolean; message: string; resetSessionId?: string }> {
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    // Find the most recent unused code for this email
+    const passwordResetCode = await this.getPasswordResetCodeByEmail(normalizedEmail);
+    
+    if (!passwordResetCode) {
+      return { success: false, message: "invalid_code" };
+    }
+    
+    // Check if too many attempts (5+ attempts locks for 10 minutes)
+    if ((passwordResetCode.attempts ?? 0) >= 5) {
+      const lockoutTime = new Date((passwordResetCode.createdAt ?? new Date()).getTime() + 10 * 60 * 1000); // 10 minutes from creation
+      if (new Date() < lockoutTime) {
+        return { success: false, message: "too_many_attempts" };
+      }
+    }
+    
+    // Hash the provided code for comparison
+    const providedCodeHash = crypto.createHash('sha256').update(code).digest('hex');
+    
+    // Constant-time comparison using Node.js crypto
+    const isValidCode = crypto.timingSafeEqual(
+      Buffer.from(passwordResetCode.codeHash, 'hex'),
+      Buffer.from(providedCodeHash, 'hex')
+    );
+    
+    if (!isValidCode) {
+      // Increment attempts on invalid code
+      await this.incrementCodeAttempts(passwordResetCode.id);
+      return { success: false, message: "invalid_code" };
+    }
+    
+    // Check if code is expired
+    const now = new Date();
+    if (now > passwordResetCode.expiresAt) {
+      return { success: false, message: "expired_code" };
+    }
+    
+    // Find user by email to ensure they exist
+    const user = await this.getUserByEmail(normalizedEmail);
+    if (!user) {
+      return { success: false, message: "invalid_code" };
+    }
+    
+    // Mark the code as used
+    await db
+      .update(passwordResetCodes)
+      .set({ usedAt: new Date() })
+      .where(eq(passwordResetCodes.id, passwordResetCode.id));
+    
+    // Create reset session
+    const resetSession = await this.createResetSession(normalizedEmail);
+    
+    return { 
+      success: true, 
+      message: "Code verified successfully",
+      resetSessionId: resetSession.id 
+    };
+  }
+
+  async createResetSession(email: string): Promise<ResetSession> {
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    // Clean up any existing unused reset sessions for this email
+    await db
+      .delete(resetSessions)
+      .where(
+        and(
+          eq(resetSessions.email, normalizedEmail),
+          eq(resetSessions.used, false)
+        )
+      );
+    
+    // Create new reset session (expires in 10 minutes)
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    
+    const [resetSession] = await db.insert(resetSessions).values({
+      email: normalizedEmail,
+      expiresAt,
+      used: false,
+    }).returning();
+    
+    return resetSession;
+  }
+
+  async getResetSession(resetSessionId: string): Promise<ResetSession | undefined> {
+    const [resetSession] = await db
+      .select()
+      .from(resetSessions)
+      .where(
+        and(
+          eq(resetSessions.id, resetSessionId),
+          eq(resetSessions.used, false),
+          gt(resetSessions.expiresAt, new Date()) // Only get non-expired sessions
+        )
+      )
+      .limit(1);
+    
+    return resetSession;
+  }
+
+  async completePasswordReset(resetSessionId: string, newPasswordHash: string): Promise<{ success: boolean; message: string; user?: User }> {
+    // Find and validate reset session
+    const resetSession = await this.getResetSession(resetSessionId);
+    
+    if (!resetSession) {
+      return { success: false, message: "Reset session invalid or expired" };
+    }
+    
+    // Find user by email
+    const user = await this.getUserByEmail(resetSession.email);
+    if (!user) {
+      return { success: false, message: "User not found" };
+    }
+    
+    // Update user's password
+    const [updatedUser] = await db
+      .update(users)
+      .set({ 
+        password: newPasswordHash,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, user.id))
+      .returning();
+    
+    // Mark the reset session as used
+    await db
+      .update(resetSessions)
+      .set({ used: true })
+      .where(eq(resetSessions.id, resetSessionId));
+    
+    // Clean up any other pending reset sessions for this email
+    await db
+      .delete(resetSessions)
+      .where(
+        and(
+          eq(resetSessions.email, resetSession.email),
+          ne(resetSessions.id, resetSessionId)
+        )
+      );
+    
+    return { 
+      success: true, 
+      message: "Password reset successfully",
+      user: updatedUser 
+    };
   }
 }
 
