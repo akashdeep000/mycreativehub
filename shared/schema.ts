@@ -10,6 +10,8 @@ import {
   integer,
   unique,
   uniqueIndex,
+  char,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -59,6 +61,22 @@ export const passwordResets = pgTable("password_resets", {
 }, (table) => [
   index("password_resets_user_id_idx").on(table.userId),
   index("password_resets_hashed_token_idx").on(table.hashedToken),
+]);
+
+// Password reset codes (6-digit code system)
+export const passwordResetCodes = pgTable("password_reset_codes", {
+  id: varchar("id").primaryKey().notNull(),
+  email: varchar("email").notNull(),
+  codeHash: char("code_hash", { length: 64 }).notNull(), // SHA-256 hex string
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  attempts: integer("attempts").default(0),
+  sentCount: integer("sent_count").default(1),
+  requestedIp: text("requested_ip"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("password_reset_codes_email_expires_idx").on(table.email, table.expiresAt),
 ]);
 
 // Toolkit modules
@@ -525,6 +543,11 @@ export const insertAffiliateLinkSchema = createInsertSchema(affiliateLinks).omit
 });
 
 export const insertPasswordResetSchema = createInsertSchema(passwordResets).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPasswordResetCodeSchema = createInsertSchema(passwordResetCodes).omit({
   id: true,
   createdAt: true,
 });

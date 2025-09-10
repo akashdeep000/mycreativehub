@@ -1,0 +1,107 @@
+Goal: Replace token link with a 6-digit code flow that works on mobile & desktop.
+
+Endpoints
+
+POST /auth/request-reset — input { email }
+
+Normalize email (trim + lowercase).
+
+Generate 6-digit code (keep leading zeros):
+
+const code = String(Math.floor(Math.random()*1_000_000)).padStart(6,'0');
+
+
+Store in password_reset_codes:
+
+email, code_hash = sha256(code), expires_at = now+15m, used_at = null, attempts = 0, sent_count += 1, requested_ip, user_agent.
+
+(Optional: delete older unused codes for that email.)
+
+Send email via Resend (from: process.env.EMAIL_FROM) with subject “Your MyCreativeHub reset code: ${code} (valid 15 min)” and body showing the code, plus a button/link to https://mycreativehub.app/reset (no tokens in URL).
+
+Always return 200 with a generic message (don’t reveal if the email exists).
+
+Rate limit: max 5 sends/hour per email/IP; 60s cooldown.
+
+POST /auth/confirm-reset — input { email, code, new_password }
+
+Normalize email, find the most recent row for that email where used_at is null and expires_at > now.
+
+Compare sha256(code) to code_hash using a constant-time comparison.
+
+On match:
+
+Hash new_password with bcrypt (10–12).
+
+Update user’s password; mark code used_at = now and/or delete other pending codes for that email.
+
+Revoke existing sessions for that user.
+
+Return 200.
+
+On mismatch/expired: increment attempts; if attempts ≥ 5, lock that email for 10 minutes; return 400 with “Code invalid or expired”.
+
+POST /auth/resend-reset (optional) — input { email }
+
+Enforce 60s cooldown and 5/hour limits; then behave like /auth/request-reset.
+
+Minimal table (SQL-ish)
+password_reset_codes (
+  id uuid primary key,
+  email citext not null,
+  code_hash char(64) not null,   -- hex sha256
+  expires_at timestamptz not null,
+  used_at timestamptz,
+  attempts int default 0,
+  sent_count int default 1,
+  requested_ip text,
+  user_agent text,
+  created_at timestamptz default now()
+);
+create index on password_reset_codes (email, expires_at);
+
+Frontend (page at /reset)
+
+Fields: Email, 6-digit code, New password, Confirm.
+
+Countdown (“Code expires in 15:00”).
+
+“Resend code” button (disabled until 60s).
+
+Submit → POST /auth/confirm-reset.
+
+On success → “Password updated — please log in.”
+
+On error → show friendly message; if expired, suggest Resend code.
+
+Email (Resend)
+
+Subject: Your MyCreativeHub reset code: ${code} (valid 15 min)
+
+HTML: Big code, 1–2 lines of instructions, button → https://mycreativehub.app/reset (no token)
+
+Text: Include the code in plain text too.
+
+From: MyCreativeHub <no-reply@mail.mycreativehub.app>
+
+Security must-haves
+
+Hash the code at rest (sha256), compare in constant time.
+
+Codes expire (15 min) and are one-time.
+
+Throttle sends and attempts per email/IP.
+
+No user enumeration in responses.
+
+After success, revoke other sessions.
+
+Acceptance test
+
+Request reset for a real account → email arrives with a 6-digit code.
+
+Go to /reset, enter email + code + new password → success.
+
+Reusing the same code fails.
+
+Mobile and desktop both work (no URLs with tokens; email clients can’t break it).
