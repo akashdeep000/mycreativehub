@@ -175,17 +175,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const token = req.params.token;
     if (!token) return res.status(400).send('Missing token');
 
+    console.log(`[RESET-PASSWORD] Token handoff for token: ${token.substring(0, 8)}...`);
+    console.log(`[RESET-PASSWORD] Request headers:`, {
+      userAgent: req.headers['user-agent'],
+      host: req.headers.host,
+      protocol: req.headers['x-forwarded-proto'] || req.protocol
+    });
+
     res.cookie('reset_token', token, {
       httpOnly: true,
       secure: true,
       sameSite: 'lax',
+      domain: '.mycreativehub.app', // CRITICAL: covers apex and subdomains for mobile
       path: '/',
       maxAge: 1000 * 60 * 15 // 15 minutes
     });
 
-    console.log(`[RESET-PASSWORD] Token handoff for token: ${token.substring(0, 8)}...`);
-    // Now send the user to the clean SPA route without any token in the URL
-    res.redirect(302, '/reset-password');
+    console.log(`[RESET-PASSWORD] Cookie set with domain: .mycreativehub.app`);
+    console.log(`[RESET-PASSWORD] Response headers:`, {
+      'Set-Cookie': `reset_token=${token.substring(0, 8)}...; Domain=.mycreativehub.app; Path=/; HttpOnly; Secure; SameSite=Lax`,
+      'Location': '/reset-password'
+    });
+
+    // Redirect to clean SPA route without any token in the URL
+    return res.redirect(302, '/reset-password');
   });
 
   // Auth routes
@@ -621,11 +634,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Clear the reset token cookie after successful reset
       res.clearCookie('reset_token', { 
+        domain: '.mycreativehub.app',
         path: '/', 
         httpOnly: true, 
         secure: true, 
         sameSite: 'lax' 
       });
+      console.log(`[RESET-PASSWORD] Cookie cleared for domain: .mycreativehub.app`);
       
       res.json({ message: "Password has been reset successfully" });
     } catch (error) {
