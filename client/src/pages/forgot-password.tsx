@@ -11,20 +11,24 @@ export default function ForgotPassword() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   
-  // Step management
-  const [currentStep, setCurrentStep] = useState<'email' | 'code'>('email');
+  // Step management - strict three-step flow
+  const [currentStep, setCurrentStep] = useState<'email' | 'code' | 'password'>('email');
   
   // Step 1: Email
   const [isSubmittingEmail, setIsSubmittingEmail] = useState(false);
   const [email, setEmail] = useState("");
   
-  // Step 2: Code + Password
+  // Step 2: Code verification only
   const [isSubmittingCode, setIsSubmittingCode] = useState(false);
   const [code, setCode] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [canResend, setCanResend] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(30);
+  
+  // Step 3: Password reset (after code verification)
+  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetSessionId, setResetSessionId] = useState("");
 
   // Step 1: Submit email
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -32,7 +36,7 @@ export default function ForgotPassword() {
     setIsSubmittingEmail(true);
 
     try {
-      const response = await fetch("/auth/request-reset", {
+      const response = await fetch("/api/auth/request-reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.toLowerCase() }),
@@ -61,8 +65,51 @@ export default function ForgotPassword() {
     }
   };
 
-  // Step 2: Submit code and new password
+  // Step 2: Submit code verification only
   const handleCodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingCode(true);
+
+    try {
+      const response = await fetch("/api/auth/verify-reset-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          email: email.toLowerCase(), 
+          code: code.trim()
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.ok) {
+        // Code verified - move to password step
+        setResetSessionId(result.resetSessionId);
+        setCurrentStep('password');
+        toast({
+          title: "Code verified",
+          description: "Please enter your new password.",
+        });
+      } else {
+        toast({
+          title: "Verification failed",
+          description: result.message || "Invalid or expired code. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingCode(false);
+    }
+  };
+
+  // Step 3: Submit new password
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (newPassword !== confirmPassword) {
@@ -83,15 +130,14 @@ export default function ForgotPassword() {
       return;
     }
 
-    setIsSubmittingCode(true);
+    setIsSubmittingPassword(true);
 
     try {
-      const response = await fetch("/auth/confirm-reset", {
+      const response = await fetch("/api/auth/complete-reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          email: email.toLowerCase(), 
-          code: code.trim(),
+          resetSessionId,
           newPassword 
         }),
       });
@@ -107,9 +153,15 @@ export default function ForgotPassword() {
       } else {
         toast({
           title: "Reset failed",
-          description: result.message || "Something went wrong. Please try again.",
+          description: result.message || "Session expired. Please start over.",
           variant: "destructive",
         });
+        // Reset to email step if session is invalid
+        setCurrentStep('email');
+        setCode("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setResetSessionId("");
       }
     } catch (error) {
       toast({
@@ -118,7 +170,7 @@ export default function ForgotPassword() {
         variant: "destructive",
       });
     } finally {
-      setIsSubmittingCode(false);
+      setIsSubmittingPassword(false);
     }
   };
 
@@ -144,7 +196,7 @@ export default function ForgotPassword() {
     
     setIsSubmittingEmail(true);
     try {
-      await fetch("/auth/request-reset", {
+      await fetch("/api/auth/request-reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.toLowerCase() }),
@@ -183,7 +235,9 @@ export default function ForgotPassword() {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-12">
             {currentStep === 'email' 
               ? "Enter your email address and we'll send you a 6-digit code to reset your password."
-              : "Enter the 6-digit code from your email and set a new password."
+              : currentStep === 'code'
+              ? "Enter the 6-digit code from your email to verify your identity."
+              : "Enter your new password to complete the reset."
             }
           </p>
         </div>
@@ -208,12 +262,19 @@ export default function ForgotPassword() {
             <Card className="border-pink-100 shadow-lg">
               <CardHeader className="text-center pb-6">
                 <CardTitle className="text-xl font-serif">
-                  {currentStep === 'email' ? "Forgot Password?" : "Enter Reset Code"}
+                  {currentStep === 'email' 
+                    ? "Forgot Password?" 
+                    : currentStep === 'code'
+                    ? "Enter Reset Code"
+                    : "Set New Password"
+                  }
                 </CardTitle>
                 <CardDescription>
                   {currentStep === 'email' 
                     ? "No worries! Enter your email and we'll send you a 6-digit code."
-                    : "Check your email for the 6-digit code and enter it below with your new password."
+                    : currentStep === 'code'
+                    ? "Check your email for the 6-digit code and enter it below."
+                    : "Your code has been verified. Please enter your new password."
                   }
                 </CardDescription>
               </CardHeader>
@@ -245,7 +306,7 @@ export default function ForgotPassword() {
                       {isSubmittingEmail ? "Sending Code..." : "Send Code"}
                     </Button>
                   </form>
-                ) : (
+                ) : currentStep === 'code' ? (
                   <form onSubmit={handleCodeSubmit} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="code">6-Digit Code</Label>
@@ -265,6 +326,44 @@ export default function ForgotPassword() {
                       />
                     </div>
 
+                    <Button 
+                      type="submit" 
+                      size="lg" 
+                      disabled={isSubmittingCode}
+                      className="w-full bg-gradient-to-r from-[#f46454] to-[#e53e3e] hover:from-[#e53e3e] hover:to-[#d53534] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                      data-testid="button-verify-code"
+                    >
+                      {isSubmittingCode ? "Verifying Code..." : "Verify Code"}
+                    </Button>
+
+                    <div className="flex gap-2">
+                      <Button 
+                        type="button"
+                        onClick={handleResend}
+                        disabled={!canResend || isSubmittingEmail}
+                        variant="outline"
+                        className="flex-1"
+                        data-testid="button-resend-code"
+                      >
+                        {!canResend ? `Resend in ${resendCountdown}s` : "Resend Code"}
+                      </Button>
+                      
+                      <Button 
+                        type="button"
+                        onClick={() => {
+                          setCurrentStep('email');
+                          setCode("");
+                        }}
+                        variant="ghost"
+                        className="flex-1"
+                        data-testid="button-back-to-email"
+                      >
+                        Change Email
+                      </Button>
+                    </div>
+                  </form>
+                ) : (
+                  <form onSubmit={handlePasswordSubmit} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="newPassword">New Password</Label>
                       <Input
@@ -300,40 +399,28 @@ export default function ForgotPassword() {
                     <Button 
                       type="submit" 
                       size="lg" 
-                      disabled={isSubmittingCode}
+                      disabled={isSubmittingPassword}
                       className="w-full bg-gradient-to-r from-[#f46454] to-[#e53e3e] hover:from-[#e53e3e] hover:to-[#d53534] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
                       data-testid="button-reset-password"
                     >
-                      {isSubmittingCode ? "Resetting Password..." : "Reset Password"}
+                      {isSubmittingPassword ? "Resetting Password..." : "Reset Password"}
                     </Button>
 
-                    <div className="flex gap-2">
-                      <Button 
-                        type="button"
-                        onClick={handleResend}
-                        disabled={!canResend || isSubmittingEmail}
-                        variant="outline"
-                        className="flex-1"
-                        data-testid="button-resend-code"
-                      >
-                        {!canResend ? `Resend in ${resendCountdown}s` : "Resend Code"}
-                      </Button>
-                      
-                      <Button 
-                        type="button"
-                        onClick={() => {
-                          setCurrentStep('email');
-                          setCode("");
-                          setNewPassword("");
-                          setConfirmPassword("");
-                        }}
-                        variant="ghost"
-                        className="flex-1"
-                        data-testid="button-back-to-email"
-                      >
-                        Change Email
-                      </Button>
-                    </div>
+                    <Button 
+                      type="button"
+                      onClick={() => {
+                        setCurrentStep('email');
+                        setCode("");
+                        setNewPassword("");
+                        setConfirmPassword("");
+                        setResetSessionId("");
+                      }}
+                      variant="ghost"
+                      className="w-full"
+                      data-testid="button-start-over"
+                    >
+                      Start Over
+                    </Button>
                   </form>
                 )}
               </CardContent>

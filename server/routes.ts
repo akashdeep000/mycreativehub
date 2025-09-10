@@ -443,8 +443,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // POST /auth/request-reset { email }
-  app.post('/auth/request-reset', async (req, res) => {
+  // POST /api/auth/request-reset { email }
+  app.post('/api/auth/request-reset', async (req, res) => {
     try {
       const email = String(req.body?.email || '').trim().toLowerCase();
       console.log('[request-reset] hit', { email });
@@ -547,8 +547,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // POST /auth/verify-reset-code { email, code }
-  app.post('/auth/verify-reset-code', async (req, res) => {
+  // POST /api/auth/verify-reset-code { email, code }
+  app.post('/api/auth/verify-reset-code', async (req, res) => {
     try {
       const { email, code } = req.body;
       
@@ -606,8 +606,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // POST /auth/complete-reset { resetSessionId, newPassword }
-  app.post('/auth/complete-reset', async (req, res) => {
+  // POST /api/auth/complete-reset { resetSessionId, newPassword }
+  app.post('/api/auth/complete-reset', async (req, res) => {
     try {
       const { resetSessionId, newPassword } = req.body;
       
