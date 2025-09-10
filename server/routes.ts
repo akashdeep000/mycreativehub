@@ -111,6 +111,98 @@ const sendPasswordResetEmail = async (email: string, token: string, host: string
   }
 };
 
+// Send password reset code email (6-digit system)
+const sendPasswordResetCodeEmail = async (email: string, code: string) => {
+  const BASE = process.env.APP_BASE_URL || 'https://mycreativehub.app';
+  const resetUrl = `${BASE}/reset`; // Clean URL without tokens
+  
+  try {
+    const { data, error } = await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+      to: [email],
+      subject: `Your MyCreativeHub reset code: ${code} (valid 15 min)`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Your Password Reset Code</title>
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">Password Reset Code</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">MyCreativeHub</p>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">Hi there,</p>
+            
+            <p style="font-size: 16px; margin-bottom: 30px;">We received a request to reset your password. Use the code below to reset your password:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <div style="display: inline-block; background: #f8f9fa; border: 2px solid #667eea; padding: 20px 30px; border-radius: 10px; font-family: 'Courier New', monospace;">
+                <div style="font-size: 36px; font-weight: bold; color: #667eea; letter-spacing: 8px; margin-bottom: 10px;">${code}</div>
+                <div style="font-size: 14px; color: #666;">Valid for 15 minutes</div>
+              </div>
+            </div>
+            
+            <p style="font-size: 16px; margin-bottom: 20px;">Enter this code on the reset page to continue.</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; font-size: 16px;">Go to Reset Page</a>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+              <p style="font-size: 14px; color: #666; margin-bottom: 10px;"><strong>Important:</strong></p>
+              <ul style="font-size: 14px; color: #666; margin: 0; padding-left: 20px;">
+                <li>This code expires in 15 minutes</li>
+                <li>Can only be used once</li>
+                <li>If you didn't request this, ignore this email</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div style="text-align: center; color: #666; font-size: 14px;">
+            <p style="margin: 0;">MyCreativeHub - Creative Business Toolkit</p>
+            <p style="margin: 5px 0 0 0;">This email was sent because a password reset was requested for your account.</p>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `
+Your MyCreativeHub Password Reset Code
+
+Hi there,
+
+We received a request to reset your password. Use this 6-digit code to reset your password:
+
+${code}
+
+This code is valid for 15 minutes and can only be used once.
+
+Go to ${resetUrl} and enter your email, this code, and your new password.
+
+If you didn't request this password reset, you can safely ignore this email.
+
+---
+MyCreativeHub - Creative Business Toolkit
+      `.trim()
+    });
+
+    if (error) {
+      console.error('Resend API error:', error);
+      throw error;
+    }
+
+    console.log('Password reset code email sent successfully:', { id: data?.id });
+    return data;
+  } catch (error) {
+    console.error('Error sending password reset code email:', error);
+    throw error;
+  }
+};
+
 // Helper function to update user stats on task completion
 async function updateUserStatsOnTaskCompletion(userId: string) {
   try {
@@ -170,36 +262,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Session middleware
   app.use(getSession());
 
-  // Password reset token handoff route (mobile-proof)
-  app.get('/rp/:token', (req, res) => {
-    const token = req.params.token;
-    if (!token) return res.status(400).send('Missing token');
-
-    console.log(`[RESET-PASSWORD] Token handoff for token: ${token.substring(0, 8)}...`);
-    console.log(`[RESET-PASSWORD] Request headers:`, {
-      userAgent: req.headers['user-agent'],
-      host: req.headers.host,
-      protocol: req.headers['x-forwarded-proto'] || req.protocol
-    });
-
-    res.cookie('reset_token', token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      domain: '.mycreativehub.app', // CRITICAL: covers apex and subdomains for mobile
-      path: '/',
-      maxAge: 1000 * 60 * 15 // 15 minutes
-    });
-
-    console.log(`[RESET-PASSWORD] Cookie set with domain: .mycreativehub.app`);
-    console.log(`[RESET-PASSWORD] Response headers:`, {
-      'Set-Cookie': `reset_token=${token.substring(0, 8)}...; Domain=.mycreativehub.app; Path=/; HttpOnly; Secure; SameSite=Lax`,
-      'Location': '/reset-password'
-    });
-
-    // Redirect to clean SPA route without any token in the URL
-    return res.redirect(302, '/reset-password');
-  });
+  // Legacy route (removed - now using 6-digit code system)
 
   // Auth routes
   app.post('/api/auth/signup', async (req, res) => {
@@ -495,121 +558,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const MAX_ATTEMPTS = 3; // 3 attempts per minute per IP
 
   // Password reset - forgot password
-  app.post('/api/auth/forgot-password', async (req, res) => {
+  // 6-digit code password reset system
+  app.post('/api/auth/request-reset', async (req, res) => {
     try {
       const { email } = req.body;
       const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+      const userAgent = req.get('User-Agent') || 'unknown';
       
-      console.log('[forgot-password] endpoint hit:', { email: email ? 'provided' : 'missing', clientIP });
+      console.log('[request-reset] endpoint hit:', { email: email ? 'provided' : 'missing', clientIP });
       
       if (!email) {
         return res.status(400).json({ message: "Email is required" });
       }
       
-      // Rate limiting check
-      const now = Date.now();
-      const attempts = forgotPasswordAttempts.get(clientIP) || { count: 0, firstAttempt: now };
+      const normalizedEmail = email.toLowerCase().trim();
       
-      // Reset counter if window has passed
-      if (now - attempts.firstAttempt > RATE_LIMIT_WINDOW) {
-        attempts.count = 0;
-        attempts.firstAttempt = now;
+      // Check rate limits using our new storage method
+      const rateLimitCheck = await storage.checkEmailResetRateLimit(normalizedEmail, clientIP);
+      if (!rateLimitCheck.allowed) {
+        return res.status(429).json({ message: rateLimitCheck.message });
       }
-      
-      if (attempts.count >= MAX_ATTEMPTS) {
-        return res.status(429).json({ 
-          message: "Too many password reset attempts. Please try again later." 
-        });
-      }
-      
-      // Increment attempt counter
-      attempts.count++;
-      forgotPasswordAttempts.set(clientIP, attempts);
       
       // Always return success to prevent email enumeration
       // But only send email if user exists
-      const user = await storage.getUserByEmail(email.toLowerCase());
+      const user = await storage.getUserByEmail(normalizedEmail);
       
       if (user) {
-        console.log('[forgot-password] user found:', { userId: user.id });
+        console.log('[request-reset] user found:', { userId: user.id });
         
-        // Create password reset token
-        const passwordReset = await storage.createPasswordResetToken(user.id);
+        // Create 6-digit reset code
+        const { code, record } = await storage.createPasswordResetCode(normalizedEmail, clientIP, userAgent);
         
-        console.log('[forgot-password] about to send reset email:', { userId: user.id });
+        console.log('[request-reset] about to send reset code email:', { userId: user.id, codeId: record.id });
         
-        // Send password reset email
+        // Send password reset email with 6-digit code
         try {
-          const result = await sendPasswordResetEmail(user.email, passwordReset.token, req.get('host') || 'localhost:5000');
-          console.log('[forgot-password] resend response:', { userId: user.id, messageId: result?.id, success: true });
+          const result = await sendPasswordResetCodeEmail(user.email, code);
+          console.log('[request-reset] email sent:', { userId: user.id, codeId: record.id, messageId: result?.id, success: true });
         } catch (emailError) {
-          console.error('[forgot-password] resend failed:', { userId: user.id, error: emailError instanceof Error ? emailError.message : String(emailError) });
+          console.error('[request-reset] email failed:', { userId: user.id, codeId: record.id, error: emailError instanceof Error ? emailError.message : String(emailError) });
           // Don't return error to prevent email enumeration
           // The user will still get a success message
         }
       } else {
-        console.log('[forgot-password] user not found for email (expected for security)');
+        console.log('[request-reset] user not found for email (expected for security)');
       }
       
       // Always return success regardless of whether user exists
-      res.json({ message: "If that email is registered, we've sent a reset link." });
+      res.json({ message: "If that email is registered, we've sent a 6-digit reset code. Check your email." });
     } catch (error) {
-      console.error("Error in forgot password:", error);
-      res.status(500).json({ message: "Failed to process forgot password request" });
+      console.error("Error in request reset:", error);
+      res.status(500).json({ message: "Failed to process reset request" });
     }
   });
 
-  // Password reset - validate token
-  app.get('/api/auth/reset-password/validate', async (req, res) => {
+  // Resend reset code (optional)
+  app.post('/api/auth/resend-reset', async (req, res) => {
     try {
-      const { token } = req.query;
+      const { email } = req.body;
+      const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+      const userAgent = req.get('User-Agent') || 'unknown';
       
-      if (!token || typeof token !== 'string') {
-        return res.status(400).json({ message: "Token is required" });
+      console.log('[resend-reset] endpoint hit:', { email: email ? 'provided' : 'missing', clientIP });
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
       }
       
-      // Hash the token to match stored format
-      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const normalizedEmail = email.toLowerCase().trim();
       
-      // Check if token exists and is not expired
-      const passwordReset = await storage.getPasswordResetToken(tokenHash);
-      
-      if (!passwordReset) {
-        return res.status(400).json({ message: "Invalid or expired reset token" });
+      // Check rate limits (same as request-reset)
+      const rateLimitCheck = await storage.checkEmailResetRateLimit(normalizedEmail, clientIP);
+      if (!rateLimitCheck.allowed) {
+        return res.status(429).json({ message: rateLimitCheck.message });
       }
       
-      // Check if token is expired (1 hour)
-      const now = new Date();
-      const expiresAt = new Date(passwordReset.expiresAt);
+      // Always return success to prevent email enumeration
+      // But only send email if user exists
+      const user = await storage.getUserByEmail(normalizedEmail);
       
-      if (now > expiresAt) {
-        return res.status(400).json({ message: "Reset token has expired" });
+      if (user) {
+        console.log('[resend-reset] user found:', { userId: user.id });
+        
+        // Create new 6-digit reset code (this will cleanup old ones)
+        const { code, record } = await storage.createPasswordResetCode(normalizedEmail, clientIP, userAgent);
+        
+        console.log('[resend-reset] about to resend reset code email:', { userId: user.id, codeId: record.id });
+        
+        // Send password reset email with 6-digit code
+        try {
+          const result = await sendPasswordResetCodeEmail(user.email, code);
+          console.log('[resend-reset] email sent:', { userId: user.id, codeId: record.id, messageId: result?.id, success: true });
+        } catch (emailError) {
+          console.error('[resend-reset] email failed:', { userId: user.id, codeId: record.id, error: emailError instanceof Error ? emailError.message : String(emailError) });
+          // Don't return error to prevent email enumeration
+        }
+      } else {
+        console.log('[resend-reset] user not found for email (expected for security)');
       }
       
-      res.json({ message: "Token is valid" });
+      // Always return success regardless of whether user exists
+      res.json({ message: "If that email is registered, we've sent a new 6-digit reset code." });
     } catch (error) {
-      console.error("Error validating reset token:", error);
-      res.status(500).json({ message: "Failed to validate reset token" });
+      console.error("Error in resend reset:", error);
+      res.status(500).json({ message: "Failed to resend reset code" });
     }
   });
 
-  // Get reset token from cookie (for client validation)
-  app.get('/api/auth/reset-token', (req, res) => {
-    const token = req.cookies.reset_token;
-    if (!token) {
-      return res.status(404).json({ message: "No reset token found" });
-    }
-    res.json({ hasToken: true });
-  });
-
-  // Password reset - reset password (now reads token from cookie)
-  app.post('/api/auth/reset-password', async (req, res) => {
+  // Verify reset code and update password
+  app.post('/api/auth/confirm-reset', async (req, res) => {
     try {
-      const { newPassword } = req.body;
-      const token = req.cookies.reset_token;
+      const { email, code, newPassword, confirmPassword } = req.body;
       
-      if (!token) {
-        return res.status(400).json({ message: "No reset token found. Please use a fresh reset link." });
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      
+      if (!code) {
+        return res.status(400).json({ message: "Reset code is required" });
       }
       
       if (!newPassword) {
@@ -620,34 +686,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Password must be at least 6 characters long" });
       }
       
+      if (confirmPassword && newPassword !== confirmPassword) {
+        return res.status(400).json({ message: "Passwords do not match" });
+      }
+      
+      const normalizedEmail = email.toLowerCase().trim();
+      
       // Hash the new password
       const hashedPassword = await hashPassword(newPassword);
       
-      // Reset password using the token
-      const user = await storage.resetPassword(token, hashedPassword);
+      // Verify code and reset password using the storage method
+      const result = await storage.verifyResetCodeAndUpdatePassword(normalizedEmail, code, hashedPassword);
       
-      if (!user) {
-        return res.status(400).json({ message: "Invalid or expired reset token" });
+      if (!result.success) {
+        console.log('[confirm-reset] verification failed:', { email: normalizedEmail, message: result.message });
+        return res.status(400).json({ message: result.message });
       }
       
-      console.log(`Password reset successful for user: ${user.email}`);
+      console.log(`[confirm-reset] Password reset successful for user: ${result.user?.email}`);
       
-      // Clear the reset token cookie after successful reset
-      res.clearCookie('reset_token', { 
-        domain: '.mycreativehub.app',
-        path: '/', 
-        httpOnly: true, 
-        secure: true, 
-        sameSite: 'lax' 
-      });
-      console.log(`[RESET-PASSWORD] Cookie cleared for domain: .mycreativehub.app`);
-      
-      res.json({ message: "Password has been reset successfully" });
+      res.json({ message: "Password has been reset successfully. You can now log in with your new password." });
     } catch (error) {
-      console.error("Error resetting password:", error);
+      console.error("Error in confirm reset:", error);
       res.status(500).json({ message: "Failed to reset password" });
     }
   });
+
+  // Legacy routes removed (now using 6-digit code system)
 
   // Toolkit modules
   app.get('/api/toolkit/modules', jwtAuth, async (req, res) => {

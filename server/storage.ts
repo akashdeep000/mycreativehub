@@ -2029,8 +2029,8 @@ export class DatabaseStorage implements IStorage {
     }
     
     // Check if too many attempts (5+ attempts locks for 10 minutes)
-    if (passwordResetCode.attempts >= 5) {
-      const lockoutTime = new Date(passwordResetCode.createdAt.getTime() + 10 * 60 * 1000); // 10 minutes from creation
+    if ((passwordResetCode.attempts ?? 0) >= 5) {
+      const lockoutTime = new Date((passwordResetCode.createdAt ?? new Date()).getTime() + 10 * 60 * 1000); // 10 minutes from creation
       if (new Date() < lockoutTime) {
         return { success: false, message: "Too many attempts. Please try again later." };
       }
