@@ -23,93 +23,7 @@ console.log('[boot] email config', {
 // Initialize Resend client
 const resend = new Resend(RESEND_KEY);
 
-// Send password reset email
-const sendPasswordResetEmail = async (email: string, token: string, host: string) => {
-  const BASE = process.env.APP_BASE_URL || `https://${host}`;
-  const resetUrl = `${BASE}/rp/${token}`;
-  
-  try {
-    const { data, error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
-      to: [email],
-      subject: 'Reset Your Password - Creative Business Toolkit',
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Reset Your Password</title>
-        </head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">Reset Your Password</h1>
-            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Creative Business Toolkit</p>
-          </div>
-          
-          <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
-            <p style="font-size: 16px; margin-bottom: 20px;">Hi there,</p>
-            
-            <p style="font-size: 16px; margin-bottom: 20px;">We received a request to reset your password for your Creative Business Toolkit account. If you didn't make this request, you can safely ignore this email.</p>
-            
-            <p style="font-size: 16px; margin-bottom: 30px;">To reset your password, click the button below:</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; font-size: 16px;">Reset My Password</a>
-            </div>
-            
-            <p style="font-size: 14px; color: #666; margin-top: 30px;">If the button doesn't work, you can copy and paste this link into your browser:</p>
-            <p style="font-size: 14px; color: #007bff; word-break: break-all; background: #f1f3f4; padding: 10px; border-radius: 5px;">${resetUrl}</p>
-            
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-              <p style="font-size: 14px; color: #666; margin-bottom: 10px;"><strong>Important:</strong></p>
-              <ul style="font-size: 14px; color: #666; margin: 0; padding-left: 20px;">
-                <li>This link will expire in 1 hour for security reasons</li>
-                <li>You can only use this link once</li>
-                <li>If you didn't request this reset, your account is still secure</li>
-              </ul>
-            </div>
-          </div>
-          
-          <div style="text-align: center; color: #666; font-size: 14px;">
-            <p>Need help? Contact us at support@mycreativehub.app</p>
-            <p style="margin-top: 20px;">© 2025 Creative Business Toolkit. All rights reserved.</p>
-          </div>
-        </body>
-        </html>
-      `,
-      text: `
-        Reset Your Password - Creative Business Toolkit
-        
-        Hi there,
-        
-        We received a request to reset your password for your Creative Business Toolkit account. If you didn't make this request, you can safely ignore this email.
-        
-        To reset your password, visit this link: ${resetUrl}
-        
-        Important:
-        - This link will expire in 1 hour for security reasons
-        - You can only use this link once
-        - If you didn't request this reset, your account is still secure
-        
-        Need help? Contact us at support@mycreativehub.app
-        
-        © 2025 Creative Business Toolkit. All rights reserved.
-      `
-    });
-
-    if (error) {
-      console.error('Resend email error:', error);
-      throw new Error('Failed to send email');
-    }
-
-    console.log('Password reset email sent successfully:', { messageId: data?.id, to: email });
-    return data;
-  } catch (error) {
-    console.error('Error sending password reset email:', error);
-    throw error;
-  }
-};
+// Old sendPasswordResetEmail function removed - now using sendPasswordResetCodeEmail for 6-digit codes
 
 // Send password reset code email (6-digit system)
 const sendPasswordResetCodeEmail = async (email: string, code: string) => {
@@ -552,12 +466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Simple rate limiting store for forgot password
-  const forgotPasswordAttempts = new Map();
-  const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-  const MAX_ATTEMPTS = 3; // 3 attempts per minute per IP
-
-  // Password reset - forgot password
+  // Password reset endpoints (6-digit code system with built-in rate limiting)
   // 6-digit code password reset system
   app.post('/api/auth/request-reset', async (req, res) => {
     try {

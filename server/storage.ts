@@ -314,10 +314,7 @@ export interface IStorage {
   updateTimeBlockingEvent(id: string, updates: Partial<InsertTimeBlockingEvent>): Promise<TimeBlockingEvent>;
   deleteTimeBlockingEvent(id: string, userId: string): Promise<void>;
   
-  // Password Reset Operations
-  createPasswordResetToken(userId: string): Promise<PasswordReset & { token: string }>;
-  getPasswordResetToken(tokenHash: string): Promise<PasswordReset | undefined>;
-  resetPassword(token: string, newPasswordHash: string): Promise<User | undefined>;
+  // Password Reset Operations (removed old token-based methods - now using 6-digit codes)
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1879,81 +1876,7 @@ export class DatabaseStorage implements IStorage {
     console.log(`Time blocking event ${id} soft deleted for user ${userId}`);
   }
 
-  // Password Reset Operations
-  async createPasswordResetToken(userId: string): Promise<PasswordReset & { token: string }> {
-    // Generate a random token
-    const token = crypto.randomBytes(32).toString('hex');
-    
-    // Hash the token for storage
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-    
-    // Set expiration to 1 hour from now
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-    
-    // Create password reset record
-    const [passwordReset] = await db.insert(passwordResets).values({
-      id: nanoid(),
-      userId,
-      hashedToken,
-      expiresAt,
-    }).returning();
-    
-    // Return the record with the original token (not hashed)
-    return {
-      ...passwordReset,
-      token // Include the original token for email sending
-    };
-  }
-
-  async getPasswordResetToken(tokenHash: string): Promise<PasswordReset | undefined> {
-    const [passwordReset] = await db
-      .select()
-      .from(passwordResets)
-      .where(
-        and(
-          eq(passwordResets.hashedToken, tokenHash),
-          isNull(passwordResets.usedAt) // Only get unused tokens
-        )
-      );
-    
-    return passwordReset;
-  }
-
-  async resetPassword(token: string, newPasswordHash: string): Promise<User | undefined> {
-    // Hash the token to match stored format
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    
-    // Find the password reset record
-    const passwordReset = await this.getPasswordResetToken(tokenHash);
-    
-    if (!passwordReset) {
-      return undefined;
-    }
-    
-    // Check if token is expired
-    const now = new Date();
-    if (now > passwordReset.expiresAt) {
-      return undefined;
-    }
-    
-    // Update user's password
-    const [updatedUser] = await db
-      .update(users)
-      .set({ 
-        password: newPasswordHash,
-        updatedAt: new Date()
-      })
-      .where(eq(users.id, passwordReset.userId))
-      .returning();
-    
-    // Mark the token as used
-    await db
-      .update(passwordResets)
-      .set({ usedAt: new Date() })
-      .where(eq(passwordResets.id, passwordReset.id));
-    
-    return updatedUser;
-  }
+  // Old token-based password reset methods removed - now using 6-digit code system
 
   // Password Reset Code Operations (6-digit system)
   async createPasswordResetCode(email: string, requestedIp?: string, userAgent?: string): Promise<{ code: string; record: PasswordResetCode }> {
