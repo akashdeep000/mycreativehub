@@ -127,6 +127,21 @@ app.use((req, res, next) => {
     }
   });
 
+  // Mobile-specific SPA route handler for reset password
+  app.get('/reset-password', (req, res, next) => {
+    console.log(`[MOBILE RESET PASSWORD FIX] Handling: ${req.originalUrl}`);
+    
+    if (process.env.NODE_ENV === 'production') {
+      const path = require('path');
+      const indexPath = path.resolve(import.meta.dirname, 'public/index.html');
+      console.log(`[MOBILE FIX] Serving production index.html from: ${indexPath}`);
+      return res.sendFile(indexPath);
+    }
+    
+    // In development, let Vite handle it
+    next();
+  });
+
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
