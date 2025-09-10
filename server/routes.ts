@@ -10,16 +10,28 @@ import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplate
 import { db } from "./db";
 import { inspirationBoards } from "@shared/schema";
 
+// Standardize environment variable reads
+const RESEND_KEY = process.env.RESEND_API_KEY || process.env.EMAIL_API_KEY;
+const EMAIL_FROM = process.env.EMAIL_FROM;
+const APP_BASE_URL = process.env.APP_BASE_URL;
+
+// Boot-time logging
+console.log('[boot] email config:', {
+  hasKey: !!RESEND_KEY,
+  from: EMAIL_FROM,
+  baseUrl: APP_BASE_URL
+});
+
 // Initialize Resend client
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(RESEND_KEY);
 
 // Send password reset email
 const sendPasswordResetEmail = async (email: string, token: string, host: string) => {
-  const resetUrl = `https://${host}/reset-password?token=${token}`;
+  const resetUrl = `${APP_BASE_URL || `https://${host}`}/reset-password?token=${token}`;
   
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Creative Toolkit <noreply@mycreativehub.app>',
+      from: EMAIL_FROM || 'onboarding@resend.dev',
       to: [email],
       subject: 'Reset Your Password - Creative Business Toolkit',
       html: `
@@ -92,7 +104,7 @@ const sendPasswordResetEmail = async (email: string, token: string, host: string
       throw new Error('Failed to send email');
     }
 
-    console.log('Password reset email sent successfully:', data?.id);
+    console.log('Password reset email sent successfully:', { messageId: data?.id, to: email });
     return data;
   } catch (error) {
     console.error('Error sending password reset email:', error);
@@ -458,6 +470,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email } = req.body;
       const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
       
+      console.log('[forgot-password] endpoint hit:', { email: email ? 'provided' : 'missing', clientIP });
+      
       if (!email) {
         return res.status(400).json({ message: "Email is required" });
       }
@@ -487,18 +501,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUserByEmail(email.toLowerCase());
       
       if (user) {
+        console.log('[forgot-password] user found:', { userId: user.id });
+        
         // Create password reset token
         const passwordReset = await storage.createPasswordResetToken(user.id);
         
+        console.log('[forgot-password] about to send reset email:', { userId: user.id });
+        
         // Send password reset email
         try {
-          await sendPasswordResetEmail(user.email, passwordReset.token, req.get('host') || 'localhost:5000');
-          console.log(`Password reset email sent to ${email}`);
+          const result = await sendPasswordResetEmail(user.email, passwordReset.token, req.get('host') || 'localhost:5000');
+          console.log('[forgot-password] resend response:', { userId: user.id, messageId: result?.id, success: true });
         } catch (emailError) {
-          console.error('Failed to send password reset email:', emailError);
+          console.error('[forgot-password] resend failed:', { userId: user.id, error: emailError instanceof Error ? emailError.message : String(emailError) });
           // Don't return error to prevent email enumeration
           // The user will still get a success message
         }
+      } else {
+        console.log('[forgot-password] user not found for email (expected for security)');
       }
       
       // Always return success regardless of whether user exists
