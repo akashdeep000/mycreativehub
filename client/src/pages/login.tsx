@@ -8,6 +8,7 @@ import { Palette } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 
 export default function Login() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -186,6 +187,17 @@ export default function Login() {
                       className="rounded-lg"
                       placeholder="Enter your password"
                     />
+                    <div className="text-right">
+                      <Link href="/forgot-password">
+                        <Button 
+                          variant="link" 
+                          className="p-0 h-auto text-sm text-[#f46454] hover:text-[#e53e3e]"
+                          type="button"
+                        >
+                          Forgot your password?
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
 
                   <div className="flex items-center space-x-2">
