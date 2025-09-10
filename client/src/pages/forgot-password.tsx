@@ -5,17 +5,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Palette, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 export default function ForgotPassword() {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [, setLocation] = useLocation();
+  
+  // Step management
+  const [currentStep, setCurrentStep] = useState<'email' | 'code'>('email');
+  
+  // Step 1: Email
+  const [isSubmittingEmail, setIsSubmittingEmail] = useState(false);
   const [email, setEmail] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  
+  // Step 2: Code + Password
+  const [isSubmittingCode, setIsSubmittingCode] = useState(false);
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [canResend, setCanResend] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(30);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Step 1: Submit email
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setIsSubmittingEmail(true);
 
     try {
       const response = await fetch("/auth/request-reset", {
@@ -24,21 +38,132 @@ export default function ForgotPassword() {
         body: JSON.stringify({ email: email.toLowerCase() }),
       });
 
-      // Always show success message regardless of response
-      setIsSubmitted(true);
+      // Always proceed to step 2 regardless of response to prevent email enumeration
+      setCurrentStep('code');
       toast({
-        title: "Reset link sent",
-        description: "If that email is registered, we've sent a reset link.",
+        title: "Code sent",
+        description: "If that email is registered, we've sent a 6-digit code. Check your inbox or junk.",
       });
+      
+      // Start resend countdown
+      startResendCountdown();
     } catch (error) {
-      // Still show success message to prevent email enumeration
-      setIsSubmitted(true);
+      // Still proceed to step 2 to prevent email enumeration
+      setCurrentStep('code');
       toast({
-        title: "Reset link sent",
-        description: "If that email is registered, we've sent a reset link.",
+        title: "Code sent", 
+        description: "If that email is registered, we've sent a 6-digit code. Check your inbox or junk.",
+      });
+      
+      startResendCountdown();
+    } finally {
+      setIsSubmittingEmail(false);
+    }
+  };
+
+  // Step 2: Submit code and new password
+  const handleCodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure both passwords are the same.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmittingCode(true);
+
+    try {
+      const response = await fetch("/auth/confirm-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          email: email.toLowerCase(), 
+          code: code.trim(),
+          newPassword 
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.ok) {
+        toast({
+          title: "Password updated",
+          description: "Your password has been successfully reset. You can now log in.",
+        });
+        setLocation('/login');
+      } else {
+        toast({
+          title: "Reset failed",
+          description: result.message || "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred. Please try again.",
+        variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setIsSubmittingCode(false);
+    }
+  };
+
+  // Resend countdown timer
+  const startResendCountdown = () => {
+    setCanResend(false);
+    setResendCountdown(30);
+    const timer = setInterval(() => {
+      setResendCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setCanResend(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Resend code
+  const handleResend = async () => {
+    if (!canResend) return;
+    
+    setIsSubmittingEmail(true);
+    try {
+      await fetch("/auth/request-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.toLowerCase() }),
+      });
+      
+      toast({
+        title: "Code resent",
+        description: "A new code has been sent to your email.",
+      });
+      
+      startResendCountdown();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to resend code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingEmail(false);
     }
   };
 
@@ -56,7 +181,10 @@ export default function ForgotPassword() {
             Reset Your Password
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-12">
-            Enter your email address and we'll send you a link to reset your password.
+            {currentStep === 'email' 
+              ? "Enter your email address and we'll send you a 6-digit code to reset your password."
+              : "Enter the 6-digit code from your email and set a new password."
+            }
           </p>
         </div>
 
@@ -76,22 +204,22 @@ export default function ForgotPassword() {
               </Link>
             </div>
 
-            {/* Forgot Password Card */}
+            {/* Password Reset Card */}
             <Card className="border-pink-100 shadow-lg">
               <CardHeader className="text-center pb-6">
                 <CardTitle className="text-xl font-serif">
-                  {isSubmitted ? "Check Your Email" : "Forgot Password?"}
+                  {currentStep === 'email' ? "Forgot Password?" : "Enter Reset Code"}
                 </CardTitle>
                 <CardDescription>
-                  {isSubmitted 
-                    ? "If that email is registered, we've sent a reset link to your inbox."
-                    : "No worries! Enter your email and we'll send you reset instructions."
+                  {currentStep === 'email' 
+                    ? "No worries! Enter your email and we'll send you a 6-digit code."
+                    : "Check your email for the 6-digit code and enter it below with your new password."
                   }
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {!isSubmitted ? (
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                {currentStep === 'email' ? (
+                  <form onSubmit={handleEmailSubmit} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email Address</Label>
                       <Input
@@ -103,50 +231,110 @@ export default function ForgotPassword() {
                         required
                         className="rounded-lg"
                         placeholder="Enter your email address"
+                        data-testid="input-email"
                       />
                     </div>
 
                     <Button 
                       type="submit" 
                       size="lg" 
-                      disabled={isSubmitting}
+                      disabled={isSubmittingEmail}
                       className="w-full bg-gradient-to-r from-[#f46454] to-[#e53e3e] hover:from-[#e53e3e] hover:to-[#d53534] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                      data-testid="button-send-code"
                     >
-                      {isSubmitting ? "Sending Reset Link..." : "Send Reset Link"}
+                      {isSubmittingEmail ? "Sending Code..." : "Send Code"}
                     </Button>
                   </form>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="text-center p-6 bg-green-50 rounded-lg border border-green-200">
-                      <p className="text-green-800 font-medium mb-2">Email Sent!</p>
-                      <p className="text-green-700 text-sm">
-                        If that email is registered, we've sent a reset link.
-                        Check your inbox and follow the instructions to reset your password.
-                      </p>
+                  <form onSubmit={handleCodeSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="code">6-Digit Code</Label>
+                      <Input
+                        id="code"
+                        name="code"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]{6}"
+                        maxLength={6}
+                        value={code}
+                        onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                        required
+                        className="rounded-lg text-center text-2xl tracking-widest"
+                        placeholder="000000"
+                        data-testid="input-code"
+                      />
                     </div>
-                    
-                    <div className="text-center space-y-3">
+
+                    <div className="space-y-2">
+                      <Label htmlFor="newPassword">New Password</Label>
+                      <Input
+                        id="newPassword"
+                        name="newPassword"
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        className="rounded-lg"
+                        placeholder="Enter new password"
+                        data-testid="input-new-password"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                      <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        className="rounded-lg"
+                        placeholder="Confirm new password"
+                        data-testid="input-confirm-password"
+                      />
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      size="lg" 
+                      disabled={isSubmittingCode}
+                      className="w-full bg-gradient-to-r from-[#f46454] to-[#e53e3e] hover:from-[#e53e3e] hover:to-[#d53534] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                      data-testid="button-reset-password"
+                    >
+                      {isSubmittingCode ? "Resetting Password..." : "Reset Password"}
+                    </Button>
+
+                    <div className="flex gap-2">
                       <Button 
-                        onClick={() => {
-                          setIsSubmitted(false);
-                          setEmail("");
-                        }}
+                        type="button"
+                        onClick={handleResend}
+                        disabled={!canResend || isSubmittingEmail}
                         variant="outline"
-                        className="w-full"
+                        className="flex-1"
+                        data-testid="button-resend-code"
                       >
-                        Send Another Reset Link
+                        {!canResend ? `Resend in ${resendCountdown}s` : "Resend Code"}
                       </Button>
                       
-                      <Link href="/login">
-                        <Button 
-                          variant="ghost" 
-                          className="w-full text-[#f46454] hover:text-[#e53e3e]"
-                        >
-                          Back to Login
-                        </Button>
-                      </Link>
+                      <Button 
+                        type="button"
+                        onClick={() => {
+                          setCurrentStep('email');
+                          setCode("");
+                          setNewPassword("");
+                          setConfirmPassword("");
+                        }}
+                        variant="ghost"
+                        className="flex-1"
+                        data-testid="button-back-to-email"
+                      >
+                        Change Email
+                      </Button>
                     </div>
-                  </div>
+                  </form>
                 )}
               </CardContent>
             </Card>

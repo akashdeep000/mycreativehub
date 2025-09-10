@@ -517,21 +517,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('[confirm-reset] password reset successful');
         return res.json({ ok: true, message: 'Password reset successful' });
       } else {
-        console.log('[confirm-reset] failed:', result.error);
+        console.log('[confirm-reset] failed:', result.message);
         
         // Map storage errors to user-friendly messages
-        let userMessage = 'Invalid or expired code';
+        let userMessage = 'That code isn\'t right. Please try again.';
         let errorType = 'invalid_code';
         
-        if (result.error === 'code_not_found') {
-          userMessage = 'That code isn\'t right. Please try again.';
-          errorType = 'invalid_code';
-        } else if (result.error === 'code_expired') {
-          userMessage = 'Code expired. Tap Resend to get a new one.';
-          errorType = 'expired_code';
-        } else if (result.error === 'too_many_attempts') {
+        if (result.message.includes('Too many attempts')) {
           userMessage = 'Too many tries. Please wait a few minutes and request a new code.';
           errorType = 'too_many_attempts';
+        } else if (result.message.includes('invalid') || result.message.includes('expired')) {
+          userMessage = 'That code isn\'t right. Please try again.';
+          errorType = 'invalid_code';
         }
         
         return res.status(400).json({ 
