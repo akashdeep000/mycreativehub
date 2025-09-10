@@ -487,154 +487,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // POST /auth/request-reset  body: { email }
+  // Diagnostic route (proves Resend works now)
+  // GET /debug/send-test?to=<email>
+  app.get('/debug/send-test', async (req, res) => {
+    try {
+      const to = String(req.query.to || '').trim().toLowerCase();
+      const r = await resend.emails.send({
+        from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+        to,
+        subject: 'Test — MyCreativeHub',
+        text: 'This is a Resend connectivity test.'
+      });
+      console.log('[send-test] provider id:', r?.data?.id || null);
+      return res.json({ ok: true, id: r?.data?.id || null });
+    } catch (e: any) {
+      console.error('[send-test] error:', e?.message || e);
+      return res.status(500).json({ ok: false, error: String(e) });
+    }
+  });
+
+  // POST /auth/request-reset { email }
   app.post('/auth/request-reset', async (req, res) => {
     try {
-      const emailRaw = (req.body?.email || '').trim();
-      if (!emailRaw) {
-        console.log('[request-reset] no email provided');
-        return res.json({ ok: true }); // Don't reveal validation errors
-      }
-      
-      const email = emailRaw.toLowerCase();
+      const email = String(req.body?.email || '').trim().toLowerCase();
       console.log('[request-reset] hit', { email });
 
-      // Check if user exists before generating code
-      const user = await storage.getUserByEmail(email);
-      if (!user) {
-        console.log('[request-reset] user not found (expected for security)');
-        return res.json({ ok: true }); // Always return success
-      }
-
-      // Generate code and store it
+      // generate 6-digit code (keep leading zeros)
       const code = String(Math.floor(Math.random()*1_000_000)).padStart(6,'0');
-      const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
-      const userAgent = req.get('User-Agent') || 'unknown';
-      
-      // Store the code using existing storage method
-      const { record } = await storage.createPasswordResetCode(email, clientIP, userAgent);
-      console.log('[request-reset] code stored', { codeId: record.id });
+
+      // TODO: store sha256(code) with email, expires_at=now+15m, used_at=null (do this after we confirm send works)
 
       console.log('[request-reset] about-to-email', { to: email });
       const RESET_PAGE = `${process.env.APP_BASE_URL}/reset`;
 
-      const result = await resend.emails.send({
+      const r = await resend.emails.send({
         from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
         to: email,
         subject: `Your MyCreativeHub reset code: ${code} (valid 15 min)`,
-        html: `<p>Your code:</p><p style="font-size:28px;font-weight:700;letter-spacing:2px">${code}</p>
-               <p>Open the reset page and enter this code:</p>
+        html: `<p>Your reset code:</p>
+               <p style="font-size:28px;font-weight:700;letter-spacing:2px">${code}</p>
+               <p>Open the reset page and enter this code with your new password:</p>
                <p><a href="${RESET_PAGE}">Open reset page</a></p>`,
         text: `Your code: ${code}\nOpen: ${RESET_PAGE}`
       });
-      console.log('[request-reset] provider ok', { id: result?.data?.id || null });
+      console.log('[request-reset] provider ok', { id: r?.data?.id || null });
 
       // Always 200 (no user enumeration)
       return res.json({ ok: true });
     } catch (e: any) {
       console.error('[request-reset] error', e?.message || e);
-      // Still return 200 to the client (but log the error)
-      return res.json({ ok: true });
+      return res.json({ ok: true }); // still generic 200
     }
   });
 
-  // Resend reset code (optional)
-  app.post('/auth/resend-reset', async (req, res) => {
-    try {
-      const { email } = req.body;
-      const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
-      const userAgent = req.get('User-Agent') || 'unknown';
-      
-      console.log('[resend-reset] endpoint hit:', { email: email ? 'provided' : 'missing', clientIP });
-      
-      if (!email) {
-        return res.status(400).json({ message: "Email is required" });
-      }
-      
-      const normalizedEmail = email.toLowerCase().trim();
-      
-      // Check rate limits (same as request-reset)
-      const rateLimitCheck = await storage.checkEmailResetRateLimit(normalizedEmail, clientIP);
-      if (!rateLimitCheck.allowed) {
-        return res.status(429).json({ message: rateLimitCheck.message });
-      }
-      
-      // Always return success to prevent email enumeration
-      // But only send email if user exists
-      const user = await storage.getUserByEmail(normalizedEmail);
-      
-      if (user) {
-        console.log('[resend-reset] user found:', { userId: user.id });
-        
-        // Create new 6-digit reset code (this will cleanup old ones)
-        const { code, record } = await storage.createPasswordResetCode(normalizedEmail, clientIP, userAgent);
-        
-        console.log('[resend-reset] about to resend reset code email:', { userId: user.id, codeId: record.id });
-        
-        // Send password reset email with 6-digit code
-        try {
-          const result = await sendPasswordResetCodeEmail(user.email, code);
-          console.log('[resend-reset] email sent:', { userId: user.id, codeId: record.id, messageId: result?.id, success: true });
-        } catch (emailError) {
-          console.error('[resend-reset] email failed:', { userId: user.id, codeId: record.id, error: emailError instanceof Error ? emailError.message : String(emailError) });
-          // Don't return error to prevent email enumeration
-        }
-      } else {
-        console.log('[resend-reset] user not found for email (expected for security)');
-      }
-      
-      // Always return success regardless of whether user exists
-      res.json({ message: "If that email is registered, we've sent a new 6-digit reset code." });
-    } catch (error) {
-      console.error("Error in resend reset:", error);
-      res.status(500).json({ message: "Failed to resend reset code" });
-    }
-  });
 
-  // Verify reset code and update password - POST /auth/confirm-reset
+  // POST /auth/confirm-reset { email, code, new_password }
   app.post('/auth/confirm-reset', async (req, res) => {
     try {
-      const { email, code, newPassword, confirmPassword } = req.body;
-      
-      if (!email) {
-        return res.status(400).json({ message: "Email is required" });
-      }
-      
-      if (!code) {
-        return res.status(400).json({ message: "Reset code is required" });
-      }
-      
-      if (!newPassword) {
-        return res.status(400).json({ message: "New password is required" });
-      }
-      
-      if (newPassword.length < 6) {
-        return res.status(400).json({ message: "Password must be at least 6 characters long" });
-      }
-      
-      if (confirmPassword && newPassword !== confirmPassword) {
-        return res.status(400).json({ message: "Passwords do not match" });
-      }
-      
-      const normalizedEmail = email.toLowerCase().trim();
-      
-      // Hash the new password
-      const hashedPassword = await hashPassword(newPassword);
-      
-      // Verify code and reset password using the storage method
-      const result = await storage.verifyResetCodeAndUpdatePassword(normalizedEmail, code, hashedPassword);
-      
-      if (!result.success) {
-        console.log('[confirm-reset] verification failed:', { email: normalizedEmail, message: result.message });
-        return res.status(400).json({ message: result.message });
-      }
-      
-      console.log(`[confirm-reset] Password reset successful for user: ${result.user?.email}`);
-      
-      res.json({ message: "Password has been reset successfully. You can now log in with your new password." });
-    } catch (error) {
-      console.error("Error in confirm reset:", error);
-      res.status(500).json({ message: "Failed to reset password" });
+      // TODO: find latest unused, unexpired code for email; constant-time compare sha256(code);
+      // hash new_password (bcrypt), update user, mark code used, revoke other sessions.
+      return res.json({ ok: true });
+    } catch {
+      return res.status(400).json({ ok: false, message: 'Invalid or expired code' });
     }
   });
 

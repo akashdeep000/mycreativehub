@@ -1,0 +1,146 @@
+Subject: 6-digit reset — make the email send now (with diagnostics) and finish the flow
+
+Context
+Production env is set & Published (don’t rename):
+
+RESEND_API_KEY = current re_… key
+
+EMAIL_API_KEY = same re_… key
+
+EMAIL_FROM = no-reply@mail.mycreativehub.app
+
+APP_BASE_URL = https://mycreativehub.app
+
+What’s wrong
+Submitting my email shows “email sent”, but Resend Logs are empty. We need to (1) prove the server can send right now, (2) prove /auth/request-reset is hit and calls Resend, then (3) finish confirm-reset.
+
+Do this EXACTLY
+0) Server basics
+// ESM-safe imports and JSON body parsing
+import express from 'express';
+import { Resend } from 'resend';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
+
+const app = express();
+app.use(express.json());
+
+const RESEND_KEY = process.env.RESEND_API_KEY || process.env.EMAIL_API_KEY;
+const resend = new Resend(RESEND_KEY);
+console.log('[boot] email cfg', { hasKey: !!RESEND_KEY, from: process.env.EMAIL_FROM });
+
+1) Add a diagnostic route (proves Resend works now)
+// GET /debug/send-test?to=<email>
+app.get('/debug/send-test', async (req, res) => {
+  try {
+    const to = String(req.query.to || '').trim().toLowerCase();
+    const r = await resend.emails.send({
+      from: process.env.EMAIL_FROM,
+      to,
+      subject: 'Test — MyCreativeHub',
+      text: 'This is a Resend connectivity test.'
+    });
+    console.log('[send-test] provider id:', r?.id || null);
+    return res.json({ ok: true, id: r?.id || null });
+  } catch (e) {
+    console.error('[send-test] error:', e?.message || e);
+    return res.status(500).json({ ok: false, error: String(e) });
+  }
+});
+
+
+Acceptance: Hitting /debug/send-test?to=myemail@… creates a new entry in Resend → Logs immediately.
+
+2) Wire the request-reset endpoint (SEND the code + log around it)
+// POST /auth/request-reset { email }
+app.post('/auth/request-reset', async (req, res) => {
+  try {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    console.log('[request-reset] hit', { email });
+
+    // generate 6-digit code (keep leading zeros)
+    const code = String(Math.floor(Math.random()*1_000_000)).padStart(6,'0');
+
+    // TODO: store sha256(code) with email, expires_at=now+15m, used_at=null (do this after we confirm send works)
+
+    console.log('[request-reset] about-to-email', { to: email });
+    const RESET_PAGE = `${process.env.APP_BASE_URL}/reset`;
+
+    const r = await resend.emails.send({
+      from: process.env.EMAIL_FROM,
+      to: email,
+      subject: `Your MyCreativeHub reset code: ${code} (valid 15 min)`,
+      html: `<p>Your reset code:</p>
+             <p style="font-size:28px;font-weight:700;letter-spacing:2px">${code}</p>
+             <p>Open the reset page and enter this code with your new password:</p>
+             <p><a href="${RESET_PAGE}">Open reset page</a></p>`,
+      text: `Your code: ${code}\nOpen: ${RESET_PAGE}`
+    });
+    console.log('[request-reset] provider ok', { id: r?.id || null });
+
+    // Always 200 (no user enumeration)
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error('[request-reset] error', e?.message || e);
+    return res.json({ ok: true }); // still generic 200
+  }
+});
+
+
+Important: For now, do not block sending on user lookup; we’re diagnosing delivery. We can reinstate the check after the email shows in Resend Logs.
+
+3) Confirm/reset endpoint stub (finish after send works)
+// POST /auth/confirm-reset { email, code, new_password }
+app.post('/auth/confirm-reset', async (req, res) => {
+  try {
+    // TODO: find latest unused, unexpired code for email; constant-time compare sha256(code);
+    // hash new_password (bcrypt), update user, mark code used, revoke other sessions.
+    return res.json({ ok: true });
+  } catch {
+    return res.status(400).json({ ok: false, message: 'Invalid or expired code' });
+  }
+});
+
+4) Frontend
+
+Forgot-password form must POST JSON to /auth/request-reset:
+
+await fetch('/auth/request-reset', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email })
+});
+
+
+Reset page at /reset (no token in URL) posts to /auth/confirm-reset with { email, code, new_password }.
+
+5) Publish & prove
+
+Click the blue Publish (secrets already set).
+
+Hit /debug/send-test?to=<your email> → confirm a new entry appears in Resend Logs.
+
+Submit the Forgot-password form → in server logs I expect:
+
+[request-reset] hit …
+
+[request-reset] about-to-email …
+
+[request-reset] provider ok { id: … }
+
+A second entry should appear in Resend Logs with subject “Your MyCreativeHub reset code…”.
+
+If any step fails, paste the exact server log lines from those handlers so we can see where it stops.
+
+Acceptance (from my side):
+
+/debug/send-test produces a log entry.
+
+Submitting my email produces a log entry.
+
+Email lands (I’ll check Junk if needed).
+
+Then you can finish the DB storage/verify for /auth/confirm-reset.
