@@ -127,6 +127,41 @@ app.use((req, res, next) => {
     }
   });
 
+  // SPA fallback middleware - handle deep links for mobile and desktop
+  app.get('*', (req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+    
+    // Skip static files (anything with a file extension except for SPA routes)
+    if (req.path.includes('.') && 
+        !req.path.includes('/reset-password') && 
+        !req.path.includes('/login') && 
+        !req.path.includes('/dashboard')) {
+      return next();
+    }
+    
+    console.log(`[SPA FALLBACK] Handling deep link: ${req.originalUrl}`);
+    
+    // In production, serve the built index.html
+    if (process.env.NODE_ENV === 'production') {
+      const path = require('path');
+      const fs = require('fs');
+      const indexPath = path.resolve(process.cwd(), 'server/public/index.html');
+      
+      if (fs.existsSync(indexPath)) {
+        return res.sendFile(indexPath);
+      } else {
+        console.error('Production index.html not found at:', indexPath);
+        return res.status(404).send('Index file not found');
+      }
+    }
+    
+    // In development, let Vite handle it
+    next();
+  });
+
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
