@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["server/**/*", "shared/**/*"],
+  "exclude": ["node_modules", "build", "dist", "**/*.test.ts", "client/**/*"],
+  "compilerOptions": {
+    "module": "ESNext",
+    "target": "es2022",
+    "noEmit": false,
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "bundler",
+    "declaration": false,
+    "sourceMap": false,
+    "removeComments": true,
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["./shared/*"]
+    }
+  }
+}

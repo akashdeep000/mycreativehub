@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
@@ -144,7 +145,6 @@ app.use((req, res, next) => {
   } else {
     console.log('Setting up static file serving for production...');
     // Enhanced production static serving
-    const path = require('path');
     const distPath = path.resolve(import.meta.dirname, "public");
     
     // Serve static files
