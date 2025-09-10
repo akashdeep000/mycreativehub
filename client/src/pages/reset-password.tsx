@@ -19,32 +19,22 @@ export default function ResetPassword() {
     confirmPassword: ""
   });
 
-  // Extract token from URL parameters
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get('token');
-
-  // Validate token on component mount
+  // Check for reset token in cookie on component mount
   useEffect(() => {
-    const validateToken = async () => {
-      if (!token) {
-        setIsValidating(false);
-        setIsTokenValid(false);
-        return;
-      }
-
+    const checkResetToken = async () => {
       try {
-        const response = await fetch(`/api/auth/reset-password/validate?token=${encodeURIComponent(token)}`);
+        const response = await fetch('/api/auth/reset-token');
         setIsTokenValid(response.ok);
       } catch (error) {
-        console.error('Token validation error:', error);
+        console.error('Token check error:', error);
         setIsTokenValid(false);
       } finally {
         setIsValidating(false);
       }
     };
 
-    validateToken();
-  }, [token]);
+    checkResetToken();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +65,6 @@ export default function ResetPassword() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          token,
           newPassword: formData.newPassword
         }),
       });
