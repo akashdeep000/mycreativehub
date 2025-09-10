@@ -30,11 +30,11 @@ const sendPasswordResetCodeEmail = async (email: string, code: string) => {
       subject: `Your MyCreativeHub reset code: ${code}`,
       html: `
         <p>Your reset code is: <strong>${code}</strong></p>
-        <p>Go to https://mycreativehub.app/reset and enter this code with your email.</p>
+        <p>Go back to the app and enter this code to set a new password.</p>
       `,
       text: `Your reset code is: ${code}
 
-Go to https://mycreativehub.app/reset and enter this code with your email.`
+Go back to the app and enter this code to set a new password.`
     });
 
     if (error) {
@@ -449,27 +449,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const email = String(req.body?.email || '').trim().toLowerCase();
       console.log('[request-reset] hit', { email });
 
-      // generate 6-digit code (keep leading zeros)
-      const code = String(Math.floor(Math.random()*1_000_000)).padStart(6,'0');
+      // Check if user exists (but don't leak this information)
+      const user = await storage.getUserByEmail(email);
+      
+      if (user) {
+        // Generate and store reset code
+        const resetCode = await storage.createPasswordResetCode(email);
+        console.log('[request-reset] code generated', { email, codeLength: resetCode.code.length });
+        
+        // Send email with code
+        try {
+          await sendPasswordResetCodeEmail(email, resetCode.code);
+          console.log('[request-reset] email sent successfully');
+        } catch (emailError) {
+          console.error('[request-reset] email failed', emailError);
+          // Don't fail the request even if email fails - prevents user enumeration
+        }
+      } else {
+        console.log('[request-reset] user not found, but returning success to prevent enumeration');
+      }
 
-      // TODO: store sha256(code) with email, expires_at=now+15m, used_at=null (do this after we confirm send works)
-
-      console.log('[request-reset] about-to-email', { to: email });
-      const RESET_PAGE = `${process.env.APP_BASE_URL}/reset`;
-
-      const r = await resend.emails.send({
-        from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
-        to: email,
-        subject: `Your MyCreativeHub reset code: ${code} (valid 15 min)`,
-        html: `<p>Your reset code:</p>
-               <p style="font-size:28px;font-weight:700;letter-spacing:2px">${code}</p>
-               <p>Open the reset page and enter this code with your new password:</p>
-               <p><a href="${RESET_PAGE}">Open reset page</a></p>`,
-        text: `Your code: ${code}\nOpen: ${RESET_PAGE}`
-      });
-      console.log('[request-reset] provider ok', { id: r?.data?.id || null });
-
-      // Always 200 (no user enumeration)
+      // Always return success to prevent user enumeration
       return res.json({ ok: true });
     } catch (e: any) {
       console.error('[request-reset] error', e?.message || e);
@@ -478,14 +478,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
-  // POST /auth/confirm-reset { email, code, new_password }
+  // POST /auth/confirm-reset { email, code, newPassword }
   app.post('/auth/confirm-reset', async (req, res) => {
     try {
-      // TODO: find latest unused, unexpired code for email; constant-time compare sha256(code);
-      // hash new_password (bcrypt), update user, mark code used, revoke other sessions.
-      return res.json({ ok: true });
-    } catch {
-      return res.status(400).json({ ok: false, message: 'Invalid or expired code' });
+      const { email, code, newPassword } = req.body;
+      
+      // Validate input
+      if (!email || !code || !newPassword) {
+        return res.status(400).json({ 
+          ok: false, 
+          error: 'invalid_input',
+          message: 'Email, code, and new password are required' 
+        });
+      }
+
+      const normalizedEmail = String(email).trim().toLowerCase();
+      const normalizedCode = String(code).trim();
+
+      // Validate code format (6 digits)
+      if (!/^\d{6}$/.test(normalizedCode)) {
+        return res.status(400).json({ 
+          ok: false, 
+          error: 'invalid_code',
+          message: 'Code must be 6 digits' 
+        });
+      }
+
+      console.log('[confirm-reset] attempting reset', { email: normalizedEmail });
+
+      // Verify code and update password using storage method
+      const result = await storage.verifyResetCodeAndUpdatePassword(
+        normalizedEmail,
+        normalizedCode, 
+        newPassword
+      );
+
+      if (result.success) {
+        console.log('[confirm-reset] password reset successful');
+        return res.json({ ok: true, message: 'Password reset successful' });
+      } else {
+        console.log('[confirm-reset] failed:', result.error);
+        
+        // Map storage errors to user-friendly messages
+        let userMessage = 'Invalid or expired code';
+        let errorType = 'invalid_code';
+        
+        if (result.error === 'code_not_found') {
+          userMessage = 'That code isn\'t right. Please try again.';
+          errorType = 'invalid_code';
+        } else if (result.error === 'code_expired') {
+          userMessage = 'Code expired. Tap Resend to get a new one.';
+          errorType = 'expired_code';
+        } else if (result.error === 'too_many_attempts') {
+          userMessage = 'Too many tries. Please wait a few minutes and request a new code.';
+          errorType = 'too_many_attempts';
+        }
+        
+        return res.status(400).json({ 
+          ok: false, 
+          error: errorType,
+          message: userMessage 
+        });
+      }
+    } catch (e: any) {
+      console.error('[confirm-reset] error', e?.message || e);
+      return res.status(500).json({ 
+        ok: false, 
+        error: 'server_error',
+        message: 'An error occurred. Please try again.' 
+      });
     }
   });
 
