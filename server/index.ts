@@ -45,16 +45,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Temporary logging to track reset-password issues
-app.use((req, res, next) => {
-  if (req.originalUrl.includes('/reset-password')) {
-    console.log(`[RESET-PASSWORD] ${req.method} ${req.originalUrl}`);
-    console.log(`[RESET-PASSWORD] User-Agent: ${req.headers['user-agent']}`);
-    console.log(`[RESET-PASSWORD] Host: ${req.headers.host}`);
-    console.log(`[RESET-PASSWORD] X-Forwarded-Proto: ${req.headers['x-forwarded-proto']}`);
-  }
-  next();
-});
 
 // Health check endpoints - must be first to avoid middleware interference
 app.get('/health', (req, res) => {
