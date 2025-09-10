@@ -170,6 +170,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Session middleware
   app.use(getSession());
 
+  // Password reset token handoff route (mobile-proof)
+  app.get('/rp/:token', (req, res) => {
+    const token = req.params.token;
+    if (!token) return res.status(400).send('Missing token');
+
+    res.cookie('reset_token', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 1000 * 60 * 15 // 15 minutes
+    });
+
+    console.log(`[RESET-PASSWORD] Token handoff for token: ${token.substring(0, 8)}...`);
+    // Now send the user to the clean SPA route without any token in the URL
+    res.redirect(302, '/reset-password');
+  });
+
   // Auth routes
   app.post('/api/auth/signup', async (req, res) => {
     try {
