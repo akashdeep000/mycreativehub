@@ -21,6 +21,22 @@ if (!isProduction) {
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy for proper session handling in deployment
 
+// HTTPS redirect middleware - preserves full URL including query parameters
+app.use((req, res, next) => {
+  if (req.headers['x-forwarded-proto'] !== 'https' && process.env.NODE_ENV === 'production') {
+    return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
+  }
+  next();
+});
+
+// Debug logging for reset-password requests to track mobile issues
+app.use((req, res, next) => {
+  if (req.originalUrl.includes('/reset-password')) {
+    console.log(`[RESET PASSWORD DEBUG] ${req.method} ${req.originalUrl} - User-Agent: ${req.headers['user-agent']?.substring(0, 50)}...`);
+  }
+  next();
+});
+
 // Health check endpoints - must be first to avoid middleware interference
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
