@@ -838,6 +838,8 @@ export type ResourceLibraryItem = typeof resourceLibrary.$inferSelect;
 export type InsertResourceLibraryItem = z.infer<typeof insertResourceLibrarySchema>;
 export type AffiliateLink = typeof affiliateLinks.$inferSelect;
 export type InsertAffiliateLink = z.infer<typeof insertAffiliateLinkSchema>;
+export type PasswordReset = typeof passwordResets.$inferSelect;
+export type InsertPasswordReset = z.infer<typeof insertPasswordResetSchema>;
 
 // New persistent data types
 export type MonthlyContentCalendar = typeof monthlyContentCalendar.$inferSelect;
