@@ -580,13 +580,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Password reset - reset password
+  // Get reset token from cookie (for client validation)
+  app.get('/api/auth/reset-token', (req, res) => {
+    const token = req.cookies.reset_token;
+    if (!token) {
+      return res.status(404).json({ message: "No reset token found" });
+    }
+    res.json({ hasToken: true });
+  });
+
+  // Password reset - reset password (now reads token from cookie)
   app.post('/api/auth/reset-password', async (req, res) => {
     try {
-      const { token, newPassword } = req.body;
+      const { newPassword } = req.body;
+      const token = req.cookies.reset_token;
       
-      if (!token || !newPassword) {
-        return res.status(400).json({ message: "Token and new password are required" });
+      if (!token) {
+        return res.status(400).json({ message: "No reset token found. Please use a fresh reset link." });
+      }
+      
+      if (!newPassword) {
+        return res.status(400).json({ message: "New password is required" });
       }
       
       if (newPassword.length < 6) {
@@ -604,6 +618,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`Password reset successful for user: ${user.email}`);
+      
+      // Clear the reset token cookie after successful reset
+      res.clearCookie('reset_token', { 
+        path: '/', 
+        httpOnly: true, 
+        secure: true, 
+        sameSite: 'lax' 
+      });
       
       res.json({ message: "Password has been reset successfully" });
     } catch (error) {
