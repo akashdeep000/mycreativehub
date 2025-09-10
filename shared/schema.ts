@@ -48,6 +48,19 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Password reset tokens
+export const passwordResets = pgTable("password_resets", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  hashedToken: varchar("hashed_token", { length: 64 }).notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("password_resets_user_id_idx").on(table.userId),
+  index("password_resets_hashed_token_idx").on(table.hashedToken),
+]);
+
 // Toolkit modules
 export const toolkitModules = pgTable("toolkit_modules", {
   id: serial("id").primaryKey(),
@@ -509,6 +522,11 @@ export const insertAffiliateLinkSchema = createInsertSchema(affiliateLinks).omit
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertPasswordResetSchema = createInsertSchema(passwordResets).omit({
+  id: true,
+  createdAt: true,
 });
 
 // Content Creation System Tables
