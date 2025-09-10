@@ -35,7 +35,7 @@ export default function ResetPassword() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/request-reset", {
+      const response = await fetch("/auth/request-reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formData.email.trim() }),
@@ -107,7 +107,7 @@ export default function ResetPassword() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/confirm-reset", {
+      const response = await fetch("/auth/confirm-reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -146,7 +146,7 @@ export default function ResetPassword() {
     setIsResending(true);
 
     try {
-      const response = await fetch("/api/auth/resend-reset", {
+      const response = await fetch("/auth/resend-reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formData.email.trim() }),
