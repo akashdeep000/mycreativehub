@@ -3,8 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
-import BackToDashboard from "@/components/BackToDashboard";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +37,8 @@ import {
   Archive,
   ChevronLeft,
   ChevronRight,
-  Pencil
+  Pencil,
+  ArrowLeft
 } from "lucide-react";
 
 interface BudgetItem {
@@ -108,6 +108,7 @@ interface MonthlySnapshot {
 export default function YourMoneyMap() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('goals');
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [currency, setCurrency] = useState('GBP');
@@ -656,14 +657,40 @@ export default function YourMoneyMap() {
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <BackToDashboard />
-            <Link href="/finance">
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
+          <div className="mb-6">
+            {/* Mobile Navigation - Single Back Arrow */}
+            <div className="flex items-center gap-3 mb-4 lg:hidden">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => window.history.back()}
+                className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Desktop Navigation - Full Buttons */}
+            <div className="hidden lg:flex gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation('/')}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Main Dashboard
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLocation('/finance')}
+                className="flex items-center gap-2"
+              >
                 <BarChart3 className="w-4 h-4" />
                 Back to Financial Management
               </Button>
-            </Link>
+            </div>
           </div>
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-xl flex items-center justify-center">
