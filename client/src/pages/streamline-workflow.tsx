@@ -353,8 +353,15 @@ export default function StreamlineWorkflow() {
               <div className="mb-6">
                 <BackToDashboard />
               </div>
-              <h1 className="text-3xl font-serif font-semibold text-gray-800 mb-2">Streamline Your Workflow</h1>
-              <p className="text-gray-600">Simple systems for busy weeks: organise ideas, block time and keep work moving.</p>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-xl flex items-center justify-center">
+                  <Zap className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-serif font-semibold text-gray-800">Streamline Your Workflow</h1>
+                  <p className="text-gray-600">Simple systems for busy weeks: organise ideas, block time and keep work moving.</p>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-6">
