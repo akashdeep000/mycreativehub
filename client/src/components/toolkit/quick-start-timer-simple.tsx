@@ -77,7 +77,7 @@ export default function QuickStartTimer() {
     <Card className="w-full">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-start gap-3">
             <div 
               className="size-12 aspect-square shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 !rounded-lg flex items-center justify-center"
               data-testid="quick-timer-icon-SQUARE"
