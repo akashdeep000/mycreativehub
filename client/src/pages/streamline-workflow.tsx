@@ -25,7 +25,8 @@ import {
   Settings,
   FileText,
   Zap,
-  MoreVertical
+  MoreVertical,
+  Workflow
 } from "lucide-react";
 import type { WorkflowTemplateInstance } from "@shared/schema";
 import CreativeInspirationHub from "@/components/workflow/creative-inspiration-hub";
