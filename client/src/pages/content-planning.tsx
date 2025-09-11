@@ -98,7 +98,9 @@ export default function ContentPlanning() {
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="mb-8">
-          <BackToDashboard />
+          <div className="mb-6">
+            <BackToDashboard />
+          </div>
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
               <Camera className="w-6 h-6 text-white" />
