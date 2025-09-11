@@ -3,16 +3,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
-import BackToDashboard from "@/components/BackToDashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Plus, DollarSign, PieChart, Calculator, Receipt, BarChart3 } from "lucide-react";
-import { Link } from "wouter";
+import { TrendingUp, Plus, DollarSign, PieChart, Calculator, Receipt, BarChart3, ArrowLeft } from "lucide-react";
+import { Link, useLocation } from "wouter";
 
 export default function FinanceTracker() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -53,7 +53,31 @@ export default function FinanceTracker() {
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="mb-8">
-          <BackToDashboard />
+          {/* Mobile Navigation - Single Back Arrow */}
+          <div className="flex items-center gap-3 mb-4 lg:hidden">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => window.history.back()}
+              className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* Desktop Navigation - Full Button */}
+          <div className="hidden lg:flex mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation('/')}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Main Dashboard
+            </Button>
+          </div>
+          
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-white" />
