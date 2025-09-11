@@ -360,7 +360,20 @@ export default function MonthlyContentCalendarV3() {
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         <div className="max-w-7xl mx-auto">
         {/* Navigation Buttons */}
-        <div className="flex items-center gap-3 mb-6">
+        {/* Mobile Navigation - Single Back Arrow */}
+        <div className="flex items-center gap-3 mb-6 lg:hidden">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => window.history.back()}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        </div>
+        
+        {/* Desktop Navigation - Full Buttons */}
+        <div className="hidden lg:flex items-center gap-3 mb-6">
           <Button 
             variant="outline" 
             size="sm" 
