@@ -776,13 +776,13 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         <CardDescription>Select a colour category, then click a calendar block to apply it. The block will auto-fill with the category name.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex gap-3 items-center overflow-x-auto w-full lg:flex-wrap">
           {data.colourTags.map((tag) => {
             const isActive = activeColourTagId === tag.id;
             return (
               <div
                 key={tag.id}
-                className={`relative flex items-center gap-2 rounded-lg p-2 transition-all cursor-pointer group ${
+                className={`relative flex items-center gap-2 rounded-lg p-2 transition-all cursor-pointer group flex-shrink-0 ${
                   isActive 
                     ? 'bg-blue-50 border-2 border-blue-500 shadow-md ring-2 ring-blue-200' 
                     : 'bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
@@ -1199,7 +1199,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                         }}
                         title={`${block.title} at ${block.startTime}`}
                       >
-                        <div className="font-medium break-words hyphens-auto leading-tight">
+                        <div className="font-medium leading-tight truncate whitespace-nowrap lg:break-words lg:whitespace-normal lg:hyphens-auto">
                           {block.title}
                         </div>
                         <div className="text-xs opacity-80 mt-0.5">
