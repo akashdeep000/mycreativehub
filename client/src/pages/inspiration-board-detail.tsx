@@ -961,25 +961,38 @@ export default function InspirationBoardDetail() {
       <div className="flex-1 flex flex-col min-h-screen lg:ml-64">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 p-4 lg:p-6">
-          <div className="flex flex-col gap-2 mb-4 lg:flex-row lg:items-center lg:gap-4">
+          <div className="mb-4">
+            {/* Mobile: Simple back arrow using browser history */}
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setLocation("/")}
-              className="text-gray-600 hover:text-gray-900"
+              onClick={() => window.history.back()}
+              className="text-gray-600 hover:text-gray-900 lg:hidden"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Main Dashboard
+              <ArrowLeft className="w-4 h-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLocation("/inspiration-hub")}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Inspiration Hub
-            </Button>
+            
+            {/* Desktop: Keep existing navigation buttons */}
+            <div className="hidden lg:flex lg:items-center lg:gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/")}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Main Dashboard
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/inspiration-hub")}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Inspiration Hub
+              </Button>
+            </div>
           </div>
           
           <div className="mb-4">
