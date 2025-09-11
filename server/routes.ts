@@ -1973,9 +1973,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const linkData = {
         userId,
         productName: req.body.productName,
-        companyName: req.body.company, // frontend sends 'company', db expects 'companyName'
-        trackingLink: req.body.affiliateLink, // frontend sends 'affiliateLink', db expects 'trackingLink'
-        affiliateCode: req.body.trackingCode, // frontend sends 'trackingCode', db expects 'affiliateCode'
+        companyName: req.body.companyName, // frontend sends 'companyName'
+        trackingLink: req.body.trackingLink, // frontend sends 'trackingLink'
+        affiliateCode: req.body.affiliateCode, // frontend sends 'affiliateCode'
         discountCode: req.body.discountCode,
         commissionRate: req.body.commissionRate,
         cookieLength: req.body.cookieLength,
@@ -1999,9 +1999,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Map frontend fields to database schema
       const updateData = {
         productName: req.body.productName,
-        companyName: req.body.company, // frontend sends 'company', db expects 'companyName'
-        trackingLink: req.body.affiliateLink, // frontend sends 'affiliateLink', db expects 'trackingLink'
-        affiliateCode: req.body.trackingCode, // frontend sends 'trackingCode', db expects 'affiliateCode'
+        companyName: req.body.companyName, // frontend sends 'companyName'
+        trackingLink: req.body.trackingLink, // frontend sends 'trackingLink'
+        affiliateCode: req.body.affiliateCode, // frontend sends 'affiliateCode'
         discountCode: req.body.discountCode,
         commissionRate: req.body.commissionRate,
         cookieLength: req.body.cookieLength,
