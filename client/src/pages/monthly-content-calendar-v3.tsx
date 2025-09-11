@@ -653,7 +653,13 @@ export default function MonthlyContentCalendarV3() {
                           return (
                             <div
                               key={entry.id}
-                              className="flex items-center gap-1 group relative"
+                              className="flex items-center gap-1 group relative cursor-pointer rounded px-1 py-0.5 hover:bg-gray-100 lg:cursor-default lg:hover:bg-transparent"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowNotesPopup(`${dayNumber}-${entry.id}`);
+                                setCurrentEntryId(entry.id);
+                                setNotesValue(entry.notes);
+                              }}
                             >
                               <div
                                 className="w-3 h-3 rounded-full flex-shrink-0"
@@ -662,6 +668,7 @@ export default function MonthlyContentCalendarV3() {
                               <span className="text-xs font-medium text-gray-700 flex-1 min-w-0">
                                 {colorKey?.label || 'Unknown'}
                               </span>
+                              {/* Desktop-only hover buttons */}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -669,7 +676,7 @@ export default function MonthlyContentCalendarV3() {
                                   setCurrentEntryId(entry.id);
                                   setNotesValue(entry.notes);
                                 }}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-gray-100 hover:bg-gray-200 rounded px-1 ml-1"
+                                className="hidden lg:block opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-gray-100 hover:bg-gray-200 rounded px-1 ml-1"
                                 title="Edit notes"
                               >
                                 <Pencil className="w-3 h-3 text-gray-500" />
@@ -679,14 +686,14 @@ export default function MonthlyContentCalendarV3() {
                                   e.stopPropagation();
                                   deleteEntry(dayNumber, entry.id);
                                 }}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-red-100 hover:bg-red-200 rounded px-1 ml-1"
+                                className="hidden lg:block opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-red-100 hover:bg-red-200 rounded px-1 ml-1"
                                 title="Delete entry"
                               >
                                 <Trash2 className="w-3 h-3 text-red-600" />
                               </button>
-                              {/* Custom instant tooltip */}
+                              {/* Custom instant tooltip - desktop only */}
                               {entry.notes && (
-                                <div className="absolute left-0 bottom-full mb-2 bg-gray-900 text-white text-sm px-4 py-2 rounded-md shadow-xl z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap max-w-sm border border-gray-700">
+                                <div className="hidden lg:block absolute left-0 bottom-full mb-2 bg-gray-900 text-white text-sm px-4 py-2 rounded-md shadow-xl z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap max-w-sm border border-gray-700">
                                   Notes: {entry.notes}
                                 </div>
                               )}
@@ -715,18 +722,32 @@ export default function MonthlyContentCalendarV3() {
                 placeholder="Add notes about this content..."
                 rows={4}
               />
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowNotesPopup(null)}>
-                  Cancel
+              <div className="flex justify-between">
+                <Button 
+                  variant="destructive"
+                  onClick={() => {
+                    if (showNotesPopup && currentEntryId) {
+                      const date = parseInt(showNotesPopup.split('-')[0]);
+                      deleteEntry(date, currentEntryId);
+                      setShowNotesPopup(null);
+                    }
+                  }}
+                >
+                  Delete Entry
                 </Button>
-                <Button onClick={() => {
-                  if (showNotesPopup && currentEntryId) {
-                    const date = parseInt(showNotesPopup.split('-')[0]);
-                    handleNotesEdit(date, currentEntryId, notesValue);
-                  }
-                }}>
-                  Save
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setShowNotesPopup(null)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={() => {
+                    if (showNotesPopup && currentEntryId) {
+                      const date = parseInt(showNotesPopup.split('-')[0]);
+                      handleNotesEdit(date, currentEntryId, notesValue);
+                    }
+                  }}>
+                    Save
+                  </Button>
+                </div>
               </div>
             </div>
           </DialogContent>
