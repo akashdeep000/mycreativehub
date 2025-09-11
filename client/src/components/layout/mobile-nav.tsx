@@ -18,6 +18,7 @@ const mobileNavigationItems = [
   { ...navigationItems.find(item => item.moduleKey === "The Affiliate Link Hub")!, label: "Affiliate" }
 ];
 
+
 export default function MobileNav() {
   const [location, setLocation] = useLocation();
 
