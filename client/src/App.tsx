@@ -25,7 +25,6 @@ import YourMoneyMap from "@/pages/your-money-map";
 import AffiliateMarketing from "@/pages/affiliate-marketing";
 import InspirationHub from "@/pages/inspiration-hub";
 import StreamlineWorkflow from "@/pages/streamline-workflow";
-import ArchivedTemplates from "@/pages/archived-templates";
 import InspirationBoardDetail from "@/pages/inspiration-board-detail";
 import DailyFocusPage from "@/pages/daily-focus";
 import AutomationToolkit from "@/pages/automation-toolkit";
@@ -139,7 +138,6 @@ function Router() {
         <Route path="/profit-calculator" component={ProfitCalculator} />
         <Route path="/pre-launch-timeline-planner" component={PreLaunchTimelinePlanner} />
         <Route path="/launch-growth-plan" component={LaunchGrowthPlan} />
-        <Route path="/archived-templates" component={ArchivedTemplates} />
         <Route path="/help" component={Help} />
         <Route component={NotFound} />
       </Switch>

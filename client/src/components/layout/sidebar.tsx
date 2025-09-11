@@ -6,7 +6,6 @@ import {
   Settings, 
   LogOut,
   Palette,
-  Archive,
   HelpCircle
 } from "lucide-react";
 
@@ -86,20 +85,6 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        {/* Archive Link */}
-        <div className="mb-6">
-          <button
-            onClick={() => setLocation("/archived-templates")}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colours ${
-              location === "/archived-templates"
-                ? "bg-pink-100 text-pink-600 font-medium"
-                : "text-gray-600 hover:bg-gray-50"
-            }`}
-          >
-            <Archive className="w-5 h-5 flex-shrink-0" />
-            <span className="text-left text-sm">Archived Templates</span>
-          </button>
-        </div>
 
         {/* Help Section */}
         <div className="mb-6">
