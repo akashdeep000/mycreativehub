@@ -10,7 +10,6 @@ import ToolkitCard from "@/components/toolkit/toolkit-card";
 import DailyFocus from "@/components/toolkit/daily-focus";
 import QuickStartTimer from "@/components/toolkit/quick-start-timer-simple";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import type { User } from "@shared/schema";
 
 export default function Dashboard() {
@@ -105,16 +104,6 @@ export default function Dashboard() {
 
       {/* Mobile Navigation */}
       <MobileNav />
-
-      {/* Floating Action Button */}
-      <div className="fixed bottom-6 right-6 lg:hidden">
-        <Button 
-          size="icon"
-          className="w-14 h-14 bg-gradient-to-br from-pink-400 to-purple-400 hover:from-pink-500 hover:to-purple-500 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
-        >
-          <Plus className="w-6 h-6 text-white" />
-        </Button>
-      </div>
     </div>
   );
 }
