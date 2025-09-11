@@ -10,7 +10,7 @@ export default function BackToDashboard() {
       variant="ghost"
       size="sm"
       onClick={() => setLocation('/')}
-      className="text-gray-600 hover:text-gray-800"
+      className="text-gray-600 hover:text-gray-800 mb-4"
     >
       {/* Mobile: Just arrow */}
       <ArrowLeft className="w-4 h-4 lg:mr-2" />
