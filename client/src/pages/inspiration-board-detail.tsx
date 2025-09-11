@@ -961,7 +961,7 @@ export default function InspirationBoardDetail() {
       <div className="flex-1 flex flex-col min-h-screen lg:ml-64">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 p-4 lg:p-6">
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex flex-col gap-2 mb-4 lg:flex-row lg:items-center lg:gap-4">
             <Button
               variant="ghost"
               size="sm"
