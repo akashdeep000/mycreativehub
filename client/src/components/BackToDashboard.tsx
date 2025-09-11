@@ -1,6 +1,6 @@
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Home } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 export default function BackToDashboard() {
   const [, setLocation] = useLocation();
@@ -12,8 +12,10 @@ export default function BackToDashboard() {
       onClick={() => setLocation('/')}
       className="text-gray-600 hover:text-gray-800"
     >
-      <Home className="w-4 h-4 mr-2" />
-      Back to Main Dashboard
+      {/* Mobile: Just arrow */}
+      <ArrowLeft className="w-4 h-4 lg:mr-2" />
+      {/* Desktop: Full text */}
+      <span className="hidden lg:inline">Back to Main Dashboard</span>
     </Button>
   );
 }
