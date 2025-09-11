@@ -1199,7 +1199,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                         }}
                         title={`${block.title} at ${block.startTime}`}
                       >
-                        <div className="font-medium leading-tight text-[10px] lg:text-xs truncate whitespace-nowrap lg:break-words lg:whitespace-normal lg:hyphens-auto w-full">
+                        <div className="font-medium leading-tight text-[10px] lg:text-xs overflow-hidden whitespace-nowrap lg:break-words lg:whitespace-normal lg:hyphens-auto w-full">
                           {block.title}
                         </div>
                         <div className="text-xs opacity-80 mt-0.5">
