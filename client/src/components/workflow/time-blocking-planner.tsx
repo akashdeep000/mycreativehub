@@ -994,7 +994,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   {getBlocksForDayAndHour(day, hour).map(block => (
                     <div
                       key={block.id}
-                      className="absolute rounded text-white text-sm font-medium cursor-move group shadow-sm overflow-hidden box-border flex items-center justify-center text-center p-2"
+                      className="absolute rounded text-white text-sm font-medium cursor-move group shadow-sm overflow-hidden box-border flex items-center justify-start text-left p-2 lg:justify-center lg:text-center"
                       style={{ 
                         backgroundColor: block.colour, 
                         height: `${Math.max(block.duration * 80 - 8, 75)}px`,
@@ -1007,7 +1007,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                       onDragStart={() => handleDragStart(block)}
                       title={`${block.title}${block.colourTagId ? ` (${getColourTagLabel(block.colourTagId)})` : ''}`}
                     >
-                      <div className="font-medium leading-tight text-xs w-full break-words hyphens-auto">
+                      <div className="font-medium leading-tight text-xs w-full text-left truncate lg:text-center lg:break-words lg:hyphens-auto">
                         {block.title}
                       </div>
                       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
