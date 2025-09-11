@@ -1299,7 +1299,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
               Click on any date to add events and appointments
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 lg:p-6">
             {renderMonthlyView()}
           </CardContent>
         </Card>
