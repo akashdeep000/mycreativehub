@@ -21,13 +21,26 @@ const mobileNavigationItems = [
 export default function MobileNav() {
   const [location, setLocation] = useLocation();
 
+  // Debug logging
+  console.log("MobileNav - Current location:", location);
+  console.log("MobileNav - Navigation items:", mobileNavigationItems.map(item => ({ 
+    label: item.label, 
+    href: item.href, 
+    moduleKey: item.moduleKey 
+  })));
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-pink-200 lg:hidden">
       <div className="flex items-center justify-around py-3">
         {mobileNavigationItems.map((item) => (
           <button
             key={item.href}
-            onClick={() => item.href !== "#" && setLocation(item.href)}
+            onClick={() => {
+              console.log("MobileNav - Clicking item:", { label: item.label, href: item.href, moduleKey: item.moduleKey });
+              if (item.href !== "#") {
+                setLocation(item.href);
+              }
+            }}
             className={`flex flex-col items-center space-y-1 ${
               location === item.href
                 ? "text-pink-600"
