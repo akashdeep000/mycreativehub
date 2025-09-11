@@ -615,8 +615,8 @@ export default function MonthlyContentCalendarV3() {
         {/* Calendar */}
         <div className="bg-white rounded-lg shadow-md border-0 p-6" id="calendar-container">
           <div className="grid grid-cols-7 mb-4">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-              <div key={day} className="text-center text-sm font-semibold text-gray-700 py-2 border-r border-gray-200 last:border-r-0">
+            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => (
+              <div key={index} className="text-center text-sm font-semibold text-gray-700 py-2 border-r border-gray-200 last:border-r-0">
                 {day}
               </div>
             ))}
@@ -659,7 +659,7 @@ export default function MonthlyContentCalendarV3() {
                                 className="w-3 h-3 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: colorKey?.color || '#gray' }}
                               />
-                              <span className="text-xs font-medium text-gray-700 flex-1 min-w-0 overflow-hidden whitespace-nowrap">
+                              <span className="text-xs font-medium text-gray-700 flex-1 min-w-0">
                                 {colorKey?.label || 'Unknown'}
                               </span>
                               <button
