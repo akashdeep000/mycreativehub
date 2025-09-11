@@ -825,10 +825,10 @@ export default function MonthlyContentCalendar() {
               </div>
               
               {/* Calendar grid */}
-              <div className="grid grid-cols-7">
+              <div className="grid grid-cols-7 border border-gray-200">
                 {days.map((day, index) => {
                   if (day === null) {
-                    return <div key={`empty-${index}`} className="h-40 border-r border-b border-gray-200 last:border-r-0" />;
+                    return <div key={`empty-${index}`} className="h-40 border-r border-b border-gray-200 last:border-r-0 bg-white" />;
                   }
                   
                   const cellData = getCellData(day);
@@ -843,7 +843,7 @@ export default function MonthlyContentCalendar() {
                     <div
                       key={`day-${day}`}
                       data-day={day}
-                      className={`h-40 border-r border-b border-gray-200 last:border-r-0 p-1 cursor-pointer transition-colors relative ${
+                      className={`h-40 border-r border-b border-gray-200 last:border-r-0 relative isolate overflow-hidden bg-white cursor-pointer transition-colors ${
                         batchMode ? 'hover:bg-yellow-50' : selectedTagId ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
                       } ${cellData.isBatchDay ? 'ring-2 ring-yellow-300 ring-opacity-50' : ''}`}
                       onClick={(e) => handleCellClick(day, e)}
@@ -875,48 +875,42 @@ export default function MonthlyContentCalendar() {
                         </div>
                       )}
                       
-                      {/* Multiple Tags Display - stacked vertically with full names */}
-                      <div className={`${cellData.isBatchDay ? 'mt-1' : 'mt-5'} px-1 space-y-0.5 overflow-y-auto max-h-32`}>
+                      {/* Multiple Tags Display - wrapping flex layout */}
+                      <div className={`${cellData.isBatchDay ? 'mt-1' : 'mt-[18px]'} flex flex-wrap gap-1 min-w-0 max-w-full overflow-y-auto max-h-32`}>
                         {cellData.tags.map((tag) => (
-                          <div key={tag.id} className="group bg-white/90 rounded px-1 py-1 border border-gray-100 shadow-sm max-w-full">
-                            <div className="flex items-start justify-between w-full">
-                              <div className="flex items-start gap-1 flex-1 min-w-0 max-w-full overflow-hidden">
-                                <div 
-                                  className="w-3 h-3 rounded-full flex-shrink-0 mt-0.5" 
-                                  style={{ backgroundColor: tag.color }}
-                                />
-                                <div className="flex-1 min-w-0 max-w-0">
-                                  <span className="text-xs font-medium text-gray-800 leading-tight block truncate">
-                                    {tag.tagLabel}
-                                  </span>
-                                  {tag.status === 'posted' && (
-                                    <Check className="w-3 h-3 text-green-600 mt-0.5" />
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openTagNotesModal(cellData.date, tag.id);
-                                  }}
-                                  className="p-0.5 hover:bg-gray-200 rounded text-gray-600 hover:text-gray-800"
-                                  title="Edit notes"
-                                >
-                                  <Edit2 className="w-3 h-3" />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeTagFromDate(cellData.date, tag.id);
-                                  }}
-                                  className="p-0.5 hover:bg-red-100 rounded text-red-600 hover:text-red-800"
-                                  title="Delete tag"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
-                              </div>
+                          <div 
+                            key={tag.id} 
+                            className="inline-flex items-center min-w-0 max-w-full overflow-hidden px-1 py-0.5 rounded text-xs font-medium shrink group"
+                            style={{ backgroundColor: tag.color }}
+                          >
+                            <span className="truncate min-w-0 text-white">
+                              {tag.tagLabel}
+                            </span>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openTagNotesModal(cellData.date, tag.id);
+                                }}
+                                className="p-0.5 hover:bg-white/20 rounded text-white hover:text-white"
+                                title="Edit notes"
+                              >
+                                <Edit2 className="w-2.5 h-2.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeTagFromDate(cellData.date, tag.id);
+                                }}
+                                className="p-0.5 hover:bg-white/20 rounded text-white hover:text-white"
+                                title="Delete tag"
+                              >
+                                <Trash2 className="w-2.5 h-2.5" />
+                              </button>
                             </div>
+                            {tag.status === 'posted' && (
+                              <Check className="w-3 h-3 text-white ml-1" />
+                            )}
                           </div>
                         ))}
                       </div>
