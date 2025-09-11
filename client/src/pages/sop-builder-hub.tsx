@@ -143,23 +143,36 @@ export default function SOPBuilderHub() {
         <main className="px-4 sm:px-6 lg:px-8 py-6">
           {/* Header */}
           <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              <Button 
-                variant="ghost" 
-                onClick={() => setLocation("/")}
-                className="text-gray-600 hover:text-gray-800"
+            <div className="mb-4">
+              {/* Mobile: Simple back arrow using browser history */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.history.back()}
+                className="text-gray-600 hover:text-gray-800 lg:hidden"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Main Dashboard
+                <ArrowLeft className="w-4 h-4" />
               </Button>
-              <Button 
-                variant="ghost" 
-                onClick={() => setLocation("/streamline-workflow")}
-                className="text-gray-600 hover:text-gray-800"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Streamline Workflow
-              </Button>
+              
+              {/* Desktop: Keep existing navigation buttons */}
+              <div className="hidden lg:flex lg:items-center lg:gap-4">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setLocation("/")}
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Main Dashboard
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setLocation("/streamline-workflow")}
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Streamline Workflow
+                </Button>
+              </div>
             </div>
             <div className="flex items-start gap-3">
               <div className="bg-gradient-to-br from-indigo-500 to-purple-500 p-3 rounded-lg">
