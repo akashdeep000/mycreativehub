@@ -45,13 +45,13 @@ export default function AffiliateMarketing() {
   const [newLink, setNewLink] = useState<InsertAffiliateLink>({
     userId: '',
     productName: '',
-    company: '',
-    affiliateLink: '',
-    trackingCode: '',
+    companyName: '',
+    trackingLink: '',
+    affiliateCode: '',
     discountCode: '',
     commissionRate: '',
     cookieLength: '',
-    contentChannels: [],
+    contentChannel: '',
     status: 'active',
     notes: ''
   });
@@ -62,9 +62,13 @@ export default function AffiliateMarketing() {
   const queryClient = useQueryClient();
 
   const { data: affiliateLinks = [], isLoading } = useQuery({
-    queryKey: ['/api/affiliate-links'],
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
+    queryKey: ['/api/affiliate-links']
+  });
+
+  // Handle errors with useEffect
+  useEffect(() => {
+    if (affiliateLinks instanceof Error) {
+      if (isUnauthorizedError(affiliateLinks)) {
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",
@@ -75,7 +79,7 @@ export default function AffiliateMarketing() {
         }, 500);
       }
     }
-  });
+  }, [affiliateLinks, toast]);
 
   const createMutation = useMutation({
     mutationFn: async (linkData: Omit<InsertAffiliateLink, 'userId'>) => {
@@ -191,30 +195,24 @@ export default function AffiliateMarketing() {
     setNewLink({
       userId: '',
       productName: '',
-      company: '',
-      affiliateLink: '',
-      trackingCode: '',
+      companyName: '',
+      trackingLink: '',
+      affiliateCode: '',
       discountCode: '',
       commissionRate: '',
       cookieLength: '',
-      contentChannels: [],
+      contentChannel: '',
       status: 'active',
       notes: ''
     });
     setErrors({});
   };
 
-  const toggleContentChannel = (channel: string, isEditing: boolean = false) => {
+  const setContentChannel = (channel: string, isEditing: boolean = false) => {
     if (isEditing && editingLink) {
-      const channels = editingLink.contentChannels.includes(channel)
-        ? editingLink.contentChannels.filter(c => c !== channel)
-        : [...editingLink.contentChannels, channel];
-      setEditingLink({...editingLink, contentChannels: channels});
+      setEditingLink({...editingLink, contentChannel: channel});
     } else {
-      const channels = newLink.contentChannels.includes(channel)
-        ? newLink.contentChannels.filter(c => c !== channel)
-        : [...newLink.contentChannels, channel];
-      setNewLink({...newLink, contentChannels: channels});
+      setNewLink({...newLink, contentChannel: channel});
     }
   };
 
@@ -240,13 +238,13 @@ export default function AffiliateMarketing() {
     if (!data.productName.trim()) {
       newErrors.productName = 'Product name is required';
     }
-    if (!data.company.trim()) {
-      newErrors.company = 'Company is required';
+    if (!data.companyName.trim()) {
+      newErrors.companyName = 'Company is required';
     }
-    if (!data.affiliateLink.trim()) {
-      newErrors.affiliateLink = 'Affiliate link is required';
-    } else if (!data.affiliateLink.startsWith('http')) {
-      newErrors.affiliateLink = 'Please enter a valid URL';
+    if (!data.trackingLink.trim()) {
+      newErrors.trackingLink = 'Tracking link is required';
+    } else if (!data.trackingLink.startsWith('http')) {
+      newErrors.trackingLink = 'Please enter a valid URL';
     }
     
     setErrors(newErrors);
@@ -283,17 +281,17 @@ export default function AffiliateMarketing() {
   };
 
   const exportToCsv = () => {
-    const headers = ['Product Name', 'Company', 'Affiliate Link', 'Tracking Code', 'Commission Rate', 'Cookie Length', 'Content Channels', 'Status', 'Notes', 'Created At'];
+    const headers = ['Product Name', 'Company', 'Tracking Link', 'Affiliate Code', 'Commission Rate', 'Cookie Length', 'Content Channel', 'Status', 'Notes', 'Created At'];
     const csvContent = [
       headers.join(','),
       ...filteredLinks.map(link => [
         `"${link.productName}"`,
-        `"${link.company}"`,
-        `"${link.affiliateLink}"`,
-        `"${link.trackingCode || ''}"`,
+        `"${link.companyName}"`,
+        `"${link.trackingLink}"`,
+        `"${link.affiliateCode || ''}"`,
         `"${link.commissionRate || ''}"`,
         `"${link.cookieLength || ''}"`,
-        `"${link.contentChannels.join('; ')}"`,
+        `"${link.contentChannel || ''}"`,
         `"${link.status}"`,
         `"${link.notes || ''}"`,
         `"${new Date(link.createdAt).toLocaleDateString()}"`
@@ -314,9 +312,9 @@ export default function AffiliateMarketing() {
     });
   };
 
-  const filteredLinks = affiliateLinks.filter(link => {
+  const filteredLinks = (affiliateLinks as AffiliateLink[]).filter((link: AffiliateLink) => {
     const matchesSearch = link.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         link.company.toLowerCase().includes(searchTerm.toLowerCase());
+                         link.companyName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || link.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -435,30 +433,30 @@ export default function AffiliateMarketing() {
               <div>
                 <label className="block text-sm font-medium mb-1">Company *</label>
                 <Input
-                  value={newLink.company}
-                  onChange={(e) => setNewLink({...newLink, company: e.target.value})}
+                  value={newLink.companyName}
+                  onChange={(e) => setNewLink({...newLink, companyName: e.target.value})}
                   placeholder="e.g., ConvertKit LLC"
-                  className={errors.company ? 'border-red-500' : ''}
+                  className={errors.companyName ? 'border-red-500' : ''}
                 />
-                {errors.company && <p className="text-red-500 text-xs mt-1">{errors.company}</p>}
+                {errors.companyName && <p className="text-red-500 text-xs mt-1">{errors.companyName}</p>}
               </div>
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-1">Affiliate Link *</label>
+              <label className="block text-sm font-medium mb-1">Tracking Link *</label>
               <Input
-                value={newLink.affiliateLink}
-                onChange={(e) => setNewLink({...newLink, affiliateLink: e.target.value})}
+                value={newLink.trackingLink || ''}
+                onChange={(e) => setNewLink({...newLink, trackingLink: e.target.value})}
                 placeholder="https://..."
-                className={errors.affiliateLink ? 'border-red-500' : ''}
+                className={errors.trackingLink ? 'border-red-500' : ''}
               />
-              {errors.affiliateLink && <p className="text-red-500 text-xs mt-1">{errors.affiliateLink}</p>}
+              {errors.trackingLink && <p className="text-red-500 text-xs mt-1">{errors.trackingLink}</p>}
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Discount Code/Coupon</label>
               <Input
-                value={newLink.discountCode}
+                value={newLink.discountCode || ''}
                 onChange={(e) => setNewLink({...newLink, discountCode: e.target.value})}
                 placeholder="e.g., SAVE20, WELCOME10"
               />
@@ -466,17 +464,17 @@ export default function AffiliateMarketing() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Tracking Code</label>
+                <label className="block text-sm font-medium mb-1">Affiliate Code</label>
                 <Input
-                  value={newLink.trackingCode}
-                  onChange={(e) => setNewLink({...newLink, trackingCode: e.target.value})}
+                  value={newLink.affiliateCode || ''}
+                  onChange={(e) => setNewLink({...newLink, affiliateCode: e.target.value})}
                   placeholder="e.g., ABC123"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Commission Rate</label>
                 <Input
-                  value={newLink.commissionRate}
+                  value={newLink.commissionRate || ''}
                   onChange={(e) => setNewLink({...newLink, commissionRate: e.target.value})}
                   placeholder="e.g., 30%"
                 />
@@ -484,7 +482,7 @@ export default function AffiliateMarketing() {
               <div>
                 <label className="block text-sm font-medium mb-1">Cookie Length</label>
                 <Input
-                  value={newLink.cookieLength}
+                  value={newLink.cookieLength || ''}
                   onChange={(e) => setNewLink({...newLink, cookieLength: e.target.value})}
                   placeholder="e.g., 30 days"
                 />
@@ -492,30 +490,29 @@ export default function AffiliateMarketing() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Content Channels</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {getAllChannels().map(channel => (
-                  <Badge
-                    key={channel}
-                    variant={newLink.contentChannels.includes(channel) ? "default" : "outline"}
-                    className={`cursor-pointer ${newLink.contentChannels.includes(channel) 
-                      ? 'bg-pink-500 text-white' 
-                      : 'border-gray-300 hover:border-pink-500'}`}
-                    onClick={() => toggleContentChannel(channel)}
-                  >
-                    {channel}
-                  </Badge>
-                ))}
-                {!showCustomChannelInput && (
-                  <Badge
-                    variant="outline"
-                    className="cursor-pointer border-pink-500 text-pink-500 hover:bg-pink-50"
-                    onClick={() => setShowCustomChannelInput(true)}
-                  >
-                    + Add Custom Channel
-                  </Badge>
-                )}
-              </div>
+              <label className="block text-sm font-medium mb-2">Content Channel</label>
+              <Select value={newLink.contentChannel || ''} onValueChange={(value) => setNewLink({...newLink, contentChannel: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a content channel" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAllChannels().map(channel => (
+                    <SelectItem key={channel} value={channel}>
+                      {channel}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!showCustomChannelInput && (
+                <Button
+                  variant="outline"
+                  className="mt-2 border-pink-500 text-pink-500 hover:bg-pink-50"
+                  onClick={() => setShowCustomChannelInput(true)}
+                  size="sm"
+                >
+                  + Add Custom Channel
+                </Button>
+              )}
               {showCustomChannelInput && (
                 <div className="flex gap-2 mt-2">
                   <Input
@@ -572,7 +569,7 @@ export default function AffiliateMarketing() {
               <div>
                 <label className="block text-sm font-medium mb-1">Notes</label>
                 <Textarea
-                  value={newLink.notes}
+                  value={newLink.notes || ''}
                   onChange={(e) => setNewLink({...newLink, notes: e.target.value})}
                   placeholder="Any additional notes..."
                   className="min-h-[40px]"
@@ -732,22 +729,22 @@ export default function AffiliateMarketing() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Company *</label>
                   <Input
-                    value={editingLink.company}
-                    onChange={(e) => setEditingLink({...editingLink, company: e.target.value})}
-                    className={errors.company ? 'border-red-500' : ''}
+                    value={editingLink.companyName}
+                    onChange={(e) => setEditingLink({...editingLink, companyName: e.target.value})}
+                    className={errors.companyName ? 'border-red-500' : ''}
                   />
-                  {errors.company && <p className="text-red-500 text-xs mt-1">{errors.company}</p>}
+                  {errors.companyName && <p className="text-red-500 text-xs mt-1">{errors.companyName}</p>}
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1">Affiliate Link *</label>
+                <label className="block text-sm font-medium mb-1">Tracking Link *</label>
                 <Input
-                  value={editingLink.affiliateLink}
-                  onChange={(e) => setEditingLink({...editingLink, affiliateLink: e.target.value})}
-                  className={errors.affiliateLink ? 'border-red-500' : ''}
+                  value={editingLink.trackingLink || ''}
+                  onChange={(e) => setEditingLink({...editingLink, trackingLink: e.target.value})}
+                  className={errors.trackingLink ? 'border-red-500' : ''}
                 />
-                {errors.affiliateLink && <p className="text-red-500 text-xs mt-1">{errors.affiliateLink}</p>}
+                {errors.trackingLink && <p className="text-red-500 text-xs mt-1">{errors.trackingLink}</p>}
               </div>
 
               <div>
@@ -761,10 +758,10 @@ export default function AffiliateMarketing() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Tracking Code</label>
+                  <label className="block text-sm font-medium mb-1">Affiliate Code</label>
                   <Input
-                    value={editingLink.trackingCode || ''}
-                    onChange={(e) => setEditingLink({...editingLink, trackingCode: e.target.value})}
+                    value={editingLink.affiliateCode || ''}
+                    onChange={(e) => setEditingLink({...editingLink, affiliateCode: e.target.value})}
                   />
                 </div>
                 <div>
@@ -784,30 +781,29 @@ export default function AffiliateMarketing() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Content Channels</label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {getAllChannels().map(channel => (
-                    <Badge
-                      key={channel}
-                      variant={editingLink.contentChannels.includes(channel) ? "default" : "outline"}
-                      className={`cursor-pointer ${editingLink.contentChannels.includes(channel) 
-                        ? 'bg-pink-500 text-white' 
-                        : 'border-gray-300 hover:border-pink-500'}`}
-                      onClick={() => toggleContentChannel(channel, true)}
-                    >
-                      {channel}
-                    </Badge>
-                  ))}
-                  {!showCustomChannelInput && (
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer border-pink-500 text-pink-500 hover:bg-pink-50"
-                      onClick={() => setShowCustomChannelInput(true)}
-                    >
-                      + Add Custom Channel
-                    </Badge>
-                  )}
-                </div>
+                <label className="block text-sm font-medium mb-2">Content Channel</label>
+                <Select value={editingLink.contentChannel || ''} onValueChange={(value) => setEditingLink({...editingLink, contentChannel: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a content channel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getAllChannels().map((channel: string) => (
+                      <SelectItem key={channel} value={channel}>
+                        {channel}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!showCustomChannelInput && (
+                  <Button
+                    variant="outline"
+                    className="mt-2 border-pink-500 text-pink-500 hover:bg-pink-50"
+                    onClick={() => setShowCustomChannelInput(true)}
+                    size="sm"
+                  >
+                    + Add Custom Channel
+                  </Button>
+                )}
                 {showCustomChannelInput && (
                   <div className="flex gap-2 mt-2">
                     <Input
