@@ -776,7 +776,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         <CardDescription>Select a colour category, then click a calendar block to apply it. The block will auto-fill with the category name.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-3 items-center overflow-x-auto w-full lg:flex-wrap">
+        <div className="flex flex-wrap gap-3 items-center">
           {data.colourTags.map((tag) => {
             const isActive = activeColourTagId === tag.id;
             return (
