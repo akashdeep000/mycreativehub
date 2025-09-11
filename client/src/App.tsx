@@ -90,7 +90,7 @@ function Router() {
           <Route path="/login" component={Login} />
           <Route path="/signup" component={SignUp} />
           <Route path="/forgot-password" component={ForgotPassword} />
-          <Route component={NotFound} />
+          <Route component={Login} />
         </Switch>
       </>
     );

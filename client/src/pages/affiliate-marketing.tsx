@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, ExternalLink, Copy, Check, Plus, Trash2, Edit, Search, Download, AlertCircle } from 'lucide-react';
-import BackToDashboard from '@/components/BackToDashboard';
+import { Link, ExternalLink, Copy, Check, Plus, Trash2, Edit, Search, Download, AlertCircle, ArrowLeft } from 'lucide-react';
 import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -61,6 +61,7 @@ export default function AffiliateMarketing() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const { data: affiliateLinks = [], isLoading } = useQuery({
     queryKey: ['/api/affiliate-links']
@@ -346,7 +347,31 @@ export default function AffiliateMarketing() {
       <MobileNav />
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
       <div className="mb-8">
-        <BackToDashboard />
+        {/* Mobile Navigation - Single Back Arrow */}
+        <div className="flex items-center gap-3 mb-4 lg:hidden">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => window.history.back()}
+            className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        {/* Desktop Navigation - Full Button */}
+        <div className="hidden lg:flex mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLocation('/')}
+            className="text-gray-600 hover:text-gray-800"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Main Dashboard
+          </Button>
+        </div>
+        
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 bg-pink-500 rounded-lg flex items-center justify-center">
             <Link className="w-6 h-6 text-white" />
