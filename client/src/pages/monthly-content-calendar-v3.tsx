@@ -382,10 +382,10 @@ export default function MonthlyContentCalendarV3() {
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0">
-              <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+        <div className="flex justify-between mb-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0">
+              <Calendar className="w-6 h-6 lg:w-7 lg:h-7 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-serif font-semibold text-gray-900">
