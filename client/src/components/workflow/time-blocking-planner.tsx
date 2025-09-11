@@ -1094,14 +1094,6 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goToToday}
-              className="text-blue-600 border-blue-200 hover:bg-blue-50"
-            >
-              Today
-            </Button>
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
               <DialogTrigger asChild>
                 <Button
@@ -1290,14 +1282,26 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       <div className="space-y-4">
         {renderColourKeyPanel()}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" />
-              Monthly Calendar
-            </CardTitle>
-            <CardDescription>
-              Click on any date to add events and appointments
-            </CardDescription>
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarIcon className="h-5 w-5" />
+                  Monthly Calendar
+                </CardTitle>
+                <CardDescription>
+                  Click on any date to add events and appointments
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToToday}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+              >
+                Today
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="p-0 lg:p-6">
             {renderMonthlyView()}
