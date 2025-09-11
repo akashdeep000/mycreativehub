@@ -54,9 +54,9 @@ export default function FinanceTracker() {
         {/* Header */}
         <div className="mb-8">
           <BackToDashboard />
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-white" />
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <div>
               <h1 className="text-3xl font-serif font-semibold text-gray-800">Financial Management</h1>
