@@ -7,7 +7,6 @@ import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
-import BackToDashboard from "@/components/BackToDashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -363,7 +362,30 @@ export default function StreamlineWorkflow() {
         <main className="px-4 sm:px-6 lg:px-8 py-6 pb-20 lg:pb-6">
             <div className="mb-8">
               <div className="mb-6">
-                <BackToDashboard />
+                {/* Mobile Navigation - Single Back Arrow */}
+                <div className="flex items-center gap-3 lg:hidden">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => window.history.back()}
+                    className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                {/* Desktop Navigation - Full Button */}
+                <div className="hidden lg:flex">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLocation("/")}
+                    className="text-gray-600 hover:text-gray-800"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Main Dashboard
+                  </Button>
+                </div>
               </div>
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-xl flex items-center justify-center shrink-0">
