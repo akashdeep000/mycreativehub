@@ -54,7 +54,9 @@ export default function ProductLaunch() {
       <Sidebar />
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
       <div className="mb-8">
-        <BackToDashboard />
+        <div className="mb-6">
+          <BackToDashboard />
+        </div>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center">
             <Rocket className="w-5 h-5 text-white" />
