@@ -63,7 +63,7 @@ export default function ProductLaunch() {
           <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center">
             <Rocket className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Product Launch System</h1>
+          <h1 className="text-2xl font-serif font-semibold text-gray-800">Product Launch System</h1>
         </div>
         <p className="text-gray-600 leading-relaxed">Strategic tools to plan, execute, and optimise your product launches throughout the year.</p>
       </div>

@@ -353,7 +353,7 @@ export default function StreamlineWorkflow() {
               <div className="mb-6">
                 <BackToDashboard />
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Streamline Your Workflow</h1>
+              <h1 className="text-3xl font-serif font-semibold text-gray-800 mb-2">Streamline Your Workflow</h1>
               <p className="text-gray-600">Simple systems for busy weeks: organise ideas, block time and keep work moving.</p>
             </div>
 

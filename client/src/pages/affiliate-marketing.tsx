@@ -352,7 +352,7 @@ export default function AffiliateMarketing() {
             <Link className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">The Affiliate Link Hub</h1>
+            <h1 className="text-3xl font-serif font-semibold text-gray-800">The Affiliate Link Hub</h1>
             <p className="text-gray-600">Manage and track your affiliate partnerships</p>
           </div>
         </div>
