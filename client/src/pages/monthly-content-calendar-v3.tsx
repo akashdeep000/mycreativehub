@@ -614,15 +614,15 @@ export default function MonthlyContentCalendarV3() {
 
         {/* Calendar */}
         <div className="bg-white rounded-lg shadow-md border-0 p-6" id="calendar-container">
-          <div className="grid grid-cols-7 gap-2 mb-4">
+          <div className="grid grid-cols-7 mb-4">
             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-              <div key={day} className="text-center text-sm font-semibold text-gray-700 py-2">
+              <div key={day} className="text-center text-sm font-semibold text-gray-700 py-2 border-r border-gray-200 last:border-r-0">
                 {day}
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7">
             {Array.from({ length: totalCells }, (_, index) => {
               const dayNumber = index - firstDayOfWeek + 1;
               const isValidDay = dayNumber > 0 && dayNumber <= daysInMonth;
@@ -632,7 +632,7 @@ export default function MonthlyContentCalendarV3() {
                 <div
                   key={index}
                   className={`
-                    min-h-32 border border-gray-200 rounded-lg p-2 min-w-0 overflow-hidden [clip-path:inset(0)]
+                    min-h-32 border-r border-b border-gray-200 last:border-r-0 p-2 min-w-0 overflow-hidden [clip-path:inset(0)]
                     ${isValidDay ? 'bg-white hover:bg-gray-50' : 'bg-gray-100'}
                     ${isValidDay && selectedKeyId ? 'cursor-pointer' : ''}
                   `}
