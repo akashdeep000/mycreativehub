@@ -632,7 +632,7 @@ export default function MonthlyContentCalendarV3() {
                 <div
                   key={index}
                   className={`
-                    min-h-32 border border-gray-200 rounded-lg p-2
+                    min-h-32 border border-gray-200 rounded-lg p-2 min-w-0 overflow-hidden [clip-path:inset(0)]
                     ${isValidDay ? 'bg-white hover:bg-gray-50' : 'bg-gray-100'}
                     ${isValidDay && selectedKeyId ? 'cursor-pointer' : ''}
                   `}
@@ -659,7 +659,7 @@ export default function MonthlyContentCalendarV3() {
                                 className="w-3 h-3 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: colorKey?.color || '#gray' }}
                               />
-                              <span className="text-xs font-medium text-gray-700 flex-1 break-words">
+                              <span className="text-xs font-medium text-gray-700 flex-1 min-w-0 overflow-hidden whitespace-nowrap">
                                 {colorKey?.label || 'Unknown'}
                               </span>
                               <button

@@ -843,7 +843,7 @@ export default function MonthlyContentCalendar() {
                     <div
                       key={`day-${day}`}
                       data-day={day}
-                      className={`h-40 border-r border-b border-gray-200 last:border-r-0 relative isolate min-w-0 overflow-hidden p-0 sm:p-1 bg-white cursor-pointer transition-colors ${
+                      className={`h-40 border-r border-b border-gray-200 last:border-r-0 relative min-w-0 overflow-hidden [clip-path:inset(0)] p-0 sm:p-1 bg-white cursor-pointer transition-colors ${
                         batchMode ? 'hover:bg-yellow-50' : selectedTagId ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
                       } ${cellData.isBatchDay ? 'ring-2 ring-yellow-300 ring-opacity-50' : ''}`}
                       onClick={(e) => handleCellClick(day, e)}
@@ -886,7 +886,7 @@ export default function MonthlyContentCalendar() {
                               className="w-2 h-2 rounded-full shrink-0" 
                               style={{ backgroundColor: tag.color }}
                             />
-                            <span className="flex-1 min-w-0 overflow-hidden whitespace-nowrap [text-overflow:clip] text-xs font-medium text-gray-800">
+                            <span className="inline-block max-w-full overflow-hidden whitespace-nowrap [text-overflow:clip] align-top text-xs font-medium text-gray-800">
                               {tag.tagLabel}
                             </span>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-auto">
