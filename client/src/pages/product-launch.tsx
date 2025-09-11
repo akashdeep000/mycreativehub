@@ -4,6 +4,7 @@ import { Rocket, Calendar, TrendingUp, Target, Lightbulb, CheckSquare, Calculato
 import { useLocation } from 'wouter';
 import BackToDashboard from '@/components/BackToDashboard';
 import Sidebar from '@/components/layout/sidebar';
+import MobileNav from '@/components/layout/mobile-nav';
 
 export default function ProductLaunch() {
   const [, setLocation] = useLocation();
@@ -52,6 +53,7 @@ export default function ProductLaunch() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
+      <MobileNav />
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
       <div className="mb-8">
         <div className="mb-6">
