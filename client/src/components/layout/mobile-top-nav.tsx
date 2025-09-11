@@ -8,6 +8,12 @@ export default function MobileTopNav() {
   const { isAuthenticated } = useAuth();
 
   const handleLogout = async () => {
+    // Show confirmation dialog
+    const confirmed = window.confirm("log out?");
+    if (!confirmed) {
+      return; // User cancelled, don't logout
+    }
+
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
