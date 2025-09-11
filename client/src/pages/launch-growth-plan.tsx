@@ -248,23 +248,38 @@ export default function LaunchGrowthPlan() {
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="flex gap-2 mb-4">
-                <Button
-                  variant="ghost"
-                  onClick={() => window.location.href = '/'}
-                  className=""
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Main Dashboard
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => setLocation('/launch')}
-                  className=""
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Product Launch
-                </Button>
+              <div className="mb-4">
+                {/* Mobile Navigation - Single Back Arrow */}
+                <div className="flex items-center gap-3 lg:hidden">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => window.history.back()}
+                    className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                {/* Desktop Navigation - Full Buttons */}
+                <div className="hidden lg:flex gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => window.location.href = '/'}
+                    className=""
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Main Dashboard
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setLocation('/launch')}
+                    className=""
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Product Launch
+                  </Button>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
