@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
-import BackToDashboard from '@/components/BackToDashboard';
 
 interface TimelineEvent {
   id: string;
@@ -478,16 +477,40 @@ export default function SeasonalityTimeline() {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <BackToDashboard />
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => setLocation('/launch')}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Product Launch
-          </Button>
+        <div className="mb-4">
+          {/* Mobile Navigation - Single Back Arrow */}
+          <div className="flex items-center gap-3 lg:hidden">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => window.history.back()}
+              className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* Desktop Navigation - Full Buttons */}
+          <div className="hidden lg:flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation("/")}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Main Dashboard
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setLocation('/launch')}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Product Launch
+            </Button>
+          </div>
         </div>
         
         <div className="flex items-center gap-3 mb-4">
