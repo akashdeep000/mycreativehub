@@ -274,7 +274,20 @@ export default function StreamlineWorkflow() {
           <main className="flex-1 overflow-y-auto">
             <div className="w-full px-6 sm:px-8 lg:px-12 py-6">
               <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
+                {/* Mobile Navigation - Single Back Arrow */}
+                <div className="flex items-center gap-3 lg:hidden">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => window.history.back()}
+                    className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                {/* Desktop Navigation - Full Buttons */}
+                <div className="hidden lg:flex items-center gap-4">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -293,8 +306,6 @@ export default function StreamlineWorkflow() {
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to Streamline Workflow
                   </Button>
-                  
-                  
                 </div>
                 
               </div>
