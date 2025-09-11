@@ -206,7 +206,7 @@ export default function ResourceLibrary() {
           <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
             <BookOpen className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-2xl font-serif font-semibold text-gray-800">Your Resource Library</h1>
+          <h1 className="text-3xl font-serif font-semibold text-gray-800">Your Resource Library</h1>
         </div>
         <p className="text-gray-600 leading-relaxed">
           This is your personal resource hub. You'll find all downloadable PDFs and templates inside your Creative Business Toolkit course. When you come across a resource you'd like to refer back to—whether it's a PDF or a useful link—add it here to keep everything in one place.

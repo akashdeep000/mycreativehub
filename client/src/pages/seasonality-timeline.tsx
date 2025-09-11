@@ -494,7 +494,7 @@ export default function SeasonalityTimeline() {
           <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-rose-400 rounded-xl flex items-center justify-center">
             <Calendar className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-2xl font-serif font-semibold text-gray-800">Seasonality Timeline {new Date().getFullYear()}</h1>
+          <h1 className="text-3xl font-serif font-semibold text-gray-800">Seasonality Timeline {new Date().getFullYear()}</h1>
         </div>
         
         <p className="text-gray-600 mb-6">Plan your year with purpose - map your seasonal cycles, launches, and holidays.</p>
