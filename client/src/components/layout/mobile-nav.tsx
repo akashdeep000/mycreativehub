@@ -1,22 +1,20 @@
 import { useLocation } from "wouter";
 import { navigationItems } from "@/lib/navigation";
-import { Archive, HelpCircle } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 
-// Filter for mobile navigation - show first 3 main items + archived + help
+// Filter for mobile navigation - show specific main sections + help
 const mobileNavigationItems = [
-  ...navigationItems.slice(0, 3).map(item => ({
-    ...item,
-    label: item.label === "Dashboard" ? "Home" : 
-           item.label === "Streamline Workflow" ? "Workflow" :
-           item.label === "Content System" ? "Content" :
-           item.label
-  })),
-  {
-    href: "/archived-templates",
-    icon: Archive,
-    label: "Archive",
-    moduleKey: "archive"
-  },
+  // Streamline Workflow → "Streamline"
+  { ...navigationItems.find(item => item.moduleKey === "Streamline Your Workflow")!, label: "Streamline" },
+  // Content System → "Content"
+  { ...navigationItems.find(item => item.moduleKey === "Content Creation System")!, label: "Content" },
+  // Product Launch → "Launch"
+  { ...navigationItems.find(item => item.moduleKey === "Product Launch System")!, label: "Launch" },
+  // Finance → "Finance"
+  { ...navigationItems.find(item => item.moduleKey === "Financial Management")!, label: "Finance" },
+  // Affiliate Hub → "Affiliate"
+  { ...navigationItems.find(item => item.moduleKey === "The Affiliate Link Hub")!, label: "Affiliate" },
+  // Help
   {
     href: "/help",
     icon: HelpCircle,
