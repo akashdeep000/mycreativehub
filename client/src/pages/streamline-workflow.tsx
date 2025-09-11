@@ -355,7 +355,7 @@ export default function StreamlineWorkflow() {
                 <BackToDashboard />
               </div>
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-xl flex items-center justify-center shrink-0">
                   <Workflow className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -395,8 +395,8 @@ export default function StreamlineWorkflow() {
                       >
                         <CardHeader className="pb-3">
                           <div className="flex items-center gap-3">
-                            <div className={`p-3 rounded-lg ${template.colour}`}>
-                              <IconComponent className={`h-6 w-6 ${template.textColor}`} />
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${template.colour}`}>
+                              <IconComponent className={`w-5 h-5 ${template.textColor}`} />
                             </div>
                             <div className="flex-1">
                               <CardTitle className="text-lg font-semibold text-gray-900 mb-1">
