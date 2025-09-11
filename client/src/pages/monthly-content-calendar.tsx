@@ -825,10 +825,10 @@ export default function MonthlyContentCalendar() {
               </div>
               
               {/* Calendar grid */}
-              <div className="grid grid-cols-7 gap-0">
+              <div className="grid grid-cols-7">
                 {days.map((day, index) => {
                   if (day === null) {
-                    return <div key={`empty-${index}`} className="h-40 border border-gray-200" />;
+                    return <div key={`empty-${index}`} className="h-40 border-r border-b border-gray-200 last:border-r-0" />;
                   }
                   
                   const cellData = getCellData(day);
@@ -843,7 +843,7 @@ export default function MonthlyContentCalendar() {
                     <div
                       key={`day-${day}`}
                       data-day={day}
-                      className={`h-40 border border-gray-200 p-3 cursor-pointer transition-colors relative ${
+                      className={`h-40 border-r border-b border-gray-200 last:border-r-0 p-1 cursor-pointer transition-colors relative ${
                         batchMode ? 'hover:bg-yellow-50' : selectedTagId ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
                       } ${cellData.isBatchDay ? 'ring-2 ring-yellow-300 ring-opacity-50' : ''}`}
                       onClick={(e) => handleCellClick(day, e)}
@@ -852,7 +852,7 @@ export default function MonthlyContentCalendar() {
                       }}
                     >
                       {/* Date number and batch day indicator */}
-                      <div className="absolute top-2 left-2 flex items-center gap-1">
+                      <div className="absolute top-1 left-1 flex items-center gap-1">
                         <span className="text-sm font-semibold text-gray-800">{day}</span>
                         {cellData.isBatchDay && (
                           <div className="flex items-center">
@@ -863,20 +863,20 @@ export default function MonthlyContentCalendar() {
                       
                       {/* Batch day controls */}
                       {cellData.isBatchDay && (
-                        <div className="mt-6 mb-2">
+                        <div className="mt-5 mb-1 px-1">
                           <input
                             type="text"
                             value={cellData.batchNote}
                             onChange={(e) => updateCell(day, { batchNote: e.target.value })}
                             placeholder="Film 3 reels"
-                            className="batch-note-input w-full text-xs bg-yellow-50 border border-yellow-200 rounded px-2 py-1 placeholder:text-yellow-600"
+                            className="batch-note-input w-full text-xs bg-yellow-50 border border-yellow-200 rounded px-1 py-0.5 placeholder:text-yellow-600"
                             onClick={(e) => e.stopPropagation()}
                           />
                         </div>
                       )}
                       
                       {/* Multiple Tags Display - stacked vertically with full names */}
-                      <div className={`${cellData.isBatchDay ? 'mt-1' : 'mt-6'} space-y-1 overflow-y-auto max-h-28`}>
+                      <div className={`${cellData.isBatchDay ? 'mt-1' : 'mt-5'} px-1 space-y-0.5 overflow-y-auto max-h-32`}>
                         {cellData.tags.map((tag) => (
                           <div key={tag.id} className="group bg-white/90 rounded px-1 py-1 border border-gray-100 shadow-sm max-w-full">
                             <div className="flex items-start justify-between w-full">
