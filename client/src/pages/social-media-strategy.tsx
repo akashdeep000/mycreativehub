@@ -201,7 +201,20 @@ export default function SocialMediaStrategy() {
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
+          {/* Mobile Navigation - Single Back Arrow */}
+          <div className="flex items-center gap-3 mb-4 lg:hidden">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.history.back()}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          </div>
+          
+          {/* Desktop Navigation - Full Buttons */}
+          <div className="hidden lg:flex items-center gap-4 mb-4">
             <BackToDashboard />
             <Link href="/content-planning">
               <Button variant="outline" size="sm">
