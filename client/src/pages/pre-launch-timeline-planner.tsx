@@ -350,23 +350,38 @@ export default function PreLaunchTimelinePlanner() {
         <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
           {/* Header */}
           <div className="mb-8">
-            <div className="flex gap-2 mb-4">
-              <Button
-                variant="ghost"
-                onClick={() => window.location.href = '/'}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Main Dashboard
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => window.history.back()}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Product Launch
-              </Button>
+            <div className="mb-4">
+              {/* Mobile Navigation - Single Back Arrow */}
+              <div className="flex items-center gap-3 lg:hidden">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => window.history.back()}
+                  className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Desktop Navigation - Full Buttons */}
+              <div className="hidden lg:flex gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => window.location.href = '/'}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Main Dashboard
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => window.history.back()}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Product Launch
+                </Button>
+              </div>
             </div>
             
             <div className="flex items-center gap-3 mb-4">
@@ -498,23 +513,38 @@ export default function PreLaunchTimelinePlanner() {
       <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex gap-2 mb-4">
-            <Button
-              variant="ghost"
-              onClick={() => window.location.href = '/'}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Main Dashboard
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => setSelectedLaunch(null)}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to All Launches
-            </Button>
+          <div className="mb-4">
+            {/* Mobile Navigation - Single Back Arrow */}
+            <div className="flex items-center gap-3 lg:hidden">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => window.history.back()}
+                className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Desktop Navigation - Full Buttons */}
+            <div className="hidden lg:flex gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => window.location.href = '/'}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Main Dashboard
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setSelectedLaunch(null)}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to All Launches
+              </Button>
+            </div>
           </div>
           
           <div className="flex items-center gap-3 mb-4">
