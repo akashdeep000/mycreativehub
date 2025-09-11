@@ -31,12 +31,14 @@ export default function MobileNav() {
   })));
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-pink-200 lg:hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-pink-200 lg:hidden shadow-lg pointer-events-auto">
       <div className="flex items-center justify-around py-3">
         {mobileNavigationItems.map((item) => (
           <button
             key={item.href}
-            onClick={() => {
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
               console.log("MobileNav - Clicking item:", { label: item.label, href: item.href, moduleKey: item.moduleKey });
               if (item.href !== "#") {
                 setLocation(item.href);
