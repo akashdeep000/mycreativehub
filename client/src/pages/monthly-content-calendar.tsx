@@ -825,7 +825,7 @@ export default function MonthlyContentCalendar() {
               </div>
               
               {/* Calendar grid */}
-              <div className="grid grid-cols-7 border border-gray-200">
+              <div className="grid grid-cols-7 gap-0 border border-gray-200">
                 {days.map((day, index) => {
                   if (day === null) {
                     return <div key={`empty-${index}`} className="h-40 border-r border-b border-gray-200 last:border-r-0 bg-white" />;
@@ -843,7 +843,7 @@ export default function MonthlyContentCalendar() {
                     <div
                       key={`day-${day}`}
                       data-day={day}
-                      className={`h-40 border-r border-b border-gray-200 last:border-r-0 relative isolate overflow-hidden bg-white cursor-pointer transition-colors ${
+                      className={`h-40 border-r border-b border-gray-200 last:border-r-0 relative isolate overflow-hidden p-0 sm:p-1 bg-white cursor-pointer transition-colors ${
                         batchMode ? 'hover:bg-yellow-50' : selectedTagId ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
                       } ${cellData.isBatchDay ? 'ring-2 ring-yellow-300 ring-opacity-50' : ''}`}
                       onClick={(e) => handleCellClick(day, e)}
@@ -875,24 +875,27 @@ export default function MonthlyContentCalendar() {
                         </div>
                       )}
                       
-                      {/* Multiple Tags Display - wrapping flex layout */}
-                      <div className={`${cellData.isBatchDay ? 'mt-1' : 'mt-[18px]'} flex flex-wrap gap-1 min-w-0 max-w-full overflow-y-auto max-h-32`}>
+                      {/* Multiple Tags Display - hard-truncated layout */}
+                      <div className={`${cellData.isBatchDay ? 'mt-1' : 'mt-[18px]'} flex flex-col gap-1 min-w-0 max-w-full overflow-hidden max-h-32`}>
                         {cellData.tags.map((tag) => (
                           <div 
                             key={tag.id} 
-                            className="inline-flex items-center min-w-0 max-w-full overflow-hidden px-1 py-0.5 rounded text-xs font-medium shrink group"
-                            style={{ backgroundColor: tag.color }}
+                            className="flex items-center gap-1 max-w-full overflow-hidden shrink group"
                           >
-                            <span className="truncate min-w-0 text-white">
+                            <div 
+                              className="w-2 h-2 rounded-full shrink-0" 
+                              style={{ backgroundColor: tag.color }}
+                            />
+                            <span className="min-w-0 w-[3ch] sm:w-[4ch] overflow-hidden whitespace-nowrap text-xs font-medium text-gray-800">
                               {tag.tagLabel}
                             </span>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1">
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-auto">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   openTagNotesModal(cellData.date, tag.id);
                                 }}
-                                className="p-0.5 hover:bg-white/20 rounded text-white hover:text-white"
+                                className="p-0.5 hover:bg-gray-200 rounded text-gray-600 hover:text-gray-800"
                                 title="Edit notes"
                               >
                                 <Edit2 className="w-2.5 h-2.5" />
@@ -902,15 +905,15 @@ export default function MonthlyContentCalendar() {
                                   e.stopPropagation();
                                   removeTagFromDate(cellData.date, tag.id);
                                 }}
-                                className="p-0.5 hover:bg-white/20 rounded text-white hover:text-white"
+                                className="p-0.5 hover:bg-red-100 rounded text-red-600 hover:text-red-800"
                                 title="Delete tag"
                               >
                                 <Trash2 className="w-2.5 h-2.5" />
                               </button>
+                              {tag.status === 'posted' && (
+                                <Check className="w-3 h-3 text-green-600" />
+                              )}
                             </div>
-                            {tag.status === 'posted' && (
-                              <Check className="w-3 h-3 text-white ml-1" />
-                            )}
                           </div>
                         ))}
                       </div>
