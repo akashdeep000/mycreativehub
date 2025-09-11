@@ -185,17 +185,30 @@ export default function TimeBlocking() {
       <div className="lg:ml-64 max-w-full overflow-x-hidden">
         <main className="px-4 sm:px-6 lg:px-8 py-6">
           <div className="mb-8">
-            <div className="flex flex-wrap gap-2 mb-2">
-              <BackToDashboard />
+            <div className="mb-2">
+              {/* Mobile: Simple back arrow using browser history */}
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setLocation('/streamline-workflow')}
-                className="text-gray-600 hover:text-gray-800"
+                onClick={() => window.history.back()}
+                className="text-gray-600 hover:text-gray-800 lg:hidden"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Streamline Your Workflow
+                <ArrowLeft className="w-4 h-4" />
               </Button>
+              
+              {/* Desktop: Keep existing navigation buttons */}
+              <div className="hidden lg:flex lg:flex-wrap lg:gap-2">
+                <BackToDashboard />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setLocation('/streamline-workflow')}
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Streamline Your Workflow
+                </Button>
+              </div>
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
               <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500 to-teal-500">
