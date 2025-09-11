@@ -1,9 +1,11 @@
 import { useLocation } from "wouter";
 import { navigationItems } from "@/lib/navigation";
-import { HelpCircle } from "lucide-react";
+import { Home } from "lucide-react";
 
-// Filter for mobile navigation - show specific main sections + help
+// Mobile navigation - Home + main sections
 const mobileNavigationItems = [
+  // Home (Dashboard)
+  { ...navigationItems.find(item => item.moduleKey === "dashboard")!, label: "Home" },
   // Streamline Workflow → "Streamline"
   { ...navigationItems.find(item => item.moduleKey === "Streamline Your Workflow")!, label: "Streamline" },
   // Content System → "Content"
@@ -13,14 +15,7 @@ const mobileNavigationItems = [
   // Finance → "Finance"
   { ...navigationItems.find(item => item.moduleKey === "Financial Management")!, label: "Finance" },
   // Affiliate Hub → "Affiliate"
-  { ...navigationItems.find(item => item.moduleKey === "The Affiliate Link Hub")!, label: "Affiliate" },
-  // Help
-  {
-    href: "/help",
-    icon: HelpCircle,
-    label: "Help",
-    moduleKey: "help"
-  }
+  { ...navigationItems.find(item => item.moduleKey === "The Affiliate Link Hub")!, label: "Affiliate" }
 ];
 
 export default function MobileNav() {

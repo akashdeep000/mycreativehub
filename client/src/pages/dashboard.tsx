@@ -6,6 +6,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { routeMap, sortModulesByNavigationOrder } from "@/lib/navigation";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
+import MobileTopNav from "@/components/layout/mobile-top-nav";
 import ToolkitCard from "@/components/toolkit/toolkit-card";
 import DailyFocus from "@/components/toolkit/daily-focus";
 import QuickStartTimer from "@/components/toolkit/quick-start-timer-simple";
@@ -104,6 +105,9 @@ export default function Dashboard() {
 
       {/* Mobile Navigation */}
       <MobileNav />
+
+      {/* Mobile Top Navigation */}
+      <MobileTopNav />
     </div>
   );
 }
