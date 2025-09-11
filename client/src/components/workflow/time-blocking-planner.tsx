@@ -1140,9 +1140,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
           </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-2 text-sm">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-            <div key={day} className="text-center font-medium text-gray-700 p-2">
+        <div className="grid grid-cols-7 text-sm">
+          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => (
+            <div key={index} className="text-center font-medium text-gray-700 p-2">
               {day}
             </div>
           ))}
@@ -1150,8 +1150,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
 
         <div className="w-full border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
           <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-              <div key={day} className="py-3 px-4 text-sm font-semibold text-gray-700 text-center border-r border-gray-200 last:border-r-0">
+            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => (
+              <div key={index} className="py-3 px-2 lg:px-4 text-sm font-semibold text-gray-700 text-center border-r border-gray-200 last:border-r-0">
                 {day}
               </div>
             ))}
@@ -1170,7 +1170,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                 return (
                   <div
                     key={`${weekIndex}-${dayIndex}`}
-                    className={`min-h-[140px] border-r border-b border-gray-200 p-3 transition-colors cursor-pointer ${
+                    className={`min-h-[140px] border-r border-b border-gray-200 p-1.5 lg:p-3 transition-colors cursor-pointer ${
                       isDisplayedMonth 
                         ? 'bg-white hover:bg-blue-50' 
                         : 'bg-gray-50 text-gray-400'
