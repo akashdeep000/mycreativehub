@@ -7,7 +7,7 @@ import BackToDashboard from '@/components/BackToDashboard';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck, Recycle, BookOpen, BarChart3, Lightbulb, Smartphone, Camera } from "lucide-react";
+import { Calendar, FileText, Grid3X3, Palette, Target, Play, Image, ClipboardCheck, Recycle, BookOpen, BarChart3, Lightbulb, Smartphone, Camera, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function ContentPlanning() {
@@ -98,7 +98,20 @@ export default function ContentPlanning() {
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="mb-8">
-          <div className="mb-6">
+          {/* Mobile Navigation - Single Back Arrow */}
+          <div className="flex items-center gap-3 mb-6 lg:hidden">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.history.back()}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          </div>
+          
+          {/* Desktop Navigation - Full Button */}
+          <div className="mb-6 hidden lg:block">
             <BackToDashboard />
           </div>
           <div className="flex items-center gap-4 mb-4">
