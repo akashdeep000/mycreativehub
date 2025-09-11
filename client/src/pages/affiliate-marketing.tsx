@@ -243,7 +243,7 @@ export default function AffiliateMarketing() {
     if (!data.companyName.trim()) {
       newErrors.companyName = 'Company is required';
     }
-    if (!data.trackingLink.trim()) {
+    if (!data.trackingLink?.trim()) {
       newErrors.trackingLink = 'Tracking link is required';
     } else if (!data.trackingLink.startsWith('http')) {
       newErrors.trackingLink = 'Please enter a valid URL';
@@ -709,11 +709,7 @@ export default function AffiliateMarketing() {
                           size="sm"
                           variant="ghost"
                           onClick={() => setEditingLink({
-                            ...link,
-                            company: link.companyName,
-                            affiliateLink: link.trackingLink,
-                            trackingCode: link.affiliateCode,
-                            contentChannels: link.contentChannel ? link.contentChannel.split(', ') : []
+                            ...link
                           })}
                           className="p-1 h-8 w-8"
                         >
