@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, ExternalLink, Copy, Check, Plus, Trash2, Edit, Search, Download, AlertCircle } from 'lucide-react';
 import BackToDashboard from '@/components/BackToDashboard';
 import Sidebar from '@/components/layout/sidebar';
+import MobileNav from '@/components/layout/mobile-nav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -342,6 +343,7 @@ export default function AffiliateMarketing() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
+      <MobileNav />
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
       <div className="mb-8">
         <BackToDashboard />
