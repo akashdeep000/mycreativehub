@@ -57,15 +57,6 @@ interface IncomeExpenseItem {
 
 
 
-interface SavingsGoal {
-  id: string;
-  title: string;
-  targetAmount: number;
-  currentAmount: number;
-  monthlyContribution: number;
-  targetDate: string;
-  priority: 'high' | 'medium' | 'low';
-}
 
 interface MonthlySnapshot {
   id: string;
@@ -76,7 +67,6 @@ interface MonthlySnapshot {
   incomeExpenseItems: IncomeExpenseItem[];
   taxPercentage: number;
   personalPayAmount: number;
-  savingsGoals: SavingsGoal[];
   summary: {
     totalIncome: number;
     totalExpenses: number;
@@ -84,12 +74,10 @@ interface MonthlySnapshot {
     taxSetAside: number;
     personalPay: number;
     profitMargin: number;
-    availableForSavings: number;
   };
   notes: {
     budget: string;
     tracker: string;
-    savings: string;
   };
 }
 
@@ -112,25 +100,18 @@ export default function YourMoneyMap() {
   const [incomeExpenseItems, setIncomeExpenseItems] = useState<IncomeExpenseItem[]>([]);
   const [taxPercentage, setTaxPercentage] = useState(25);
   const [personalPayAmount, setPersonalPayAmount] = useState(0);
-  const [savingsPercentage, setSavingsPercentage] = useState(20);
-  
   // Category names state
   const [taxCategoryName, setTaxCategoryName] = useState('Tax Amount');
   const [personalPayCategoryName, setPersonalPayCategoryName] = useState('Personal Pay Amount');
-  const [savingsCategoryName, setSavingsCategoryName] = useState('Set aside for savings');
   
   // Edit states for category names
   const [editingTax, setEditingTax] = useState(false);
   const [editingPersonalPay, setEditingPersonalPay] = useState(false);
-  const [editingSavings, setEditingSavings] = useState(false);
   const [trackerNotes, setTrackerNotes] = useState('');
 
 
 
 
-  // Savings Tracker State
-  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
-  const [savingsNotes, setSavingsNotes] = useState('');
 
   // Monthly Snapshots State
   const [monthlySnapshots, setMonthlySnapshots] = useState<MonthlySnapshot[]>([]);
@@ -186,8 +167,6 @@ export default function YourMoneyMap() {
       taxPercentage,
       personalPayAmount,
       trackerNotes,
-      savingsGoals,
-      savingsNotes,
       selectedPeriod,
       currency
     };
@@ -214,8 +193,6 @@ export default function YourMoneyMap() {
           setTaxPercentage(draft.taxPercentage || 25);
           setPersonalPayAmount(draft.personalPayAmount || 0);
           setTrackerNotes(draft.trackerNotes || '');
-          setSavingsGoals(draft.savingsGoals || []);
-          setSavingsNotes(draft.savingsNotes || '');
           return true;
         }
       } catch (error) {
@@ -255,8 +232,6 @@ export default function YourMoneyMap() {
       setTaxPercentage(25);
       setPersonalPayAmount(0);
       setTrackerNotes('');
-      setSavingsGoals([]);
-      setSavingsNotes('');
     }
   }, [currentDate, selectedPeriod]);
 
