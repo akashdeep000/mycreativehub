@@ -23,7 +23,7 @@ interface ContentBlock {
   title: string;
   isCustom: boolean;
   status: 'in progress' | 'scheduled' | 'completed';
-  emoji: string;
+  emoji?: string;
   notes?: string;
   checklist?: ChecklistItem[];
 }
@@ -50,13 +50,25 @@ interface Launch {
 }
 
 const PRE_FILLED_CONTENT_TYPES = [
-  { type: 'Teaser Post', emoji: '👀', color: 'bg-pink-100 border-pink-300 text-pink-800' },
-  { type: 'Behind-the-Scenes', emoji: '🎬', color: 'bg-blue-100 border-blue-300 text-blue-800' },
-  { type: 'Story Moment', emoji: '📖', color: 'bg-purple-100 border-purple-300 text-purple-800' },
-  { type: 'Countdown Post', emoji: '⏰', color: 'bg-orange-100 border-orange-300 text-orange-800' },
-  { type: 'Value Email', emoji: '💌', color: 'bg-green-100 border-green-300 text-green-800' },
-  { type: 'Product Preview', emoji: '✨', color: 'bg-yellow-100 border-yellow-300 text-yellow-800' },
-  { type: 'Collab or Promo', emoji: '🤝', color: 'bg-indigo-100 border-indigo-300 text-indigo-800' },
+  { type: 'Value Email', color: 'bg-green-100 border-green-300 text-green-800' },
+  { type: 'Sales Email', color: 'bg-red-100 border-red-300 text-red-800' },
+  { type: 'FAQ Email', color: 'bg-blue-100 border-blue-300 text-blue-800' },
+  { type: 'Case Study Email', color: 'bg-purple-100 border-purple-300 text-purple-800' },
+  { type: 'Teaser Post', color: 'bg-pink-100 border-pink-300 text-pink-800' },
+  { type: 'Carousel: Pain Point', color: 'bg-orange-100 border-orange-300 text-orange-800' },
+  { type: 'Carousel: Solution/Outcome', color: 'bg-emerald-100 border-emerald-300 text-emerald-800' },
+  { type: 'Testimonial / Social Proof', color: 'bg-yellow-100 border-yellow-300 text-yellow-800' },
+  { type: 'Offer/Bonus Reveal', color: 'bg-rose-100 border-rose-300 text-rose-800' },
+  { type: 'Countdown Reminder', color: 'bg-orange-100 border-orange-300 text-orange-800' },
+  { type: 'Long Form Video', color: 'bg-indigo-100 border-indigo-300 text-indigo-800' },
+  { type: 'Instagram Stories', color: 'bg-gradient-to-r from-purple-400 to-pink-400 text-white' },
+  { type: 'Reels', color: 'bg-gradient-to-r from-pink-400 to-red-400 text-white' },
+  { type: 'Behind-the-Scenes Video', color: 'bg-blue-100 border-blue-300 text-blue-800' },
+  { type: 'Demo / Tutorial Clip', color: 'bg-cyan-100 border-cyan-300 text-cyan-800' },
+  { type: 'Q&A Stories', color: 'bg-teal-100 border-teal-300 text-teal-800' },
+  { type: 'Poll / Quiz Stories', color: 'bg-lime-100 border-lime-300 text-lime-800' },
+  { type: 'Live Q&A', color: 'bg-violet-100 border-violet-300 text-violet-800' },
+  { type: 'DM Invite / Waitlist Nudge', color: 'bg-slate-100 border-slate-300 text-slate-800' },
 ];
 
 export default function PreLaunchTimelinePlanner() {
@@ -217,7 +229,7 @@ export default function PreLaunchTimelinePlanner() {
     setCustomEmoji('📝');
   };
 
-  const addContentToWeek = (weekNumber: number, contentType: string, emoji: string, isCustom: boolean = false) => {
+  const addContentToWeek = (weekNumber: number, contentType: string, emoji?: string, isCustom: boolean = false) => {
     if (!selectedLaunch) return;
 
     const weeks = selectedLaunch.timelineData.weeks.map(week => {
@@ -228,7 +240,7 @@ export default function PreLaunchTimelinePlanner() {
           title: contentType,
           isCustom,
           status: 'in progress',
-          emoji,
+          emoji: emoji,
           checklist: checklistItems.length > 0 ? checklistItems : undefined,
         };
         return { ...week, content: [...week.content, newContent] };
@@ -707,9 +719,8 @@ export default function PreLaunchTimelinePlanner() {
                                   key={content.type}
                                   variant="outline"
                                   className="justify-start h-auto p-3"
-                                  onClick={() => addContentToWeek(week.weekNumber, content.type, content.emoji)}
+                                  onClick={() => addContentToWeek(week.weekNumber, content.type)}
                                 >
-                                  <span className="text-lg mr-2">{content.emoji}</span>
                                   {content.type}
                                 </Button>
                               ))}
@@ -820,7 +831,7 @@ export default function PreLaunchTimelinePlanner() {
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="text-sm">{content.emoji}</span>
+                                {content.emoji && <span className="text-sm">{content.emoji}</span>}
                                 <span className="font-medium text-sm">{content.title}</span>
                               </div>
                               <Select value={content.status} onValueChange={(value: 'in progress' | 'scheduled' | 'completed') => updateContentStatus(week.weekNumber, content.id, value)}>
