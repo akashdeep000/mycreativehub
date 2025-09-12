@@ -386,7 +386,7 @@ export default function PreLaunchTimelinePlanner() {
             
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-white" />
+                <Clock className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1">
                 <h1 className="text-2xl font-bold text-gray-900">Pre-Launch Timeline Planner</h1>
@@ -549,7 +549,7 @@ export default function PreLaunchTimelinePlanner() {
           
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-white" />
+              <Clock className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900">{selectedLaunch.title}</h1>
