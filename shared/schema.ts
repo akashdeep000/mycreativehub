@@ -518,22 +518,11 @@ export const resourceLibrary = pgTable("resource_library", {
   fileData: text("file_data"), // Base64 encoded file for PDFs
   fileName: varchar("file_name"), // Original filename for PDFs
   fileSize: integer("file_size"), // File size in bytes
-  folderId: integer("folder_id").references(() => resourceLibraryFolders.id), // Optional folder reference
   displayOrder: integer("display_order").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Resource Library Folders
-export const resourceLibraryFolders = pgTable("resource_library_folders", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  name: varchar("name").notNull(),
-  color: varchar("color").default("#6B7280"), // Default gray color
-  displayOrder: integer("display_order").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
 // Affiliate Link Tracker
 export const affiliateLinks = pgTable("affiliate_links", {
@@ -559,11 +548,6 @@ export const insertResourceLibrarySchema = createInsertSchema(resourceLibrary).o
   updatedAt: true,
 });
 
-export const insertResourceLibraryFolderSchema = createInsertSchema(resourceLibraryFolders).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
 
 export const insertAffiliateLinkSchema = createInsertSchema(affiliateLinks).omit({
   id: true,

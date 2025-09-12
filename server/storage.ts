@@ -19,7 +19,6 @@ import {
   boardLinks,
   socialMediaStrategies,
   resourceLibrary,
-  resourceLibraryFolders,
   affiliateLinks,
   passwordResets,
   passwordResetCodes,
@@ -78,8 +77,6 @@ import {
   type InsertSocialMediaStrategy,
   type ResourceLibraryItem,
   type InsertResourceLibraryItem,
-  type ResourceLibraryFolder,
-  type InsertResourceLibraryFolder,
   type AffiliateLink,
   type InsertAffiliateLink,
   type PasswordReset,
@@ -247,12 +244,6 @@ export interface IStorage {
   deleteResourceLibraryItem(id: number): Promise<void>;
   updateResourceDisplayOrder(items: { id: number; displayOrder: number }[]): Promise<void>;
   
-  // Resource Library Folders
-  getResourceLibraryFolders(userId: string): Promise<ResourceLibraryFolder[]>;
-  getResourceLibraryFolder(id: number): Promise<ResourceLibraryFolder | undefined>;
-  createResourceLibraryFolder(folder: InsertResourceLibraryFolder): Promise<ResourceLibraryFolder>;
-  updateResourceLibraryFolder(id: number, data: any): Promise<ResourceLibraryFolder>;
-  deleteResourceLibraryFolder(id: number): Promise<void>;
   
   // Affiliate Links
   getAffiliateLinks(userId: string): Promise<AffiliateLink[]>;
@@ -1185,57 +1176,6 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Resource Library Folders
-  async getResourceLibraryFolders(userId: string): Promise<ResourceLibraryFolder[]> {
-    return await db
-      .select()
-      .from(resourceLibraryFolders)
-      .where(eq(resourceLibraryFolders.userId, userId))
-      .orderBy(asc(resourceLibraryFolders.displayOrder));
-  }
-
-  async getResourceLibraryFolder(id: number): Promise<ResourceLibraryFolder | undefined> {
-    const [folder] = await db
-      .select()
-      .from(resourceLibraryFolders)
-      .where(eq(resourceLibraryFolders.id, id))
-      .limit(1);
-    return folder;
-  }
-
-  async createResourceLibraryFolder(folderData: InsertResourceLibraryFolder): Promise<ResourceLibraryFolder> {
-    const [folder] = await db
-      .insert(resourceLibraryFolders)
-      .values(folderData)
-      .returning();
-    return folder;
-  }
-
-  async updateResourceLibraryFolder(id: number, data: any): Promise<ResourceLibraryFolder> {
-    const [updatedFolder] = await db
-      .update(resourceLibraryFolders)
-      .set({
-        ...data,
-        updatedAt: new Date(),
-      })
-      .where(eq(resourceLibraryFolders.id, id))
-      .returning();
-    return updatedFolder;
-  }
-
-  async deleteResourceLibraryFolder(id: number): Promise<void> {
-    await db.transaction(async (tx) => {
-      // First, set all items in this folder to have no folder (null)
-      await tx
-        .update(resourceLibrary)
-        .set({ folderId: null })
-        .where(eq(resourceLibrary.folderId, id));
-      
-      // Then delete the folder
-      await tx.delete(resourceLibraryFolders)
-        .where(eq(resourceLibraryFolders.id, id));
-    });
-  }
 
   // Affiliate Links
   async getAffiliateLinks(userId: string): Promise<AffiliateLink[]> {
