@@ -447,8 +447,9 @@ export default function SeasonalityTimeline() {
     const colors = ['bg-purple-500', 'bg-blue-500', 'bg-green-500', 'bg-orange-500', 'bg-pink-500', 'bg-yellow-500', 'bg-red-500'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
+    const eventId = generateId();
     const event: TimelineEvent = {
-      id: generateId(),
+      id: eventId,
       type: newEvent.type,
       date: newEvent.date,
       month,
@@ -461,6 +462,12 @@ export default function SeasonalityTimeline() {
     };
 
     setEvents(prev => [...prev, event]);
+    
+    // If there are checklist items from the dialog, store them in the existing checklist system
+    if (newEvent.checklist.length > 0) {
+      updateEventChecklist(eventId, newEvent.checklist);
+    }
+    
     resetDialogState();
     setIsAddModalOpen(false);
     
