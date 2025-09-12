@@ -494,18 +494,30 @@ export default function PreLaunchTimelinePlanner() {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg text-gray-900">{launch.title}</CardTitle>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingLaunchId(launch.id);
-                          setEditingLaunchTitle(launch.title);
-                          setIsEditingLaunchTitle(true);
-                        }}
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingLaunchId(launch.id);
+                            setEditingLaunchTitle(launch.title);
+                            setIsEditingLaunchTitle(true);
+                          }}
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteLaunch(launch.id);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -523,29 +535,17 @@ export default function PreLaunchTimelinePlanner() {
                         >
                           Open Timeline
                         </Button>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              duplicateLaunch(launch);
-                            }}
-                            title="Duplicate Timeline"
-                          >
-                            Duplicate
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteLaunch(launch.id);
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            duplicateLaunch(launch);
+                          }}
+                          title="Duplicate Timeline"
+                        >
+                          Duplicate
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
