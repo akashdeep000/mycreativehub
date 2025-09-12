@@ -37,7 +37,7 @@ export default function FinanceTracker() {
     {
       id: 1,
       name: "Your Money Map",
-      description: "Complete financial dashboard with budget planning, income tracking, profitability analysis, goals, and savings tracking",
+      description: "Complete financial dashboard with income tracking, profitability analysis, and tracking",
       icon: BarChart3,
       color: "blue",
       lastUsed: "Never",
