@@ -15,6 +15,7 @@ import {
   ArrowLeft, 
   Plus, 
   Trash2, 
+  Edit2,
   Edit3,
   Save,
   X,
@@ -394,6 +395,33 @@ export default function ProfitCalculator() {
     toast({
       title: "Saved to library",
       description: `${selectedCalculation.name} has been added to your pricing library.`,
+    });
+  };
+
+  const editFromLibrary = (id: string) => {
+    const entry = pricingLibrary.find(e => e.id === id);
+    if (!entry) return;
+    
+    // Create a new calculation from the library entry
+    const editCalculation: ProfitCalculation = {
+      id: generateId(),
+      name: entry.productName,
+      components: [], // Start with empty components, user can add them
+      totalCost: entry.totalCost,
+      sellingPrice: entry.sellingPrice,
+      profitPerUnit: entry.profitPerUnit,
+      profitMargin: entry.profitMargin,
+      marginStrength: entry.marginStrength,
+      currency: entry.currency || 'USD'
+    };
+    
+    // Switch to calculator tab and load the calculation
+    setActiveTab('calculator');
+    setSelectedCalculation(editCalculation);
+    
+    toast({
+      title: "Loaded for editing",
+      description: `${entry.productName} has been loaded into the calculator for editing.`,
     });
   };
 
@@ -903,14 +931,24 @@ export default function ProfitCalculator() {
                             </td>
                             <td className="p-4 text-gray-600">{new Date(entry.dateAdded).toLocaleDateString()}</td>
                             <td className="p-4">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => deleteFromLibrary(entry.id)}
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => editFromLibrary(entry.id)}
+                                  className="text-blue-600 hover:text-blue-800"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => deleteFromLibrary(entry.id)}
+                                  className="text-red-600 hover:text-red-800"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         ))}
