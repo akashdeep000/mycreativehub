@@ -438,8 +438,7 @@ export default function ProfitCalculator() {
       lastModified: new Date().toISOString()
     };
     
-    // Add this calculation to the calculations list and select it
-    setCalculations(prev => [...prev, editCalculation]);
+    // When editing from library, just set as selected without adding to calculations list
     setSelectedCalculation(editCalculation);
     
     // Switch to calculator tab
