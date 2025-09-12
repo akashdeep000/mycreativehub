@@ -34,16 +34,47 @@ export default function ResourceLibrary() {
         body: JSON.stringify(itemData),
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/resource-library'] });
-      setIsAddModalOpen(false);
+    onMutate: async (variables) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ['/api/resource-library'] });
+
+      // Snapshot the previous value
+      const previousItems = queryClient.getQueryData(['/api/resource-library']) || [];
+
+      // Create optimistic item with temporary ID
+      const tempId = -Date.now();
+      const optimisticItem = {
+        id: tempId,
+        ...variables,
+      };
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['/api/resource-library'], (old: any) => [optimisticItem, ...(old || [])]);
+
+      // Clear upload state immediately after optimistic update
       setUploadingFileName(null);
+
+      // Return a context object with the snapshotted value
+      return { previousItems, tempId };
+    },
+    onSuccess: (createdItem, variables, context) => {
+      // Replace the optimistic item with the real server response
+      queryClient.setQueryData(['/api/resource-library'], (old: any) => 
+        (old || []).map((item: any) => item.id === context?.tempId ? createdItem : item)
+      );
+      
+      setIsAddModalOpen(false);
       toast({
         title: "Success",
         description: "Resource added to your library",
       });
     },
-    onError: () => {
+    onError: (error, variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousItems) {
+        queryClient.setQueryData(['/api/resource-library'], context.previousItems);
+      }
+      
       setUploadingFileName(null);
       toast({
         title: "Error",
