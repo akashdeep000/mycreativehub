@@ -381,29 +381,29 @@ export default function PreLaunchTimelinePlanner() {
     }
   };
 
-  const clearTimeline = () => {
-    if (!selectedLaunch) return;
-
-    const weeks = selectedLaunch.timelineData.weeks.map(week => ({
-      ...week,
-      content: [],
-      notes: '',
-    }));
-
-    const updatedLaunch = {
-      ...selectedLaunch,
-      timelineData: { ...selectedLaunch.timelineData, weeks },
+  const duplicateLaunch = (launchToDuplicate: Launch) => {
+    const duplicatedLaunch: Launch = {
+      id: generateId(),
+      title: `${launchToDuplicate.title} (copy)`,
+      timelineData: {
+        ...launchToDuplicate.timelineData,
+        projectName: `${launchToDuplicate.title} (copy)`,
+        weeks: launchToDuplicate.timelineData.weeks.map(week => ({
+          ...week,
+          content: week.content.map(content => ({
+            ...content,
+            id: generateId(), // Generate new IDs for content blocks
+          }))
+        }))
+      },
+      createdAt: new Date().toISOString(),
       lastModified: new Date().toISOString(),
     };
 
-    setSelectedLaunch(updatedLaunch);
-    setLaunches(launches.map(launch => 
-      launch.id === selectedLaunch.id ? updatedLaunch : launch
-    ));
-
+    setLaunches([...launches, duplicatedLaunch]);
     toast({
-      title: "Timeline Cleared",
-      description: "All content removed from timeline",
+      title: "Timeline Duplicated",
+      description: `Created a copy of "${launchToDuplicate.title}"`,
     });
   };
 
@@ -523,16 +523,29 @@ export default function PreLaunchTimelinePlanner() {
                         >
                           Open Timeline
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteLaunch(launch.id);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              duplicateLaunch(launch);
+                            }}
+                            title="Duplicate Timeline"
+                          >
+                            Duplicate
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteLaunch(launch.id);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
