@@ -657,7 +657,7 @@ export default function PreLaunchTimelinePlanner() {
             </div>
           </div>
           
-          <p className="text-gray-600 mb-6">Map out your pre-launch timeline with drag-and-drop content planning</p>
+          <p className="text-gray-600 mb-6">Map out your pre-launch timeline with week by week content planning</p>
 
           {/* Controls */}
           <div className="flex justify-end mb-4">
