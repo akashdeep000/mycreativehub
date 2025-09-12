@@ -370,27 +370,14 @@ export default function LaunchGrowthPlan() {
                       </div>
                     </div>
                     
-                    <div className="border-t pt-3">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`completed-${plan.id}`}
-                          checked={plan.isCompleted}
-                          onCheckedChange={() => toggleCompleted(plan.id)}
-                        />
-                        <label
-                          htmlFor={`completed-${plan.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          I've updated my next launch plan with these learnings
-                        </label>
-                      </div>
-                      {plan.isCompleted && (
-                        <div className="flex items-center gap-2 mt-2 text-sm text-green-600">
+                    {plan.isCompleted && (
+                      <div className="border-t pt-3">
+                        <div className="flex items-center gap-2 text-sm text-green-600">
                           <CheckCircle2 className="w-4 h-4" />
                           Completed
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))
