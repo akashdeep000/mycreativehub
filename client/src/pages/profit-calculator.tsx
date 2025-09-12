@@ -389,26 +389,12 @@ export default function ProfitCalculator() {
       currency: selectedCalculation.currency
     };
     
-    // Check if product already exists in library
-    const existingIndex = pricingLibrary.findIndex(entry => entry.productName === selectedCalculation.name);
-    
-    if (existingIndex !== -1) {
-      // Update existing entry
-      const updatedLibrary = [...pricingLibrary];
-      updatedLibrary[existingIndex] = libraryEntry;
-      setPricingLibrary(updatedLibrary);
-      toast({
-        title: "Product updated",
-        description: `${selectedCalculation.name} has been updated in your pricing library.`,
-      });
-    } else {
-      // Add new entry
-      setPricingLibrary(prev => [...prev, libraryEntry]);
-      toast({
-        title: "Saved to library",
-        description: `${selectedCalculation.name} has been added to your pricing library.`,
-      });
-    }
+    // Always add as new entry - don't replace existing ones
+    setPricingLibrary(prev => [...prev, libraryEntry]);
+    toast({
+      title: "Saved to library",
+      description: `${selectedCalculation.name} has been added to your pricing library.`,
+    });
   };
 
   const deleteFromLibrary = (id: string) => {
