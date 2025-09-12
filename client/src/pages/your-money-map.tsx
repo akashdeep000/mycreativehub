@@ -897,20 +897,6 @@ export default function YourMoneyMap() {
 
 
 
-            {/* Tracker Notes */}
-            <Card className="shadow-md border-0">
-              <CardHeader>
-                <CardTitle>Tracker Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  placeholder="Add notes about your actual income and expenses..."
-                  value={trackerNotes}
-                  onChange={(e) => setTrackerNotes(e.target.value)}
-                  rows={3}
-                />
-              </CardContent>
-            </Card>
           </CardContent>
         </Card>
 
