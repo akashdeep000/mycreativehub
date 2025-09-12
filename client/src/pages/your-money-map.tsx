@@ -636,7 +636,7 @@ export default function YourMoneyMap() {
               <TrendingUp className="w-6 h-6 text-green-600" />
               Income & Expenses
             </CardTitle>
-            <CardDescription>Track your income and expenses</CardDescription>
+            <CardDescription>Track your income and expenses then save to your desktop.</CardDescription>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
             {/* Save Button */}
