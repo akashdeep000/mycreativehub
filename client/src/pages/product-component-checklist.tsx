@@ -274,16 +274,10 @@ export default function ProductComponentChecklist() {
             <div className="p-4 border-b bg-gray-50">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Product Components</h3>
-                <div className="flex gap-2">
-                  <Button onClick={copyComponentList} variant="outline" size="sm">
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy List
-                  </Button>
-                  <Button onClick={addComponent} size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Component
-                  </Button>
-                </div>
+                <Button onClick={copyComponentList} variant="outline" size="sm">
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy List
+                </Button>
               </div>
             </div>
 
@@ -339,6 +333,14 @@ export default function ProductComponentChecklist() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            
+            {/* Add Component Button */}
+            <div className="p-4 border-t bg-gray-50">
+              <Button onClick={addComponent} size="sm" className="w-full sm:w-auto">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Component
+              </Button>
             </div>
           </div>
         </div>
