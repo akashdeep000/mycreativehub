@@ -112,9 +112,7 @@ export default function FinanceTracker() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between text-sm text-gray-500">
-                    <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
-                      Open
-                    </Button>
+                    
                   </div>
                 </CardContent>
               </Card>
