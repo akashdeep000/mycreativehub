@@ -56,15 +56,6 @@ interface IncomeExpenseItem {
 
 
 
-interface Goal {
-  id: string;
-  title: string;
-  type: 'monthly' | 'quarterly' | 'yearly';
-  targetAmount: number;
-  currentAmount: number;
-  deadline: string;
-  status: 'on-track' | 'behind' | 'ahead';
-}
 
 interface SavingsGoal {
   id: string;
@@ -85,7 +76,6 @@ interface MonthlySnapshot {
   incomeExpenseItems: IncomeExpenseItem[];
   taxPercentage: number;
   personalPayAmount: number;
-  goals: Goal[];
   savingsGoals: SavingsGoal[];
   summary: {
     totalIncome: number;
@@ -99,7 +89,6 @@ interface MonthlySnapshot {
   notes: {
     budget: string;
     tracker: string;
-    goals: string;
     savings: string;
   };
 }
@@ -138,9 +127,6 @@ export default function YourMoneyMap() {
 
 
 
-  // Goal Tracker State
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [goalNotes, setGoalNotes] = useState('');
 
   // Savings Tracker State
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
@@ -200,8 +186,6 @@ export default function YourMoneyMap() {
       taxPercentage,
       personalPayAmount,
       trackerNotes,
-      goals,
-      goalNotes,
       savingsGoals,
       savingsNotes,
       selectedPeriod,
@@ -230,8 +214,6 @@ export default function YourMoneyMap() {
           setTaxPercentage(draft.taxPercentage || 25);
           setPersonalPayAmount(draft.personalPayAmount || 0);
           setTrackerNotes(draft.trackerNotes || '');
-          setGoals(draft.goals || []);
-          setGoalNotes(draft.goalNotes || '');
           setSavingsGoals(draft.savingsGoals || []);
           setSavingsNotes(draft.savingsNotes || '');
           return true;
@@ -273,8 +255,6 @@ export default function YourMoneyMap() {
       setTaxPercentage(25);
       setPersonalPayAmount(0);
       setTrackerNotes('');
-      setGoals([]);
-      setGoalNotes('');
       setSavingsGoals([]);
       setSavingsNotes('');
     }
@@ -294,7 +274,7 @@ export default function YourMoneyMap() {
   // Auto-save draft when data changes
   useEffect(() => {
     saveDraftForCurrentPeriod();
-  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, personalPayAmount, trackerNotes, goals, goalNotes, savingsGoals, savingsNotes]);
+  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, personalPayAmount, trackerNotes, savingsGoals, savingsNotes]);
 
   // Authentication check
   useEffect(() => {
@@ -406,44 +386,6 @@ export default function YourMoneyMap() {
 
 
 
-  // Goal Tracker Functions
-  const addGoal = () => {
-    const newGoal: Goal = {
-      id: Date.now().toString(),
-      title: '',
-      type: 'monthly',
-      targetAmount: 0,
-      currentAmount: 0,
-      deadline: '',
-      status: 'on-track'
-    };
-    setGoals([...goals, newGoal]);
-  };
-
-  const updateGoal = (id: string, field: string, value: any) => {
-    setGoals(goals.map(goal => {
-      if (goal.id === id) {
-        const updatedGoal = { ...goal, [field]: value };
-        // Auto-calculate status based on progress
-        if (field === 'currentAmount' || field === 'targetAmount') {
-          const progress = updatedGoal.targetAmount > 0 ? (updatedGoal.currentAmount / updatedGoal.targetAmount) * 100 : 0;
-          if (progress >= 100) {
-            updatedGoal.status = 'ahead';
-          } else if (progress >= 80) {
-            updatedGoal.status = 'on-track';
-          } else {
-            updatedGoal.status = 'behind';
-          }
-        }
-        return updatedGoal;
-      }
-      return goal;
-    }));
-  };
-
-  const deleteGoal = (id: string) => {
-    setGoals(goals.filter(goal => goal.id !== id));
-  };
 
   // Savings Tracker Functions
   const addSavingsGoal = () => {
@@ -510,14 +452,6 @@ export default function YourMoneyMap() {
     csvContent += `Available for Savings,${trackerTotals.availableForSavings}\n`;
     csvContent += `Profit Margin,${trackerTotals.profitMargin.toFixed(2)}%\n\n`;
     
-    // Goals
-    csvContent += "GOALS\n";
-    csvContent += "Title,Type,Target Amount,Current Amount,Progress %,Status,Deadline\n";
-    goals.forEach(goal => {
-      const progress = goal.targetAmount > 0 ? ((goal.currentAmount / goal.targetAmount) * 100).toFixed(1) : 0;
-      csvContent += `${goal.title},${goal.type},${goal.targetAmount},${goal.currentAmount},${progress},${goal.status},${goal.deadline}\n`;
-    });
-    
     // Savings Goals
     csvContent += "\nSAVINGS GOALS\n";
     csvContent += "Title,Target Amount,Current Amount,Monthly Contribution,Months to Goal,Priority,Target Date\n";
@@ -575,7 +509,6 @@ export default function YourMoneyMap() {
       notes: {
         budget: budgetNotes,
         tracker: trackerNotes,
-        goals: goalNotes,
         savings: savingsNotes,
       },
     };
@@ -754,172 +687,12 @@ export default function YourMoneyMap() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-green-100 text-green-700">
-                3 Cards
+                2 Cards
               </Badge>
             </div>
           </div>
         </div>
 
-        {/* Goals Card */}
-        <Card className="shadow-lg border-0 mb-8">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Target className="w-6 h-6 text-blue-600" />
-              Goals
-            </CardTitle>
-            <CardDescription>Set and track your financial goals</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 space-y-6">
-
-            {/* Financial Goals */}
-            <Card className="shadow-md border-0">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Financial Goals</span>
-                  <Button onClick={addGoal} className="flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Add Goal
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {goals.map((goal) => (
-                    <div key={goal.id} className="p-4 border rounded-lg space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Input
-                          placeholder="Goal title"
-                          value={goal.title}
-                          onChange={(e) => updateGoal(goal.id, 'title', e.target.value)}
-                        />
-                        <Select value={goal.type} onValueChange={(value) => updateGoal(goal.id, 'type', value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="monthly">Monthly</SelectItem>
-                            <SelectItem value="quarterly">Quarterly</SelectItem>
-                            <SelectItem value="yearly">Yearly</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <div className="space-y-1">
-                          <label className="text-sm font-medium text-gray-700">Achieve Goal By</label>
-                          <Input
-                            type="date"
-                            value={goal.deadline}
-                            onChange={(e) => updateGoal(goal.id, 'deadline', e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                          type="number"
-                          placeholder="Target amount"
-                          value={goal.targetAmount || ''}
-                          onChange={(e) => updateGoal(goal.id, 'targetAmount', parseFloat(e.target.value) || 0)}
-                        />
-                        <Input
-                          type="number"
-                          placeholder="Current amount"
-                          value={goal.currentAmount || ''}
-                          onChange={(e) => updateGoal(goal.id, 'currentAmount', parseFloat(e.target.value) || 0)}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Progress</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">
-                              {goal.targetAmount > 0 ? Math.round((goal.currentAmount / goal.targetAmount) * 100) : 0}%
-                            </span>
-                            <div className="flex items-center gap-1">
-                              {goal.status === 'ahead' && <CheckCircle className="w-4 h-4 text-green-500" />}
-                              {goal.status === 'on-track' && <Target className="w-4 h-4 text-blue-500" />}
-                              {goal.status === 'behind' && <AlertCircle className="w-4 h-4 text-red-500" />}
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                goal.status === 'ahead' ? 'bg-green-100 text-green-700' :
-                                goal.status === 'on-track' ? 'bg-blue-100 text-blue-700' :
-                                'bg-red-100 text-red-700'
-                              }`}>
-                                {goal.status}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <Progress 
-                          value={goal.targetAmount > 0 ? Math.min((goal.currentAmount / goal.targetAmount) * 100, 100) : 0} 
-                          className="h-2"
-                        />
-                      </div>
-                      
-                      <div className="flex justify-end">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteGoal(goal.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Goals Summary */}
-            <Card className="shadow-md border-0">
-              <CardHeader>
-                <CardTitle>Goals Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {goals.length}
-                    </div>
-                    <div className="text-sm text-gray-600">Total Goals</div>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">
-                      {goals.filter(g => g.status === 'on-track' || g.status === 'ahead').length}
-                    </div>
-                    <div className="text-sm text-gray-600">On Track</div>
-                  </div>
-                  <div className="text-center p-4 bg-orange-50 rounded-lg">
-                    <div className="text-2xl font-bold text-orange-600">
-                      {formatCurrency(goals.reduce((sum, goal) => sum + goal.targetAmount, 0))}
-                    </div>
-                    <div className="text-sm text-gray-600">Total Target</div>
-                  </div>
-                  <div className="text-center p-4 bg-purple-50 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600">
-                      {formatCurrency(goals.reduce((sum, goal) => sum + goal.currentAmount, 0))}
-                    </div>
-                    <div className="text-sm text-gray-600">Current Total</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Goal Notes */}
-            <Card className="shadow-md border-0">
-              <CardHeader>
-                <CardTitle>Goal Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  placeholder="Add notes about your goals and progress..."
-                  value={goalNotes}
-                  onChange={(e) => setGoalNotes(e.target.value)}
-                  rows={3}
-                />
-              </CardContent>
-            </Card>
-          </CardContent>
-        </Card>
 
         {/* Income & Expenses Card */}
         <Card className="shadow-lg border-0 mb-8">
@@ -1570,25 +1343,8 @@ export default function YourMoneyMap() {
                             </div>
                           </div>
 
-                          {/* Goals & Savings Summary */}
-                          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                              <h5 className="font-medium mb-3 text-blue-600">Goals ({snapshot.goals.length})</h5>
-                              <div className="space-y-2">
-                                {snapshot.goals.map((goal, index) => (
-                                  <div key={index} className="text-sm">
-                                    <div className="flex justify-between">
-                                      <span>{goal.title}</span>
-                                      <span className="font-medium">{goal.status}</span>
-                                    </div>
-                                    <div className="text-xs text-gray-500">
-                                      {getCurrencySymbol(snapshot.currency)}{goal.currentAmount.toLocaleString()} / {getCurrencySymbol(snapshot.currency)}{goal.targetAmount.toLocaleString()}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                            
+                          {/* Savings Summary */}
+                          <div className="mt-6">
                             <div>
                               <h5 className="font-medium mb-3 text-purple-600">Savings Goals ({snapshot.savingsGoals.length})</h5>
                               <div className="space-y-2">
