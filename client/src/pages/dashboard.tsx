@@ -86,7 +86,7 @@ export default function Dashboard() {
 
         {/* Main Toolkit Sections */}
         <div className="bg-white rounded-lg p-6 mb-8">
-          <h3 className="text-2xl font-serif font-semibold text-gray-800 mb-6">Your Creative Toolkit</h3>
+          <h3 className="text-2xl font-serif font-semibold text-gray-800 mb-6">My Creative Hub</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {sortModulesByNavigationOrder(toolkitModules as any[]).map((module: any) => (
