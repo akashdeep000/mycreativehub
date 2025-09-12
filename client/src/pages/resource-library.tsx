@@ -480,27 +480,7 @@ export default function ResourceLibrary() {
         )}
       </div>
 
-      {/* Download All PDFs Button */}
-      {fileItems.length > 0 && (
-        <div className="mt-12 pt-8 border-t border-gray-200">
-          <div className="text-center">
-            <Button
-              variant="outline"
-              size="lg"
-              className="bg-gradient-to-r from-pink-50 to-purple-50 hover:from-pink-100 hover:to-purple-100 text-gray-700 border-gray-300"
-              onClick={() => {
-                toast({
-                  title: "Coming Soon",
-                  description: "Bulk PDF download feature will be available shortly",
-                });
-              }}
-            >
-              <Archive className="w-5 h-5 mr-2" />
-              Download All PDFs into Organised Folders for Your Desktop
-            </Button>
-          </div>
-        </div>
-      )}
+      
       </div>
     </div>
   );
