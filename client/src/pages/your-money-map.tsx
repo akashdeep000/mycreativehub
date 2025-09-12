@@ -54,9 +54,11 @@ interface IncomeExpenseItem {
   type: 'income' | 'expense';
 }
 
-
-
-
+interface CustomAllocation {
+  id: string;
+  name: string;
+  percentage: number;
+}
 
 interface MonthlySnapshot {
   id: string;
@@ -66,13 +68,13 @@ interface MonthlySnapshot {
   budgetItems: BudgetItem[];
   incomeExpenseItems: IncomeExpenseItem[];
   taxPercentage: number;
-  personalPayPercentage: number;
+  customAllocations: CustomAllocation[];
   summary: {
     totalIncome: number;
     totalExpenses: number;
     profit: number;
     taxSetAside: number;
-    personalPay: number;
+    customAllocationsTotal: number;
     availableAfterAllocations: number;
     profitMargin: number;
   };
@@ -100,14 +102,12 @@ export default function YourMoneyMap() {
   // Income & Expense Tracker State
   const [incomeExpenseItems, setIncomeExpenseItems] = useState<IncomeExpenseItem[]>([]);
   const [taxPercentage, setTaxPercentage] = useState(25);
-  const [personalPayPercentage, setPersonalPayPercentage] = useState(0);
+  const [customAllocations, setCustomAllocations] = useState<CustomAllocation[]>([]);
   // Category names state
   const [taxCategoryName, setTaxCategoryName] = useState('Tax Amount');
-  const [personalPayCategoryName, setPersonalPayCategoryName] = useState('Personal Pay Amount');
   
   // Edit states for category names
   const [editingTax, setEditingTax] = useState(false);
-  const [editingPersonalPay, setEditingPersonalPay] = useState(false);
   const [trackerNotes, setTrackerNotes] = useState('');
 
 
@@ -166,8 +166,7 @@ export default function YourMoneyMap() {
       budgetNotes,
       incomeExpenseItems,
       taxPercentage,
-      personalPayPercentage,
-      trackerNotes,
+      customAllocations,
       selectedPeriod,
       currency
     };
@@ -192,8 +191,7 @@ export default function YourMoneyMap() {
           setBudgetNotes(draft.budgetNotes || '');
           setIncomeExpenseItems(draft.incomeExpenseItems || []);
           setTaxPercentage(draft.taxPercentage || 25);
-          setPersonalPayPercentage(draft.personalPayPercentage || 0);
-          setTrackerNotes(draft.trackerNotes || '');
+          setCustomAllocations(draft.customAllocations || []);
           return true;
         }
       } catch (error) {
@@ -231,8 +229,7 @@ export default function YourMoneyMap() {
       setBudgetNotes('');
       setIncomeExpenseItems([]);
       setTaxPercentage(25);
-      setPersonalPayPercentage(0);
-      setTrackerNotes('');
+      setCustomAllocations([]);
     }
   }, [currentDate, selectedPeriod]);
 
@@ -250,7 +247,7 @@ export default function YourMoneyMap() {
   // Auto-save draft when data changes
   useEffect(() => {
     saveDraftForCurrentPeriod();
-  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, personalPayPercentage, trackerNotes]);
+  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, customAllocations]);
 
   // Authentication check
   useEffect(() => {
@@ -346,8 +343,13 @@ export default function YourMoneyMap() {
     const actualProfit = actualIncome - actualExpenses;
     const taxAmount = actualProfit * (taxPercentage / 100);
     const afterTaxProfit = actualProfit - taxAmount;
-    const personalPayAmount = afterTaxProfit * (personalPayPercentage / 100);
-    const availableAfterAllocations = afterTaxProfit - personalPayAmount;
+    
+    // Calculate custom allocations
+    const customAllocationsTotal = customAllocations.reduce((sum, allocation) => {
+      return sum + (afterTaxProfit * (allocation.percentage / 100));
+    }, 0);
+    
+    const availableAfterAllocations = afterTaxProfit - customAllocationsTotal;
     const profitMargin = actualIncome > 0 ? (actualProfit / actualIncome) * 100 : 0;
     
     return {
@@ -355,7 +357,11 @@ export default function YourMoneyMap() {
       actualExpenses,
       actualProfit,
       taxAmount,
-      personalPayAmount,
+      customAllocationsTotal,
+      customAllocations: customAllocations.map(allocation => ({
+        ...allocation,
+        amount: afterTaxProfit * (allocation.percentage / 100)
+      })),
       afterTaxProfit,
       availableAfterAllocations,
       profitMargin
@@ -365,6 +371,26 @@ export default function YourMoneyMap() {
 
 
 
+
+  // Custom Allocations Functions
+  const addCustomAllocation = () => {
+    const newAllocation: CustomAllocation = {
+      id: Date.now().toString(),
+      name: '',
+      percentage: 0
+    };
+    setCustomAllocations([...customAllocations, newAllocation]);
+  };
+
+  const updateCustomAllocation = (id: string, field: string, value: any) => {
+    setCustomAllocations(customAllocations.map(allocation => 
+      allocation.id === id ? { ...allocation, [field]: value } : allocation
+    ));
+  };
+
+  const deleteCustomAllocation = (id: string) => {
+    setCustomAllocations(customAllocations.filter(allocation => allocation.id !== id));
+  };
 
   // Export to CSV
   const exportToCSV = () => {
@@ -397,7 +423,9 @@ export default function YourMoneyMap() {
     csvContent += `Actual Expenses,${trackerTotals.actualExpenses}\n`;
     csvContent += `Actual Profit,${trackerTotals.actualProfit}\n`;
     csvContent += `Tax Amount (${taxPercentage}%),${trackerTotals.taxAmount}\n`;
-    csvContent += `Personal Pay (${personalPayPercentage}%),${trackerTotals.personalPayAmount}\n`;
+    trackerTotals.customAllocations.forEach(allocation => {
+      csvContent += `${allocation.name} (${allocation.percentage}%),${allocation.amount}\n`;
+    });
     csvContent += `Profit Margin,${trackerTotals.profitMargin.toFixed(2)}%\n\n`;
     
     // Create and download file
@@ -434,13 +462,13 @@ export default function YourMoneyMap() {
       budgetItems: [...budgetItems],
       incomeExpenseItems: [...incomeExpenseItems],
       taxPercentage,
-      personalPayPercentage,
+      customAllocations: [...customAllocations],
       summary: {
         totalIncome: trackerTotals.actualIncome,
         totalExpenses: trackerTotals.actualExpenses,
         profit: trackerTotals.actualProfit,
         taxSetAside: trackerTotals.taxAmount,
-        personalPay: trackerTotals.personalPayAmount,
+        customAllocationsTotal: trackerTotals.customAllocationsTotal,
         availableAfterAllocations: trackerTotals.availableAfterAllocations,
         profitMargin: trackerTotals.profitMargin,
       },
@@ -491,7 +519,7 @@ export default function YourMoneyMap() {
     csvContent += `Total Expenses,${snapshot.summary.totalExpenses}\n`;
     csvContent += `Profit,${snapshot.summary.profit}\n`;
     csvContent += `Tax Set Aside,${snapshot.summary.taxSetAside}\n`;
-    csvContent += `Personal Pay,${snapshot.summary.personalPay}\n`;
+    csvContent += `Custom Allocations Total,${snapshot.summary.customAllocationsTotal}\n`;
     csvContent += `Profit Margin,${snapshot.summary.profitMargin.toFixed(2)}%\n\n`;
     
     // Income & Expenses
@@ -807,39 +835,53 @@ export default function YourMoneyMap() {
                       className="no-spinners"
                     />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      {editingPersonalPay ? (
-                        <Input
-                          type="text"
-                          value={personalPayCategoryName}
-                          onChange={(e) => setPersonalPayCategoryName(e.target.value)}
-                          onBlur={() => setEditingPersonalPay(false)}
-                          onKeyDown={(e) => e.key === 'Enter' && setEditingPersonalPay(false)}
-                          className="flex-1 text-sm font-medium"
-                          autoFocus
-                        />
-                      ) : (
-                        <span className="flex-1 text-sm font-medium">{personalPayCategoryName}</span>
-                      )}
-                      <button
-                        onClick={() => setEditingPersonalPay(true)}
-                        className="hover:text-blue-600 transition-colors"
+                  {/* Custom Allocations */}
+                  <div className="md:col-span-2">
+                    <div className="space-y-4">
+                      {customAllocations.map((allocation) => (
+                        <div key={allocation.id} className="flex gap-2 items-end">
+                          <div className="flex-1">
+                            <label className="text-sm font-medium mb-1 block">Allocation Name</label>
+                            <Input
+                              type="text"
+                              placeholder="e.g., Personal Pay, Emergency Fund"
+                              value={allocation.name}
+                              onChange={(e) => updateCustomAllocation(allocation.id, 'name', e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                            />
+                          </div>
+                          <div className="w-24">
+                            <label className="text-sm font-medium mb-1 block">%</label>
+                            <Input
+                              type="number"
+                              placeholder="0"
+                              value={allocation.percentage || ''}
+                              onChange={(e) => updateCustomAllocation(allocation.id, 'percentage', parseFloat(e.target.value) || 0)}
+                              onFocus={(e) => e.target.select()}
+                              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                              onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
+                              className="no-spinners"
+                            />
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteCustomAllocation(allocation.id)}
+                            className="mb-0"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button 
+                        variant="outline" 
+                        onClick={addCustomAllocation}
+                        className="w-full"
                       >
-                        <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-600" />
-                      </button>
-                      <span className="text-sm font-medium">(%)</span>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add New % Allocation
+                      </Button>
                     </div>
-                    <Input
-                      id="personal-pay"
-                      type="number"
-                      value={personalPayPercentage}
-                      onChange={(e) => setPersonalPayPercentage(parseFloat(e.target.value) || 0)}
-                      onFocus={(e) => e.target.select()}
-                      onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
-                      className="no-spinners"
-                      placeholder="0"
-                    />
                   </div>
                 </div>
               </CardContent>
@@ -886,10 +928,20 @@ export default function YourMoneyMap() {
                     <div className="text-sm text-gray-600">{taxCategoryName}</div>
                   </div>
                   <div className="text-center p-4 bg-indigo-50 rounded-lg">
-                    <div className="text-lg font-bold text-indigo-600">
-                      {formatCurrency(getTrackerTotals().personalPayAmount)}
+                    <div className="space-y-2">
+                      <div className="text-lg font-bold text-indigo-600">Custom Allocations</div>
+                      {getTrackerTotals().customAllocations.map((allocation) => (
+                        <div key={allocation.id} className="flex justify-between items-center text-sm">
+                          <div className="text-gray-600">{allocation.name || 'Unnamed'}</div>
+                          <div className="font-medium text-indigo-600">
+                            {formatCurrency(allocation.amount)}
+                          </div>
+                        </div>
+                      ))}
+                      {customAllocations.length === 0 && (
+                        <div className="text-sm text-gray-500 italic">No allocations</div>
+                      )}
                     </div>
-                    <div className="text-sm text-gray-600">{personalPayCategoryName}</div>
                   </div>
                   <div className="text-center p-4 bg-teal-50 rounded-lg">
                     <div className="text-lg font-bold text-teal-600">
@@ -1037,9 +1089,9 @@ export default function YourMoneyMap() {
                         </div>
                         <div className="text-center p-3 bg-indigo-50 rounded-lg">
                           <div className="text-sm font-bold text-indigo-600">
-                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.personalPay.toLocaleString()}
+                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.customAllocationsTotal.toLocaleString()}
                           </div>
-                          <div className="text-xs text-gray-600">Personal Pay</div>
+                          <div className="text-xs text-gray-600">Custom Allocations</div>
                         </div>
                         <div className="text-center p-3 bg-teal-50 rounded-lg">
                           <div className="text-sm font-bold text-teal-600">
