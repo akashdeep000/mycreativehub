@@ -416,16 +416,7 @@ export default function LaunchGrowthPlan() {
                     />
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Launch Date
-                    </label>
-                    <Input
-                      type="date"
-                      value={formData.launchDate}
-                      onChange={(e) => setFormData({ ...formData, launchDate: e.target.value })}
-                    />
-                  </div>
+                  
                 </div>
                 
                 <div>
