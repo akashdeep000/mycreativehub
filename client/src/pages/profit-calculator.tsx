@@ -529,13 +529,7 @@ export default function ProfitCalculator() {
           {/* Components Table */}
           <div className="bg-white rounded-lg border mb-6">
             <div className="p-4 border-b bg-gray-50">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Components & Costs</h3>
-                <Button onClick={addComponent} size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Component
-                </Button>
-              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Components & Costs</h3>
               <div className="flex items-center gap-2">
                 <label className="text-sm font-medium text-gray-700">Currency:</label>
                 <Select value={selectedCalculation.currency} onValueChange={handleCurrencyChange}>
@@ -626,6 +620,14 @@ export default function ProfitCalculator() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            
+            {/* Add Component Button */}
+            <div className="p-4 border-t bg-gray-50">
+              <Button onClick={addComponent} size="sm" className="w-full sm:w-auto">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Component
+              </Button>
             </div>
           </div>
 
