@@ -26,6 +26,12 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 
+interface ChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
 interface TimelineEvent {
   id: string;
   type: string;
@@ -36,6 +42,7 @@ interface TimelineEvent {
   notes: string;
   emoji: string;
   color: string;
+  checklist?: ChecklistItem[];
 }
 
 const defaultEventTypes = [
@@ -102,8 +109,15 @@ export default function SeasonalityTimeline() {
 
   const [newEvent, setNewEvent] = useState({
     type: '',
-    date: ''
+    date: '',
+    notes: '',
+    checklist: [] as ChecklistItem[]
   });
+  
+  // State for optional sections in dialog
+  const [showDetailedNotes, setShowDetailedNotes] = useState(false);
+  const [showChecklist, setShowChecklist] = useState(false);
+  const [newChecklistItem, setNewChecklistItem] = useState('');
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -379,6 +393,42 @@ export default function SeasonalityTimeline() {
     updateEventChecklist(eventId, updatedChecklist);
   };
 
+  // Functions for checklist management in dialog
+  const addChecklistItemToDialog = () => {
+    if (!newChecklistItem.trim()) return;
+    
+    const newItem: ChecklistItem = {
+      id: generateId(),
+      text: newChecklistItem.trim(),
+      completed: false,
+    };
+    
+    setNewEvent(prev => ({
+      ...prev,
+      checklist: [...prev.checklist, newItem]
+    }));
+    setNewChecklistItem('');
+  };
+
+  const removeChecklistItemFromDialog = (itemId: string) => {
+    setNewEvent(prev => ({
+      ...prev,
+      checklist: prev.checklist.filter(item => item.id !== itemId)
+    }));
+  };
+
+  const resetDialogState = () => {
+    setShowDetailedNotes(false);
+    setShowChecklist(false);
+    setNewChecklistItem('');
+    setNewEvent({
+      type: '',
+      date: '',
+      notes: '',
+      checklist: []
+    });
+  };
+
   const handleAddEvent = () => {
     if (!newEvent.type || !newEvent.date) {
       toast({
@@ -404,13 +454,14 @@ export default function SeasonalityTimeline() {
       month,
       quarter,
       title: newEvent.type,
-      notes: '',
+      notes: newEvent.notes || '',
       emoji: '📅',
-      color: randomColor
+      color: randomColor,
+      checklist: newEvent.checklist.length > 0 ? newEvent.checklist : undefined
     };
 
     setEvents(prev => [...prev, event]);
-    setNewEvent({ type: '', date: '' });
+    resetDialogState();
     setIsAddModalOpen(false);
     
     toast({
@@ -430,7 +481,9 @@ export default function SeasonalityTimeline() {
   const handleQuickAdd = (suggestion: any) => {
     setNewEvent({
       type: suggestion.type,
-      date: suggestion.date
+      date: suggestion.date,
+      notes: '',
+      checklist: []
     });
     setIsAddModalOpen(true);
   };
@@ -537,14 +590,19 @@ export default function SeasonalityTimeline() {
 
         {/* Centered Add Event Button */}
         <div className="flex justify-center mb-6">
-          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+          <Dialog open={isAddModalOpen} onOpenChange={(open) => {
+            setIsAddModalOpen(open);
+            if (!open) {
+              resetDialogState();
+            }
+          }}>
             <DialogTrigger asChild>
               <Button className="bg-pink-500 hover:bg-pink-600">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Event
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add Timeline Event</DialogTitle>
                 <DialogDescription>
@@ -558,6 +616,14 @@ export default function SeasonalityTimeline() {
                 eventTypes={eventTypes}
                 onEditEventType={handleEditEventType}
                 onDeleteEventType={handleDeleteEventType}
+                showDetailedNotes={showDetailedNotes}
+                setShowDetailedNotes={setShowDetailedNotes}
+                showChecklist={showChecklist}
+                setShowChecklist={setShowChecklist}
+                newChecklistItem={newChecklistItem}
+                setNewChecklistItem={setNewChecklistItem}
+                addChecklistItemToDialog={addChecklistItemToDialog}
+                removeChecklistItemFromDialog={removeChecklistItemFromDialog}
               />
             </DialogContent>
           </Dialog>
@@ -896,13 +962,36 @@ function CustomEventTypeDropdown({
   );
 }
 
-function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes, onEditEventType, onDeleteEventType }: {
+function AddEventForm({ 
+  newEvent, 
+  setNewEvent, 
+  onAdd, 
+  eventTypes, 
+  onEditEventType, 
+  onDeleteEventType,
+  showDetailedNotes,
+  setShowDetailedNotes,
+  showChecklist,
+  setShowChecklist,
+  newChecklistItem,
+  setNewChecklistItem,
+  addChecklistItemToDialog,
+  removeChecklistItemFromDialog
+}: {
   newEvent: any;
   setNewEvent: any;
   onAdd: any;
   eventTypes: any[];
   onEditEventType: (typeValue: string, newLabel: string) => void;
   onDeleteEventType: (typeValue: string) => void;
+  showDetailedNotes: boolean;
+  setShowDetailedNotes: (show: boolean) => void;
+  showChecklist: boolean;
+  setShowChecklist: (show: boolean) => void;
+  newChecklistItem: string;
+  setNewChecklistItem: (text: string) => void;
+  addChecklistItemToDialog: () => void;
+  removeChecklistItemFromDialog: (itemId: string) => void;
 }) {
   const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState('');
@@ -949,13 +1038,89 @@ function AddEventForm({ newEvent, setNewEvent, onAdd, eventTypes, onEditEventTyp
 
 
 
-      <div>
-        <p className="text-sm text-gray-600">
-          Add detailed notes and a Checklist by expanding the event within your timeline
-        </p>
+      {/* Optional Detailed Notes Section */}
+      <div className="border-t pt-4">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-medium text-gray-900">Detailed Notes (Optional)</h4>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDetailedNotes(!showDetailedNotes)}
+          >
+            {showDetailedNotes ? 'Hide' : 'Add'} Notes
+          </Button>
+        </div>
+        
+        {showDetailedNotes && (
+          <div className="space-y-3">
+            <Textarea
+              placeholder="Add detailed event notes, strategy, and plans..."
+              value={newEvent.notes}
+              onChange={(e) => setNewEvent({ ...newEvent, notes: e.target.value })}
+              className="resize-none h-24"
+            />
+          </div>
+        )}
       </div>
 
-
+      {/* Optional Action Checklist Section */}
+      <div className="border-t pt-4">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-medium text-gray-900">Action Checklist (Optional)</h4>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowChecklist(!showChecklist)}
+          >
+            {showChecklist ? 'Hide' : 'Add'} Checklist
+          </Button>
+        </div>
+        
+        {showChecklist && (
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add checklist item..."
+                value={newChecklistItem}
+                onChange={(e) => setNewChecklistItem(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && addChecklistItemToDialog()}
+                className="flex-1"
+              />
+              <Button
+                onClick={addChecklistItemToDialog}
+                disabled={!newChecklistItem.trim()}
+                size="sm"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            {newEvent.checklist.length > 0 && (
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {newEvent.checklist.map((item: ChecklistItem) => (
+                  <div key={item.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                    <span className="flex-1 text-sm">{item.text}</span>
+                    <Button
+                      onClick={() => removeChecklistItemFromDialog(item.id)}
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {newEvent.checklist.length > 0 && (
+              <p className="text-xs text-gray-500">
+                {newEvent.checklist.length} checklist item{newEvent.checklist.length !== 1 ? 's' : ''} will be added
+              </p>
+            )}
+          </div>
+        )}
+      </div>
 
       <Button onClick={onAdd} className="w-full bg-pink-500 hover:bg-pink-600">
         Add Event
