@@ -692,6 +692,7 @@ export default function YourMoneyMap() {
                         value={item.actualAmount || ''}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'actualAmount', parseFloat(e.target.value) || 0)}
                         onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                        onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
                         className="w-32 no-spinners"
                       />
                       <Button
@@ -738,6 +739,7 @@ export default function YourMoneyMap() {
                         value={item.actualAmount || ''}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'actualAmount', parseFloat(e.target.value) || 0)}
                         onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                        onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
                         className="w-32 no-spinners"
                       />
                       <Button
@@ -800,6 +802,7 @@ export default function YourMoneyMap() {
                       value={taxPercentage}
                       onChange={(e) => setTaxPercentage(parseFloat(e.target.value) || 0)}
                       onFocus={(e) => e.target.select()}
+                      onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
                       placeholder="25"
                       className="no-spinners"
                     />
@@ -833,6 +836,7 @@ export default function YourMoneyMap() {
                       value={personalPayPercentage}
                       onChange={(e) => setPersonalPayPercentage(parseFloat(e.target.value) || 0)}
                       onFocus={(e) => e.target.select()}
+                      onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
                       className="no-spinners"
                       placeholder="0"
                     />
