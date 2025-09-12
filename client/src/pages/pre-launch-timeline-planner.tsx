@@ -520,7 +520,7 @@ export default function PreLaunchTimelinePlanner() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-6">
                     <div className="space-y-3">
                       <div className="text-sm text-gray-500">
                         Last modified: {new Date(launch.lastModified).toLocaleDateString()}
