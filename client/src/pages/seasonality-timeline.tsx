@@ -21,7 +21,9 @@ import {
   ZoomIn,
   ChevronDown,
   ChevronUp,
-  Check
+  Check,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
@@ -97,6 +99,7 @@ export default function SeasonalityTimeline() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const timelineRef = useRef<HTMLDivElement>(null);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [eventTypes, setEventTypes] = useState(defaultEventTypes);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -122,10 +125,10 @@ export default function SeasonalityTimeline() {
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
-  // Load events and event types from localStorage on component mount
+  // Load events and event types from localStorage when selectedYear changes
   useEffect(() => {
-    const savedEvents = localStorage.getItem('seasonality-timeline-events');
-    const savedEventTypes = localStorage.getItem('seasonality-timeline-event-types');
+    const savedEvents = localStorage.getItem(`seasonality-timeline-events-${selectedYear}`);
+    const savedEventTypes = localStorage.getItem(`seasonality-timeline-event-types-${selectedYear}`);
     
     if (savedEvents) {
       try {
@@ -133,6 +136,9 @@ export default function SeasonalityTimeline() {
       } catch (error) {
         console.error('Error loading events:', error);
       }
+    } else {
+      // If no events exist for this year, start with empty array
+      setEvents([]);
     }
     
     if (savedEventTypes) {
@@ -141,20 +147,23 @@ export default function SeasonalityTimeline() {
       } catch (error) {
         console.error('Error loading event types:', error);
       }
+    } else {
+      // If no event types exist for this year, use defaults
+      setEventTypes(defaultEventTypes);
     }
-  }, []);
+  }, [selectedYear]);
 
   // Save events to localStorage whenever events change
   useEffect(() => {
-    localStorage.setItem('seasonality-timeline-events', JSON.stringify(events));
+    localStorage.setItem(`seasonality-timeline-events-${selectedYear}`, JSON.stringify(events));
     // Also sync events to quarter detail pages
     syncEventsToQuarters();
-  }, [events]);
+  }, [events, selectedYear]);
 
   // Save event types to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('seasonality-timeline-event-types', JSON.stringify(eventTypes));
-  }, [eventTypes]);
+    localStorage.setItem(`seasonality-timeline-event-types-${selectedYear}`, JSON.stringify(eventTypes));
+  }, [eventTypes, selectedYear]);
 
   // Close color picker when clicking outside
   useEffect(() => {
@@ -176,7 +185,7 @@ export default function SeasonalityTimeline() {
     
     // Check all existing events and load their checklists
     events.forEach(event => {
-      const eventData = JSON.parse(localStorage.getItem(`event-${event.id}-data`) || '{}');
+      const eventData = JSON.parse(localStorage.getItem(`event-${event.id}-data-${selectedYear}`) || '{}');
       if (eventData.checklist && eventData.checklist.length > 0) {
         loadedChecklists[event.id] = eventData.checklist;
       }
@@ -188,19 +197,19 @@ export default function SeasonalityTimeline() {
         ...loadedChecklists
       }));
     }
-  }, [events]);
+  }, [events, selectedYear]);
 
   // Sync events to quarter detail pages
   const syncEventsToQuarters = () => {
-    // Clear existing quarter events
+    // Clear existing quarter events for the current year
     ['q1', 'q2', 'q3', 'q4'].forEach(quarter => {
-      localStorage.removeItem(`quarter-${quarter}-events`);
+      localStorage.removeItem(`quarter-${quarter}-events-${selectedYear}`);
     });
 
     // Group events by quarter and save to respective quarter localStorage
     events.forEach(event => {
       const quarterKey = `q${event.quarter}`;
-      const quarterEvents = JSON.parse(localStorage.getItem(`quarter-${quarterKey}-events`) || '[]');
+      const quarterEvents = JSON.parse(localStorage.getItem(`quarter-${quarterKey}-events-${selectedYear}`) || '[]');
       
       // Convert timeline event to quarter event format
       const quarterEvent = {
@@ -217,8 +226,17 @@ export default function SeasonalityTimeline() {
       };
       
       quarterEvents.push(quarterEvent);
-      localStorage.setItem(`quarter-${quarterKey}-events`, JSON.stringify(quarterEvents));
+      localStorage.setItem(`quarter-${quarterKey}-events-${selectedYear}`, JSON.stringify(quarterEvents));
     });
+  };
+
+  // Year navigation functions
+  const navigateToNextYear = () => {
+    setSelectedYear(prev => prev + 1);
+  };
+
+  const navigateToPreviousYear = () => {
+    setSelectedYear(prev => prev - 1);
   };
 
   const getEventTypeData = (type: string) => {
@@ -342,10 +360,10 @@ export default function SeasonalityTimeline() {
       [eventId]: checklist
     }));
     
-    // Store checklist in localStorage for persistence
-    const eventData = JSON.parse(localStorage.getItem(`event-${eventId}-data`) || '{}');
+    // Store checklist in localStorage for persistence with year
+    const eventData = JSON.parse(localStorage.getItem(`event-${eventId}-data-${selectedYear}`) || '{}');
     eventData.checklist = checklist;
-    localStorage.setItem(`event-${eventId}-data`, JSON.stringify(eventData));
+    localStorage.setItem(`event-${eventId}-data-${selectedYear}`, JSON.stringify(eventData));
   };
 
   const getEventChecklist = (eventId: string) => {
@@ -354,8 +372,8 @@ export default function SeasonalityTimeline() {
       return eventChecklists[eventId];
     }
     
-    // Fallback to localStorage
-    const eventData = JSON.parse(localStorage.getItem(`event-${eventId}-data`) || '{}');
+    // Fallback to localStorage with year
+    const eventData = JSON.parse(localStorage.getItem(`event-${eventId}-data-${selectedYear}`) || '{}');
     const checklist = eventData.checklist || [];
     
     // Update React state with the loaded data
@@ -602,7 +620,32 @@ export default function SeasonalityTimeline() {
           <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-rose-400 rounded-xl flex items-center justify-center">
             <Calendar className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-3xl font-serif font-semibold text-gray-800">Seasonality Timeline {new Date().getFullYear()}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-serif font-semibold text-gray-800">Seasonality Timeline</h1>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={navigateToPreviousYear}
+                className="h-8 w-8 p-0 text-gray-600 hover:text-gray-800"
+                data-testid="button-previous-year"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-2xl font-serif font-semibold text-gray-800 min-w-[80px] text-center">
+                {selectedYear}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={navigateToNextYear}
+                className="h-8 w-8 p-0 text-gray-600 hover:text-gray-800"
+                data-testid="button-next-year"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
         
         <p className="text-gray-600 mb-6">Plan your year with purpose - map your seasonal cycles, launches, and holidays.</p>
