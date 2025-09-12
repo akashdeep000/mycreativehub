@@ -48,7 +48,7 @@ export default function AffiliateMarketing() {
     productName: '',
     companyName: '',
     trackingLink: '',
-    affiliateCode: '',
+
     discountCode: '',
     commissionRate: '',
     cookieLength: '',
@@ -199,7 +199,7 @@ export default function AffiliateMarketing() {
       productName: '',
       companyName: '',
       trackingLink: '',
-      affiliateCode: '',
+  
       discountCode: '',
       commissionRate: '',
       cookieLength: '',
@@ -283,19 +283,18 @@ export default function AffiliateMarketing() {
   };
 
   const exportToCsv = () => {
-    const headers = ['Product Name', 'Company', 'Tracking Link', 'Affiliate Code', 'Commission Rate', 'Cookie Length', 'Status', 'Notes', 'Created At'];
+    const headers = ['Product Name', 'Company', 'Tracking Link', 'Commission Rate', 'Cookie Length', 'Status', 'Notes', 'Created At'];
     const csvContent = [
       headers.join(','),
       ...filteredLinks.map(link => [
         `"${link.productName}"`,
         `"${link.companyName}"`,
         `"${link.trackingLink}"`,
-        `"${link.affiliateCode || ''}"`,
         `"${link.commissionRate || ''}"`,
         `"${link.cookieLength || ''}"`,
         `"${link.status}"`,
         `"${link.notes || ''}"`,
-        `"${new Date(link.createdAt).toLocaleDateString()}"`
+        `"${link.createdAt ? new Date(link.createdAt).toLocaleDateString() : ''}"`
       ].join(','))
     ].join('\n');
 
@@ -424,7 +423,7 @@ export default function AffiliateMarketing() {
           <Plus className="w-4 h-4 mr-2" />
           Add Link
         </Button>
-        {affiliateLinks.length > 0 && (
+        {(affiliateLinks as AffiliateLink[]).length > 0 && (
           <Button
             onClick={exportToCsv}
             variant="outline"
@@ -486,15 +485,7 @@ export default function AffiliateMarketing() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Affiliate Code</label>
-                <Input
-                  value={newLink.affiliateCode || ''}
-                  onChange={(e) => setNewLink({...newLink, affiliateCode: e.target.value})}
-                  placeholder="e.g., ABC123"
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Commission Rate</label>
                 <Input
@@ -589,9 +580,6 @@ export default function AffiliateMarketing() {
                   <tr key={link.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">{link.productName}</div>
-                      {link.affiliateCode && (
-                        <div className="text-xs text-gray-500">Code: {link.affiliateCode}</div>
-                      )}
                     </td>
                     <td className="px-4 py-3 text-gray-900">{link.companyName}</td>
                     <td className="px-4 py-3">
@@ -599,7 +587,7 @@ export default function AffiliateMarketing() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => copyToClipboard(link.trackingLink, link.id)}
+                          onClick={() => copyToClipboard(link.trackingLink || '', link.id)}
                           className="p-1 h-8 w-8"
                         >
                           {copiedId === link.id ? (
@@ -611,7 +599,7 @@ export default function AffiliateMarketing() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => window.open(link.trackingLink, '_blank')}
+                          onClick={() => window.open(link.trackingLink || '', '_blank')}
                           className="p-1 h-8 w-8"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -701,14 +689,7 @@ export default function AffiliateMarketing() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Affiliate Code</label>
-                  <Input
-                    value={editingLink.affiliateCode || ''}
-                    onChange={(e) => setEditingLink({...editingLink, affiliateCode: e.target.value})}
-                  />
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Commission Rate</label>
                   <Input
