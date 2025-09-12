@@ -368,6 +368,11 @@ export default function LaunchGrowthPlan() {
                         <h4 className="font-medium text-gray-900 mb-1">Needs Improvement</h4>
                         <p className="text-sm text-gray-600 line-clamp-2">{plan.whatNeedsImprovement || 'No improvements noted'}</p>
                       </div>
+                      
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-1">Notes or Customer Feedback</h4>
+                        <p className="text-sm text-gray-600 line-clamp-2">{plan.teamNotes || 'No notes recorded'}</p>
+                      </div>
                     </div>
                     
                     {plan.isCompleted && (
