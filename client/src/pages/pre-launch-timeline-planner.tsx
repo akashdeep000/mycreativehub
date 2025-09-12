@@ -50,26 +50,40 @@ interface Launch {
 }
 
 const PRE_FILLED_CONTENT_TYPES = [
-  { type: 'Value Email', color: 'bg-green-100 border-green-300 text-green-800' },
-  { type: 'Sales Email', color: 'bg-red-100 border-red-300 text-red-800' },
-  { type: 'FAQ Email', color: 'bg-blue-100 border-blue-300 text-blue-800' },
-  { type: 'Case Study Email', color: 'bg-purple-100 border-purple-300 text-purple-800' },
-  { type: 'Teaser Post', color: 'bg-pink-100 border-pink-300 text-pink-800' },
-  { type: 'Carousel: Pain Point', color: 'bg-orange-100 border-orange-300 text-orange-800' },
-  { type: 'Carousel: Solution/Outcome', color: 'bg-emerald-100 border-emerald-300 text-emerald-800' },
-  { type: 'Testimonial / Social Proof', color: 'bg-yellow-100 border-yellow-300 text-yellow-800' },
-  { type: 'Offer/Bonus Reveal', color: 'bg-rose-100 border-rose-300 text-rose-800' },
-  { type: 'Countdown Reminder', color: 'bg-orange-100 border-orange-300 text-orange-800' },
-  { type: 'Long Form Video', color: 'bg-indigo-100 border-indigo-300 text-indigo-800' },
-  { type: 'Instagram Stories', color: 'bg-gradient-to-r from-purple-400 to-pink-400 text-white' },
-  { type: 'Reels', color: 'bg-gradient-to-r from-pink-400 to-red-400 text-white' },
-  { type: 'Behind-the-Scenes Video', color: 'bg-blue-100 border-blue-300 text-blue-800' },
-  { type: 'Demo / Tutorial Clip', color: 'bg-cyan-100 border-cyan-300 text-cyan-800' },
-  { type: 'Q&A Stories', color: 'bg-teal-100 border-teal-300 text-teal-800' },
-  { type: 'Poll / Quiz Stories', color: 'bg-lime-100 border-lime-300 text-lime-800' },
-  { type: 'Live Q&A', color: 'bg-violet-100 border-violet-300 text-violet-800' },
-  { type: 'DM Invite / Waitlist Nudge', color: 'bg-slate-100 border-slate-300 text-slate-800' },
+  { type: 'Value Email' },
+  { type: 'Sales Email' },
+  { type: 'FAQ Email' },
+  { type: 'Case Study Email' },
+  { type: 'Teaser Post' },
+  { type: 'Carousel: Pain Point' },
+  { type: 'Carousel: Solution/Outcome' },
+  { type: 'Testimonial / Social Proof' },
+  { type: 'Offer/Bonus Reveal' },
+  { type: 'Countdown Reminder' },
+  { type: 'Long Form Video' },
+  { type: 'Instagram Stories' },
+  { type: 'Reels' },
+  { type: 'Behind-the-Scenes Video' },
+  { type: 'Demo / Tutorial Clip' },
+  { type: 'Q&A Stories' },
+  { type: 'Poll / Quiz Stories' },
+  { type: 'Live Q&A' },
+  { type: 'DM Invite / Waitlist Nudge' },
 ];
+
+// Function to get color classes based on content status
+const getStatusColor = (status: 'in progress' | 'scheduled' | 'completed') => {
+  switch (status) {
+    case 'in progress':
+      return 'bg-red-100 border-red-300 text-red-800';
+    case 'scheduled':
+      return 'bg-amber-100 border-amber-300 text-amber-800';
+    case 'completed':
+      return 'bg-green-100 border-green-300 text-green-800';
+    default:
+      return 'bg-gray-100 border-gray-300 text-gray-800';
+  }
+};
 
 export default function PreLaunchTimelinePlanner() {
   const { toast } = useToast();
@@ -827,7 +841,7 @@ export default function PreLaunchTimelinePlanner() {
                   ) : (
                     week.content.map((content) => (
                       <div key={content.id} className="group">
-                        <div className={`p-3 rounded-lg border-2 ${PRE_FILLED_CONTENT_TYPES.find(t => t.type === content.type)?.color || 'bg-gray-100 border-gray-300 text-gray-800'}`}>
+                        <div className={`p-3 rounded-lg border-2 ${getStatusColor(content.status)}`}>
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
