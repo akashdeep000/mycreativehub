@@ -491,7 +491,7 @@ export default function PreLaunchTimelinePlanner() {
                   className="h-fit cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() => setSelectedLaunch(launch)}
                 >
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-3 px-8">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg text-gray-900">{launch.title}</CardTitle>
                       <div className="flex gap-2">
@@ -520,7 +520,7 @@ export default function PreLaunchTimelinePlanner() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="px-6">
+                  <CardContent className="px-8">
                     <div className="space-y-3">
                       <div className="text-sm text-gray-500">
                         Last modified: {new Date(launch.lastModified).toLocaleDateString()}
