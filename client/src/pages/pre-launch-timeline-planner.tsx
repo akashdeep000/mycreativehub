@@ -659,12 +659,7 @@ export default function PreLaunchTimelinePlanner() {
           
           <p className="text-gray-600 mb-6">Map out your pre-launch timeline with week by week content planning</p>
 
-          {/* Controls */}
-          <div className="flex justify-end mb-4">
-            <Button onClick={clearTimeline} variant="outline" size="sm">
-              Clear Timeline
-            </Button>
-          </div>
+          
           
           {/* Instructions */}
           <p className="text-sm text-gray-600 mb-4">
