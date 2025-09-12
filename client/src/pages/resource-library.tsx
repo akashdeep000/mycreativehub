@@ -125,7 +125,40 @@ export default function ResourceLibrary() {
         body: JSON.stringify({ items: reorderedItems }),
       });
     },
-    onSuccess: () => {
+    onMutate: async (reorderedItems) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['/api/resource-library'] });
+
+      // Snapshot the previous value
+      const previousItems = queryClient.getQueryData(['/api/resource-library']);
+
+      // Optimistically update cache with new order
+      const currentItems = (previousItems as ResourceLibraryItem[]) || [];
+      const reorderedItemsMap = new Map(reorderedItems.map(item => [item.id, item.displayOrder]));
+      
+      const newItems = [...currentItems].sort((a, b) => {
+        const aOrder = reorderedItemsMap.get(a.id) ?? a.displayOrder;
+        const bOrder = reorderedItemsMap.get(b.id) ?? b.displayOrder;
+        return aOrder - bOrder;
+      });
+
+      queryClient.setQueryData(['/api/resource-library'], newItems);
+
+      return { previousItems };
+    },
+    onError: (err, newItems, context) => {
+      // Revert to previous state on error
+      if (context?.previousItems) {
+        queryClient.setQueryData(['/api/resource-library'], context.previousItems);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to reorder items. Please try again.",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      // Optionally refresh data in background (not blocking UI)
       queryClient.invalidateQueries({ queryKey: ['/api/resource-library'] });
     },
   });
