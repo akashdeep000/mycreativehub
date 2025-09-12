@@ -642,17 +642,9 @@ export default function ProfitCalculator() {
               <CardHeader>
                 <CardTitle className="text-lg text-gray-900">Pricing Details</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Total Cost to Produce
-                  </label>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {getCurrencySymbol(selectedCalculation.currency)}{selectedCalculation.totalCost.toFixed(2)}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-lg font-semibold text-gray-900 mb-3">
                     Desired Selling Price ({getCurrencySymbol(selectedCalculation.currency)})
                   </label>
                   <Input
@@ -666,32 +658,41 @@ export default function ProfitCalculator() {
                       }
                     }}
                     placeholder="0.00"
-                    className="border-gray-300 text-lg"
+                    className="border-gray-300 text-2xl p-4 font-semibold"
                     step="0.01"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Total Cost to Produce
+                  </label>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {getCurrencySymbol(selectedCalculation.currency)}{selectedCalculation.totalCost.toFixed(2)}
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg text-gray-900">Profit Analysis</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Profit per Unit
-                  </label>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {getCurrencySymbol(selectedCalculation.currency)}{selectedCalculation.profitPerUnit.toFixed(2)}
+            {selectedCalculation.sellingPrice > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg text-gray-900">Profit Analysis</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Profit per Unit
+                    </label>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {getCurrencySymbol(selectedCalculation.currency)}{selectedCalculation.profitPerUnit.toFixed(2)}
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Profit Margin (%)
-                  </label>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {selectedCalculation.profitMargin.toFixed(1)}%
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Profit Margin (%)
+                    </label>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {selectedCalculation.profitMargin.toFixed(1)}%
                   </div>
                 </div>
                 <div>
@@ -706,6 +707,7 @@ export default function ProfitCalculator() {
                 </div>
               </CardContent>
             </Card>
+            )}
           </div>
 
           {/* Action Buttons */}
