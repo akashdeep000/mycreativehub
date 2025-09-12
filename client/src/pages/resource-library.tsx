@@ -24,9 +24,19 @@ export default function ResourceLibrary() {
   const [uploadingFileName, setUploadingFileName] = useState<string | null>(null);
   const [isAddFolderOpen, setIsAddFolderOpen] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<number | null>(null);
+  const [editingFolder, setEditingFolder] = useState<ResourceLibraryFolder | null>(null);
 
+  // Use folder-scoped cache keys for better cache invalidation
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ['/api/resource-library'],
+    queryKey: ['/api/resource-library', selectedFolder],
+    queryFn: async () => {
+      const url = selectedFolder !== null 
+        ? `/api/resource-library?folderId=${selectedFolder}`
+        : '/api/resource-library';
+      const response = await fetch(url, { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch items');
+      return response.json();
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
   });
@@ -49,7 +59,7 @@ export default function ResourceLibrary() {
       await queryClient.cancelQueries({ queryKey: ['/api/resource-library'] });
 
       // Snapshot the previous value
-      const previousItems = queryClient.getQueryData(['/api/resource-library']) || [];
+      const previousItems = queryClient.getQueryData(['/api/resource-library', selectedFolder]) || [];
 
       // Create optimistic item with temporary ID
       const tempId = -Date.now();
@@ -59,7 +69,7 @@ export default function ResourceLibrary() {
       };
 
       // Optimistically update to the new value
-      queryClient.setQueryData(['/api/resource-library'], (old: any) => [optimisticItem, ...(old || [])]);
+      queryClient.setQueryData(['/api/resource-library', selectedFolder], (old: any) => [optimisticItem, ...(old || [])]);
 
       // Clear upload state immediately after optimistic update
       setUploadingFileName(null);
@@ -70,7 +80,7 @@ export default function ResourceLibrary() {
     onSuccess: (createdItem, variables, context) => {
       console.log('Upload success - item created:', createdItem);
       
-      // Simplified approach: just invalidate and refetch
+      // Invalidate all folder-scoped cache entries
       queryClient.invalidateQueries({ queryKey: ['/api/resource-library'] });
       
       setIsAddModalOpen(false);
@@ -82,7 +92,7 @@ export default function ResourceLibrary() {
     onError: (error, variables, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousItems) {
-        queryClient.setQueryData(['/api/resource-library'], context.previousItems);
+        queryClient.setQueryData(['/api/resource-library', selectedFolder], context.previousItems);
       }
       
       setUploadingFileName(null);
@@ -195,6 +205,29 @@ export default function ResourceLibrary() {
     },
   });
 
+  const updateFolderMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: { name?: string; color?: string } }) => {
+      return await apiRequest(`/api/resource-library/folders/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/resource-library/folders'] });
+      toast({
+        title: "Success",
+        description: "Folder updated successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update folder",
+        variant: "destructive",
+      });
+    },
+  });
+
   const deleteFolderMutation = useMutation({
     mutationFn: async (folderId: number) => {
       return await apiRequest(`/api/resource-library/folders/${folderId}`, {
@@ -203,6 +236,7 @@ export default function ResourceLibrary() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/resource-library/folders'] });
+      // Invalidate all folder-scoped cache entries
       queryClient.invalidateQueries({ queryKey: ['/api/resource-library'] });
       toast({
         title: "Success",
@@ -392,6 +426,28 @@ export default function ResourceLibrary() {
             <CreateFolderForm onSubmit={handleCreateFolder} />
           </DialogContent>
         </Dialog>
+
+        {/* Edit Folder Dialog */}
+        <Dialog open={!!editingFolder} onOpenChange={() => setEditingFolder(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Folder</DialogTitle>
+            </DialogHeader>
+            {editingFolder && (
+              <EditFolderForm 
+                folder={editingFolder}
+                onSubmit={(data) => {
+                  updateFolderMutation.mutate({
+                    id: editingFolder.id,
+                    data
+                  });
+                  setEditingFolder(null);
+                }}
+                onCancel={() => setEditingFolder(null)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Folder Management Section */}
@@ -458,15 +514,26 @@ export default function ResourceLibrary() {
                   />
                   {folder.name}
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-1 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700"
-                  onClick={() => deleteFolderMutation.mutate(folder.id)}
-                  data-testid={`button-delete-folder-${folder.id}`}
-                >
-                  <Trash2 className="w-3 h-3" />
-                </Button>
+                <div className="absolute right-0 top-0 h-full flex opacity-0 group-hover:opacity-100">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-full px-1 text-gray-500 hover:text-gray-700"
+                    onClick={() => setEditingFolder(folder)}
+                    data-testid={`button-edit-folder-${folder.id}`}
+                  >
+                    <Edit2 className="w-3 h-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-full px-1 text-red-500 hover:text-red-700"
+                    onClick={() => deleteFolderMutation.mutate(folder.id)}
+                    data-testid={`button-delete-folder-${folder.id}`}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -837,6 +904,85 @@ function CreateFolderForm({ onSubmit }: { onSubmit: (data: { name: string; color
           Cancel
         </Button>
         <Button type="submit" data-testid="button-create-folder">Create Folder</Button>
+      </div>
+    </form>
+  );
+}
+
+function EditFolderForm({ folder, onSubmit, onCancel }: { 
+  folder: ResourceLibraryFolder;
+  onSubmit: (data: { name: string; color: string }) => void;
+  onCancel: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    name: folder.name,
+    color: folder.color,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  const colorOptions = [
+    { value: '#6B7280', name: 'Gray' },
+    { value: '#EF4444', name: 'Red' },
+    { value: '#F97316', name: 'Orange' },
+    { value: '#EAB308', name: 'Yellow' },
+    { value: '#22C55E', name: 'Green' },
+    { value: '#3B82F6', name: 'Blue' },
+    { value: '#8B5CF6', name: 'Purple' },
+    { value: '#EC4899', name: 'Pink' },
+  ];
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="editFolderName">Folder Name</Label>
+        <Input
+          id="editFolderName"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          placeholder="Enter folder name"
+          required
+          data-testid="input-edit-folder-name"
+        />
+      </div>
+      <div>
+        <Label htmlFor="editFolderColor">Color</Label>
+        <Select
+          value={formData.color}
+          onValueChange={(value) => setFormData({ ...formData, color: value })}
+        >
+          <SelectTrigger data-testid="select-edit-folder-color">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-4 h-4 rounded-full border border-gray-300"
+                style={{ backgroundColor: formData.color }}
+              />
+              <SelectValue />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            {colorOptions.map((color) => (
+              <SelectItem key={color.value} value={color.value}>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-full border border-gray-300"
+                    style={{ backgroundColor: color.value }}
+                  />
+                  {color.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onCancel} data-testid="button-cancel-edit-folder">
+          Cancel
+        </Button>
+        <Button type="submit" data-testid="button-save-folder">Save Changes</Button>
       </div>
     </form>
   );

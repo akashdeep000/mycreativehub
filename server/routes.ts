@@ -1896,8 +1896,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/resource-library', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      const folderId = req.query.folderId ? parseInt(req.query.folderId as string) : undefined;
+      
       const items = await storage.getResourceLibraryItems(userId);
-      res.json(items);
+      
+      // Apply server-side filtering by folder if specified
+      let filteredItems = items;
+      if (folderId !== undefined) {
+        if (isNaN(folderId)) {
+          return res.status(400).json({ message: "Invalid folder ID" });
+        }
+        filteredItems = items.filter(item => item.folderId === (folderId || null));
+      }
+      
+      res.json(filteredItems);
     } catch (error) {
       console.error("Error fetching resource library items:", error);
       res.status(500).json({ message: "Failed to fetch resource library items" });
