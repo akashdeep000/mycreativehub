@@ -21,7 +21,7 @@ export default function Sidebar() {
           <div className="w-10 h-10 bg-gradient-to-br from-pink-300 to-purple-300 rounded-xl flex items-center justify-center">
             <Palette className="text-white text-lg" />
           </div>
-          <h1 className="text-xl font-serif font-semibold text-gray-800">My Creative Hub</h1>
+          <h1 className="text-xl font-serif font-semibold text-gray-800 whitespace-nowrap">My Creative Hub</h1>
         </div>
 
         {/* User Profile Section */}

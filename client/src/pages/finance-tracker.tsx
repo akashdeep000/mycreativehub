@@ -136,7 +136,6 @@ export default function FinanceTracker() {
                 <h4 className="font-semibold text-gray-700 mb-2">📊 Track Everything</h4>
                 <p className="text-gray-600 text-sm mb-4">Record every business expense, no matter how small. It all adds up over time.</p>
               </div>
-              
               <div>
                 <h4 className="font-semibold text-gray-700 mb-2">💡 Plan for Taxes</h4>
                 <p className="text-gray-600 text-sm mb-4">
