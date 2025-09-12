@@ -476,19 +476,7 @@ export default function LaunchGrowthPlan() {
                   />
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="completed"
-                    checked={formData.isCompleted}
-                    onCheckedChange={(checked) => setFormData({ ...formData, isCompleted: !!checked })}
-                  />
-                  <label
-                    htmlFor="completed"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    I've updated my next launch plan with these learnings
-                  </label>
-                </div>
+                
               </div>
               
               <div className="flex justify-end gap-3 mt-6">
