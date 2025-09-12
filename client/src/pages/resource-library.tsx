@@ -60,29 +60,10 @@ export default function ResourceLibrary() {
       return { previousItems, tempId };
     },
     onSuccess: (createdItem, variables, context) => {
-      console.log('Upload success - replacing optimistic item:', { tempId: context?.tempId, createdItem });
+      console.log('Upload success - item created:', createdItem);
       
-      // Replace the optimistic item with the real server response
-      queryClient.setQueryData(['/api/resource-library'], (old: any) => {
-        const currentItems = old || [];
-        console.log('Current items before replacement:', currentItems.map(i => ({ id: i.id, title: i.title })));
-        
-        // Find and replace the temporary item with the real one
-        const updatedItems = currentItems.map((item: any) => 
-          item.id === context?.tempId ? createdItem : item
-        );
-        
-        console.log('Items after replacement:', updatedItems.map(i => ({ id: i.id, title: i.title })));
-        
-        // If no replacement happened (shouldn't occur), add the item anyway
-        const hasRealItem = updatedItems.some((item: any) => item.id === createdItem.id);
-        if (!hasRealItem && !updatedItems.find((item: any) => item.id === context?.tempId)) {
-          console.log('No replacement found, adding item to start of list');
-          return [createdItem, ...updatedItems];
-        }
-        
-        return updatedItems;
-      });
+      // Simplified approach: just invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ['/api/resource-library'] });
       
       setIsAddModalOpen(false);
       toast({

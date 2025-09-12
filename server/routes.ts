@@ -1912,7 +1912,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body
       };
       
+      console.log("Creating resource library item with data:", itemData);
       const item = await storage.createResourceLibraryItem(itemData);
+      console.log("Created item:", item);
+      console.log("Responding with item:", JSON.stringify(item));
       res.status(201).json(item);
     } catch (error) {
       console.error("Error creating resource library item:", error);
