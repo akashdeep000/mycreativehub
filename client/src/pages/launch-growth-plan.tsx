@@ -302,7 +302,7 @@ export default function LaunchGrowthPlan() {
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-green-500" />
               <span className="text-sm text-gray-600">
-                {growthPlans.length} growth plans
+                {growthPlans.length} growth plan{growthPlans.length === 1 ? '' : 's'}
               </span>
             </div>
           </div>
