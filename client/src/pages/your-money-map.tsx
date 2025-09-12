@@ -947,7 +947,7 @@ export default function YourMoneyMap() {
                     <div className="text-lg font-bold text-teal-600">
                       {formatCurrency(getTrackerTotals().availableAfterAllocations)}
                     </div>
-                    <div className="text-sm text-gray-600">Available After Allocations</div>
+                    <div className="text-sm text-gray-600">Net Profit (after tax and allocations)</div>
                   </div>
                 </div>
               </CardContent>
