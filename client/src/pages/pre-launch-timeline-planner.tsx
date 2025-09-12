@@ -100,6 +100,7 @@ export default function PreLaunchTimelinePlanner() {
   const [isEditingLaunchTitle, setIsEditingLaunchTitle] = useState(false);
   const [editingLaunchTitle, setEditingLaunchTitle] = useState('');
   const [editingLaunchId, setEditingLaunchId] = useState<string | null>(null);
+  const [escapedEdit, setEscapedEdit] = useState(false);
   
   // Checklist state for dialog
   const [showChecklist, setShowChecklist] = useState(false);
@@ -339,8 +340,35 @@ export default function PreLaunchTimelinePlanner() {
   };
 
   const handleLaunchTitleSave = () => {
+    // If user pressed escape, don't save
+    if (escapedEdit) {
+      setEscapedEdit(false);
+      return;
+    }
+
+    // If title is empty, cancel the edit
+    if (!editingLaunchTitle.trim()) {
+      setIsEditingLaunchTitle(false);
+      setEditingLaunchId(null);
+      return;
+    }
+
     if (editingLaunchId && editingLaunchTitle.trim()) {
-      updateLaunchTitle(editingLaunchId, editingLaunchTitle.trim());
+      const newTitle = editingLaunchTitle.trim();
+      
+      // Update the launches array
+      updateLaunchTitle(editingLaunchId, newTitle);
+      
+      // Also update selectedLaunch if it matches the edited launch
+      if (selectedLaunch && selectedLaunch.id === editingLaunchId) {
+        setSelectedLaunch({
+          ...selectedLaunch,
+          title: newTitle,
+          timelineData: { ...selectedLaunch.timelineData, projectName: newTitle },
+          lastModified: new Date().toISOString(),
+        });
+      }
+      
       setIsEditingLaunchTitle(false);
       setEditingLaunchId(null);
       toast({
@@ -590,7 +618,42 @@ export default function PreLaunchTimelinePlanner() {
               <Clock className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">{selectedLaunch.title}</h1>
+              {isEditingLaunchTitle && editingLaunchId === selectedLaunch.id ? (
+                <Input
+                  value={editingLaunchTitle}
+                  onChange={(e) => setEditingLaunchTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleLaunchTitleSave();
+                    }
+                    if (e.key === 'Escape') {
+                      e.preventDefault();
+                      setEscapedEdit(true);
+                      setIsEditingLaunchTitle(false);
+                      setEditingLaunchId(null);
+                    }
+                  }}
+                  onBlur={handleLaunchTitleSave}
+                  className="text-2xl font-bold border-none shadow-none p-0 h-auto bg-transparent"
+                  data-testid="input-launch-title"
+                  autoFocus
+                />
+              ) : (
+                <h1 
+                  className="text-2xl font-bold text-gray-900 cursor-pointer hover:text-gray-700 transition-colors"
+                  onClick={() => {
+                    setEscapedEdit(false);
+                    setEditingLaunchId(selectedLaunch.id);
+                    setEditingLaunchTitle(selectedLaunch.title);
+                    setIsEditingLaunchTitle(true);
+                  }}
+                  title="Click to edit title"
+                  data-testid="text-launch-title"
+                >
+                  {selectedLaunch.title}
+                </h1>
+              )}
             </div>
           </div>
           
