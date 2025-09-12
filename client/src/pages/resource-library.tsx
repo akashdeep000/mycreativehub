@@ -355,7 +355,7 @@ export default function ResourceLibrary() {
             </CardContent>
           </Card>
         ) : fileItems.length === 0 && uploadingFileName ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {/* Upload Progress Card - First Upload */}
             <Card className="aspect-square border-0 shadow-md bg-white animate-pulse">
               <CardHeader className="pb-4 bg-gradient-to-br from-pink-400 to-purple-400 text-white relative">
@@ -380,7 +380,7 @@ export default function ResourceLibrary() {
             </Card>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {/* Upload Progress Card */}
             {uploadingFileName && (
               <Card className="aspect-square border-0 shadow-md bg-white animate-pulse">
@@ -444,7 +444,7 @@ export default function ResourceLibrary() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {linkItems.map((item: ResourceLibraryItem) => (
               <ResourceCard
                 key={item.id}
@@ -534,7 +534,7 @@ function ResourceCard({
 
   return (
     <Card
-      className={`transition-all duration-200 hover:shadow-lg cursor-move aspect-square border-0 shadow-md bg-white ${
+      className={`transition-all duration-200 hover:shadow-lg cursor-move border-0 shadow-md bg-white h-48 ${
         draggedItem?.id === item.id ? 'opacity-50' : ''
       }`}
       draggable
