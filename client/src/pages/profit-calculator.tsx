@@ -121,6 +121,7 @@ export default function ProfitCalculator() {
   const [pasteText, setPasteText] = useState('');
   const [pricingLibrary, setPricingLibrary] = useState<PricingLibraryEntry[]>([]);
   const [activeTab, setActiveTab] = useState('calculator');
+  const [editingLibraryEntryId, setEditingLibraryEntryId] = useState<string | null>(null);
 
   // Load calculations and pricing library from localStorage on component mount
   useEffect(() => {
@@ -380,7 +381,7 @@ export default function ProfitCalculator() {
     if (!selectedCalculation) return;
     
     const libraryEntry: PricingLibraryEntry = {
-      id: generateId(),
+      id: editingLibraryEntryId || generateId(),
       productName: selectedCalculation.name,
       components: selectedCalculation.components,
       totalCost: selectedCalculation.totalCost,
@@ -388,21 +389,40 @@ export default function ProfitCalculator() {
       profitPerUnit: selectedCalculation.profitPerUnit,
       profitMargin: selectedCalculation.profitMargin,
       marginStrength: selectedCalculation.marginStrength,
-      dateAdded: new Date().toISOString(),
+      dateAdded: editingLibraryEntryId ? 
+        pricingLibrary.find(e => e.id === editingLibraryEntryId)?.dateAdded || new Date().toISOString() :
+        new Date().toISOString(),
       currency: selectedCalculation.currency
     };
     
-    // Always add as new entry - don't replace existing ones
-    setPricingLibrary(prev => [...prev, libraryEntry]);
-    toast({
-      title: "Saved to library",
-      description: `${selectedCalculation.name} has been added to your pricing library.`,
-    });
+    if (editingLibraryEntryId) {
+      // Update existing entry
+      setPricingLibrary(prev => 
+        prev.map(entry => 
+          entry.id === editingLibraryEntryId ? libraryEntry : entry
+        )
+      );
+      setEditingLibraryEntryId(null);
+      toast({
+        title: "Updated in library",
+        description: `${selectedCalculation.name} has been updated in your pricing library.`,
+      });
+    } else {
+      // Add new entry
+      setPricingLibrary(prev => [...prev, libraryEntry]);
+      toast({
+        title: "Saved to library",
+        description: `${selectedCalculation.name} has been added to your pricing library.`,
+      });
+    }
   };
 
   const editFromLibrary = (id: string) => {
     const entry = pricingLibrary.find(e => e.id === id);
     if (!entry) return;
+    
+    // Set editing mode to track which library entry we're editing
+    setEditingLibraryEntryId(id);
     
     // Create a new calculation from the library entry with all original components
     const editCalculation: ProfitCalculation = {
@@ -427,7 +447,7 @@ export default function ProfitCalculator() {
     
     toast({
       title: "Loaded for editing",
-      description: `${entry.productName} has been loaded into the calculator for editing.`,
+      description: `${entry.productName} has been loaded into the calculator for editing. Changes will update the original entry.`,
     });
   };
 
