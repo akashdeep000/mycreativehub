@@ -768,7 +768,6 @@ export default function PreLaunchTimelinePlanner() {
                           {/* Optional Action Checklist */}
                           <div className="border-t pt-4">
                             <div className="flex items-center justify-between mb-3">
-                              <h4 className="font-medium text-gray-900">Action Checklist (Optional)</h4>
                               <Button
                                 variant="outline"
                                 size="sm"
