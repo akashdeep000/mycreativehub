@@ -112,10 +112,10 @@ export default function ResourceLibrary() {
       return;
     }
 
-    const draggedIndex = items.findIndex((item: ResourceLibraryItem) => item.id === draggedItem.id);
-    const targetIndex = items.findIndex((item: ResourceLibraryItem) => item.id === targetItem.id);
+    const draggedIndex = (items as ResourceLibraryItem[]).findIndex((item: ResourceLibraryItem) => item.id === draggedItem.id);
+    const targetIndex = (items as ResourceLibraryItem[]).findIndex((item: ResourceLibraryItem) => item.id === targetItem.id);
 
-    const newItems = [...items];
+    const newItems = [...(items as ResourceLibraryItem[])];
     const [movedItem] = newItems.splice(draggedIndex, 1);
     newItems.splice(targetIndex, 0, movedItem);
 
@@ -146,7 +146,7 @@ export default function ResourceLibrary() {
     const reader = new FileReader();
     reader.onload = (event) => {
       const base64 = event.target?.result as string;
-      const nextOrder = items.length + 1;
+      const nextOrder = (items as ResourceLibraryItem[]).length + 1;
       
       addItemMutation.mutate({
         title: file.name,
@@ -161,7 +161,7 @@ export default function ResourceLibrary() {
   };
 
   const handleAddLink = (formData: any) => {
-    const nextOrder = items.length + 1;
+    const nextOrder = (items as ResourceLibraryItem[]).length + 1;
     addItemMutation.mutate({
       ...formData,
       type: 'link',
@@ -203,8 +203,8 @@ export default function ResourceLibrary() {
     );
   }
 
-  const fileItems = items.filter((item: ResourceLibraryItem) => item.type === 'file');
-  const linkItems = items.filter((item: ResourceLibraryItem) => item.type === 'link');
+  const fileItems = (items as ResourceLibraryItem[]).filter((item: ResourceLibraryItem) => item.type === 'file');
+  const linkItems = (items as ResourceLibraryItem[]).filter((item: ResourceLibraryItem) => item.type === 'link');
 
   return (
     <div className="min-h-screen bg-gray-50">
