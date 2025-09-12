@@ -251,7 +251,19 @@ export default function ResourceLibrary() {
 
       {/* PDF Files Section */}
       <div className="mb-12">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Uploaded PDFs</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Uploaded PDFs</h2>
+          {fileItems.length > 0 && (
+            <Button
+              onClick={() => document.getElementById('file-upload')?.click()}
+              className="bg-pink-500 hover:bg-pink-600 text-white"
+              size="sm"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Add More PDFs
+            </Button>
+          )}
+        </div>
         {fileItems.length === 0 ? (
           <Card className="text-center py-8 border-dashed border-2 border-gray-300 bg-white shadow-md">
             <CardContent>
