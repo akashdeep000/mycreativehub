@@ -479,7 +479,7 @@ export default function LaunchGrowthPlan() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Team Notes or Feedback (Optional)
+                    Notes or Customer Feedback
                   </label>
                   <Textarea
                     value={formData.teamNotes}
