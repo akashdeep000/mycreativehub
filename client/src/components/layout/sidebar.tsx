@@ -18,7 +18,7 @@ export default function Sidebar() {
       <div className="p-6">
         {/* Logo/Brand */}
         <div className="flex items-center space-x-3 mb-8">
-          <div className="w-10 h-10 bg-gradient-to-br from-pink-300 to-purple-300 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-pink-300 to-purple-300 rounded-lg flex items-center justify-center">
             <Palette className="text-white text-lg" />
           </div>
           <h1 className="text-xl font-serif font-semibold text-gray-800 whitespace-nowrap">My Creative Hub</h1>
