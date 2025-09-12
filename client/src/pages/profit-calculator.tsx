@@ -565,6 +565,11 @@ export default function ProfitCalculator() {
                         <Input
                           value={component.name}
                           onChange={(e) => updateComponent(component.id, 'name', e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              (e.target as HTMLInputElement).blur();
+                            }
+                          }}
                           placeholder="Component name"
                           className="border-gray-300"
                         />
