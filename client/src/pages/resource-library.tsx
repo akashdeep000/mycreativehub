@@ -208,9 +208,7 @@ export default function ResourceLibrary() {
           </div>
           <h1 className="text-3xl font-serif font-semibold text-gray-800">Your Resource Library</h1>
         </div>
-        <p className="text-gray-600 leading-relaxed">
-          This is your personal resource hub. You'll find all downloadable PDFs and templates inside your Creative Business Toolkit course. When you come across a resource you'd like to refer back to—whether it's a PDF or a useful link—add it here to keep everything in one place.
-        </p>
+        <p className="text-gray-600 leading-relaxed">This is your personal resource hub. You'll find all downloadable PDFs and templates inside your 'My Creative Hub: Systems for Success' course. When you come across a resource you'd like to refer back to, add it here to keep everything in one place.</p>
         
         {/* Hidden file input for uploads triggered from section buttons */}
         <input
