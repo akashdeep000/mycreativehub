@@ -752,7 +752,7 @@ export default function ProfitCalculator() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Profit Calculator</h1>
-              <p className="text-gray-600">Calculate costs, profits, and margins with color-coded indicators</p>
+              <p className="text-gray-600">Calculate costs, profits, and margins with colour-coded indicators</p>
             </div>
           </div>
         </div>
