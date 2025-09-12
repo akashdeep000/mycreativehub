@@ -271,9 +271,7 @@ export default function ResourceLibrary() {
       {/* Website Links Section */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-2">Favourite Websites & Resources</h2>
-        <p className="text-gray-600 mb-4">
-          Have websites or tools you visit regularly? Add them here so they're easy to access.
-        </p>
+        <p className="text-gray-600 mb-4">If you have websites or tools you visit regularly, add them here so they're easy to access.</p>
         {linkItems.length === 0 ? (
           <Card className="text-center py-8 border-dashed border-2 border-gray-300 bg-white shadow-md">
             <CardContent>
