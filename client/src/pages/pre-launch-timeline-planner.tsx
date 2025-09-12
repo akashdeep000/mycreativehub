@@ -484,14 +484,14 @@ export default function PreLaunchTimelinePlanner() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {launches.map((launch) => (
                 <Card 
                   key={launch.id} 
-                  className="h-fit cursor-pointer hover:shadow-md transition-shadow"
+                  className="min-h-[200px] w-full cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() => setSelectedLaunch(launch)}
                 >
-                  <CardHeader className="pb-3 px-8">
+                  <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg text-gray-900">{launch.title}</CardTitle>
                       <div className="flex gap-2">
@@ -520,7 +520,7 @@ export default function PreLaunchTimelinePlanner() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="px-8">
+                  <CardContent>
                     <div className="space-y-3">
                       <div className="text-sm text-gray-500">
                         Last modified: {new Date(launch.lastModified).toLocaleDateString()}
