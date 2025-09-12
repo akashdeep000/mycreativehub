@@ -455,7 +455,7 @@ export default function LaunchGrowthPlan() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    What Needs Improvement (Adjust or Drop)
+                    What Needs Improvement?
                   </label>
                   <Textarea
                     value={formData.whatNeedsImprovement}
