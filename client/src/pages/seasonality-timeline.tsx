@@ -1090,7 +1090,12 @@ function AddEventForm({
                 placeholder="Add checklist item..."
                 value={newChecklistItem}
                 onChange={(e) => setNewChecklistItem(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addChecklistItemToDialog()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addChecklistItemToDialog();
+                  }
+                }}
                 className="flex-1"
               />
               <Button
