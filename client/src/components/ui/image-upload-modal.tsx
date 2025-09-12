@@ -184,7 +184,7 @@ export function ImageUploadModal({ isOpen, onClose, onImageSave }: ImageUploadMo
                 </Button>
               </div>
               
-              <div className="max-h-96 overflow-hidden rounded-lg border">
+              <div className="max-h-[70vh] overflow-auto rounded-lg border flex items-center justify-center">
                 <ReactCrop
                   crop={crop}
                   onChange={(_, percentCrop) => setCrop(percentCrop)}
