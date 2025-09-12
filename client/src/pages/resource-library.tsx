@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Trash2, GripVertical, FileText, Link, Download, Edit2, X, Check, ExternalLink, Archive, BookOpen, Loader2 } from 'lucide-react';
+import { Trash2, GripVertical, FileText, Link, Download, Edit2, X, Check, ExternalLink, BookOpen, Loader2 } from 'lucide-react';
 import BackToDashboard from '@/components/BackToDashboard';
 import Sidebar from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
