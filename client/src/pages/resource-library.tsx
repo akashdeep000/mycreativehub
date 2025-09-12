@@ -28,12 +28,14 @@ export default function ResourceLibrary() {
 
   const addItemMutation = useMutation({
     mutationFn: async (itemData: any) => {
+      console.log('Mutation starting with data size:', JSON.stringify(itemData).length);
       return await apiRequest('/api/resource-library', {
         method: 'POST',
         body: JSON.stringify(itemData),
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Mutation success:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/resource-library'] });
       setIsAddModalOpen(false);
       toast({
@@ -42,6 +44,7 @@ export default function ResourceLibrary() {
       });
     },
     onError: (error) => {
+      console.error('Mutation error:', error);
       toast({
         title: "Error",
         description: "Failed to add resource",
@@ -131,10 +134,16 @@ export default function ResourceLibrary() {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+
+    console.log('File selected:', file.name, 'Type:', file.type, 'Size:', file.size);
 
     // Check if file is a PDF
     if (file.type !== 'application/pdf') {
+      console.log('File rejected - not a PDF');
       toast({
         title: "Error",
         description: "Failed to upload. Please upload a PDF only.",
@@ -143,10 +152,21 @@ export default function ResourceLibrary() {
       return;
     }
 
+    console.log('PDF validation passed, reading file...');
     const reader = new FileReader();
+    
     reader.onload = (event) => {
       const base64 = event.target?.result as string;
       const nextOrder = (items as ResourceLibraryItem[]).length + 1;
+      
+      console.log('File read successfully, base64 length:', base64.length);
+      console.log('Calling mutation with data:', {
+        title: file.name,
+        type: 'file',
+        fileName: file.name,
+        fileType: file.type,
+        displayOrder: nextOrder,
+      });
       
       addItemMutation.mutate({
         title: file.name,
@@ -157,6 +177,16 @@ export default function ResourceLibrary() {
         displayOrder: nextOrder,
       });
     };
+    
+    reader.onerror = (error) => {
+      console.error('File reading error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to read the file. Please try again.",
+        variant: "destructive",
+      });
+    };
+    
     reader.readAsDataURL(file);
   };
 
