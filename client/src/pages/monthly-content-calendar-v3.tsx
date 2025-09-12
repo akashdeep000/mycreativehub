@@ -706,7 +706,7 @@ export default function MonthlyContentCalendarV3() {
                               </button>
                               {/* Custom instant tooltip - desktop only */}
                               {entry.notes && (
-                                <div className="hidden lg:block absolute left-0 bottom-full mb-2 bg-gray-900 text-white text-sm px-4 py-2 rounded-md shadow-xl z-[100] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none max-w-lg break-words border border-gray-700">
+                                <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 bg-gray-900 text-white text-sm px-4 py-2 rounded-md shadow-xl z-[100] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-normal break-words w-[min(80vw,36rem)] border border-gray-700">
                                   Notes: {entry.notes}
                                 </div>
                               )}
