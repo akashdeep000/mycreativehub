@@ -50,6 +50,7 @@ interface ProfitCalculation {
 interface PricingLibraryEntry {
   id: string;
   productName: string;
+  components: Component[];
   totalCost: number;
   sellingPrice: number;
   profitPerUnit: number;
@@ -381,6 +382,7 @@ export default function ProfitCalculator() {
     const libraryEntry: PricingLibraryEntry = {
       id: generateId(),
       productName: selectedCalculation.name,
+      components: selectedCalculation.components,
       totalCost: selectedCalculation.totalCost,
       sellingPrice: selectedCalculation.sellingPrice,
       profitPerUnit: selectedCalculation.profitPerUnit,
@@ -402,22 +404,26 @@ export default function ProfitCalculator() {
     const entry = pricingLibrary.find(e => e.id === id);
     if (!entry) return;
     
-    // Create a new calculation from the library entry
+    // Create a new calculation from the library entry with all original components
     const editCalculation: ProfitCalculation = {
       id: generateId(),
       name: entry.productName,
-      components: [], // Start with empty components, user can add them
+      components: entry.components || [],
       totalCost: entry.totalCost,
       sellingPrice: entry.sellingPrice,
       profitPerUnit: entry.profitPerUnit,
       profitMargin: entry.profitMargin,
       marginStrength: entry.marginStrength,
-      currency: entry.currency || 'USD'
+      currency: entry.currency || 'USD',
+      lastModified: new Date().toISOString()
     };
     
-    // Switch to calculator tab and load the calculation
-    setActiveTab('calculator');
+    // Add this calculation to the calculations list and select it
+    setCalculations(prev => [...prev, editCalculation]);
     setSelectedCalculation(editCalculation);
+    
+    // Switch to calculator tab
+    setActiveTab('calculator');
     
     toast({
       title: "Loaded for editing",
