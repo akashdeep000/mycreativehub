@@ -130,7 +130,7 @@ export default function YourMoneyMap() {
 
   const getCurrentPeriodLabel = () => {
     if (selectedPeriod === 'monthly') {
-      return `📅 ${currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+      return currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     } else {
       const quarter = Math.floor(currentDate.getMonth() / 3) + 1;
       const quarterMonths = [
