@@ -444,6 +444,7 @@ export default function YourMoneyMap() {
         profit: trackerTotals.actualProfit,
         taxSetAside: trackerTotals.taxAmount,
         personalPay: personalPayAmount,
+        availableForSavings: trackerTotals.availableForSavings,
         profitMargin: trackerTotals.profitMargin,
       },
       notes: {
@@ -685,6 +686,7 @@ export default function YourMoneyMap() {
                         placeholder="Income source"
                         value={item.category}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'category', e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                         className="flex-1"
                       />
                       <Input
@@ -729,6 +731,7 @@ export default function YourMoneyMap() {
                         placeholder="Expense item"
                         value={item.category}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'category', e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                         className="flex-1"
                       />
                       <Input
