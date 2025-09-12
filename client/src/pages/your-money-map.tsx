@@ -73,7 +73,7 @@ interface MonthlySnapshot {
     profit: number;
     taxSetAside: number;
     personalPay: number;
-    availableForSavings: number;
+    availableAfterAllocations: number;
     profitMargin: number;
   };
   notes: {
@@ -104,13 +104,10 @@ export default function YourMoneyMap() {
   // Category names state
   const [taxCategoryName, setTaxCategoryName] = useState('Tax Amount');
   const [personalPayCategoryName, setPersonalPayCategoryName] = useState('Personal Pay Amount');
-  const [savingsPercentage, setSavingsPercentage] = useState(0);
-  const [savingsCategoryName, setSavingsCategoryName] = useState('Savings');
   
   // Edit states for category names
   const [editingTax, setEditingTax] = useState(false);
   const [editingPersonalPay, setEditingPersonalPay] = useState(false);
-  const [editingSavings, setEditingSavings] = useState(false);
   const [trackerNotes, setTrackerNotes] = useState('');
 
 
@@ -234,7 +231,7 @@ export default function YourMoneyMap() {
       setBudgetNotes('');
       setIncomeExpenseItems([]);
       setTaxPercentage(25);
-      setPersonalPayAmount(0);
+      setPersonalPayPercentage(0);
       setTrackerNotes('');
     }
   }, [currentDate, selectedPeriod]);
@@ -350,8 +347,7 @@ export default function YourMoneyMap() {
     const taxAmount = actualProfit * (taxPercentage / 100);
     const afterTaxProfit = actualProfit - taxAmount;
     const personalPayAmount = afterTaxProfit * (personalPayPercentage / 100);
-    const savingsAmount = afterTaxProfit * (savingsPercentage / 100);
-    const availableForSavings = afterTaxProfit - personalPayAmount - savingsAmount;
+    const availableAfterAllocations = afterTaxProfit - personalPayAmount;
     const profitMargin = actualIncome > 0 ? (actualProfit / actualIncome) * 100 : 0;
     
     return {
@@ -360,9 +356,8 @@ export default function YourMoneyMap() {
       actualProfit,
       taxAmount,
       personalPayAmount,
-      savingsAmount,
       afterTaxProfit,
-      availableForSavings,
+      availableAfterAllocations,
       profitMargin
     };
   };
@@ -446,7 +441,7 @@ export default function YourMoneyMap() {
         profit: trackerTotals.actualProfit,
         taxSetAside: trackerTotals.taxAmount,
         personalPay: trackerTotals.personalPayAmount,
-        availableForSavings: trackerTotals.availableForSavings,
+        availableAfterAllocations: trackerTotals.availableAfterAllocations,
         profitMargin: trackerTotals.profitMargin,
       },
       notes: {
@@ -775,7 +770,7 @@ export default function YourMoneyMap() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       {editingTax ? (
@@ -840,38 +835,6 @@ export default function YourMoneyMap() {
                       placeholder="0"
                     />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      {editingSavings ? (
-                        <Input
-                          type="text"
-                          value={savingsCategoryName}
-                          onChange={(e) => setSavingsCategoryName(e.target.value)}
-                          onBlur={() => setEditingSavings(false)}
-                          onKeyDown={(e) => e.key === 'Enter' && setEditingSavings(false)}
-                          className="flex-1 text-sm font-medium"
-                          autoFocus
-                        />
-                      ) : (
-                        <span className="flex-1 text-sm font-medium">{savingsCategoryName}</span>
-                      )}
-                      <button
-                        onClick={() => setEditingSavings(true)}
-                        className="hover:text-blue-600 transition-colors"
-                      >
-                        <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-600" />
-                      </button>
-                      <span className="text-sm font-medium">(%)</span>
-                    </div>
-                    <Input
-                      id="savings-percentage"
-                      type="number"
-                      value={savingsPercentage}
-                      onChange={(e) => setSavingsPercentage(parseFloat(e.target.value) || 0)}
-                      onFocus={(e) => e.target.select()}
-                      placeholder="10"
-                    />
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -922,15 +885,9 @@ export default function YourMoneyMap() {
                     </div>
                     <div className="text-sm text-gray-600">{personalPayCategoryName}</div>
                   </div>
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-lg font-bold text-green-600">
-                      {formatCurrency(getTrackerTotals().savingsAmount)}
-                    </div>
-                    <div className="text-sm text-gray-600">{savingsCategoryName}</div>
-                  </div>
                   <div className="text-center p-4 bg-teal-50 rounded-lg">
                     <div className="text-lg font-bold text-teal-600">
-                      {formatCurrency(getTrackerTotals().availableForSavings)}
+                      {formatCurrency(getTrackerTotals().availableAfterAllocations)}
                     </div>
                     <div className="text-sm text-gray-600">Available After Allocations</div>
                   </div>
@@ -1094,9 +1051,9 @@ export default function YourMoneyMap() {
                         </div>
                         <div className="text-center p-3 bg-teal-50 rounded-lg">
                           <div className="text-sm font-bold text-teal-600">
-                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.availableForSavings.toLocaleString()}
+                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.availableAfterAllocations.toLocaleString()}
                           </div>
-                          <div className="text-xs text-gray-600">Available for Savings</div>
+                          <div className="text-xs text-gray-600">Available After Allocations</div>
                         </div>
                       </div>
 
