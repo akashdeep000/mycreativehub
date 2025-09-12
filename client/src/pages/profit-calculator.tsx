@@ -580,6 +580,7 @@ export default function ProfitCalculator() {
                           type="number"
                           value={component.costPerUnit}
                           onChange={(e) => updateComponent(component.id, 'costPerUnit', parseFloat(e.target.value) || 0)}
+                          onFocus={(e) => e.target.select()}
                           placeholder="0.00"
                           className="border-gray-300"
                           step="0.01"
@@ -590,6 +591,7 @@ export default function ProfitCalculator() {
                           type="number"
                           value={component.quantity}
                           onChange={(e) => updateComponent(component.id, 'quantity', parseFloat(e.target.value) || 0)}
+                          onFocus={(e) => e.target.select()}
                           placeholder="1"
                           className="border-gray-300"
                           step="0.01"
@@ -640,6 +642,7 @@ export default function ProfitCalculator() {
                     type="number"
                     value={selectedCalculation.sellingPrice}
                     onChange={(e) => updateSellingPrice(parseFloat(e.target.value) || 0)}
+                    onFocus={(e) => e.target.select()}
                     placeholder="0.00"
                     className="border-gray-300 text-lg"
                     step="0.01"
