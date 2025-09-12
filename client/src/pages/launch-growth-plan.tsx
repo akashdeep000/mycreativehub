@@ -415,8 +415,6 @@ export default function LaunchGrowthPlan() {
                       placeholder="Enter product name"
                     />
                   </div>
-                  
-                  
                 </div>
                 
                 <div>
