@@ -11,6 +11,12 @@ import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/layout/sidebar';
 
 
+interface ChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
 interface ContentBlock {
   id: string;
   type: string;
@@ -19,6 +25,7 @@ interface ContentBlock {
   status: 'in progress' | 'scheduled' | 'completed';
   emoji: string;
   notes?: string;
+  checklist?: ChecklistItem[];
 }
 
 interface WeekData {
@@ -93,6 +100,11 @@ export default function PreLaunchTimelinePlanner() {
   const [isEditingLaunchTitle, setIsEditingLaunchTitle] = useState(false);
   const [editingLaunchTitle, setEditingLaunchTitle] = useState('');
   const [editingLaunchId, setEditingLaunchId] = useState<string | null>(null);
+  
+  // Checklist state for dialog
+  const [showChecklist, setShowChecklist] = useState(false);
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
+  const [newChecklistItem, setNewChecklistItem] = useState('');
 
   // Auto-save launches to localStorage
   useEffect(() => {
@@ -178,6 +190,32 @@ export default function PreLaunchTimelinePlanner() {
     ));
   };
 
+  // Checklist management functions
+  const addChecklistItem = () => {
+    if (!newChecklistItem.trim()) return;
+    
+    const newItem: ChecklistItem = {
+      id: generateId(),
+      text: newChecklistItem.trim(),
+      completed: false,
+    };
+    
+    setChecklistItems([...checklistItems, newItem]);
+    setNewChecklistItem('');
+  };
+
+  const removeChecklistItem = (itemId: string) => {
+    setChecklistItems(checklistItems.filter(item => item.id !== itemId));
+  };
+
+  const resetDialogState = () => {
+    setShowChecklist(false);
+    setChecklistItems([]);
+    setNewChecklistItem('');
+    setCustomContentType('');
+    setCustomEmoji('📝');
+  };
+
   const addContentToWeek = (weekNumber: number, contentType: string, emoji: string, isCustom: boolean = false) => {
     if (!selectedLaunch) return;
 
@@ -190,6 +228,7 @@ export default function PreLaunchTimelinePlanner() {
           isCustom,
           status: 'in progress',
           emoji,
+          checklist: checklistItems.length > 0 ? checklistItems : undefined,
         };
         return { ...week, content: [...week.content, newContent] };
       }
@@ -209,6 +248,7 @@ export default function PreLaunchTimelinePlanner() {
 
     setIsAddModalOpen(false);
     setSelectedWeek(null);
+    resetDialogState();
 
     toast({
       title: "Content Added",
@@ -295,8 +335,6 @@ export default function PreLaunchTimelinePlanner() {
   const handleCustomContentSubmit = () => {
     if (customContentType.trim() && selectedWeek) {
       addContentToWeek(selectedWeek, customContentType.trim(), customEmoji, true);
-      setCustomContentType('');
-      setCustomEmoji('📝');
     }
   };
 
@@ -582,7 +620,10 @@ export default function PreLaunchTimelinePlanner() {
                     <Dialog open={isAddModalOpen && selectedWeek === week.weekNumber} onOpenChange={(open) => {
                       setIsAddModalOpen(open);
                       if (open) setSelectedWeek(week.weekNumber);
-                      else setSelectedWeek(null);
+                      else {
+                        setSelectedWeek(null);
+                        resetDialogState();
+                      }
                     }}>
                       <DialogTrigger asChild>
                         <Button size="sm" variant="outline">
@@ -637,6 +678,65 @@ export default function PreLaunchTimelinePlanner() {
                                 Add Custom Content
                               </Button>
                             </div>
+                          </div>
+                          
+                          {/* Optional Action Checklist */}
+                          <div className="border-t pt-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="font-medium text-gray-900">Action Checklist (Optional)</h4>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowChecklist(!showChecklist)}
+                              >
+                                {showChecklist ? 'Hide' : 'Add'} Checklist
+                              </Button>
+                            </div>
+                            
+                            {showChecklist && (
+                              <div className="space-y-3">
+                                <div className="flex gap-2">
+                                  <Input
+                                    placeholder="Add checklist item..."
+                                    value={newChecklistItem}
+                                    onChange={(e) => setNewChecklistItem(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && addChecklistItem()}
+                                    className="flex-1"
+                                  />
+                                  <Button
+                                    onClick={addChecklistItem}
+                                    disabled={!newChecklistItem.trim()}
+                                    size="sm"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                                
+                                {checklistItems.length > 0 && (
+                                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                                    {checklistItems.map((item) => (
+                                      <div key={item.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                                        <span className="flex-1 text-sm">{item.text}</span>
+                                        <Button
+                                          onClick={() => removeChecklistItem(item.id)}
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 w-6 p-0"
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                
+                                {checklistItems.length > 0 && (
+                                  <p className="text-xs text-gray-500">
+                                    {checklistItems.length} checklist item{checklistItems.length !== 1 ? 's' : ''} will be added
+                                  </p>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </DialogContent>
