@@ -61,10 +61,10 @@ const months = [
 ];
 
 const quarters = [
-  { name: 'Q1', months: [1, 2, 3], color: 'from-blue-400 to-cyan-400' },
-  { name: 'Q2', months: [4, 5, 6], color: 'from-green-400 to-emerald-400' },
-  { name: 'Q3', months: [7, 8, 9], color: 'from-orange-400 to-yellow-400' },
-  { name: 'Q4', months: [10, 11, 12], color: 'from-purple-400 to-pink-400' }
+  { name: 'Quarter 1', months: [1, 2, 3], color: 'from-blue-400 to-cyan-400' },
+  { name: 'Quarter 2', months: [4, 5, 6], color: 'from-green-400 to-emerald-400' },
+  { name: 'Quarter 3', months: [7, 8, 9], color: 'from-orange-400 to-yellow-400' },
+  { name: 'Quarter 4', months: [10, 11, 12], color: 'from-purple-400 to-pink-400' }
 ];
 
 const quickSuggestions = [
