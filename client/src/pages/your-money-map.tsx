@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
@@ -109,7 +108,6 @@ export default function YourMoneyMap() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState('goals');
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [currency, setCurrency] = useState('GBP');
   
@@ -756,22 +754,22 @@ export default function YourMoneyMap() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-green-100 text-green-700">
-                3 Sections
+                3 Cards
               </Badge>
             </div>
           </div>
         </div>
 
-        {/* Main Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="goals">Goals</TabsTrigger>
-            <TabsTrigger value="tracker">Income & Expenses</TabsTrigger>
-            <TabsTrigger value="savings">Savings</TabsTrigger>
-          </TabsList>
-
-          {/* Goals Tab */}
-          <TabsContent value="goals" className="space-y-6">
+        {/* Goals Card */}
+        <Card className="shadow-lg border-0 mb-8">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Target className="w-6 h-6 text-blue-600" />
+              Goals
+            </CardTitle>
+            <CardDescription>Set and track your financial goals</CardDescription>
+          </CardHeader>
+          <CardContent className="p-6 space-y-6">
 
             {/* Financial Goals */}
             <Card className="shadow-md border-0">
@@ -920,10 +918,19 @@ export default function YourMoneyMap() {
                 />
               </CardContent>
             </Card>
-          </TabsContent>
+          </CardContent>
+        </Card>
 
-          {/* Income & Expense Tracker Tab */}
-          <TabsContent value="tracker" className="space-y-6">
+        {/* Income & Expenses Card */}
+        <Card className="shadow-lg border-0 mb-8">
+          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <TrendingUp className="w-6 h-6 text-green-600" />
+              Income & Expenses
+            </CardTitle>
+            <CardDescription>Track your income and expenses</CardDescription>
+          </CardHeader>
+          <CardContent className="p-6 space-y-6">
             {/* Save Button */}
             <Card className="shadow-md border-0 bg-gradient-to-r from-blue-50 to-indigo-50">
               <CardContent className="p-6">
@@ -1223,14 +1230,19 @@ export default function YourMoneyMap() {
                 />
               </CardContent>
             </Card>
-          </TabsContent>
+          </CardContent>
+        </Card>
 
-
-
-
-
-          {/* Savings Tracker Tab */}
-          <TabsContent value="savings" className="space-y-6">
+        {/* Savings Card */}
+        <Card className="shadow-lg border-0 mb-8">
+          <CardHeader className="bg-gradient-to-r from-purple-50 to-violet-50">
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <PiggyBank className="w-6 h-6 text-purple-600" />
+              Savings
+            </CardTitle>
+            <CardDescription>Set and track your savings goals</CardDescription>
+          </CardHeader>
+          <CardContent className="p-6 space-y-6">
 
             <Card className="shadow-md border-0">
               <CardHeader>
@@ -1377,8 +1389,8 @@ export default function YourMoneyMap() {
                 />
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          </CardContent>
+        </Card>
 
         {/* Monthly Records Section */}
         <Card className="shadow-md border-0 mt-6">
