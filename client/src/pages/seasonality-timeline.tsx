@@ -104,6 +104,7 @@ export default function SeasonalityTimeline() {
   const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
   const [eventChecklists, setEventChecklists] = useState<{[eventId: string]: any[]}>({});
+  const [newItemInputs, setNewItemInputs] = useState<{[eventId: string]: string}>({});
   const [editingLabel, setEditingLabel] = useState('');
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
 
@@ -377,6 +378,24 @@ export default function SeasonalityTimeline() {
     };
     const updatedChecklist = [...currentChecklist, newItem];
     updateEventChecklist(eventId, updatedChecklist);
+  };
+
+  const addChecklistItemFromInput = (eventId: string) => {
+    const newItemText = newItemInputs[eventId] || '';
+    if (!newItemText.trim()) return;
+    
+    const currentChecklist = getEventChecklist(eventId);
+    const newItem = {
+      id: `item-${Date.now()}`,
+      text: newItemText.trim(),
+      completed: false
+    };
+    
+    const updatedChecklist = [...currentChecklist, newItem];
+    updateEventChecklist(eventId, updatedChecklist);
+    
+    // Clear the input for this event
+    setNewItemInputs(prev => ({ ...prev, [eventId]: '' }));
   };
 
   const updateChecklistItem = (eventId: string, itemId: string, updates: any) => {
@@ -736,6 +755,22 @@ export default function SeasonalityTimeline() {
                                           Add
                                         </Button>
                                       </div>
+
+                                      {/* New item input */}
+                                      <div className="mb-2">
+                                        <Input
+                                          value={newItemInputs[event.id] || ''}
+                                          onChange={(e) => setNewItemInputs(prev => ({ ...prev, [event.id]: e.target.value }))}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                              e.preventDefault();
+                                              addChecklistItemFromInput(event.id);
+                                            }
+                                          }}
+                                          placeholder="Type and press Enter to add item..."
+                                          className="h-6 text-xs"
+                                        />
+                                      </div>
                                       
                                       <div className="space-y-1">
                                         {checklist.map((item: any) => (
@@ -749,6 +784,12 @@ export default function SeasonalityTimeline() {
                                             <Input
                                               value={item.text}
                                               onChange={(e) => updateChecklistItem(event.id, item.id, { text: e.target.value })}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                  e.preventDefault();
+                                                  (e.target as HTMLInputElement).blur();
+                                                }
+                                              }}
                                               placeholder="Enter checklist item..."
                                               className="flex-1 h-6 text-xs"
                                             />
