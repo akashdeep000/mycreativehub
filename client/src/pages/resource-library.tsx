@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FolderOpen, Plus, Trash2, GripVertical, FileText, Link, Download, Edit2, X, Check, ExternalLink, Archive, BookOpen, Loader2 } from 'lucide-react';
+import { FolderOpen, Plus, Trash2, GripVertical, FileText, Link, Download, Edit2, X, Check, ExternalLink, Archive, BookOpen, Loader2, FolderPlus, Palette } from 'lucide-react';
 import BackToDashboard from '@/components/BackToDashboard';
 import Sidebar from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import type { ResourceLibraryItem } from '@shared/schema';
+import type { ResourceLibraryItem, ResourceLibraryFolder } from '@shared/schema';
 
 export default function ResourceLibrary() {
   const { toast } = useToast();
@@ -22,11 +22,19 @@ export default function ResourceLibrary() {
   const [editingItem, setEditingItem] = useState<ResourceLibraryItem | null>(null);
   const [draggedItem, setDraggedItem] = useState<ResourceLibraryItem | null>(null);
   const [uploadingFileName, setUploadingFileName] = useState<string | null>(null);
+  const [isAddFolderOpen, setIsAddFolderOpen] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState<number | null>(null);
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['/api/resource-library'],
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+  });
+
+  const { data: folders = [] } = useQuery({
+    queryKey: ['/api/resource-library/folders'],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const addItemMutation = useMutation({
@@ -163,6 +171,46 @@ export default function ResourceLibrary() {
     },
   });
 
+  const createFolderMutation = useMutation({
+    mutationFn: async (folderData: { name: string; color: string }) => {
+      return await apiRequest('/api/resource-library/folders', {
+        method: 'POST',
+        body: JSON.stringify(folderData),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/resource-library/folders'] });
+      setIsAddFolderOpen(false);
+      toast({
+        title: "Success",
+        description: "Folder created successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create folder",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteFolderMutation = useMutation({
+    mutationFn: async (folderId: number) => {
+      return await apiRequest(`/api/resource-library/folders/${folderId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/resource-library/folders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/resource-library'] });
+      toast({
+        title: "Success",
+        description: "Folder deleted",
+      });
+    },
+  });
+
   const handleDragStart = (e: React.DragEvent, item: ResourceLibraryItem) => {
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = 'move';
@@ -227,6 +275,7 @@ export default function ResourceLibrary() {
         fileName: file.name,
         fileType: file.type,
         displayOrder: nextOrder,
+        folderId: selectedFolder,
       });
     };
     
@@ -251,7 +300,12 @@ export default function ResourceLibrary() {
       ...formData,
       type: 'link',
       displayOrder: nextOrder,
+      folderId: selectedFolder,
     });
+  };
+
+  const handleCreateFolder = (formData: { name: string; color: string }) => {
+    createFolderMutation.mutate(formData);
   };
 
   const getTypeColor = (type: string) => {
@@ -288,8 +342,13 @@ export default function ResourceLibrary() {
     );
   }
 
-  const fileItems = (items as ResourceLibraryItem[]).filter((item: ResourceLibraryItem) => item.type === 'file');
-  const linkItems = (items as ResourceLibraryItem[]).filter((item: ResourceLibraryItem) => item.type === 'link');
+  const filteredItems = (items as ResourceLibraryItem[]).filter((item: ResourceLibraryItem) => {
+    if (selectedFolder === null) return true; // Show all items when no folder selected
+    return item.folderId === selectedFolder; // Only show items in selected folder
+  });
+
+  const fileItems = filteredItems.filter((item: ResourceLibraryItem) => item.type === 'file');
+  const linkItems = filteredItems.filter((item: ResourceLibraryItem) => item.type === 'link');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -323,6 +382,95 @@ export default function ResourceLibrary() {
             <AddLinkForm onSubmit={handleAddLink} />
           </DialogContent>
         </Dialog>
+
+        {/* Create Folder Dialog */}
+        <Dialog open={isAddFolderOpen} onOpenChange={setIsAddFolderOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Folder</DialogTitle>
+            </DialogHeader>
+            <CreateFolderForm onSubmit={handleCreateFolder} />
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Folder Management Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Organize by Folders</h2>
+          <Button
+            onClick={() => setIsAddFolderOpen(true)}
+            className="bg-indigo-500 hover:bg-indigo-600 text-white"
+            size="sm"
+            data-testid="button-add-folder"
+          >
+            <FolderPlus className="w-4 h-4 mr-2" />
+            Add Folder
+          </Button>
+        </div>
+        
+        {folders.length === 0 ? (
+          <Card className="text-center py-6 border-dashed border-2 border-gray-300 bg-white shadow-md">
+            <CardContent>
+              <FolderOpen className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600 mb-4">No folders created yet</p>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddFolderOpen(true)}
+                className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-300"
+                data-testid="button-create-first-folder"
+              >
+                Create Your First Folder
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="flex flex-wrap gap-3 mb-6">
+            <Button
+              variant={selectedFolder === null ? "default" : "outline"}
+              onClick={() => setSelectedFolder(null)}
+              className={selectedFolder === null ? "bg-gray-900 text-white" : ""}
+              size="sm"
+              data-testid="button-all-files"
+            >
+              All Files
+            </Button>
+            {folders.map((folder: ResourceLibraryFolder) => (
+              <div key={folder.id} className="relative group">
+                <Button
+                  variant={selectedFolder === folder.id ? "default" : "outline"}
+                  onClick={() => setSelectedFolder(folder.id)}
+                  className={`${
+                    selectedFolder === folder.id
+                      ? "text-white"
+                      : "hover:bg-gray-50"
+                  } pr-8`}
+                  style={{
+                    backgroundColor: selectedFolder === folder.id ? folder.color : undefined,
+                    borderColor: folder.color
+                  }}
+                  size="sm"
+                  data-testid={`button-folder-${folder.id}`}
+                >
+                  <div
+                    className="w-3 h-3 rounded-full mr-2"
+                    style={{ backgroundColor: folder.color }}
+                  />
+                  {folder.name}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-1 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700"
+                  onClick={() => deleteFolderMutation.mutate(folder.id)}
+                  data-testid={`button-delete-folder-${folder.id}`}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* PDF Files Section */}
@@ -615,6 +763,82 @@ function ResourceCard({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function CreateFolderForm({ onSubmit }: { onSubmit: (data: { name: string; color: string }) => void }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    color: '#6B7280',
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+    setFormData({ name: '', color: '#6B7280' });
+  };
+
+  const colorOptions = [
+    { value: '#6B7280', name: 'Gray' },
+    { value: '#EF4444', name: 'Red' },
+    { value: '#F97316', name: 'Orange' },
+    { value: '#EAB308', name: 'Yellow' },
+    { value: '#22C55E', name: 'Green' },
+    { value: '#3B82F6', name: 'Blue' },
+    { value: '#8B5CF6', name: 'Purple' },
+    { value: '#EC4899', name: 'Pink' },
+  ];
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="folderName">Folder Name</Label>
+        <Input
+          id="folderName"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          placeholder="Enter folder name"
+          required
+          data-testid="input-folder-name"
+        />
+      </div>
+      <div>
+        <Label htmlFor="folderColor">Color</Label>
+        <Select
+          value={formData.color}
+          onValueChange={(value) => setFormData({ ...formData, color: value })}
+        >
+          <SelectTrigger data-testid="select-folder-color">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-4 h-4 rounded-full border border-gray-300"
+                style={{ backgroundColor: formData.color }}
+              />
+              <SelectValue />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            {colorOptions.map((color) => (
+              <SelectItem key={color.value} value={color.value}>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-full border border-gray-300"
+                    style={{ backgroundColor: color.value }}
+                  />
+                  {color.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={() => setFormData({ name: '', color: '#6B7280' })}>
+          Cancel
+        </Button>
+        <Button type="submit" data-testid="button-create-folder">Create Folder</Button>
+      </div>
+    </form>
   );
 }
 

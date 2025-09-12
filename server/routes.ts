@@ -6,7 +6,7 @@ import { generateToken, jwtAuth, hashPassword, comparePassword } from "./jwtAuth
 import { nanoid } from "nanoid";
 import crypto from "crypto";
 import { Resend } from "resend";
-import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplateInstanceSchema } from "@shared/schema";
+import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplateInstanceSchema, insertResourceLibraryFolderSchema } from "@shared/schema";
 import { db } from "./db";
 import { inspirationBoards } from "@shared/schema";
 
@@ -1922,8 +1922,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/resource-library/:id', jwtAuth, async (req: any, res) => {
     try {
+      const userId = req.user.id;
       const { id } = req.params;
-      const item = await storage.updateResourceLibraryItem(parseInt(id), req.body);
+      const itemId = parseInt(id);
+      
+      if (isNaN(itemId)) {
+        return res.status(400).json({ message: "Invalid item ID" });
+      }
+      
+      // Check if item exists and verify ownership
+      const existingItem = await storage.getResourceLibraryItem(itemId);
+      if (!existingItem) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+      
+      if (existingItem.userId !== userId) {
+        return res.status(403).json({ message: "Access denied: You can only update your own items" });
+      }
+      
+      const item = await storage.updateResourceLibraryItem(itemId, req.body);
       res.json(item);
     } catch (error) {
       console.error("Error updating resource library item:", error);
@@ -1933,8 +1950,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/resource-library/:id', jwtAuth, async (req: any, res) => {
     try {
+      const userId = req.user.id;
       const { id } = req.params;
-      await storage.deleteResourceLibraryItem(parseInt(id));
+      const itemId = parseInt(id);
+      
+      if (isNaN(itemId)) {
+        return res.status(400).json({ message: "Invalid item ID" });
+      }
+      
+      // Check if item exists and verify ownership
+      const existingItem = await storage.getResourceLibraryItem(itemId);
+      if (!existingItem) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+      
+      if (existingItem.userId !== userId) {
+        return res.status(403).json({ message: "Access denied: You can only delete your own items" });
+      }
+      
+      await storage.deleteResourceLibraryItem(itemId);
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting resource library item:", error);
@@ -1950,6 +1984,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error reordering resource library items:", error);
       res.status(500).json({ message: "Failed to reorder resource library items" });
+    }
+  });
+
+  // Move item to folder endpoint
+  app.patch('/api/resource-library/:id/folder', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const { folderId } = req.body;
+      const itemId = parseInt(id);
+      
+      if (isNaN(itemId)) {
+        return res.status(400).json({ message: "Invalid item ID" });
+      }
+      
+      // Check if item exists and verify ownership
+      const existingItem = await storage.getResourceLibraryItem(itemId);
+      if (!existingItem) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+      
+      if (existingItem.userId !== userId) {
+        return res.status(403).json({ message: "Access denied: You can only move your own items" });
+      }
+      
+      // If folderId is provided, verify it exists and belongs to the user
+      if (folderId !== null && folderId !== undefined) {
+        const targetFolder = await storage.getResourceLibraryFolder(folderId);
+        if (!targetFolder) {
+          return res.status(404).json({ message: "Target folder not found" });
+        }
+        
+        if (targetFolder.userId !== userId) {
+          return res.status(403).json({ message: "Access denied: You can only move items to your own folders" });
+        }
+      }
+      
+      // Update the item's folder
+      const updatedItem = await storage.updateResourceLibraryItem(itemId, { folderId });
+      res.json(updatedItem);
+    } catch (error) {
+      console.error("Error moving resource library item to folder:", error);
+      res.status(500).json({ message: "Failed to move item to folder" });
+    }
+  });
+
+  // Resource Library Folders routes
+  app.get('/api/resource-library/folders', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const folders = await storage.getResourceLibraryFolders(userId);
+      res.json(folders);
+    } catch (error) {
+      console.error("Error fetching resource library folders:", error);
+      res.status(500).json({ message: "Failed to fetch resource library folders" });
+    }
+  });
+
+  app.post('/api/resource-library/folders', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { name, color } = req.body;
+      
+      if (!name?.trim()) {
+        return res.status(400).json({ message: "Folder name is required" });
+      }
+
+      // Get next display order
+      const existingFolders = await storage.getResourceLibraryFolders(userId);
+      const nextOrder = existingFolders.length + 1;
+
+      const folderData = {
+        userId,
+        name: name.trim(),
+        color: color || "#6B7280",
+        displayOrder: nextOrder,
+      };
+      
+      const folder = await storage.createResourceLibraryFolder(folderData);
+      res.status(201).json(folder);
+    } catch (error) {
+      console.error("Error creating resource library folder:", error);
+      res.status(500).json({ message: "Failed to create resource library folder" });
+    }
+  });
+
+  app.put('/api/resource-library/folders/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const folderId = parseInt(id);
+      
+      if (isNaN(folderId)) {
+        return res.status(400).json({ message: "Invalid folder ID" });
+      }
+      
+      // Check if folder exists and verify ownership
+      const existingFolder = await storage.getResourceLibraryFolder(folderId);
+      if (!existingFolder) {
+        return res.status(404).json({ message: "Folder not found" });
+      }
+      
+      if (existingFolder.userId !== userId) {
+        return res.status(403).json({ message: "Access denied: You can only update your own folders" });
+      }
+      
+      // Validate request body using Zod schema
+      const updateSchema = insertResourceLibraryFolderSchema.omit({ userId: true }).partial();
+      const validationResult = updateSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid folder data", 
+          errors: validationResult.error.issues 
+        });
+      }
+      
+      const folder = await storage.updateResourceLibraryFolder(folderId, validationResult.data);
+      res.json(folder);
+    } catch (error) {
+      console.error("Error updating resource library folder:", error);
+      res.status(500).json({ message: "Failed to update resource library folder" });
+    }
+  });
+
+  app.delete('/api/resource-library/folders/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const folderId = parseInt(id);
+      
+      if (isNaN(folderId)) {
+        return res.status(400).json({ message: "Invalid folder ID" });
+      }
+      
+      // Check if folder exists and verify ownership
+      const existingFolder = await storage.getResourceLibraryFolder(folderId);
+      if (!existingFolder) {
+        return res.status(404).json({ message: "Folder not found" });
+      }
+      
+      if (existingFolder.userId !== userId) {
+        return res.status(403).json({ message: "Access denied: You can only delete your own folders" });
+      }
+      
+      // Delete folder (transaction handles moving items out of folder)
+      await storage.deleteResourceLibraryFolder(folderId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting resource library folder:", error);
+      res.status(500).json({ message: "Failed to delete resource library folder" });
     }
   });
 

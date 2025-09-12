@@ -241,6 +241,7 @@ export interface IStorage {
   
   // Resource Library
   getResourceLibraryItems(userId: string): Promise<ResourceLibraryItem[]>;
+  getResourceLibraryItem(id: number): Promise<ResourceLibraryItem | undefined>;
   createResourceLibraryItem(item: InsertResourceLibraryItem): Promise<ResourceLibraryItem>;
   updateResourceLibraryItem(id: number, data: any): Promise<ResourceLibraryItem>;
   deleteResourceLibraryItem(id: number): Promise<void>;
@@ -248,6 +249,7 @@ export interface IStorage {
   
   // Resource Library Folders
   getResourceLibraryFolders(userId: string): Promise<ResourceLibraryFolder[]>;
+  getResourceLibraryFolder(id: number): Promise<ResourceLibraryFolder | undefined>;
   createResourceLibraryFolder(folder: InsertResourceLibraryFolder): Promise<ResourceLibraryFolder>;
   updateResourceLibraryFolder(id: number, data: any): Promise<ResourceLibraryFolder>;
   deleteResourceLibraryFolder(id: number): Promise<void>;
@@ -1139,6 +1141,15 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(resourceLibrary.displayOrder));
   }
 
+  async getResourceLibraryItem(id: number): Promise<ResourceLibraryItem | undefined> {
+    const [item] = await db
+      .select()
+      .from(resourceLibrary)
+      .where(eq(resourceLibrary.id, id))
+      .limit(1);
+    return item;
+  }
+
   async createResourceLibraryItem(itemData: InsertResourceLibraryItem): Promise<ResourceLibraryItem> {
     const [item] = await db
       .insert(resourceLibrary)
@@ -1183,6 +1194,15 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(resourceLibraryFolders.displayOrder));
   }
 
+  async getResourceLibraryFolder(id: number): Promise<ResourceLibraryFolder | undefined> {
+    const [folder] = await db
+      .select()
+      .from(resourceLibraryFolders)
+      .where(eq(resourceLibraryFolders.id, id))
+      .limit(1);
+    return folder;
+  }
+
   async createResourceLibraryFolder(folderData: InsertResourceLibraryFolder): Promise<ResourceLibraryFolder> {
     const [folder] = await db
       .insert(resourceLibraryFolders)
@@ -1204,8 +1224,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteResourceLibraryFolder(id: number): Promise<void> {
-    await db.delete(resourceLibraryFolders)
-      .where(eq(resourceLibraryFolders.id, id));
+    await db.transaction(async (tx) => {
+      // First, set all items in this folder to have no folder (null)
+      await tx
+        .update(resourceLibrary)
+        .set({ folderId: null })
+        .where(eq(resourceLibrary.folderId, id));
+      
+      // Then delete the folder
+      await tx.delete(resourceLibraryFolders)
+        .where(eq(resourceLibraryFolders.id, id));
+    });
   }
 
   // Affiliate Links
