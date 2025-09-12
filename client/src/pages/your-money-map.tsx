@@ -694,6 +694,7 @@ export default function YourMoneyMap() {
                         placeholder="Amount"
                         value={item.actualAmount || ''}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'actualAmount', parseFloat(e.target.value) || 0)}
+                        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                         className="w-32"
                       />
                       <Button
@@ -739,6 +740,7 @@ export default function YourMoneyMap() {
                         placeholder="Amount"
                         value={item.actualAmount || ''}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'actualAmount', parseFloat(e.target.value) || 0)}
+                        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                         className="w-32"
                       />
                       <Button
