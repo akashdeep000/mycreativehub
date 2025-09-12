@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Rocket, Calendar, TrendingUp, Target, Lightbulb, CheckSquare, Calculator, Clock, BarChart3, ArrowLeft } from 'lucide-react';
 import { useLocation } from 'wouter';
@@ -116,28 +116,19 @@ export default function ProductLaunch() {
         {templates.map((template) => (
           <Card 
             key={template.id}
-            className="group hover:shadow-lg transition-all duration-300 cursor-pointer aspect-square border-0 shadow-md bg-white"
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-md bg-white"
             onClick={() => handleTemplateClick(template)}
           >
-            <CardContent className="p-6 flex flex-col h-full relative">
-              {/* Icon */}
-              <div className="mb-4">
-                <div className={`w-12 h-12 bg-gradient-to-br ${template.gradient} rounded-xl flex items-center justify-center`}>
+            <CardHeader>
+              <div className="flex items-center justify-between mb-3">
+                <div className={`w-10 h-10 bg-gradient-to-br ${template.gradient} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
                   <template.icon className="w-5 h-5 text-white" />
                 </div>
               </div>
-
-              {/* Content */}
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-tight">
-                  {template.title}
-                </h3>
-                <p className="text-sm text-gray-600 mb-4 line-clamp-3">
-                  {template.subtitle}
-                </p>
-              </div>
-              
-              
+              <CardTitle className="text-lg font-serif">{template.title}</CardTitle>
+              <CardDescription>{template.subtitle}</CardDescription>
+            </CardHeader>
+            <CardContent>
             </CardContent>
           </Card>
         ))}
