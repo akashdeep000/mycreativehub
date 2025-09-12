@@ -103,10 +103,13 @@ export default function YourMoneyMap() {
   // Category names state
   const [taxCategoryName, setTaxCategoryName] = useState('Tax Amount');
   const [personalPayCategoryName, setPersonalPayCategoryName] = useState('Personal Pay Amount');
+  const [savingsPercentage, setSavingsPercentage] = useState(0);
+  const [savingsCategoryName, setSavingsCategoryName] = useState('Savings');
   
   // Edit states for category names
   const [editingTax, setEditingTax] = useState(false);
   const [editingPersonalPay, setEditingPersonalPay] = useState(false);
+  const [editingSavings, setEditingSavings] = useState(false);
   const [trackerNotes, setTrackerNotes] = useState('');
 
 
@@ -136,7 +139,7 @@ export default function YourMoneyMap() {
       const quarterMonths = [
         'Jan–Mar', 'Apr–Jun', 'Jul–Sep', 'Oct–Dec'
       ];
-      return `📘 Q${quarter}: ${quarterMonths[quarter - 1]} ${currentDate.getFullYear()}`;
+      return `Q${quarter}: ${quarterMonths[quarter - 1]} ${currentDate.getFullYear()}`;
     }
   };
 
@@ -344,8 +347,9 @@ export default function YourMoneyMap() {
     
     const actualProfit = actualIncome - actualExpenses;
     const taxAmount = actualProfit * (taxPercentage / 100);
+    const savingsAmount = actualProfit * (savingsPercentage / 100);
     const afterTaxProfit = actualProfit - taxAmount;
-    const availableForSavings = afterTaxProfit - personalPayAmount;
+    const availableForSavings = afterTaxProfit - personalPayAmount - savingsAmount;
     const profitMargin = actualIncome > 0 ? (actualProfit / actualIncome) * 100 : 0;
     
     return {
@@ -353,6 +357,7 @@ export default function YourMoneyMap() {
       actualExpenses,
       actualProfit,
       taxAmount,
+      savingsAmount,
       afterTaxProfit,
       availableForSavings,
       profitMargin
@@ -825,6 +830,37 @@ export default function YourMoneyMap() {
                       placeholder="0"
                     />
                   </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      {editingSavings ? (
+                        <Input
+                          type="text"
+                          value={savingsCategoryName}
+                          onChange={(e) => setSavingsCategoryName(e.target.value)}
+                          onBlur={() => setEditingSavings(false)}
+                          onKeyDown={(e) => e.key === 'Enter' && setEditingSavings(false)}
+                          className="flex-1 text-sm font-medium"
+                          autoFocus
+                        />
+                      ) : (
+                        <span className="flex-1 text-sm font-medium">{savingsCategoryName}</span>
+                      )}
+                      <button
+                        onClick={() => setEditingSavings(true)}
+                        className="hover:text-blue-600 transition-colors"
+                      >
+                        <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                      </button>
+                      <span className="text-sm font-medium">(%)</span>
+                    </div>
+                    <Input
+                      id="savings-percentage"
+                      type="number"
+                      value={savingsPercentage}
+                      onChange={(e) => setSavingsPercentage(parseFloat(e.target.value) || 0)}
+                      placeholder="10"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -862,7 +898,7 @@ export default function YourMoneyMap() {
                   </div>
                 </div>
                 
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 bg-orange-50 rounded-lg">
                     <div className="text-lg font-bold text-orange-600">
                       {formatCurrency(getTrackerTotals().taxAmount)}
@@ -874,6 +910,18 @@ export default function YourMoneyMap() {
                       {formatCurrency(personalPayAmount)}
                     </div>
                     <div className="text-sm text-gray-600">{personalPayCategoryName}</div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-lg font-bold text-green-600">
+                      {formatCurrency(getTrackerTotals().savingsAmount)}
+                    </div>
+                    <div className="text-sm text-gray-600">{savingsCategoryName}</div>
+                  </div>
+                  <div className="text-center p-4 bg-teal-50 rounded-lg">
+                    <div className="text-lg font-bold text-teal-600">
+                      {formatCurrency(getTrackerTotals().availableForSavings)}
+                    </div>
+                    <div className="text-sm text-gray-600">Available After Allocations</div>
                   </div>
                 </div>
               </CardContent>
