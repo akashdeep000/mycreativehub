@@ -138,9 +138,6 @@ export default function FinanceTracker() {
               </div>
               <div>
                 <h4 className="font-semibold text-gray-700 mb-2">🎯 Set Monthly Goals</h4>
-                <p className="text-gray-600 text-sm mb-4">
-                  Break down your annual revenue goals into monthly targets for better focus.
-                </p>
               </div>
               <div>
                 <h4 className="font-semibold text-gray-700 mb-2">💡 Plan for Taxes</h4>
