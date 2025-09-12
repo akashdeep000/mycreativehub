@@ -17,11 +17,11 @@ export default function Sidebar() {
     <div className="fixed top-0 left-0 lg:w-64 bg-white lg:shadow-[4px_0_20px_-4px_rgba(0,0,0,0.1)] h-full overflow-y-auto hidden lg:block z-40">
       <div className="p-6">
         {/* Logo/Brand */}
-        <div className="flex items-center space-x-3 mb-8">
-          <div className="w-10 h-10 bg-gradient-to-br from-pink-300 to-purple-300 rounded-lg flex items-center justify-center">
-            <Palette className="text-white text-lg" />
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-12 h-12 aspect-square shrink-0 rounded-[10px] flex items-center justify-center bg-gradient-to-br from-pink-300 to-purple-300 mb-3">
+            <Palette className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-xl font-serif font-semibold text-gray-800 whitespace-nowrap">My Creative Hub</h1>
+          <h1 className="text-xl font-serif font-semibold text-gray-800 text-center">My Creative Hub</h1>
         </div>
 
         {/* User Profile Section */}
