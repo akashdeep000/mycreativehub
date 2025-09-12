@@ -581,6 +581,11 @@ export default function ProfitCalculator() {
                           value={component.costPerUnit}
                           onChange={(e) => updateComponent(component.id, 'costPerUnit', parseFloat(e.target.value) || 0)}
                           onFocus={(e) => e.target.select()}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              (e.target as HTMLInputElement).blur();
+                            }
+                          }}
                           placeholder="0.00"
                           className="border-gray-300"
                           step="0.01"
@@ -592,6 +597,11 @@ export default function ProfitCalculator() {
                           value={component.quantity}
                           onChange={(e) => updateComponent(component.id, 'quantity', parseFloat(e.target.value) || 0)}
                           onFocus={(e) => e.target.select()}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              (e.target as HTMLInputElement).blur();
+                            }
+                          }}
                           placeholder="1"
                           className="border-gray-300"
                           step="0.01"
@@ -643,6 +653,11 @@ export default function ProfitCalculator() {
                     value={selectedCalculation.sellingPrice}
                     onChange={(e) => updateSellingPrice(parseFloat(e.target.value) || 0)}
                     onFocus={(e) => e.target.select()}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        (e.target as HTMLInputElement).blur();
+                      }
+                    }}
                     placeholder="0.00"
                     className="border-gray-300 text-lg"
                     step="0.01"
