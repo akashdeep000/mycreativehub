@@ -443,7 +443,7 @@ export default function LaunchGrowthPlan() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    What Went Well (Repeat)
+                    What Went Well
                   </label>
                   <Textarea
                     value={formData.whatWentWell}
