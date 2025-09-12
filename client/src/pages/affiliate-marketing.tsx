@@ -283,7 +283,7 @@ export default function AffiliateMarketing() {
   };
 
   const exportToCsv = () => {
-    const headers = ['Product Name', 'Company', 'Tracking Link', 'Affiliate Code', 'Commission Rate', 'Cookie Length', 'Content Channel', 'Status', 'Notes', 'Created At'];
+    const headers = ['Product Name', 'Company', 'Tracking Link', 'Affiliate Code', 'Commission Rate', 'Cookie Length', 'Status', 'Notes', 'Created At'];
     const csvContent = [
       headers.join(','),
       ...filteredLinks.map(link => [
@@ -293,7 +293,6 @@ export default function AffiliateMarketing() {
         `"${link.affiliateCode || ''}"`,
         `"${link.commissionRate || ''}"`,
         `"${link.cookieLength || ''}"`,
-        `"${link.contentChannel || ''}"`,
         `"${link.status}"`,
         `"${link.notes || ''}"`,
         `"${new Date(link.createdAt).toLocaleDateString()}"`
@@ -514,66 +513,6 @@ export default function AffiliateMarketing() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Content Channel</label>
-              <Select value={newLink.contentChannel || ''} onValueChange={(value) => setNewLink({...newLink, contentChannel: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a content channel" />
-                </SelectTrigger>
-                <SelectContent>
-                  {getAllChannels().map(channel => (
-                    <SelectItem key={channel} value={channel}>
-                      {channel}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {!showCustomChannelInput && (
-                <Button
-                  variant="outline"
-                  className="mt-2 border-pink-500 text-pink-500 hover:bg-pink-50"
-                  onClick={() => setShowCustomChannelInput(true)}
-                  size="sm"
-                >
-                  + Add Custom Channel
-                </Button>
-              )}
-              {showCustomChannelInput && (
-                <div className="flex gap-2 mt-2">
-                  <Input
-                    value={newCustomChannel}
-                    onChange={(e) => setNewCustomChannel(e.target.value)}
-                    placeholder="Enter custom channel name"
-                    className="flex-1"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        addCustomChannel();
-                      } else if (e.key === 'Escape') {
-                        setShowCustomChannelInput(false);
-                        setNewCustomChannel('');
-                      }
-                    }}
-                  />
-                  <Button
-                    onClick={addCustomChannel}
-                    className="bg-pink-500 hover:bg-pink-600 text-white"
-                    size="sm"
-                  >
-                    Add
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setShowCustomChannelInput(false);
-                      setNewCustomChannel('');
-                    }}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              )}
-            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -634,7 +573,6 @@ export default function AffiliateMarketing() {
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Link</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Commission</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Cookie</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Channels</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
               </tr>
@@ -642,7 +580,7 @@ export default function AffiliateMarketing() {
             <tbody className="divide-y divide-gray-200">
               {filteredLinks.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
                     {searchTerm || statusFilter !== 'all' ? 'No affiliate links match your filters' : 'No affiliate links yet. Add your first one above!'}
                   </td>
                 </tr>
@@ -682,20 +620,6 @@ export default function AffiliateMarketing() {
                     </td>
                     <td className="px-4 py-3 text-gray-900">{link.commissionRate || '-'}</td>
                     <td className="px-4 py-3 text-gray-900">{link.cookieLength || '-'}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {link.contentChannel ? link.contentChannel.split(', ').slice(0, 2).map(channel => (
-                          <Badge key={channel} variant="outline" className="text-xs">
-                            {channel}
-                          </Badge>
-                        )) : null}
-                        {link.contentChannel && link.contentChannel.split(', ').length > 2 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{link.contentChannel.split(', ').length - 2}
-                          </Badge>
-                        )}
-                      </div>
-                    </td>
                     <td className="px-4 py-3">
                       <Badge className={`${getStatusBadgeColor(link.status)} border-0`}>
                         {STATUS_OPTIONS.find(opt => opt.value === link.status)?.label || link.status}
@@ -801,66 +725,6 @@ export default function AffiliateMarketing() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Content Channel</label>
-                <Select value={editingLink.contentChannel || ''} onValueChange={(value) => setEditingLink({...editingLink, contentChannel: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a content channel" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getAllChannels().map((channel: string) => (
-                      <SelectItem key={channel} value={channel}>
-                        {channel}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!showCustomChannelInput && (
-                  <Button
-                    variant="outline"
-                    className="mt-2 border-pink-500 text-pink-500 hover:bg-pink-50"
-                    onClick={() => setShowCustomChannelInput(true)}
-                    size="sm"
-                  >
-                    + Add Custom Channel
-                  </Button>
-                )}
-                {showCustomChannelInput && (
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      value={newCustomChannel}
-                      onChange={(e) => setNewCustomChannel(e.target.value)}
-                      placeholder="Enter custom channel name"
-                      className="flex-1"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          addCustomChannel();
-                        } else if (e.key === 'Escape') {
-                          setShowCustomChannelInput(false);
-                          setNewCustomChannel('');
-                        }
-                      }}
-                    />
-                    <Button
-                      onClick={addCustomChannel}
-                      className="bg-pink-500 hover:bg-pink-600 text-white"
-                      size="sm"
-                    >
-                      Add
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setShowCustomChannelInput(false);
-                        setNewCustomChannel('');
-                      }}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                )}
-              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
