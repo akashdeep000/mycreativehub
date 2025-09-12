@@ -804,6 +804,7 @@ export default function YourMoneyMap() {
                       type="number"
                       value={taxPercentage}
                       onChange={(e) => setTaxPercentage(parseFloat(e.target.value) || 0)}
+                      onFocus={(e) => e.target.select()}
                       placeholder="25"
                     />
                   </div>
@@ -835,6 +836,7 @@ export default function YourMoneyMap() {
                       type="number"
                       value={personalPayPercentage}
                       onChange={(e) => setPersonalPayPercentage(parseFloat(e.target.value) || 0)}
+                      onFocus={(e) => e.target.select()}
                       placeholder="0"
                     />
                   </div>
@@ -866,6 +868,7 @@ export default function YourMoneyMap() {
                       type="number"
                       value={savingsPercentage}
                       onChange={(e) => setSavingsPercentage(parseFloat(e.target.value) || 0)}
+                      onFocus={(e) => e.target.select()}
                       placeholder="10"
                     />
                   </div>
