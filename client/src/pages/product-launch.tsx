@@ -34,7 +34,7 @@ export default function ProductLaunch() {
     {
       id: 3,
       title: "Profit Calculator",
-      subtitle: "Calculate costs, profits, and margins with color-coded margin strength indicators.",
+      subtitle: "Calculate costs, profits, and margins with colour-coded margin strength indicators.",
       icon: Calculator,
       gradient: "from-green-400 to-teal-400",
       route: "/profit-calculator"
