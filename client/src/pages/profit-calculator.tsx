@@ -769,9 +769,7 @@ export default function ProfitCalculator() {
               {/* Instructions */}
               <Card className="bg-green-50 border-green-200">
                 <CardContent className="p-6">
-                  <p className="text-sm text-green-800 leading-relaxed">
-                    List your product components here, enter your costs, and let the calculator do the rest. You'll see exactly how much it costs to produce each item, how much profit you're making, and whether your price is aligned with your goals. Tweak your numbers to test different scenarios, then click 'add to library' to see all your products listed in one place.
-                  </p>
+                  <p className="text-sm text-green-800 leading-relaxed">List your product components here, enter your costs, and let the calculator do the rest. You'll see exactly how much it costs to produce each item and how much profit you're making. Tweak your numbers to test different scenarios, then click 'add to library' to see all your products listed in one place, ready to download.</p>
                 </CardContent>
               </Card>
 
