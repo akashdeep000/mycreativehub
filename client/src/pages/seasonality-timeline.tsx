@@ -620,32 +620,7 @@ export default function SeasonalityTimeline() {
           <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-rose-400 rounded-xl flex items-center justify-center">
             <Calendar className="w-5 h-5 text-white" />
           </div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-serif font-semibold text-gray-800">Seasonality Timeline</h1>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={navigateToPreviousYear}
-                className="h-8 w-8 p-0 text-gray-600 hover:text-gray-800"
-                data-testid="button-previous-year"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-2xl font-serif font-semibold text-gray-800 min-w-[80px] text-center">
-                {selectedYear}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={navigateToNextYear}
-                className="h-8 w-8 p-0 text-gray-600 hover:text-gray-800"
-                data-testid="button-next-year"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          <h1 className="text-3xl font-serif font-semibold text-gray-800">Seasonality Timeline</h1>
         </div>
         
         <p className="text-gray-600 mb-6">Plan your year with purpose - map your seasonal cycles, launches, and holidays.</p>
@@ -702,9 +677,31 @@ export default function SeasonalityTimeline() {
         {/* Main Timeline */}
         <div className="lg:col-span-3">
           <div ref={timelineRef} className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-xl font-semibold mb-6 text-center">
-              Year-at-a-Glance: {new Date().getFullYear()}
-            </h2>
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <h2 className="text-xl font-semibold">
+                Year-at-a-Glance: {selectedYear}
+              </h2>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={navigateToPreviousYear}
+                  className="h-7 w-7 p-0 text-gray-600 hover:text-gray-800"
+                  data-testid="button-previous-year"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={navigateToNextYear}
+                  className="h-7 w-7 p-0 text-gray-600 hover:text-gray-800"
+                  data-testid="button-next-year"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {quarters.map((quarter) => (
