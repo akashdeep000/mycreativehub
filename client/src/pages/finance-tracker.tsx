@@ -49,7 +49,6 @@ export default function FinanceTracker() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
-      
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="mb-8">
@@ -135,9 +134,7 @@ export default function FinanceTracker() {
               </div>
               <div>
                 <h4 className="font-semibold text-gray-700 mb-2">📊 Track Everything</h4>
-                <p className="text-gray-600 text-sm mb-4">
-                  Record every business expense, no matter how small. It all adds up at tax time.
-                </p>
+                <p className="text-gray-600 text-sm mb-4">Record every business expense, no matter how small. It all adds up over time.</p>
               </div>
               <div>
                 <h4 className="font-semibold text-gray-700 mb-2">🎯 Set Monthly Goals</h4>
@@ -155,7 +152,6 @@ export default function FinanceTracker() {
           </CardContent>
         </Card>
       </div>
-
       <MobileNav />
     </div>
   );
