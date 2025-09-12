@@ -73,6 +73,7 @@ interface MonthlySnapshot {
     profit: number;
     taxSetAside: number;
     personalPay: number;
+    availableForSavings: number;
     profitMargin: number;
   };
   notes: {
@@ -725,7 +726,7 @@ export default function YourMoneyMap() {
                   {incomeExpenseItems.filter(item => item.type === 'expense').map((item) => (
                     <div key={item.id} className="flex gap-2">
                       <Input
-                        placeholder="Expense category"
+                        placeholder="Expense item"
                         value={item.category}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'category', e.target.value)}
                         className="flex-1"
@@ -752,7 +753,7 @@ export default function YourMoneyMap() {
                     className="w-full"
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Expense Category
+                    Add Expense Item
                   </Button>
                 </CardContent>
               </Card>
