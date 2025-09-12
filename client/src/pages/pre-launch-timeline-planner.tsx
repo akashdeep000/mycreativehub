@@ -706,7 +706,7 @@ export default function PreLaunchTimelinePlanner() {
                           Add
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
+                      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[640px]">
                         <DialogHeader>
                           <DialogTitle>Add Content to {week.weekTitle}</DialogTitle>
                         </DialogHeader>
