@@ -77,7 +77,7 @@ const getStatusColor = (status: 'in progress' | 'scheduled' | 'completed') => {
     case 'in progress':
       return 'bg-red-100 border-red-300 text-red-800';
     case 'scheduled':
-      return 'bg-amber-100 border-amber-300 text-amber-800';
+      return 'bg-orange-100 border-orange-300 text-orange-800';
     case 'completed':
       return 'bg-green-100 border-green-300 text-green-800';
     default:
@@ -430,9 +430,6 @@ export default function PreLaunchTimelinePlanner() {
     });
   };
 
-  const getStatusColor = (status: 'draft' | 'scheduled') => {
-    return status === 'scheduled' ? 'bg-green-100 border-green-300 text-green-800' : 'bg-gray-100 border-gray-300 text-gray-600';
-  };
 
   // Launch cards view (when no launch is selected)
   if (!selectedLaunch) {
