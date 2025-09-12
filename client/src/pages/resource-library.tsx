@@ -70,7 +70,7 @@ export default function ResourceLibrary() {
     onSuccess: (createdItem, variables, context) => {
       console.log('Upload success - item created:', createdItem);
       
-      // Invalidate all folder-scoped cache entries
+      // Invalidate cache entries
       queryClient.invalidateQueries({ queryKey: ['/api/resource-library'] });
       
       setIsAddModalOpen(false);
@@ -550,7 +550,7 @@ function ResourceCard({
 
   return (
     <Card
-      className={`transition-all duration-200 hover:shadow-lg cursor-move border-0 shadow-md bg-white h-48 ${
+      className={`transition-all duration-200 hover:shadow-lg cursor-move border-0 shadow-md bg-white min-h-56 ${
         draggedItem?.id === item.id ? 'opacity-50' : ''
       }`}
       draggable
