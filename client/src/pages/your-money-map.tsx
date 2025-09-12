@@ -249,7 +249,7 @@ export default function YourMoneyMap() {
   // Auto-save draft when data changes
   useEffect(() => {
     saveDraftForCurrentPeriod();
-  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, personalPayAmount, trackerNotes, savingsGoals, savingsNotes]);
+  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, personalPayAmount, trackerNotes]);
 
   // Authentication check
   useEffect(() => {
@@ -362,35 +362,6 @@ export default function YourMoneyMap() {
 
 
 
-  // Savings Tracker Functions
-  const addSavingsGoal = () => {
-    const newGoal: SavingsGoal = {
-      id: Date.now().toString(),
-      title: '',
-      targetAmount: 0,
-      currentAmount: 0,
-      monthlyContribution: 0,
-      targetDate: '',
-      priority: 'medium'
-    };
-    setSavingsGoals([...savingsGoals, newGoal]);
-  };
-
-  const updateSavingsGoal = (id: string, field: string, value: any) => {
-    setSavingsGoals(savingsGoals.map(goal => 
-      goal.id === id ? { ...goal, [field]: value } : goal
-    ));
-  };
-
-  const deleteSavingsGoal = (id: string) => {
-    setSavingsGoals(savingsGoals.filter(goal => goal.id !== id));
-  };
-
-  const calculateMonthsToGoal = (goal: SavingsGoal) => {
-    if (goal.monthlyContribution <= 0) return 0;
-    const remaining = goal.targetAmount - goal.currentAmount;
-    return Math.ceil(remaining / goal.monthlyContribution);
-  };
 
   // Export to CSV
   const exportToCSV = () => {
@@ -424,16 +395,7 @@ export default function YourMoneyMap() {
     csvContent += `Actual Profit,${trackerTotals.actualProfit}\n`;
     csvContent += `Tax Amount (${taxPercentage}%),${trackerTotals.taxAmount}\n`;
     csvContent += `Personal Pay,${personalPayAmount}\n`;
-    csvContent += `Available for Savings,${trackerTotals.availableForSavings}\n`;
     csvContent += `Profit Margin,${trackerTotals.profitMargin.toFixed(2)}%\n\n`;
-    
-    // Savings Goals
-    csvContent += "\nSAVINGS GOALS\n";
-    csvContent += "Title,Target Amount,Current Amount,Monthly Contribution,Months to Goal,Priority,Target Date\n";
-    savingsGoals.forEach(goal => {
-      const monthsToGoal = calculateMonthsToGoal(goal);
-      csvContent += `${goal.title},${goal.targetAmount},${goal.currentAmount},${goal.monthlyContribution},${monthsToGoal},${goal.priority},${goal.targetDate}\n`;
-    });
     
     // Create and download file
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -470,8 +432,6 @@ export default function YourMoneyMap() {
       incomeExpenseItems: [...incomeExpenseItems],
       taxPercentage,
       personalPayAmount,
-      goals: [...goals],
-      savingsGoals: [...savingsGoals],
       summary: {
         totalIncome: trackerTotals.actualIncome,
         totalExpenses: trackerTotals.actualExpenses,
@@ -479,12 +439,10 @@ export default function YourMoneyMap() {
         taxSetAside: trackerTotals.taxAmount,
         personalPay: personalPayAmount,
         profitMargin: trackerTotals.profitMargin,
-        availableForSavings: trackerTotals.availableForSavings,
       },
       notes: {
         budget: budgetNotes,
         tracker: trackerNotes,
-        savings: savingsNotes,
       },
     };
     
@@ -530,7 +488,6 @@ export default function YourMoneyMap() {
     csvContent += `Profit,${snapshot.summary.profit}\n`;
     csvContent += `Tax Set Aside,${snapshot.summary.taxSetAside}\n`;
     csvContent += `Personal Pay,${snapshot.summary.personalPay}\n`;
-    csvContent += `Available for Savings,${snapshot.summary.availableForSavings}\n`;
     csvContent += `Profit Margin,${snapshot.summary.profitMargin.toFixed(2)}%\n\n`;
     
     // Income & Expenses
@@ -662,7 +619,7 @@ export default function YourMoneyMap() {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-green-100 text-green-700">
-                2 Cards
+                1 Card
               </Badge>
             </div>
           </div>
@@ -871,37 +828,6 @@ export default function YourMoneyMap() {
                       placeholder="0"
                     />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      {editingSavings ? (
-                        <Input
-                          type="text"
-                          value={savingsCategoryName}
-                          onChange={(e) => setSavingsCategoryName(e.target.value)}
-                          onBlur={() => setEditingSavings(false)}
-                          onKeyDown={(e) => e.key === 'Enter' && setEditingSavings(false)}
-                          className="flex-1 text-sm font-medium"
-                          autoFocus
-                        />
-                      ) : (
-                        <span className="flex-1 text-sm font-medium">{savingsCategoryName}</span>
-                      )}
-                      <button
-                        onClick={() => setEditingSavings(true)}
-                        className="hover:text-blue-600 transition-colors"
-                      >
-                        <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-600" />
-                      </button>
-                      <span className="text-sm font-medium">(%)</span>
-                    </div>
-                    <Input
-                      id="savings-percentage"
-                      type="number"
-                      value={savingsPercentage}
-                      onChange={(e) => setSavingsPercentage(parseFloat(e.target.value) || 0)}
-                      placeholder="20"
-                    />
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -952,12 +878,6 @@ export default function YourMoneyMap() {
                     </div>
                     <div className="text-sm text-gray-600">{personalPayCategoryName}</div>
                   </div>
-                  <div className="text-center p-4 bg-teal-50 rounded-lg">
-                    <div className="text-lg font-bold text-teal-600">
-                      {formatCurrency(getTrackerTotals().availableForSavings)}
-                    </div>
-                    <div className="text-sm text-gray-600">{savingsCategoryName}</div>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -981,164 +901,6 @@ export default function YourMoneyMap() {
           </CardContent>
         </Card>
 
-        {/* Savings Card */}
-        <Card className="shadow-lg border-0 mb-8">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-violet-50">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <PiggyBank className="w-6 h-6 text-purple-600" />
-              Savings
-            </CardTitle>
-            <CardDescription>Set and track your savings goals</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 space-y-6">
-
-            <Card className="shadow-md border-0">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Savings Goals</span>
-                  <Button onClick={addSavingsGoal} className="flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Add Savings Goal
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {savingsGoals.map((goal) => (
-                    <div key={goal.id} className="p-4 border rounded-lg space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Input
-                          placeholder="Savings goal title"
-                          value={goal.title}
-                          onChange={(e) => updateSavingsGoal(goal.id, 'title', e.target.value)}
-                        />
-                        <Select value={goal.priority} onValueChange={(value) => updateSavingsGoal(goal.id, 'priority', value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="high">High Priority</SelectItem>
-                            <SelectItem value="medium">Medium Priority</SelectItem>
-                            <SelectItem value="low">Low Priority</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="date"
-                          value={goal.targetDate}
-                          onChange={(e) => updateSavingsGoal(goal.id, 'targetDate', e.target.value)}
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Input
-                          type="number"
-                          placeholder="Target amount"
-                          value={goal.targetAmount || ''}
-                          onChange={(e) => updateSavingsGoal(goal.id, 'targetAmount', parseFloat(e.target.value) || 0)}
-                        />
-                        <Input
-                          type="number"
-                          placeholder="Current amount"
-                          value={goal.currentAmount || ''}
-                          onChange={(e) => updateSavingsGoal(goal.id, 'currentAmount', parseFloat(e.target.value) || 0)}
-                        />
-                        <Input
-                          type="number"
-                          placeholder="Monthly contribution"
-                          value={goal.monthlyContribution || ''}
-                          onChange={(e) => updateSavingsGoal(goal.id, 'monthlyContribution', parseFloat(e.target.value) || 0)}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Progress</span>
-                          <div className="flex items-center gap-4">
-                            <span className="text-sm">
-                              {goal.targetAmount > 0 ? Math.round((goal.currentAmount / goal.targetAmount) * 100) : 0}%
-                            </span>
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              goal.priority === 'high' ? 'bg-red-100 text-red-700' :
-                              goal.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-green-100 text-green-700'
-                            }`}>
-                              {goal.priority}
-                            </span>
-                          </div>
-                        </div>
-                        <Progress 
-                          value={goal.targetAmount > 0 ? Math.min((goal.currentAmount / goal.targetAmount) * 100, 100) : 0} 
-                          className="h-2"
-                        />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm text-gray-600">
-                          {calculateMonthsToGoal(goal) > 0 && (
-                            <span>
-                              {calculateMonthsToGoal(goal)} months to goal at current contribution rate
-                            </span>
-                          )}
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteSavingsGoal(goal.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Savings Summary */}
-            <Card className="shadow-md border-0">
-              <CardHeader>
-                <CardTitle>Savings Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-xl font-bold text-green-600">
-                      {formatCurrency(savingsGoals.reduce((sum, goal) => sum + goal.currentAmount, 0))}
-                    </div>
-                    <div className="text-sm text-gray-600">Total Saved</div>
-                  </div>
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-xl font-bold text-blue-600">
-                      {formatCurrency(savingsGoals.reduce((sum, goal) => sum + goal.targetAmount, 0))}
-                    </div>
-                    <div className="text-sm text-gray-600">Total Target</div>
-                  </div>
-                  <div className="text-center p-4 bg-purple-50 rounded-lg">
-                    <div className="text-xl font-bold text-purple-600">
-                      {formatCurrency(savingsGoals.reduce((sum, goal) => sum + goal.monthlyContribution, 0))}
-                    </div>
-                    <div className="text-sm text-gray-600">Monthly Contributions</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Savings Notes */}
-            <Card className="shadow-md border-0">
-              <CardHeader>
-                <CardTitle>Savings Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  placeholder="Add notes about your savings goals and strategies..."
-                  value={savingsNotes}
-                  onChange={(e) => setSavingsNotes(e.target.value)}
-                  rows={3}
-                />
-              </CardContent>
-            </Card>
-          </CardContent>
-        </Card>
 
         {/* Monthly Records Section */}
         <Card className="shadow-md border-0 mt-6">
@@ -1179,7 +941,7 @@ export default function YourMoneyMap() {
           </CardHeader>
           
           {showMonthlyRecords && (
-            <CardContent>
+            <CardContent className="space-y-4">
               {monthlySnapshots.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400" />
@@ -1312,26 +1074,6 @@ export default function YourMoneyMap() {
                                     <span className="font-medium">
                                       {getCurrencySymbol(snapshot.currency)}{item.actualAmount.toLocaleString()}
                                     </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Savings Summary */}
-                          <div className="mt-6">
-                            <div>
-                              <h5 className="font-medium mb-3 text-purple-600">Savings Goals ({snapshot.savingsGoals.length})</h5>
-                              <div className="space-y-2">
-                                {snapshot.savingsGoals.map((goal, index) => (
-                                  <div key={index} className="text-sm">
-                                    <div className="flex justify-between">
-                                      <span>{goal.title}</span>
-                                      <span className="font-medium">{goal.priority}</span>
-                                    </div>
-                                    <div className="text-xs text-gray-500">
-                                      {getCurrencySymbol(snapshot.currency)}{goal.currentAmount.toLocaleString()} / {getCurrencySymbol(snapshot.currency)}{goal.targetAmount.toLocaleString()}
-                                    </div>
                                   </div>
                                 ))}
                               </div>
