@@ -443,18 +443,6 @@ export default function LaunchGrowthPlan() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    3 Key Insights from This Launch
-                  </label>
-                  <Textarea
-                    value={formData.keyInsights}
-                    onChange={(e) => setFormData({ ...formData, keyInsights: e.target.value })}
-                    placeholder="What were the most important things you learned?"
-                    rows={3}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     What Went Well (Repeat)
                   </label>
                   <Textarea
