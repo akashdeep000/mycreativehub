@@ -66,7 +66,7 @@ interface MonthlySnapshot {
   budgetItems: BudgetItem[];
   incomeExpenseItems: IncomeExpenseItem[];
   taxPercentage: number;
-  personalPayAmount: number;
+  personalPayPercentage: number;
   summary: {
     totalIncome: number;
     totalExpenses: number;
@@ -100,7 +100,7 @@ export default function YourMoneyMap() {
   // Income & Expense Tracker State
   const [incomeExpenseItems, setIncomeExpenseItems] = useState<IncomeExpenseItem[]>([]);
   const [taxPercentage, setTaxPercentage] = useState(25);
-  const [personalPayAmount, setPersonalPayAmount] = useState(0);
+  const [personalPayPercentage, setPersonalPayPercentage] = useState(0);
   // Category names state
   const [taxCategoryName, setTaxCategoryName] = useState('Tax Amount');
   const [personalPayCategoryName, setPersonalPayCategoryName] = useState('Personal Pay Amount');
@@ -169,7 +169,7 @@ export default function YourMoneyMap() {
       budgetNotes,
       incomeExpenseItems,
       taxPercentage,
-      personalPayAmount,
+      personalPayPercentage,
       trackerNotes,
       selectedPeriod,
       currency
@@ -195,7 +195,7 @@ export default function YourMoneyMap() {
           setBudgetNotes(draft.budgetNotes || '');
           setIncomeExpenseItems(draft.incomeExpenseItems || []);
           setTaxPercentage(draft.taxPercentage || 25);
-          setPersonalPayAmount(draft.personalPayAmount || 0);
+          setPersonalPayPercentage(draft.personalPayPercentage || 0);
           setTrackerNotes(draft.trackerNotes || '');
           return true;
         }
@@ -253,7 +253,7 @@ export default function YourMoneyMap() {
   // Auto-save draft when data changes
   useEffect(() => {
     saveDraftForCurrentPeriod();
-  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, personalPayAmount, trackerNotes]);
+  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, personalPayPercentage, trackerNotes]);
 
   // Authentication check
   useEffect(() => {
@@ -348,8 +348,9 @@ export default function YourMoneyMap() {
     
     const actualProfit = actualIncome - actualExpenses;
     const taxAmount = actualProfit * (taxPercentage / 100);
-    const savingsAmount = actualProfit * (savingsPercentage / 100);
     const afterTaxProfit = actualProfit - taxAmount;
+    const personalPayAmount = afterTaxProfit * (personalPayPercentage / 100);
+    const savingsAmount = afterTaxProfit * (savingsPercentage / 100);
     const availableForSavings = afterTaxProfit - personalPayAmount - savingsAmount;
     const profitMargin = actualIncome > 0 ? (actualProfit / actualIncome) * 100 : 0;
     
@@ -358,6 +359,7 @@ export default function YourMoneyMap() {
       actualExpenses,
       actualProfit,
       taxAmount,
+      personalPayAmount,
       savingsAmount,
       afterTaxProfit,
       availableForSavings,
@@ -400,7 +402,7 @@ export default function YourMoneyMap() {
     csvContent += `Actual Expenses,${trackerTotals.actualExpenses}\n`;
     csvContent += `Actual Profit,${trackerTotals.actualProfit}\n`;
     csvContent += `Tax Amount (${taxPercentage}%),${trackerTotals.taxAmount}\n`;
-    csvContent += `Personal Pay,${personalPayAmount}\n`;
+    csvContent += `Personal Pay (${personalPayPercentage}%),${trackerTotals.personalPayAmount}\n`;
     csvContent += `Profit Margin,${trackerTotals.profitMargin.toFixed(2)}%\n\n`;
     
     // Create and download file
@@ -437,13 +439,13 @@ export default function YourMoneyMap() {
       budgetItems: [...budgetItems],
       incomeExpenseItems: [...incomeExpenseItems],
       taxPercentage,
-      personalPayAmount,
+      personalPayPercentage,
       summary: {
         totalIncome: trackerTotals.actualIncome,
         totalExpenses: trackerTotals.actualExpenses,
         profit: trackerTotals.actualProfit,
         taxSetAside: trackerTotals.taxAmount,
-        personalPay: personalPayAmount,
+        personalPay: trackerTotals.personalPayAmount,
         availableForSavings: trackerTotals.availableForSavings,
         profitMargin: trackerTotals.profitMargin,
       },
@@ -831,8 +833,8 @@ export default function YourMoneyMap() {
                     <Input
                       id="personal-pay"
                       type="number"
-                      value={personalPayAmount}
-                      onChange={(e) => setPersonalPayAmount(parseFloat(e.target.value) || 0)}
+                      value={personalPayPercentage}
+                      onChange={(e) => setPersonalPayPercentage(parseFloat(e.target.value) || 0)}
                       placeholder="0"
                     />
                   </div>
@@ -913,7 +915,7 @@ export default function YourMoneyMap() {
                   </div>
                   <div className="text-center p-4 bg-indigo-50 rounded-lg">
                     <div className="text-lg font-bold text-indigo-600">
-                      {formatCurrency(personalPayAmount)}
+                      {formatCurrency(getTrackerTotals().personalPayAmount)}
                     </div>
                     <div className="text-sm text-gray-600">{personalPayCategoryName}</div>
                   </div>
