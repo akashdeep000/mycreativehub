@@ -389,9 +389,7 @@ export default function AffiliateMarketing() {
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 mb-1">Track Your Affiliate Success</h3>
-              <p className="text-gray-700 text-sm">
-                Keep all your affiliate links organized in one place. Track commissions, cookie lengths, and performance across different content channels.
-              </p>
+              <p className="text-gray-700 text-sm">Keep all your affiliate links organised in one place. Track commissions, cookie lengths, and performance across different content channels.</p>
             </div>
           </div>
         </div>
