@@ -89,7 +89,7 @@ export default function LaunchGrowthPlan() {
     if (!formData.productName.trim()) {
       toast({
         title: "Product Name Required",
-        description: "Please enter a product name for your growth plan",
+        description: "Please enter a product name for your launch reflection",
         variant: "destructive",
       });
       return;
@@ -104,8 +104,8 @@ export default function LaunchGrowthPlan() {
       );
       setGrowthPlans(updatedPlans);
       toast({
-        title: "Growth Plan Updated",
-        description: `Updated plan for ${formData.productName}`,
+        title: "Launch Reflection Updated",
+        description: `Updated reflection for ${formData.productName}`,
       });
     } else {
       // Create new plan
@@ -116,8 +116,8 @@ export default function LaunchGrowthPlan() {
       };
       setGrowthPlans([...growthPlans, newPlan]);
       toast({
-        title: "Growth Plan Created",
-        description: `Created new plan for ${formData.productName}`,
+        title: "Launch Reflection Created",
+        description: `Created new reflection for ${formData.productName}`,
       });
     }
 
@@ -130,8 +130,8 @@ export default function LaunchGrowthPlan() {
     const planToDelete = growthPlans.find(p => p.id === id);
     setGrowthPlans(growthPlans.filter(p => p.id !== id));
     toast({
-      title: "Growth Plan Deleted",
-      description: `Deleted plan for ${planToDelete?.productName}`,
+      title: "Launch Reflection Deleted",
+      description: `Deleted reflection for ${planToDelete?.productName}`,
     });
   };
 
@@ -145,10 +145,10 @@ export default function LaunchGrowthPlan() {
     
     const plan = updatedPlans.find(p => p.id === id);
     toast({
-      title: plan?.isCompleted ? "Plan Completed" : "Plan Unmarked",
+      title: plan?.isCompleted ? "Reflection Completed" : "Reflection Unmarked",
       description: plan?.isCompleted 
         ? "Great! Your insights have been captured for next time." 
-        : "Plan marked as incomplete",
+        : "Reflection marked as incomplete",
     });
   };
 
@@ -157,8 +157,8 @@ export default function LaunchGrowthPlan() {
     
     if (completedPlans.length === 0) {
       toast({
-        title: "No Completed Plans",
-        description: "Please complete at least one growth plan to export",
+        title: "No Completed Reflections",
+        description: "Please complete at least one launch reflection to export",
         variant: "destructive",
       });
       return;
@@ -173,7 +173,7 @@ export default function LaunchGrowthPlan() {
       // Title
       pdf.setFontSize(20);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Launch Growth Plans', pageWidth / 2, yPosition, { align: 'center' });
+      pdf.text('Launch Reflections', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 20;
 
       for (let i = 0; i < completedPlans.length; i++) {
@@ -220,7 +220,7 @@ export default function LaunchGrowthPlan() {
       pdf.save('launch-growth-plans.pdf');
       toast({
         title: "Export Successful",
-        description: `Exported ${completedPlans.length} completed growth plans`,
+        description: `Exported ${completedPlans.length} completed launch reflections`,
       });
     } catch (error) {
       toast({
@@ -286,7 +286,7 @@ export default function LaunchGrowthPlan() {
                   <TrendingUp className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Launch Growth Plan</h1>
+                  <h1 className="text-3xl font-bold text-gray-900">Launch Reflection</h1>
                   <p className="text-gray-600 mt-2">
                     Capture key insights and plan improvements for your next launch
                   </p>
@@ -302,7 +302,7 @@ export default function LaunchGrowthPlan() {
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-green-500" />
               <span className="text-sm text-gray-600">
-                {growthPlans.length} growth plan{growthPlans.length === 1 ? '' : 's'}
+                {growthPlans.length} reflection{growthPlans.length === 1 ? '' : 's'}
               </span>
             </div>
           </div>
@@ -312,13 +312,13 @@ export default function LaunchGrowthPlan() {
             {growthPlans.length === 0 ? (
               <div className="col-span-full text-center py-12">
                 <TrendingUp className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Growth Plans Yet</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Launch Reflections Yet</h3>
                 <p className="text-gray-500 mb-4">
-                  Create your first growth plan to capture insights from your launch
+                  Create your first launch reflection to capture insights from your launch
                 </p>
                 <Button onClick={openAddModal}>
                   <Plus className="w-4 h-4 mr-2" />
-                  New Growth Plan
+                  New Launch Reflection
                 </Button>
               </div>
             ) : (
@@ -394,7 +394,7 @@ export default function LaunchGrowthPlan() {
             <div className="flex justify-center mt-6">
               <Button onClick={openAddModal} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="w-4 h-4 mr-2" />
-                Add New Growth Plan
+                Add New Launch Reflection
               </Button>
             </div>
           )}
@@ -404,7 +404,7 @@ export default function LaunchGrowthPlan() {
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
-                  {editingPlan ? 'Edit Growth Plan' : 'New Growth Plan'}
+                  {editingPlan ? 'Edit Launch Reflection' : 'New Launch Reflection'}
                 </DialogTitle>
               </DialogHeader>
               
