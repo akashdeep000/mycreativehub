@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FolderOpen, Plus, Trash2, GripVertical, FileText, Link, Download, Edit2, X, Check, ExternalLink, Archive, BookOpen } from 'lucide-react';
+import { FolderOpen, Plus, Trash2, GripVertical, FileText, Link, Download, Edit2, X, Check, ExternalLink, Archive, BookOpen, Loader2 } from 'lucide-react';
 import BackToDashboard from '@/components/BackToDashboard';
 import Sidebar from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ export default function ResourceLibrary() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ResourceLibraryItem | null>(null);
   const [draggedItem, setDraggedItem] = useState<ResourceLibraryItem | null>(null);
+  const [uploadingFileName, setUploadingFileName] = useState<string | null>(null);
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['/api/resource-library'],
@@ -36,12 +37,14 @@ export default function ResourceLibrary() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/resource-library'] });
       setIsAddModalOpen(false);
+      setUploadingFileName(null);
       toast({
         title: "Success",
         description: "Resource added to your library",
       });
     },
     onError: () => {
+      setUploadingFileName(null);
       toast({
         title: "Error",
         description: "Failed to add resource",
@@ -143,6 +146,9 @@ export default function ResourceLibrary() {
       return;
     }
 
+    // Set uploading state
+    setUploadingFileName(file.name);
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const base64 = event.target?.result as string;
@@ -159,6 +165,7 @@ export default function ResourceLibrary() {
     };
     
     reader.onerror = () => {
+      setUploadingFileName(null);
       toast({
         title: "Error",
         description: "Failed to read the file. Please try again.",
@@ -167,6 +174,9 @@ export default function ResourceLibrary() {
     };
     
     reader.readAsDataURL(file);
+
+    // Reset file input
+    e.target.value = '';
   };
 
   const handleAddLink = (formData: any) => {
@@ -264,7 +274,7 @@ export default function ResourceLibrary() {
             </Button>
           )}
         </div>
-        {fileItems.length === 0 ? (
+        {fileItems.length === 0 && !uploadingFileName ? (
           <Card className="text-center py-8 border-dashed border-2 border-gray-300 bg-white shadow-md">
             <CardContent>
               <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
@@ -278,8 +288,58 @@ export default function ResourceLibrary() {
               </Button>
             </CardContent>
           </Card>
+        ) : fileItems.length === 0 && uploadingFileName ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Upload Progress Card - First Upload */}
+            <Card className="aspect-square border-0 shadow-md bg-white animate-pulse">
+              <CardHeader className="pb-4 bg-gradient-to-br from-pink-400 to-purple-400 text-white relative">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 flex-1 flex flex-col">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{uploadingFileName}</h3>
+                  <p className="text-sm text-gray-600 mb-3">Uploading PDF...</p>
+                </div>
+                <div className="mt-auto">
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <div className="bg-pink-500 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+                  </div>
+                  <p className="text-xs text-gray-500 text-center">Please wait...</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Upload Progress Card */}
+            {uploadingFileName && (
+              <Card className="aspect-square border-0 shadow-md bg-white animate-pulse">
+                <CardHeader className="pb-4 bg-gradient-to-br from-pink-400 to-purple-400 text-white relative">
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 flex-1 flex flex-col">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{uploadingFileName}</h3>
+                    <p className="text-sm text-gray-600 mb-3">Uploading PDF...</p>
+                  </div>
+                  <div className="mt-auto">
+                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                      <div className="bg-pink-500 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+                    </div>
+                    <p className="text-xs text-gray-500 text-center">Please wait...</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             {fileItems.map((item: ResourceLibraryItem) => (
               <ResourceCard
                 key={item.id}
