@@ -645,7 +645,7 @@ export default function MonthlyContentCalendarV3() {
                 <div
                   key={index}
                   className={`
-                    min-h-32 border-r border-b border-gray-200 last:border-r-0 p-2 min-w-0 overflow-hidden [clip-path:inset(0)]
+                    min-h-32 border-r border-b border-gray-200 last:border-r-0 p-2 min-w-0 overflow-visible
                     ${isValidDay ? 'bg-white hover:bg-gray-50' : 'bg-gray-100'}
                     ${isValidDay && selectedKeyId ? 'cursor-pointer' : ''}
                   `}
