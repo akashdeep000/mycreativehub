@@ -133,6 +133,16 @@ export default function ResourceLibrary() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check if file is a PDF
+    if (file.type !== 'application/pdf') {
+      toast({
+        title: "Error",
+        description: "Failed to upload. Please upload a PDF only.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const base64 = event.target?.result as string;
@@ -215,7 +225,7 @@ export default function ResourceLibrary() {
           type="file"
           id="file-upload"
           className="hidden"
-          accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif"
+          accept=".pdf"
           onChange={handleFileUpload}
         />
         
