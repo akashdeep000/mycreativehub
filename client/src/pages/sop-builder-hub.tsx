@@ -28,7 +28,7 @@ const defaultSOPs: SOP[] = [
     id: 'email-funnel',
     title: 'Email Funnel SOP',
     steps: [
-      { id: '1', text: 'Create launch timeline\nSet your launch date and work backwards:\n• Choose launch date (give yourself 4-6 weeks minimum)\n• Map out key milestones: content creation, email sequence, sales page\n• Block time in your Time Blocking Calendar for each milestone\n• Set up project tracking system (Notion, Trello, or simple doc)\nDone when: you have a clear timeline with specific dates for each deliverable.', completed: false },
+      { id: '1', text: 'Create the automation:\n\n- In your email platform, go to Automations/Workflows → New.\nName it: "Funnel – Product/Lead Magnet".', completed: false },
       { id: '2', text: 'Develop marketing assets\nCreate all supporting materials:\n• Lead magnet design and copy (PDF, checklist, mini-course)\n• Sales page copy and visuals\n• Social media graphics (Instagram posts, stories, LinkedIn)\n• Email header/footer templates\n• Thank you page design\nDone when: all visual assets are created and copy is written for each touchpoint.', completed: false },
       { id: '3', text: 'Set up sales page\nBuild your conversion-focused landing page:\n• Write compelling headline and subheaders\n• Add benefit-focused bullet points\n• Include social proof (testimonials, reviews, case studies)\n• Create clear call-to-action buttons\n• Set up payment processing and delivery system\n• Test all forms and purchase flows\nDone when: page is live, tested, and converting visitors to customers.', completed: false },
       { id: '4', text: 'Build email sequences\nWrite your nurture and sales sequence:\n• Welcome email with lead magnet delivery\n• 5-7 nurture emails providing value and building trust\n• 3-5 sales emails with clear offers and urgency\n• Follow-up sequences for non-openers and non-clickers\n• Set up automation triggers and timing\nDone when: entire sequence is written, tested, and automated.', completed: false },
@@ -80,7 +80,7 @@ export default function SOPBuilderHub() {
   useEffect(() => {
     const savedSOPs = localStorage.getItem('sop-builder-sops');
     const sopsVersion = localStorage.getItem('sops-version');
-    const currentVersion = '3'; // Version 3 removes 'Step X - ' prefixes from step text
+    const currentVersion = '4'; // Version 4 updates Email Funnel SOP Step 1 with automation creation text
     
     if (savedSOPs) {
       let sopsData = JSON.parse(savedSOPs);
@@ -107,7 +107,7 @@ export default function SOPBuilderHub() {
       if (emailFunnelSOP && emailDefault) {
         const needsEmailUpdate = needsVersionUpdate || 
           emailFunnelSOP.steps.length !== emailDefault.steps.length ||
-          emailFunnelSOP.steps.some(step => 
+          emailFunnelSOP.steps.some((step: SOPStep) => 
             !step.text || step.text.trim() === '' || isGenericPlaceholder(step.text)
           );
 
@@ -138,7 +138,7 @@ export default function SOPBuilderHub() {
       if (productLaunchSOP && productDefault) {
         const needsProductUpdate = needsVersionUpdate ||
           productLaunchSOP.steps.length !== productDefault.steps.length ||
-          productLaunchSOP.steps.some(step => 
+          productLaunchSOP.steps.some((step: SOPStep) => 
             !step.text || step.text.trim() === '' || isGenericPlaceholder(step.text)
           );
 
