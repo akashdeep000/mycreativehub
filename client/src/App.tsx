@@ -89,17 +89,25 @@ function MobileHeaderPortal({ navigate }: { navigate: (path: string) => void }) 
   };
 
   const handleLogoutConfirm = async () => {
+    console.log("🔥 LOGOUT CLICKED - Starting logout process");
     setShowLogoutDialog(false);
     try {
-      await fetch("/api/auth/logout", {
+      console.log("🔥 Making logout API call to /api/auth/logout");
+      const response = await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });
+      console.log("🔥 Logout API response:", response.status);
+      console.log("🔥 Removing token from localStorage");
       localStorage.removeItem('token');
+      console.log("🔥 Navigating to /");
       navigate("/");
+      console.log("🔥 Logout process completed");
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("🔥 Logout error:", error);
+      console.log("🔥 Removing token from localStorage (error path)");
       localStorage.removeItem('token');
+      console.log("🔥 Navigating to / (error path)");
       navigate("/");
     }
   };
