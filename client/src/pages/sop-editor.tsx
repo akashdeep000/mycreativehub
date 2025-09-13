@@ -274,7 +274,7 @@ export default function SOPEditor() {
                           index === 5 ? 'Add one simple rule\nIf purchased {Product} → Exit the sales funnel (so buyers stop getting pitches).' :
                           index === 6 ? 'Quick test (always)\nAdd yourself to the trigger → make sure each email lands, links work, mobile looks good.' :
                           index === 7 ? 'Turn it on\nSwitch the automation ON. Promote lead magnet/product to get signups.' :
-                          index === 8 ? 'Tips: Keep it simple to improve\nIf opens are low → try a stronger subject on the next email.\nIf clicks are low → move the CTA higher and make it clearer.\nIf someone buys → confirm they stop the sales funnel.' :
+                          index === 8 ? 'Tips: Keep it simple to improve\n\nIf opens are low → try a stronger subject on the next email.\n\nIf clicks are low → move the CTA higher and make it clearer.\n\nIf someone buys → confirm they stop the sales funnel.' :
                           'Add your step here'
                         }`}
                         className="min-h-[60px] resize-none overflow-hidden auto-resize-textarea"
@@ -343,7 +343,7 @@ export default function SOPEditor() {
                           index === 5 ? 'Add one simple rule\nIf purchased {Product} → Exit the sales funnel (so buyers stop getting pitches).' :
                           index === 6 ? 'Quick test (always)\nAdd yourself to the trigger → make sure each email lands, links work, mobile looks good.' :
                           index === 7 ? 'Turn it on\nSwitch the automation ON. Promote lead magnet/product to get signups.' :
-                          index === 8 ? 'Tips: Keep it simple to improve\nIf opens are low → try a stronger subject on the next email.\nIf clicks are low → move the CTA higher and make it clearer.\nIf someone buys → confirm they stop the sales funnel.' :
+                          index === 8 ? 'Tips: Keep it simple to improve\n\nIf opens are low → try a stronger subject on the next email.\n\nIf clicks are low → move the CTA higher and make it clearer.\n\nIf someone buys → confirm they stop the sales funnel.' :
                           'Add your step here'
                         }`}
                         className="min-h-[80px] w-full resize-none overflow-y-auto"
