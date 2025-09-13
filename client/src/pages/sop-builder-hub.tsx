@@ -289,10 +289,7 @@ export default function SOPBuilderHub() {
                     {/* Steps Summary */}
                     <div className="text-sm text-gray-600 dark:text-gray-400">
                       <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                          <span>{sop.steps.filter(step => step.completed).length} completed</span>
-                        </div>
+                        
                         <div className="flex items-center gap-1">
                           <Circle className="w-4 h-4" />
                           <span>{sop.steps.filter(step => !step.completed).length} remaining</span>
