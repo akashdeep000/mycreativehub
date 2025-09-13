@@ -23,19 +23,57 @@ interface SOP {
   updatedAt: Date;
 }
 
+// The 3 permanent example SOPs with user's exact content
 const defaultSOPs: SOP[] = [
   {
     id: 'email-funnel',
     title: 'Email Funnel SOP',
     steps: [
-      { id: '1', text: 'Create the automation:\n\n- In your email platform, go to Automations/Workflows → New.\nName it: "Funnel – Product/Lead Magnet".', completed: false },
-      { id: '2', text: 'Choose the trigger (pick one):\n\n- Lead magnet sign-up (joined form/list).\n- Tag applied (e.g., "Interested in Product A").\n- Purchased product (order completed).', completed: false },
-      { id: '3', text: 'Protect your list:\n\n- If this is a sales funnel, also exclude subscribers that have already bought this product.', completed: false },
-      { id: '4', text: 'Build email sequences\n\nWrite your nurture and sales sequence:\n\n• Welcome email with lead magnet delivery\n• 5-7 nurture emails providing value and building trust\n• 3-5 sales emails with clear offers and urgency\n• Follow-up sequences for non-openers and non-clickers\n• Set up automation triggers and timing\n\nDone when: entire sequence is written, tested, and automated.', completed: false },
-      { id: '5', text: 'Plan social media campaign\n\nCreate your promotion strategy:\n\n• Map content to your Content Pillars (behind-scenes, tips, testimonials)\n• Schedule posts in your Time Blocking Calendar\n• Create engagement-driving content (polls, questions, stories)\n• Plan cross-platform promotion (Instagram, Facebook, LinkedIn, TikTok)\n• Set up tracking for clicks and conversions\n\nDone when: 2-4 weeks of social content is planned and scheduled.', completed: false },
-      { id: '6', text: 'Quick test (always)\nAdd yourself to the trigger → make sure each email lands, links work, mobile looks good.\n• Test on multiple devices and email clients\n• Check all links lead to correct pages\n• Verify lead magnet delivers properly\n• Confirm automation timing is correct\nDone when: you\'ve received and tested the entire customer journey.', completed: false },
-      { id: '7', text: 'Turn it on\nSwitch the automation ON. Promote lead magnet/product to get signups.\n• Activate all email sequences\n• Launch social media campaign\n• Send announcement to existing list\n• Monitor performance in first 24 hours\nDone when: funnel is live and generating leads.', completed: false },
-      { id: '8', text: 'Monitor and optimize\nTrack performance and make improvements:\n\nIf opens are low → try a stronger subject on the next email.\n\nIf clicks are low → move the CTA higher and make it clearer.\n\nIf someone buys → confirm they stop the sales funnel.\n\nWeekly: Review open rates, click rates, and conversion rates.', completed: false },
+      { 
+        id: '1', 
+        text: 'Create the automation:\n\n- In your email platform, go to Automations/Workflows → New.\nName it: "Funnel – Product/Lead Magnet".', 
+        completed: false 
+      },
+      { 
+        id: '2', 
+        text: 'Choose the trigger (pick one):\n\n- Lead magnet sign-up (joined form/list).\n- Tag applied (e.g., "Interested in Product A").\n- Purchased product (order completed).', 
+        completed: false 
+      },
+      { 
+        id: '3', 
+        text: 'Protect your list:\n\n- If this is a sales funnel, also exclude subscribers that have already bought this product.', 
+        completed: false 
+      },
+      { 
+        id: '4', 
+        text: 'Plan/Write the email sequence:\n(Timing is from the moment they enter the automation).\n\nFor a Sales/Nurture Funnel (after tag or lead magnet):\n\n- Email 1: Welcome + quick win (send immediately)\nDeliver the freebie/product or a tip. CTA: "Learn about Product/additional product"\n\n- Email 2: Teach something helpful (+1 day)\nShort tip/tutorial. CTA: "See how Product/additional product helps"\n\n- Email 3: Proof/Story (+2 days)\nBefore/after or testimonial. CTA: "See results / case study"\n\n- Email 4: Offer (+2 days)\nWhat\'s inside, benefits, bonus, guarantee. CTA: "Get Product"\n\n- Email 5: FAQs / Objections (+2 days)\nAnswer "Will this work for me?", time, price. CTA: "Get Product"\n\n- Email 6: Last call (gentle urgency) (+2–3 days)\nRecap benefits + simple nudge. CTA: "Last chance to grab it" or "I won\'t mention this again for a while!"', 
+        completed: false 
+      },
+      { 
+        id: '5', 
+        text: 'Add delays:\n\n- Between emails, add delays as listed above (1–2 days is perfect for first week after sign up, then move to weekly value emails).', 
+        completed: false 
+      },
+      { 
+        id: '6', 
+        text: 'Add one simple rule:\n\n- If purchased a Product → Exit the sales funnel (so buyers stop getting pitches).', 
+        completed: false 
+      },
+      { 
+        id: '7', 
+        text: 'Quick test (always):\n\n- Add yourself to the trigger → make sure each email lands, links work, mobile looks good.', 
+        completed: false 
+      },
+      { 
+        id: '8', 
+        text: 'Turn it on:\n\n- Switch the automation ON. Promote lead magnet/product to get signups.', 
+        completed: false 
+      },
+      { 
+        id: '9', 
+        text: 'Tips: Keep it simple to improve:\n\nIf opens are low → try a stronger subject on the next email.\nIf clicks are low → move the CTA higher and make it clearer.\nIf someone buys → confirm they stop the sales funnel.', 
+        completed: false 
+      },
     ],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -44,13 +82,31 @@ const defaultSOPs: SOP[] = [
     id: 'product-launch',
     title: 'Product Launch SOP',
     steps: [
-      { id: '1', text: 'Pre-launch planning (4-6 weeks out)\nDefine your launch strategy:\n• Set launch date and create countdown timeline\n• Define target audience and ideal customer avatar\n• Research competitor launches and pricing\n• Plan your unique value proposition and messaging\n• Use your Financial Management tools to set revenue goals\n• Block launch tasks in your Time Blocking Calendar\nDone when: you have a clear launch strategy and timeline documented.', completed: false },
-      { id: '2', text: 'Create your product (3-4 weeks out)\nFinalize your offering:\n• Complete product creation (course, template, service, etc.)\n• Test all functionality and user experience\n• Create product mockups and demo videos\n• Write detailed product descriptions and benefits\n• Set up delivery system (if digital) or fulfillment (if physical)\nDone when: your product is 100% ready and tested.', completed: false },
-      { id: '3', text: 'Build marketing assets (2-3 weeks out)\nCreate all promotional materials:\n• Sales page with compelling copy and visuals\n• Product images, videos, and testimonials\n• Social media graphics and templates\n• Email headers, banners, and promotional graphics\n• Press kit and media resources\n• FAQ document addressing common objections\nDone when: all marketing materials are created and approved.', completed: false },
-      { id: '4', text: 'Set up sales systems (2 weeks out)\nPrepare your sales infrastructure:\n• Configure payment processing and checkout\n• Set up affiliate program if applicable\n• Create customer onboarding sequence\n• Test purchase flow end-to-end\n• Set up analytics and tracking codes\n• Prepare customer support resources\nDone when: customers can successfully purchase and receive your product.', completed: false },
-      { id: '5', text: 'Build anticipation (1-2 weeks out)\nGenerate pre-launch buzz:\n• Send teaser emails to your list\n• Share behind-the-scenes content on social media\n• Partner with influencers or collaborators\n• Schedule podcast interviews or guest posts\n• Create urgency with limited-time bonuses\n• Set up waitlist or early bird offers\nDone when: your audience is excited and ready to buy.', completed: false },
-      { id: '6', text: 'Execute launch week\nGo live with your launch:\n• Send launch announcement email\n• Post across all social media platforms\n• Go live on Instagram/Facebook to announce\n• Follow up with reminder emails (3-4 during launch week)\n• Engage with comments and questions immediately\n• Monitor sales and adjust strategy if needed\nDone when: launch week is complete and you\'ve maximized initial sales.', completed: false },
-      { id: '7', text: 'Post-launch follow-up\nContinue momentum after launch:\n• Send final 24-hour reminder email\n• Thank customers and deliver products\n• Ask for testimonials and reviews\n• Analyze launch performance and metrics\n• Plan next steps (product updates, new launches)\n• Celebrate your success!\nDone when: customers are served and you\'ve captured lessons learned.', completed: false },
+      { 
+        id: '1', 
+        text: 'Set the foundations:\n\n- Pick your launch window (Use the Seasonality Timeline). Add holidays, travel, collabs, and other promos.\n\n- Choose a 10-14 day window (pre-launch + launch week).\nDone when: Launch dates are blocked on the Seasonality Timeline (Product Launch System)\n\n- Set the money goal (Profit Calculator within Product Launch System)\n\n- Enter product price, estimated costs/fees, and unit target.\nAdjust price or target until profit goal feels realistic.', 
+        completed: false 
+      },
+      { 
+        id: '2', 
+        text: 'Map the marketing:\n\n- Plan your 2-4 week content runway (Pre-Launch Timeline within Product Launch System)\n\nUse the same menu each week so it\'s simple:\n- Value Email\n- Sales Email (soft CTA or waitlist until open-cart)\n- Behind-the-Scenes Video (long or short)\n- Carousel: Pain Point or Myth vs Fact\n- Story/Case Study Post\n- Live/Q&A or Stories Poll\n- Teaser/Countdown (T-2 and T-1 only)\nDone when: Each week has 4–6 scheduled content blocks.\n\nDecide list growth (optional):\n\n- Pick or refresh a lead magnet to share and drive sales to launch.\nDone when: Lead magnet link is added to your content call-to-actions', 
+        completed: false 
+      },
+      { 
+        id: '3', 
+        text: 'Build core assets:\n\n- Draft the sales page/listing page (can be simple)\n\n- Sections: Headline → Description →  Problem → Promise → What\'s inside → Who it\'s for → Social proof → Bonuses → Pricing → Guarantee → FAQ → CTA.\n\n- Write the emails (use your email funnel SOP)\n\n- Waitlist/Pre-launch: 2–3 value emails + 1 story/case study.\n\n- Open-cart: Day 1 announcement.\n\n- Mid-cart: 1 objection buster + 1 social proof.\n\n- Close day: 2 reminders (AM + last-chance PM).\nDone when: Emails are drafted/scheduled in your ESP.\n\n- Prep social + visuals: 2-3 carousels, 2 reels/shorts, 3-4 stories templates, product mockups.', 
+        completed: false 
+      },
+      { 
+        id: '4', 
+        text: 'Launch week:\n\nOpen cart (Day 1): \n- Publish sales/listing page.\n- Send "It\'s live" email; post announcement to top platform; add story highlights.\nDone when: Sales page is live and first marketing/email is published\n\nMid-cart momentum (Day 2-4):\nEmail: objection buster + case study.\nSocial: BTS, carousel addressing common question, 1 live/Q&A.\n\nFinal push (Last day)\n- AM reminder email; PM last-chance email.\n- Stories and final email reminder', 
+        completed: false 
+      },
+      { 
+        id: '5', 
+        text: 'Delivery & upsell:\n\nOnboard buyers:\n\n- Thank-you email, access instructions, quick-start checklist.\nTag buyers and remove from promo sequence.\nDone when: All buyers receive access + are correctly tagged.\n\n- Optional: Easy upsell\nCreate a simple follow-up email with a complementary offer or add-on.\nDone when: Upsell is scheduled for buyers (1-3 days later).', 
+        completed: false 
+      },
     ],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -59,13 +115,41 @@ const defaultSOPs: SOP[] = [
     id: 'batching-content',
     title: 'Batching Content SOP',
     steps: [
-      { id: '1', text: 'Plan your next 2-4 weeks\nPick goal(s): nurture, launch support, list growth, or evergreen.\nChoose channels: IG feed/Reels, Stories, TikTok, YouTube Shorts, Email, Blog, Pinterest.\nDecide timeline (e.g. 3 IG posts, 2 Reels, 1 email per week).\nList 3-5 content pillar themes you\'ll repeat (e.g., Tips, Behind-the-Scenes, Testimonials, Offers). Use Content Pillars within Content Creation System.\nUse Time Blocking Calendar: plug in key dates (promos, holidays, launches). Done when: you have a filled in calendar and a target number of assets to make.', completed: false },
-      { id: '2', text: 'Block your batching time\nTake Action! Pick 1-2 batching sessions this week for any given task within your Time Blocking Planner and get to work.\nSet a Quick Start Timer on your dashboard and turn off distractions. Done when: your time is blocked and your workspace/files are ready.', completed: false },
-      { id: '3', text: 'Plan content\nBrain dump 10-20 post ideas tied to your content pillars.\nFor each idea, jot 3-5 bullet points (what to show/say).\nMap ideas to formats (Carousel, Reel, Story, Email). Done when: you have enough outlines to hit your batching target for 2-4 weeks.', completed: false },
-      { id: '4', text: 'Produce visuals & videos (batch)\nRecord all clips in one go (same setup, different outfits/angles), OR film as you go, bank content throughout the week and batch the editing.\nDesign carousels/covers/thumbnails using your template packs.\nExport in correct sizes and store in organised desktop folder. Done when: all visuals/clips for this batch are exported and named properly.', completed: false },
-      { id: '5', text: 'Write captions & email copy\nFor each asset, write:\nHook → 3-5 value lines → CTA.\nAdd 3-5 relevant hashtags (if used), alt text, and any links. Done when: every asset has its caption/copy, CTA, and accessibility text.', completed: false },
-      { id: '6', text: 'Upload/Schedule\nLoad posts into your scheduler (or native app).\nSet dates/times; add first comments/links if needed.\nFinal checks:\nSpelling/brand voice, audio levels, CTAs, alt text/captions on.\nHit Schedule. Done when: everything is queued and ready to go.', completed: false },
-      { id: '7', text: 'Publish day checklist (super short)\nReply to early comments/DMs in the first hour.\nAdd links to Stories/Link-in-bio as needed.', completed: false },
+      { 
+        id: '1', 
+        text: 'Plan your next 2-4 weeks:\n\n- Pick goal(s): nurture, launch support, list growth, or evergreen.\n\n- Choose channels: IG feed/Reels, Stories, TikTok, YouTube Shorts, Email, Blog, Pinterest.\n\n- Decide timeline (e.g. 3 IG posts, 2 Reels, 1 email per week).\n\n- List 3-5 content pillar themes you\'ll repeat (e.g., Tips, Behind-the-Scenes, Testimonials, Offers). Use Content Pillars within Content Creation System.\n\n- Use Time Blocking Calendar: plug in key dates (promos, holidays, launches).\nDone when: you have a filled in calendar and a target number of assets to make.', 
+        completed: false 
+      },
+      { 
+        id: '2', 
+        text: 'Block your batching time:\n\n- Take Action! Pick 1-2 batching sessions this week for any given task within your Time Blocking Planner and get to work. \n\n- Set a Quick Start Timer on your dashboard and turn off distractions. \nDone when: your time is blocked and your workspace/files are ready.', 
+        completed: false 
+      },
+      { 
+        id: '3', 
+        text: 'Plan content:\n\n- Brain dump 10-20 post ideas tied to your content pillars.\n\n- For each idea, jot 3-5 bullet points (what to show/say).\n\n- Map ideas to formats (Carousel, Reel, Story, Email).\nDone when: you have enough outlines to hit your batching target for 2-4 weeks.', 
+        completed: false 
+      },
+      { 
+        id: '4', 
+        text: 'Produce visuals & videos (batch):\n\n- Record all clips in one go (same setup, different outfits/angles), OR film as you go, bank content throughout the week and batch the editing. \n\n- Design carousels/covers/thumbnails using your template packs.\n\n- Export in correct sizes and store in organised desktop folder.\nDone when: all visuals/clips for this batch are exported and named properly.', 
+        completed: false 
+      },
+      { 
+        id: '5', 
+        text: 'Write captions & email copy:\n\n- For each asset, write: Hook → 3-5 value lines → CTA.\n\n- Add 3-5 relevant hashtags (if used), alt text, and any links.\nDone when: every asset has its caption/copy, CTA, and accessibility text.', 
+        completed: false 
+      },
+      { 
+        id: '6', 
+        text: 'Upload/Schedule:\n\n- Load posts into your scheduler (or native app).\n\n- Set dates/times; add first comments/links if needed.\n\n- Final checks: Spelling/brand voice, audio levels, CTAs, alt text/captions on.\n\n- Hit Schedule.\nDone when: everything is queued and ready to go.', 
+        completed: false 
+      },
+      { 
+        id: '7', 
+        text: 'Publish day checklist (super short):\n\n- Reply to early comments/DMs in the first hour.\n- Add links to Stories/Link-in-bio as needed.', 
+        completed: false 
+      },
     ],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -78,127 +162,33 @@ export default function SOPBuilderHub() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    const savedSOPs = localStorage.getItem('sop-builder-sops');
-    const sopsVersion = localStorage.getItem('sops-version');
-    const currentVersion = '10'; // Version 10 fixes migration system and updates Email Funnel SOP Step 3
+    // Clear any old SOP data and start fresh
+    localStorage.removeItem('sop-builder-sops');
+    localStorage.removeItem('sops-version');
+    
+    // Check if we have saved SOPs (user's customized versions)
+    const savedSOPs = localStorage.getItem('creative-toolkit-sops');
     
     if (savedSOPs) {
-      let sopsData = JSON.parse(savedSOPs);
-      let needsVersionUpdate = !sopsVersion || sopsVersion !== currentVersion;
-      
-      // Only check for specific legacy content that needs updating
-      const hasLegacyContent = (text: string, stepIndex: number): boolean => {
-        if (stepIndex === 2) { // Step 3
-          return text.includes('Build your conversion-focused landing page');
-        }
-        if (stepIndex === 1) { // Step 2
-          return text.includes('Choose the trigger (pick one)') && !text.includes('\n\nChoose the trigger');
-        }
-        if (stepIndex === 3) { // Step 4
-          return text.includes('entire sequence is written, tested, and automated') && !text.includes('\n\nWrite your nurture');
-        }
-        if (stepIndex === 4) { // Step 5
-          return text.includes('2-4 weeks of social content is planned and scheduled') && !text.includes('\n\nCreate your promotion');
-        }
-        return false;
-      };
-      
-      // Force update Email Funnel SOP with detailed content
-      const emailFunnelSOP = sopsData.find((sop: SOP) => sop.id === 'email-funnel');
-      const emailDefault = defaultSOPs.find(sop => sop.id === 'email-funnel');
-      
-      if (emailFunnelSOP && emailDefault && needsVersionUpdate) {
-        console.log('🔄 Migrating Email Funnel SOP - preserving user content, updating only legacy content');
-        
-        // Preserve user content, only update steps with exact legacy matches
-        const updatedSteps = emailFunnelSOP.steps.map((existingStep: SOPStep, index: number) => {
-          const defaultStep = emailDefault.steps[index];
-          if (!defaultStep) return existingStep;
-          
-          // Only update if this step has legacy content that needs updating
-          const shouldUpdate = hasLegacyContent(existingStep.text, index);
-          
-          return {
-            ...existingStep,
-            text: shouldUpdate ? defaultStep.text : existingStep.text
-          };
-        });
-        
-        const mergedSOP = {
-          ...emailFunnelSOP,
-          steps: updatedSteps,
-          updatedAt: new Date()
-        };
-        
-        sopsData = sopsData.map((sop: SOP) => 
-          sop.id === 'email-funnel' ? mergedSOP : sop
-        );
+      try {
+        const parsedSOPs = JSON.parse(savedSOPs);
+        setSops(parsedSOPs);
+      } catch (error) {
+        console.error('Error loading saved SOPs:', error);
+        // If there's an error, start with defaults
+        setSops(defaultSOPs);
+        localStorage.setItem('creative-toolkit-sops', JSON.stringify(defaultSOPs));
       }
-      
-      // Force update Product Launch SOP with detailed content
-      const productLaunchSOP = sopsData.find((sop: SOP) => sop.id === 'product-launch');
-      const productDefault = defaultSOPs.find(sop => sop.id === 'product-launch');
-      
-      if (productLaunchSOP && productDefault) {
-        const needsProductUpdate = needsVersionUpdate;
-
-        if (needsProductUpdate) {
-          console.log('🔄 Migrating Product Launch SOP - preserving user content');
-          const mergedSOP = {
-            ...productLaunchSOP,
-            steps: productLaunchSOP.steps.map((existingStep: SOPStep, index: number) => {
-              const defaultStep = productDefault.steps[index];
-              return defaultStep ? { ...existingStep } : existingStep;
-            }),
-            updatedAt: new Date()
-          };
-          
-          sopsData = sopsData.map((sop: SOP) => 
-            sop.id === 'product-launch' ? mergedSOP : sop
-          );
-        }
-      }
-
-      // Ensure batching-content SOP has correct content for steps 6 and 7
-      const batchingSOP = sopsData.find((sop: SOP) => sop.id === 'batching-content');
-      const batchingDefault = defaultSOPs.find(sop => sop.id === 'batching-content');
-      
-      if (batchingSOP && batchingDefault) {
-        const updatedSteps = batchingSOP.steps.map((step: SOPStep, index: number) => {
-          if (index === 5 && (!step.text || step.text.trim() === '' || step.text.includes('Step 7 - Upload/Schedule'))) {
-            return { ...step, text: batchingDefault.steps[5].text };
-          }
-          if (index === 6 && (!step.text || step.text.trim() === '' || step.text.includes('Step 8 - Publish day checklist'))) {
-            return { ...step, text: batchingDefault.steps[6].text };
-          }
-          return step;
-        });
-        
-        const updatedBatchingSOP = {
-          ...batchingSOP,
-          steps: updatedSteps,
-          updatedAt: new Date()
-        };
-        
-        sopsData = sopsData.map((sop: SOP) => 
-          sop.id === 'batching-content' ? updatedBatchingSOP : sop
-        );
-      }
-      
-      // Save updated data and version
-      localStorage.setItem('sop-builder-sops', JSON.stringify(sopsData));
-      localStorage.setItem('sops-version', currentVersion);
-      setSops(sopsData);
     } else {
+      // First time visit - load the permanent examples
       setSops(defaultSOPs);
-      localStorage.setItem('sop-builder-sops', JSON.stringify(defaultSOPs));
-      localStorage.setItem('sops-version', currentVersion);
+      localStorage.setItem('creative-toolkit-sops', JSON.stringify(defaultSOPs));
     }
   }, []);
 
   const saveSOPs = (updatedSOPs: SOP[]) => {
     setSops(updatedSOPs);
-    localStorage.setItem('sop-builder-sops', JSON.stringify(updatedSOPs));
+    localStorage.setItem('creative-toolkit-sops', JSON.stringify(updatedSOPs));
   };
 
   const createNewSOP = () => {
@@ -221,156 +211,151 @@ export default function SOPBuilderHub() {
     });
   };
 
-  const updateSOPTitle = (id: string, newTitle: string) => {
-    const updatedSOPs = sops.map(sop => 
-      sop.id === id ? { ...sop, title: newTitle, updatedAt: new Date() } : sop
-    );
-    saveSOPs(updatedSOPs);
-  };
+  const deleteSOP = (sopId: string) => {
+    // Don't allow deletion of the 3 example SOPs
+    if (sopId === 'email-funnel' || sopId === 'product-launch' || sopId === 'batching-content') {
+      toast({
+        title: "Cannot Delete Example SOP",
+        description: "The example SOPs cannot be deleted, but you can edit their content.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  const clearSOPChecklist = (id: string) => {
-    const updatedSOPs = sops.map(sop => 
-      sop.id === id ? {
-        ...sop,
-        steps: sop.steps.map(step => ({ ...step, completed: false })),
-        updatedAt: new Date()
-      } : sop
-    );
+    const updatedSOPs = sops.filter(sop => sop.id !== sopId);
     saveSOPs(updatedSOPs);
     
     toast({
-      title: "Checklist Cleared",
-      description: "All steps have been unchecked for this SOP.",
+      title: "SOP Deleted",
+      description: "The SOP has been permanently deleted.",
     });
   };
 
-  const getSOPProgress = (sop: SOP) => {
+  const getCompletionPercentage = (sop: SOP): number => {
+    if (sop.steps.length === 0) return 0;
     const completedSteps = sop.steps.filter(step => step.completed).length;
-    const totalSteps = sop.steps.length;
-    return { completed: completedSteps, total: totalSteps, percentage: totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0 };
+    return Math.round((completedSteps / sop.steps.length) * 100);
+  };
+
+  const getStatusBadge = (sop: SOP) => {
+    const percentage = getCompletionPercentage(sop);
+    if (percentage === 0) return <Badge variant="secondary">Not Started</Badge>;
+    if (percentage === 100) return <Badge variant="default" className="bg-green-600">Complete</Badge>;
+    return <Badge variant="outline">In Progress</Badge>;
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <Sidebar />
       <MobileNav />
-      <div className="lg:ml-64 max-w-full overflow-x-hidden">
-        <main className="px-4 sm:px-6 lg:px-8 py-6 pb-20 lg:pb-6">
+      
+      <div className="lg:ml-64">
+        <div className="p-6">
           {/* Header */}
           <div className="mb-8">
-            <div className="mb-4">
-              {/* Mobile: Simple back arrow using browser history */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.history.back()}
-                className="text-gray-600 hover:text-gray-800 lg:hidden"
+            <div className="flex items-center gap-4 mb-4">
+              <Link 
+                href="/streamline-workflow" 
+                className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                data-testid="link-back-streamline"
               >
                 <ArrowLeft className="w-4 h-4" />
-              </Button>
-              
-              {/* Desktop: Keep existing navigation buttons */}
-              <div className="hidden lg:flex lg:items-center lg:gap-4">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => setLocation("/")}
-                  className="text-gray-600 hover:text-gray-800"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Main Dashboard
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => setLocation("/streamline-workflow")}
-                  className="text-gray-600 hover:text-gray-800"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Streamline Workflow
-                </Button>
-              </div>
+                Back to Streamline Your Workflow
+              </Link>
             </div>
-            <div className="flex items-start gap-3">
-              <div className="bg-gradient-to-br from-indigo-500 to-purple-500 p-3 rounded-lg">
-                <FileText className="h-8 w-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">SOP Builder Hub</h1>
-                <p className="text-gray-600 mt-1">Create and manage your Standard Operating Procedures to streamline your workflow</p>
-              </div>
-            </div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              SOP Builder Hub
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Create, manage, and track your Standard Operating Procedures. Start with our example SOPs or create your own.
+            </p>
           </div>
 
-          {/* Information Box */}
-          <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">What's an SOP?</h3>
-                <p className="text-gray-600">A Standard Operating Procedure is a step-by-step checklist for repeatable tasks, so that you're not starting from scratch every single time.</p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">How to use this hub:</h3>
-                <p className="text-gray-600">The first three SOPs (Email Funnel, Product Launch, Batching Content) are examples. Open one, edit the steps to fit your business, or click Add New SOP to create your own. Mark steps complete to track progress.</p>
-              </div>
-            </div>
-          </div>
-
-        {/* SOP Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sops.map((sop) => {
-            const progress = getSOPProgress(sop);
-            return (
-              <Card key={sop.id} className="hover:shadow-lg transition-shadow">
+          {/* Example SOPs Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {sops.map((sop) => (
+              <Card key={sop.id} className="hover:shadow-lg transition-shadow border-0 shadow-md bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-pink-600" />
-                      <input
-                        type="text"
-                        value={sop.title}
-                        onChange={(e) => updateSOPTitle(sop.id, e.target.value)}
-                        className="font-semibold text-lg bg-transparent border-none outline-none focus:ring-0 text-gray-900"
-                        onClick={(e) => e.stopPropagation()}
-                      />
+                      <FileText className="w-5 h-5 text-blue-600" />
+                      <CardTitle className="text-lg font-semibold">{sop.title}</CardTitle>
                     </div>
-                  </div>
-                  <div className="mt-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant="outline" className="text-xs">
-                        {progress.completed}/{progress.total} steps
-                      </Badge>
-                      <span className="text-xs text-gray-500">
-                        {Math.round(progress.percentage)}%
-                      </span>
-                    </div>
-                    <Progress value={progress.percentage} className="h-2" />
+                    {getStatusBadge(sop)}
                   </div>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex gap-2">
-                    <Link href={`/sop/${sop.id}`} className="flex-1">
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Progress */}
+                    <div>
+                      <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        <span>Progress</span>
+                        <span>{getCompletionPercentage(sop)}%</span>
+                      </div>
+                      <Progress value={getCompletionPercentage(sop)} className="h-2" />
+                    </div>
+
+                    {/* Steps Summary */}
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span>{sop.steps.filter(step => step.completed).length} completed</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Circle className="w-4 h-4" />
+                          <span>{sop.steps.filter(step => !step.completed).length} remaining</span>
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        Total steps: {sop.steps.length}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-2">
                       <Button 
-                        className="w-full bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-white"
-                        size="sm"
+                        asChild 
+                        size="sm" 
+                        className="flex-1"
+                        data-testid={`button-edit-${sop.id}`}
                       >
-                        Open SOP
+                        <Link href={`/sop/${sop.id}`}>
+                          Edit SOP
+                        </Link>
                       </Button>
-                    </Link>
+                      {sop.id !== 'email-funnel' && sop.id !== 'product-launch' && sop.id !== 'batching-content' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => deleteSOP(sop.id)}
+                          data-testid={`button-delete-${sop.id}`}
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            );
-          })}
+            ))}
+          </div>
 
-          {/* Add New SOP Card */}
-          <Card className="border-2 border-dashed border-pink-200 hover:border-pink-300 transition-colors cursor-pointer" onClick={createNewSOP}>
-            <CardContent className="flex flex-col items-center justify-center h-full p-8">
-              <Plus className="h-8 w-8 text-pink-400 mb-3" />
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">Add New SOP</h3>
-              <p className="text-sm text-gray-500 text-center">Create a new Standard Operating Procedure</p>
+          {/* Create New SOP */}
+          <Card className="border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-colors bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Plus className="w-12 h-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Create New SOP</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4 text-center">
+                Build your own custom Standard Operating Procedure
+              </p>
+              <Button onClick={createNewSOP} data-testid="button-create-new-sop">
+                <Plus className="w-4 h-4 mr-2" />
+                Create SOP
+              </Button>
             </CardContent>
           </Card>
-          </div>
-        </main>
+        </div>
       </div>
     </div>
   );
