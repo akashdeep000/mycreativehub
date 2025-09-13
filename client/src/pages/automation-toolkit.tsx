@@ -293,10 +293,10 @@ export default function AutomationToolkit() {
                             Clickable Button Title
                           </div>
                           <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
-                            Link Title
+                            DM with Link
                           </div>
                           <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
-                            DM with Link
+                            Link Title
                           </div>
                           <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
                             Link You Will Send
@@ -391,26 +391,6 @@ export default function AutomationToolkit() {
                               />
                             </div>
 
-                            {/* CTA Buttons */}
-                            <div className="bg-white p-2 border-r border-gray-100">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => copyToClipboard(flow.ctaButtons, "CTA button copied!")}
-                                  className="text-xs h-6 px-2"
-                                >
-                                  <Copy className="w-3 h-3" />
-                                </Button>
-                              </div>
-                              <Textarea
-                                value={flow.ctaButtons}
-                                onChange={(e) => updateFlow(flow.id, 'ctaButtons', e.target.value)}
-                                className="min-h-16 text-sm resize-none"
-                                placeholder="Button text for links..."
-                              />
-                            </div>
-
                             {/* Automated Reply */}
                             <div className="bg-white p-2 border-r border-gray-100">
                               <div className="flex items-center gap-2 mb-2">
@@ -428,6 +408,26 @@ export default function AutomationToolkit() {
                                 onChange={(e) => updateFlow(flow.id, 'automatedReply', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="DM you send just above the link"
+                              />
+                            </div>
+
+                            {/* CTA Buttons */}
+                            <div className="bg-white p-2 border-r border-gray-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => copyToClipboard(flow.ctaButtons, "CTA button copied!")}
+                                  className="text-xs h-6 px-2"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              <Textarea
+                                value={flow.ctaButtons}
+                                onChange={(e) => updateFlow(flow.id, 'ctaButtons', e.target.value)}
+                                className="min-h-16 text-sm resize-none"
+                                placeholder="Button text for links..."
                               />
                             </div>
 
