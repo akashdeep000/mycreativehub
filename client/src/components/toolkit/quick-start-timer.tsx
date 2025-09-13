@@ -28,7 +28,7 @@ export default function QuickStartTimer() {
   const [totalTime, setTotalTime] = useState(0);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [currentTask, setCurrentTask] = useState("");
-  const [customTime, setCustomTime] = useState({ hours: 0, minutes: 25 });
+  const [customTime, setCustomTime] = useState({ hours: 0, minutes: 0 });
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [hoursStr, setHoursStr] = useState("");
   const [minutesStr, setMinutesStr] = useState("");
