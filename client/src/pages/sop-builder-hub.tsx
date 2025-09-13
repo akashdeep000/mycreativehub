@@ -77,12 +77,12 @@ export default function SOPBuilderHub() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    // Force clear and reload the batching-content SOP with new template
+    // Force complete refresh of batching-content SOP to ensure steps 6 and 7 have proper text
     const savedSOPs = localStorage.getItem('sop-builder-sops');
     if (savedSOPs) {
       let sopsData = JSON.parse(savedSOPs);
       
-      // Remove old batching-content SOP to force fresh reload
+      // Completely remove old batching-content SOP to force fresh template load
       sopsData = sopsData.filter((sop: SOP) => sop.id !== 'batching-content');
       
       // Update Email Funnel SOP if it exists but has fewer than 9 steps or empty steps 6-9
@@ -122,6 +122,8 @@ export default function SOPBuilderHub() {
           ...batchingDefault,
           updatedAt: new Date()
         });
+        // Save the updated data immediately
+        localStorage.setItem('sop-builder-sops', JSON.stringify(sopsData));
       }
       
       setSops(sopsData);
