@@ -47,7 +47,7 @@ export default function MobileTopNav() {
   };
 
   return (
-    <div className="fixed top-0 right-0 p-4 z-50 lg:hidden">
+    <div className="fixed top-0 right-0 p-4 z-[9999] lg:hidden pointer-events-auto">
       <div className="flex items-center space-x-3">
         {/* Help Button */}
         <Button
