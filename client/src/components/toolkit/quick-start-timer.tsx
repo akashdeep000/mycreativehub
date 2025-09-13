@@ -676,7 +676,7 @@ export default function QuickStartTimer() {
                       max="23"
                       value={customTime.hours}
                       onChange={(e) => setCustomTime(prev => ({ ...prev, hours: parseInt(e.target.value) || 0 }))}
-                      onFocus={(e) => e.target.select()}
+                      onFocus={(e) => setTimeout(() => e.target.select(), 0)}
                       className="w-16 no-spinners"
                     />
                     <span className="text-sm">hours</span>
@@ -686,7 +686,7 @@ export default function QuickStartTimer() {
                       max="59"
                       value={customTime.minutes}
                       onChange={(e) => setCustomTime(prev => ({ ...prev, minutes: parseInt(e.target.value) || 0 }))}
-                      onFocus={(e) => e.target.select()}
+                      onFocus={(e) => setTimeout(() => e.target.select(), 0)}
                       className="w-16 no-spinners"
                     />
                     <span className="text-sm">minutes</span>
