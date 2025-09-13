@@ -19,6 +19,8 @@ export default function QuickStartTimer() {
   const [, setLocation] = useLocation();
   const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const hoursInputRef = useRef<HTMLInputElement>(null);
+  const minutesInputRef = useRef<HTMLInputElement>(null);
   
   // All state variables
   const [task, setTask] = useState("");
@@ -439,6 +441,33 @@ export default function QuickStartTimer() {
     }
   }, []); // Remove handleSessionComplete from dependencies
 
+  // Prevent wheel scrolling on number inputs
+  useEffect(() => {
+    const preventWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      (e.target as HTMLElement).blur();
+    };
+
+    const hoursEl = hoursInputRef.current;
+    const minutesEl = minutesInputRef.current;
+
+    if (hoursEl) {
+      hoursEl.addEventListener('wheel', preventWheel, { passive: false });
+    }
+    if (minutesEl) {
+      minutesEl.addEventListener('wheel', preventWheel, { passive: false });
+    }
+
+    return () => {
+      if (hoursEl) {
+        hoursEl.removeEventListener('wheel', preventWheel);
+      }
+      if (minutesEl) {
+        minutesEl.removeEventListener('wheel', preventWheel);
+      }
+    };
+  }, [showCustomInput]);
+
   // Initialize notification permissions and restore persistent timer
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
@@ -670,22 +699,22 @@ export default function QuickStartTimer() {
                   <label className="text-sm font-medium">Custom Duration</label>
                   <div className="flex items-center gap-2">
                     <Input
+                      ref={hoursInputRef}
                       type="number"
                       min="0"
                       max="23"
                       value={customTime.hours}
                       onChange={(e) => setCustomTime(prev => ({ ...prev, hours: parseInt(e.target.value) || 0 }))}
-                      onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
                       className="w-16"
                     />
                     <span className="text-sm">hours</span>
                     <Input
+                      ref={minutesInputRef}
                       type="number"
                       min="1"
                       max="59"
                       value={customTime.minutes}
                       onChange={(e) => setCustomTime(prev => ({ ...prev, minutes: parseInt(e.target.value) || 0 }))}
-                      onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
                       className="w-16"
                     />
                     <span className="text-sm">minutes</span>
