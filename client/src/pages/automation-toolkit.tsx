@@ -29,6 +29,7 @@ interface AutomationFlow {
   triggerWord: string;
   dmPrompt: string;
   linkText: string;
+  clickableButtonTitle: string;
   ctaButtons: string;
   automatedReply: string;
   followUp: string;
@@ -41,6 +42,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     triggerWord: 'PROMPTS',
     dmPrompt: 'Thanks! I\'ve sent the link to your DMs!',
     linkText: 'Hey there! I\'m so happy you\'re here, thanks so much for your interest in my [enter thing] 😊  Just click below and I\'ll send you the link straight there, as well as a freebie to go with!',
+    clickableButtonTitle: 'Download Now',
     ctaButtons: 'Grab Yours Today',
     automatedReply: 'Hey there! I\'m so happy you\'re here, thanks so much for your interest in my [enter thing] 😊  Just click below and I\'ll send you the link straight there, as well as a freebie to go with!',
     followUp: 'How are you getting on with the prompts? Any questions?',
@@ -51,6 +53,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     triggerWord: 'DISCOUNT',
     dmPrompt: 'Sent you a message! 😍',
     linkText: 'Thanks so much for your interest in [insert]! Inside, you\'ll find [list qualities]...can\'t wait for you to join! Click below to grab the link.',
+    clickableButtonTitle: 'Get My Discount',
     ctaButtons: 'Claim Your Discount',
     automatedReply: 'Amazing! Use code SAVE30 for 30% off: [LINK]',
     followUp: 'Did you use your discount code? Let me know if you need help!',
@@ -61,6 +64,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     triggerWord: 'INFO',
     dmPrompt: 'Yay! The Link is in your DMs! ',
     linkText: 'Hey there! 👋 Thanks so much for checking out my [product name] You\'ll get [product qualities] Click to find out more!',
+    clickableButtonTitle: 'See the Menu',
     ctaButtons: 'Start Here',
     automatedReply: 'Here\'s everything you need to know: [LINK]',
     followUp: 'Have you had a chance to look through the info? Any questions?',
@@ -142,6 +146,7 @@ export default function AutomationToolkit() {
       triggerWord: '',
       dmPrompt: '',
       linkText: '',
+      clickableButtonTitle: '',
       ctaButtons: '',
       automatedReply: '',
       followUp: '',
@@ -274,7 +279,7 @@ export default function AutomationToolkit() {
                     <div className="min-w-[1200px]">
                       {/* Table Header */}
                       <div className="sticky top-0 bg-gray-50 border border-gray-200 rounded-t-lg">
-                        <div className="grid grid-cols-7 gap-px">
+                        <div className="grid grid-cols-8 gap-px">
                           <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
                             Trigger Word or Phrase
                           </div>
@@ -283,6 +288,9 @@ export default function AutomationToolkit() {
                           </div>
                           <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
                             The Opening DM
+                          </div>
+                          <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
+                            Clickable Button Title
                           </div>
                           <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
                             Link Title
@@ -302,7 +310,7 @@ export default function AutomationToolkit() {
                       {/* Table Body */}
                       <div className="border-l border-r border-b border-gray-200 rounded-b-lg">
                         {automationFlows.map((flow, index) => (
-                          <div key={flow.id} className={`grid grid-cols-7 gap-px ${index !== automationFlows.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                          <div key={flow.id} className={`grid grid-cols-8 gap-px ${index !== automationFlows.length - 1 ? 'border-b border-gray-100' : ''}`}>
                             {/* Trigger Word */}
                             <div className="bg-white p-2 border-r border-gray-100">
                               <div className="flex items-center gap-2 mb-2">
@@ -360,6 +368,26 @@ export default function AutomationToolkit() {
                                 onChange={(e) => updateFlow(flow.id, 'linkText', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="Your opening DM to a follower that commented your keyword"
+                              />
+                            </div>
+
+                            {/* Clickable Button Title */}
+                            <div className="bg-white p-2 border-r border-gray-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => copyToClipboard(flow.clickableButtonTitle, "Clickable button title copied!")}
+                                  className="text-xs h-6 px-2"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              <Textarea
+                                value={flow.clickableButtonTitle}
+                                onChange={(e) => updateFlow(flow.id, 'clickableButtonTitle', e.target.value)}
+                                className="min-h-16 text-sm resize-none"
+                                placeholder="Get them to click for link"
                               />
                             </div>
 
