@@ -1,5 +1,7 @@
 import { Switch, Route } from "wouter";
 import { useEffect } from "react";
+import { HelpCircle, LogOut } from "lucide-react";
+import { useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -71,6 +73,7 @@ function TimerWrapper() {
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [, navigate] = useLocation();
 
   // Show loading state while authentication is being checked
   if (isLoading) {
@@ -101,6 +104,46 @@ function Router() {
     <>
       <ScrollToTop />
       <TimerWrapper />
+      
+      {/* Mobile-only Help and Logout buttons - truly fixed header approach */}
+      <div 
+        className="fixed top-0 right-0 z-50 flex gap-2 p-4 md:hidden"
+        style={{
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
+          paddingRight: 'calc(env(safe-area-inset-right, 0px) + 16px)'
+        }}
+      >
+        <button
+          onClick={() => navigate("/help")}
+          className="bg-white border border-gray-200 rounded-full p-3 shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200"
+          data-testid="button-help-mobile"
+          aria-label="Help"
+        >
+          <HelpCircle className="h-5 w-5 text-gray-600" />
+        </button>
+        <button
+          onClick={async () => {
+            try {
+              await fetch("/api/auth/logout", {
+                method: "POST",
+                credentials: "include",
+              });
+              localStorage.removeItem('token');
+              navigate("/");
+            } catch (error) {
+              console.error("Logout error:", error);
+              localStorage.removeItem('token');
+              navigate("/");
+            }
+          }}
+          className="bg-white border border-gray-200 rounded-full p-3 shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200"
+          data-testid="button-logout-mobile"
+          aria-label="Logout"
+        >
+          <LogOut className="h-5 w-5 text-gray-600" />
+        </button>
+      </div>
+      
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
