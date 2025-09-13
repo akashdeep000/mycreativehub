@@ -251,7 +251,7 @@ export default function SOPEditor() {
           <CardContent className="pt-6">
             {/* Steps List */}
             <div className="space-y-4">
-              {sop.steps.map((step, index) => (
+              {sop.steps.filter(step => !step.text.includes('Execute launch week')).map((step, index) => (
                 <div key={step.id} className="p-4 border rounded-lg bg-white">
                   {/* Desktop Layout */}
                   <div className="hidden lg:flex items-start gap-4">
