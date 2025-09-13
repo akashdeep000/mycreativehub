@@ -675,7 +675,7 @@ export default function QuickStartTimer() {
                       max="23"
                       value={customTime.hours}
                       onChange={(e) => setCustomTime(prev => ({ ...prev, hours: parseInt(e.target.value) || 0 }))}
-                      className="w-16"
+                      className="w-16 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     />
                     <span className="text-sm">hours</span>
                     <Input
@@ -684,7 +684,7 @@ export default function QuickStartTimer() {
                       max="59"
                       value={customTime.minutes}
                       onChange={(e) => setCustomTime(prev => ({ ...prev, minutes: parseInt(e.target.value) || 0 }))}
-                      className="w-16"
+                      className="w-16 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     />
                     <span className="text-sm">minutes</span>
                   </div>

@@ -170,8 +170,8 @@ export default function ResourceLibrary() {
       const reorderedItemsMap = new Map(reorderedItems.map(item => [item.id, item.displayOrder]));
       
       const newItems = [...currentItems].sort((a, b) => {
-        const aOrder = reorderedItemsMap.get(a.id) ?? a.displayOrder;
-        const bOrder = reorderedItemsMap.get(b.id) ?? b.displayOrder;
+        const aOrder = reorderedItemsMap.get(a.id) ?? a.displayOrder ?? 0;
+        const bOrder = reorderedItemsMap.get(b.id) ?? b.displayOrder ?? 0;
         return aOrder - bOrder;
       });
 
