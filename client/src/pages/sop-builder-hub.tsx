@@ -77,7 +77,15 @@ export default function SOPBuilderHub() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    // Force complete refresh of batching-content SOP to ensure steps 6 and 7 have proper text
+    // FORCE COMPLETE RESET - Clear ALL SOP data to fix grey text issue
+    localStorage.removeItem('sop-builder-sops');
+    
+    // Load fresh defaults with proper text for steps 6 and 7
+    localStorage.setItem('sop-builder-sops', JSON.stringify(defaultSOPs));
+    setSops(defaultSOPs);
+    return; // Exit early to ensure clean reload
+    
+    // OLD CODE (keeping as backup but not running):
     const savedSOPs = localStorage.getItem('sop-builder-sops');
     if (savedSOPs) {
       let sopsData = JSON.parse(savedSOPs);
