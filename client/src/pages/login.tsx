@@ -141,7 +141,7 @@ export default function Login() {
             </div>
           </div>
           <h1 className="text-5xl font-serif font-bold text-gray-800 mb-4">
-            The Creative Business Toolkit
+            My Creative Hub
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-12">
             Designed for Makers, Dreamers and Doers. This is your space to stay organised, feel inspired and build a business that works for you.
