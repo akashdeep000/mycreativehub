@@ -45,7 +45,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     clickableButtonTitle: 'Click to find out more!',
     ctaButtons: 'Grab Yours Today',
     automatedReply: 'Here\'s the link to [the thing]!\n\nP.s If you love it, I\'d be so grateful if you could leave a quick review [then direct them to review page in 2nd link] ',
-    followUp: 'How are you getting on with the prompts? Any questions?',
+    followUp: '',
     bonusUpsell: 'Since you grabbed the prompts, you might love our Premium Journal Set — limited-time offer inside!'
   },
   {
@@ -56,7 +56,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     clickableButtonTitle: 'Grab the link',
     ctaButtons: 'Claim Your Discount',
     automatedReply: 'Yay! Here\'s the link to my [thing]. I hope you love it as much as I loved creating it 😍 Below you\'ll also find a link to my Freebie [enter relevant freebie - optional] ',
-    followUp: 'Did you use your discount code? Let me know if you need help!',
+    followUp: '',
     bonusUpsell: 'Love your purchase? Get 20% off our premium bundle with code BUNDLE20!'
   },
   {
@@ -67,7 +67,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     clickableButtonTitle: 'Check it out!',
     ctaButtons: 'Start Here',
     automatedReply: 'I\'m so glad you want to check out my [insert thing] I think you\'ll love it! 😍',
-    followUp: 'Have you had a chance to look through the info? Any questions?',
+    followUp: '',
     bonusUpsell: 'Ready to get started? Book a free consultation call: [LINK]'
   }
 ];
