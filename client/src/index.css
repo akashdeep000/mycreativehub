@@ -2,14 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Fixed overlay root for mobile buttons to prevent iOS Safari positioning bugs */
-#overlay-root {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2147483647;
-}
-
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);
