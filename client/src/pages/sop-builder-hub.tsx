@@ -30,7 +30,7 @@ const defaultSOPs: SOP[] = [
     steps: [
       { id: '1', text: 'Create the automation:\n\n- In your email platform, go to Automations/Workflows → New.\nName it: "Funnel – Product/Lead Magnet".', completed: false },
       { id: '2', text: 'Choose the trigger (pick one):\n\n- Lead magnet sign-up (joined form/list).\n- Tag applied (e.g., "Interested in Product A").\n- Purchased product (order completed).', completed: false },
-      { id: '3', text: 'Set up sales page\n\nBuild your conversion-focused landing page:\n\n• Write compelling headline and subheaders\n• Add benefit-focused bullet points\n• Include social proof (testimonials, reviews, case studies)\n• Create clear call-to-action buttons\n• Set up payment processing and delivery system\n• Test all forms and purchase flows\n\nDone when: sales page is live and all purchase flows tested.', completed: false },
+      { id: '3', text: 'Protect your list:\n\n- If this is a sales funnel, also exclude subscribers that have already bought this product.', completed: false },
       { id: '4', text: 'Build email sequences\n\nWrite your nurture and sales sequence:\n\n• Welcome email with lead magnet delivery\n• 5-7 nurture emails providing value and building trust\n• 3-5 sales emails with clear offers and urgency\n• Follow-up sequences for non-openers and non-clickers\n• Set up automation triggers and timing\n\nDone when: entire sequence is written, tested, and automated.', completed: false },
       { id: '5', text: 'Plan social media campaign\n\nCreate your promotion strategy:\n\n• Map content to your Content Pillars (behind-scenes, tips, testimonials)\n• Schedule posts in your Time Blocking Calendar\n• Create engagement-driving content (polls, questions, stories)\n• Plan cross-platform promotion (Instagram, Facebook, LinkedIn, TikTok)\n• Set up tracking for clicks and conversions\n\nDone when: 2-4 weeks of social content is planned and scheduled.', completed: false },
       { id: '6', text: 'Quick test (always)\nAdd yourself to the trigger → make sure each email lands, links work, mobile looks good.\n• Test on multiple devices and email clients\n• Check all links lead to correct pages\n• Verify lead magnet delivers properly\n• Confirm automation timing is correct\nDone when: you\'ve received and tested the entire customer journey.', completed: false },
@@ -80,59 +80,59 @@ export default function SOPBuilderHub() {
   useEffect(() => {
     const savedSOPs = localStorage.getItem('sop-builder-sops');
     const sopsVersion = localStorage.getItem('sops-version');
-    const currentVersion = '9'; // Version 9 updates Email Funnel SOP Step 5 with improved social media campaign formatting
+    const currentVersion = '10'; // Version 10 fixes migration system and updates Email Funnel SOP Step 3
     
     if (savedSOPs) {
       let sopsData = JSON.parse(savedSOPs);
       let needsVersionUpdate = !sopsVersion || sopsVersion !== currentVersion;
       
-      // Helper function to detect old generic placeholder content
-      const isGenericPlaceholder = (text: string): boolean => {
-        const genericPhrases = [
-          'Create launch timeline',
-          'Develop marketing assets', 
-          'Set up sales page',
-          'Build email sequences',
-          'Plan social media campaign',
-          'Execute launch week'
-        ];
-        const hasStepPrefix = /^Step \d+ - /.test(text);
-        const hasOldStep2Content = text.includes('Develop marketing assets');
-        const hasOldStep3Content = text.includes('page is live, tested, and converting visitors to customers');
-        const hasOldStep4Content = text.includes('entire sequence is written, tested, and automated') && !text.includes('\n\nWrite your nurture');
-        const hasOldStep5Content = text.includes('2-4 weeks of social content is planned and scheduled') && !text.includes('\n\nCreate your promotion');
-        return genericPhrases.some(phrase => text.includes(phrase)) || text.length < 50 || hasStepPrefix || hasOldStep2Content || hasOldStep3Content || hasOldStep4Content || hasOldStep5Content;
+      // Only check for specific legacy content that needs updating
+      const hasLegacyContent = (text: string, stepIndex: number): boolean => {
+        if (stepIndex === 2) { // Step 3
+          return text.includes('Build your conversion-focused landing page');
+        }
+        if (stepIndex === 1) { // Step 2
+          return text.includes('Choose the trigger (pick one)') && !text.includes('\n\nChoose the trigger');
+        }
+        if (stepIndex === 3) { // Step 4
+          return text.includes('entire sequence is written, tested, and automated') && !text.includes('\n\nWrite your nurture');
+        }
+        if (stepIndex === 4) { // Step 5
+          return text.includes('2-4 weeks of social content is planned and scheduled') && !text.includes('\n\nCreate your promotion');
+        }
+        return false;
       };
       
       // Force update Email Funnel SOP with detailed content
       const emailFunnelSOP = sopsData.find((sop: SOP) => sop.id === 'email-funnel');
       const emailDefault = defaultSOPs.find(sop => sop.id === 'email-funnel');
       
-      if (emailFunnelSOP && emailDefault) {
-        const needsEmailUpdate = needsVersionUpdate || 
-          emailFunnelSOP.steps.length !== emailDefault.steps.length ||
-          emailFunnelSOP.steps.some((step: SOPStep) => 
-            !step.text || step.text.trim() === '' || isGenericPlaceholder(step.text)
-          );
-
-        if (needsEmailUpdate) {
-          console.log('🔄 Migrating Email Funnel SOP with detailed content');
-          const mergedSOP = {
-            ...emailDefault,
-            steps: emailDefault.steps.map((defStep, i) => {
-              const existing = emailFunnelSOP.steps[i];
-              return {
-                ...defStep, 
-                completed: !!existing?.completed
-              };
-            }),
-            updatedAt: new Date()
-          };
+      if (emailFunnelSOP && emailDefault && needsVersionUpdate) {
+        console.log('🔄 Migrating Email Funnel SOP - preserving user content, updating only legacy content');
+        
+        // Preserve user content, only update steps with exact legacy matches
+        const updatedSteps = emailFunnelSOP.steps.map((existingStep: SOPStep, index: number) => {
+          const defaultStep = emailDefault.steps[index];
+          if (!defaultStep) return existingStep;
           
-          sopsData = sopsData.map((sop: SOP) => 
-            sop.id === 'email-funnel' ? mergedSOP : sop
-          );
-        }
+          // Only update if this step has legacy content that needs updating
+          const shouldUpdate = hasLegacyContent(existingStep.text, index);
+          
+          return {
+            ...existingStep,
+            text: shouldUpdate ? defaultStep.text : existingStep.text
+          };
+        });
+        
+        const mergedSOP = {
+          ...emailFunnelSOP,
+          steps: updatedSteps,
+          updatedAt: new Date()
+        };
+        
+        sopsData = sopsData.map((sop: SOP) => 
+          sop.id === 'email-funnel' ? mergedSOP : sop
+        );
       }
       
       // Force update Product Launch SOP with detailed content
@@ -140,22 +140,15 @@ export default function SOPBuilderHub() {
       const productDefault = defaultSOPs.find(sop => sop.id === 'product-launch');
       
       if (productLaunchSOP && productDefault) {
-        const needsProductUpdate = needsVersionUpdate ||
-          productLaunchSOP.steps.length !== productDefault.steps.length ||
-          productLaunchSOP.steps.some((step: SOPStep) => 
-            !step.text || step.text.trim() === '' || isGenericPlaceholder(step.text)
-          );
+        const needsProductUpdate = needsVersionUpdate;
 
         if (needsProductUpdate) {
-          console.log('🔄 Migrating Product Launch SOP with detailed content');
+          console.log('🔄 Migrating Product Launch SOP - preserving user content');
           const mergedSOP = {
-            ...productDefault,
-            steps: productDefault.steps.map((defStep, i) => {
-              const existing = productLaunchSOP.steps[i];
-              return {
-                ...defStep,
-                completed: !!existing?.completed
-              };
+            ...productLaunchSOP,
+            steps: productLaunchSOP.steps.map((existingStep: SOPStep, index: number) => {
+              const defaultStep = productDefault.steps[index];
+              return defaultStep ? { ...existingStep } : existingStep;
             }),
             updatedAt: new Date()
           };
