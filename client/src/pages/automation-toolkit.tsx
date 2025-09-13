@@ -339,7 +339,7 @@ export default function AutomationToolkit() {
                                 value={flow.dmPrompt}
                                 onChange={(e) => updateFlow(flow.id, 'dmPrompt', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
-                                placeholder="Caption to tell followers what to DM..."
+                                placeholder="First automatic response..."
                               />
                             </div>
 
@@ -359,7 +359,7 @@ export default function AutomationToolkit() {
                                 value={flow.linkText}
                                 onChange={(e) => updateFlow(flow.id, 'linkText', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
-                                placeholder="Button text for links..."
+                                placeholder="Caption to tell followers what to DM..."
                               />
                             </div>
 
@@ -379,7 +379,7 @@ export default function AutomationToolkit() {
                                 value={flow.ctaButtons}
                                 onChange={(e) => updateFlow(flow.id, 'ctaButtons', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
-                                placeholder="Action button labels..."
+                                placeholder="Button text for links..."
                               />
                             </div>
 
@@ -399,7 +399,7 @@ export default function AutomationToolkit() {
                                 value={flow.automatedReply}
                                 onChange={(e) => updateFlow(flow.id, 'automatedReply', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
-                                placeholder="First automatic response..."
+                                placeholder="Action button labels..."
                               />
                             </div>
 
@@ -419,7 +419,7 @@ export default function AutomationToolkit() {
                                 value={flow.followUp}
                                 onChange={(e) => updateFlow(flow.id, 'followUp', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
-                                placeholder="Nurture message..."
+                                placeholder="Link URL..."
                               />
                             </div>
 
@@ -439,7 +439,7 @@ export default function AutomationToolkit() {
                                 value={flow.bonusUpsell}
                                 onChange={(e) => updateFlow(flow.id, 'bonusUpsell', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
-                                placeholder="Additional offer..."
+                                placeholder="Nurture message..."
                               />
                             </div>
                           </div>
