@@ -273,7 +273,7 @@ export default function SOPEditor() {
                           }, 0);
                         }}
                         placeholder={`Example: ${
-                          index === 0 ? 'Create launch timeline' :
+                          index === 0 ? 'Step 1 - Plan your next 2-4 weeks\nPick goal(s): nurture, launch support, list growth, or evergreen.\nChoose channels: IG feed/Reels, Stories, TikTok, YouTube Shorts, Email, Blog, Pinterest.\nDecide timeline (e.g. 3 IG posts, 2 Reels, 1 email per week).\nList 3-5 content pillar themes you\'ll repeat (e.g., Tips, Behind-the-Scenes, Testimonials, Offers). Use Content Pillars within Content Creation System.\nUse Time Blocking Calendar: plug in key dates (promos, holidays, launches). Done when: you have a filled in calendar and a target number of assets to make.' :
                           index === 1 ? 'Develop marketing assets' :
                           index === 2 ? 'Set up sales page' :
                           index === 3 ? 'Build email sequences' :
@@ -341,7 +341,7 @@ export default function SOPEditor() {
                         value={step.text}
                         onChange={(e) => updateStepText(step.id, e.target.value)}
                         placeholder={`Example: ${
-                          index === 0 ? 'Create launch timeline' :
+                          index === 0 ? 'Step 1 - Plan your next 2-4 weeks\nPick goal(s): nurture, launch support, list growth, or evergreen.\nChoose channels: IG feed/Reels, Stories, TikTok, YouTube Shorts, Email, Blog, Pinterest.\nDecide timeline (e.g. 3 IG posts, 2 Reels, 1 email per week).\nList 3-5 content pillar themes you\'ll repeat (e.g., Tips, Behind-the-Scenes, Testimonials, Offers). Use Content Pillars within Content Creation System.\nUse Time Blocking Calendar: plug in key dates (promos, holidays, launches). Done when: you have a filled in calendar and a target number of assets to make.' :
                           index === 1 ? 'Develop marketing assets' :
                           index === 2 ? 'Set up sales page' :
                           index === 3 ? 'Build email sequences' :
