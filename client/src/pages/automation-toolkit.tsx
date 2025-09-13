@@ -49,7 +49,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
   {
     id: '2', 
     triggerWord: 'DISCOUNT',
-    dmPrompt: 'Ready to save 30%? DM me \'DISCOUNT\' and I\'ll send you the exclusive code!',
+    dmPrompt: 'Sent you a message! 😍',
     linkText: 'Get My Discount',
     ctaButtons: 'Claim Your Discount',
     automatedReply: 'Amazing! Use code SAVE30 for 30% off: [LINK]',
