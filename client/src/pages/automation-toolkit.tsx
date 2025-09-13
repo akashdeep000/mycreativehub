@@ -53,7 +53,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     triggerWord: 'DISCOUNT',
     dmPrompt: 'Sent you a message! 😍',
     linkText: 'Thanks so much for your interest in [insert]! Inside, you\'ll find [list qualities]...can\'t wait for you to join! Click below to grab the link.',
-    clickableButtonTitle: 'Get My Discount',
+    clickableButtonTitle: 'Grab the link',
     ctaButtons: 'Claim Your Discount',
     automatedReply: 'Amazing! Use code SAVE30 for 30% off: [LINK]',
     followUp: 'Did you use your discount code? Let me know if you need help!',
