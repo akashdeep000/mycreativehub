@@ -676,7 +676,7 @@ export default function QuickStartTimer() {
                       max="23"
                       value={customTime.hours}
                       onChange={(e) => setCustomTime(prev => ({ ...prev, hours: parseInt(e.target.value) || 0 }))}
-                      onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
+
                       className="w-16 no-spinners"
                     />
                     <span className="text-sm">hours</span>
@@ -686,7 +686,7 @@ export default function QuickStartTimer() {
                       max="59"
                       value={customTime.minutes}
                       onChange={(e) => setCustomTime(prev => ({ ...prev, minutes: parseInt(e.target.value) || 0 }))}
-                      onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
+
                       className="w-16 no-spinners"
                     />
                     <span className="text-sm">minutes</span>

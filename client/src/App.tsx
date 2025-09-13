@@ -1,4 +1,5 @@
 import { Switch, Route } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -146,6 +147,19 @@ function Router() {
 }
 
 function App() {
+  // Global fix for mouse wheel scrolling on focused number inputs
+  useEffect(() => {
+    const handler = (e: WheelEvent) => {
+      const el = document.activeElement as HTMLInputElement | null;
+      if (el && el.tagName === 'INPUT' && el.type === 'number') {
+        e.preventDefault();
+        el.blur();
+      }
+    };
+    document.addEventListener('wheel', handler, { passive: false });
+    return () => document.removeEventListener('wheel', handler);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
