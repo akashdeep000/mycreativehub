@@ -685,7 +685,6 @@ export default function QuickStartTimer() {
                       inputMode="numeric"
                       pattern="\\d*"
                       autoComplete="off"
-                      placeholder="0"
                       value={hoursStr}
                       onChange={(e) => {
                         let digits = e.target.value.replace(/[^0-9]/g, "");
@@ -712,7 +711,6 @@ export default function QuickStartTimer() {
                       inputMode="numeric"
                       pattern="\\d*"
                       autoComplete="off"
-                      placeholder="25"
                       value={minutesStr}
                       onChange={(e) => {
                         let digits = e.target.value.replace(/[^0-9]/g, "");
