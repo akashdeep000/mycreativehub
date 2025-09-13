@@ -46,7 +46,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     ctaButtons: 'Grab Yours Today',
     automatedReply: 'Here\'s the link to [the thing]!\n\nP.s If you love it, I\'d be so grateful if you could leave a quick review [then direct them to review page in 2nd link] ',
     followUp: '',
-    bonusUpsell: 'Since you grabbed the prompts, you might love our Premium Journal Set — limited-time offer inside!'
+    bonusUpsell: 'Hey! 👋 just popping back to check how you\'re getting on? Don\'t forget to grab [insert] above!'
   },
   {
     id: '2', 
