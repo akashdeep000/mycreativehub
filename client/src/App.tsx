@@ -141,9 +141,6 @@ function MobileHeaderPortal({ navigate }: { navigate: (path: string) => void }) 
             <DialogTitle className="text-xl font-semibold text-gray-800 mb-2">
               Ready to sign off?
             </DialogTitle>
-            <DialogDescription className="text-gray-600 text-base leading-relaxed">
-              You'll be logged out of your creative toolkit. All your progress is automatically saved.
-            </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
             <Button
