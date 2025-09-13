@@ -262,7 +262,7 @@ export default function SOPBuilderHub() {
                 <FileText className="w-6 h-6 text-white" />
               </div>
               <h1 className="text-3xl font-serif font-semibold text-gray-800 dark:text-white">
-                SOP Builder Hub
+                SOP Builder
               </h1>
             </div>
             <p className="text-gray-600 dark:text-gray-400">
