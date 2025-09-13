@@ -275,7 +275,7 @@ export default function SOPEditor() {
                         placeholder={`Example: ${
                           index === 0 ? 'Create launch timeline' :
                           index === 1 ? 'Develop marketing assets' :
-                          index === 2 ? 'Launch email campaign' :
+                          index === 2 ? 'Set up sales page' :
                           index === 3 ? 'Set up landing page' :
                           index === 4 ? 'Configure email automation' :
                           index === 5 ? 'Add one simple rule\nIf purchased {Product} → Exit the sales funnel (so buyers stop getting pitches).' :
@@ -344,7 +344,7 @@ export default function SOPEditor() {
                         placeholder={`Example: ${
                           index === 0 ? 'Create launch timeline' :
                           index === 1 ? 'Develop marketing assets' :
-                          index === 2 ? 'Launch email campaign' :
+                          index === 2 ? 'Set up sales page' :
                           index === 3 ? 'Set up landing page' :
                           index === 4 ? 'Configure email automation' :
                           index === 5 ? 'Add one simple rule\nIf purchased {Product} → Exit the sales funnel (so buyers stop getting pitches).' :
