@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { Plus, FileText, CheckCircle, Circle, ArrowLeft } from 'lucide-react';
@@ -237,12 +236,7 @@ export default function SOPBuilderHub() {
     return Math.round((completedSteps / sop.steps.length) * 100);
   };
 
-  const getStatusBadge = (sop: SOP) => {
-    const percentage = getCompletionPercentage(sop);
-    if (percentage === 0) return <Badge variant="secondary">Not Started</Badge>;
-    if (percentage === 100) return <Badge variant="default" className="bg-green-600">Complete</Badge>;
-    return <Badge variant="outline">In Progress</Badge>;
-  };
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -276,12 +270,9 @@ export default function SOPBuilderHub() {
             {sops.map((sop) => (
               <Card key={sop.id} className="hover:shadow-lg transition-shadow border-0 shadow-md bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm">
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-blue-600" />
-                      <CardTitle className="text-lg font-semibold">{sop.title}</CardTitle>
-                    </div>
-                    {getStatusBadge(sop)}
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    <CardTitle className="text-lg font-semibold">{sop.title}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
