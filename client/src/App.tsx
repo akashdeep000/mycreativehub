@@ -1,5 +1,5 @@
 import { Switch, Route } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { HelpCircle, LogOut } from "lucide-react";
 import { useLocation } from "wouter";
 import { createPortal } from "react-dom";
@@ -7,6 +7,15 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import ScrollToTop from "@/components/ScrollToTop";
 import { TimerProvider, useTimer } from "@/contexts/TimerContext";
@@ -73,14 +82,14 @@ function TimerWrapper() {
 }
 
 function MobileHeaderPortal({ navigate }: { navigate: (path: string) => void }) {
-  const handleLogout = () => {
-    const confirmed = window.confirm("Are you sure you want to log out?");
-    if (confirmed) {
-      logout();
-    }
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
+  const handleLogoutClick = () => {
+    setShowLogoutDialog(true);
   };
 
-  const logout = async () => {
+  const handleLogoutConfirm = async () => {
+    setShowLogoutDialog(false);
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
@@ -95,31 +104,67 @@ function MobileHeaderPortal({ navigate }: { navigate: (path: string) => void }) 
     }
   };
 
+  const handleLogoutCancel = () => {
+    setShowLogoutDialog(false);
+  };
+
   return createPortal(
-    <div 
-      className="fixed top-0 right-0 z-[9999] flex gap-2 p-3 md:hidden pointer-events-auto"
-      style={{
-        top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
-        right: 'calc(env(safe-area-inset-right, 0px) + 12px)'
-      }}
-    >
-      <button
-        onClick={() => navigate("/help")}
-        className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200"
-        data-testid="button-help-mobile"
-        aria-label="Help"
+    <>
+      <div 
+        className="fixed top-0 right-0 z-[9999] flex gap-2 p-3 md:hidden pointer-events-auto"
+        style={{
+          top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+          right: 'calc(env(safe-area-inset-right, 0px) + 12px)'
+        }}
       >
-        <HelpCircle className="h-5 w-5 text-gray-600" />
-      </button>
-      <button
-        onClick={handleLogout}
-        className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200"
-        data-testid="button-logout-mobile"
-        aria-label="Logout"
-      >
-        <LogOut className="h-5 w-5 text-gray-600" />
-      </button>
-    </div>,
+        <button
+          onClick={() => navigate("/help")}
+          className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200"
+          data-testid="button-help-mobile"
+          aria-label="Help"
+        >
+          <HelpCircle className="h-5 w-5 text-gray-600" />
+        </button>
+        <button
+          onClick={handleLogoutClick}
+          className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200"
+          data-testid="button-logout-mobile"
+          aria-label="Logout"
+        >
+          <LogOut className="h-5 w-5 text-gray-600" />
+        </button>
+      </div>
+
+      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <DialogContent className="sm:max-w-md mx-4 rounded-xl bg-gradient-to-br from-cream-50 to-cream-100 border-cream-200">
+          <DialogHeader className="text-center pb-2">
+            <DialogTitle className="text-xl font-semibold text-gray-800 mb-2">
+              Ready to sign off?
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 text-base leading-relaxed">
+              You'll be logged out of your creative toolkit. All your progress is automatically saved.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={handleLogoutCancel}
+              className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+              data-testid="button-cancel-logout"
+            >
+              Stay logged in
+            </Button>
+            <Button
+              onClick={handleLogoutConfirm}
+              className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white shadow-lg transition-all duration-200"
+              data-testid="button-confirm-logout"
+            >
+              Yes, log me out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>,
     document.body
   );
 }
