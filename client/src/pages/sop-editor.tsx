@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useParams } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -53,6 +53,20 @@ export default function SOPEditor() {
     }
     setIsLoading(false);
   }, [sopId]);
+
+  // Auto-resize textareas on component mount and when SOP changes
+  useEffect(() => {
+    if (sop) {
+      setTimeout(() => {
+        const textareas = document.querySelectorAll('.auto-resize-textarea');
+        textareas.forEach((textarea) => {
+          const element = textarea as HTMLTextAreaElement;
+          element.style.height = 'auto';
+          element.style.height = element.scrollHeight + 'px';
+        });
+      }, 50);
+    }
+  }, [sop]);
 
   const saveSOPToStorage = (updatedSOP: SOP) => {
     const savedSOPs = localStorage.getItem('sop-builder-sops');
@@ -239,7 +253,18 @@ export default function SOPEditor() {
                     <div className="flex-1">
                       <Textarea
                         value={step.text}
-                        onChange={(e) => updateStepText(step.id, e.target.value)}
+                        onChange={(e) => {
+                          updateStepText(step.id, e.target.value);
+                          // Auto-resize textarea for desktop
+                          e.target.style.height = 'auto';
+                          e.target.style.height = e.target.scrollHeight + 'px';
+                        }}
+                        onInput={(e) => {
+                          // Auto-resize on input for desktop
+                          const target = e.target as HTMLTextAreaElement;
+                          target.style.height = 'auto';
+                          target.style.height = target.scrollHeight + 'px';
+                        }}
                         placeholder={`Example: ${
                           index === 0 ? 'Create lead magnet' :
                           index === 1 ? 'Test email sequences' :
@@ -252,7 +277,8 @@ export default function SOPEditor() {
                           index === 8 ? 'Tips: Keep it simple to improve\nIf opens are low → try a stronger subject on the next email.\nIf clicks are low → move the CTA higher and make it clearer.\nIf someone buys → confirm they stop the sales funnel.' :
                           'Add your step here'
                         }`}
-                        className="min-h-[60px] resize-none"
+                        className="min-h-[60px] resize-none overflow-hidden auto-resize-textarea"
+                        style={{ height: 'auto' }}
                       />
                     </div>
                     <div className="flex items-center gap-2">
