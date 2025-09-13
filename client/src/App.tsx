@@ -136,7 +136,7 @@ function MobileHeaderPortal({ navigate }: { navigate: (path: string) => void }) 
       </div>
 
       <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <DialogContent className="sm:max-w-md mx-4 rounded-xl bg-gradient-to-br from-cream-50 to-cream-100 border-cream-200">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-sm sm:max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-xl bg-gradient-to-br from-cream-50 to-cream-100 border-cream-200">
           <DialogHeader className="text-center pb-2">
             <DialogTitle className="text-xl font-semibold text-gray-800 mb-2">
               Ready to sign off?
