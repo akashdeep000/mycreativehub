@@ -689,7 +689,8 @@ export default function QuickStartTimer() {
                       value={hoursStr}
                       onChange={(e) => {
                         let digits = e.target.value.replace(/[^0-9]/g, "");
-                        if (digits.length > 1) digits = digits.replace(/^0+/, "");
+                        // Remove leading zeros immediately when user starts typing
+                        digits = digits.replace(/^0+/, "") || (digits === "0" ? "0" : "");
                         digits = digits.slice(0, 2);
                         setHoursStr(digits);
                       }}
@@ -715,7 +716,8 @@ export default function QuickStartTimer() {
                       value={minutesStr}
                       onChange={(e) => {
                         let digits = e.target.value.replace(/[^0-9]/g, "");
-                        if (digits.length > 1) digits = digits.replace(/^0+/, "");
+                        // Remove leading zeros immediately when user starts typing
+                        digits = digits.replace(/^0+/, "") || (digits === "0" ? "0" : "");
                         digits = digits.slice(0, 2);
                         setMinutesStr(digits);
                       }}
