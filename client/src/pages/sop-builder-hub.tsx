@@ -83,62 +83,6 @@ export default function SOPBuilderHub() {
     // Load fresh defaults with proper text for steps 6 and 7
     localStorage.setItem('sop-builder-sops', JSON.stringify(defaultSOPs));
     setSops(defaultSOPs);
-    return; // Exit early to ensure clean reload
-    
-    // OLD CODE (keeping as backup but not running):
-    const savedSOPs = localStorage.getItem('sop-builder-sops');
-    if (savedSOPs) {
-      let sopsData = JSON.parse(savedSOPs);
-      
-      // Completely remove old batching-content SOP to force fresh template load
-      sopsData = sopsData.filter((sop: SOP) => sop.id !== 'batching-content');
-      
-      // Update Email Funnel SOP if it exists but has fewer than 9 steps or empty steps 6-9
-      const emailFunnelSOP = sopsData.find((sop: SOP) => sop.id === 'email-funnel');
-      const emailDefault = defaultSOPs.find(sop => sop.id === 'email-funnel');
-      
-      if (emailFunnelSOP && emailDefault) {
-        const needsUpdate = emailFunnelSOP.steps.length < 9 || 
-          emailDefault.steps.slice(5).some((_, idx) => {
-            const existingStep = emailFunnelSOP.steps[5 + idx];
-            return !existingStep || !existingStep.text || !existingStep.text.trim();
-          });
-
-        if (needsUpdate) {
-          const mergedSOP = {
-            ...emailDefault,
-            steps: emailDefault.steps.map((defStep, i) => {
-              const existing = emailFunnelSOP.steps[i];
-              return existing && existing.text?.trim()
-                ? { ...defStep, ...existing, id: defStep.id, text: existing.text, completed: !!existing.completed }
-                : { ...defStep, completed: !!existing?.completed };
-            }),
-            updatedAt: new Date()
-          };
-          
-          sopsData = sopsData.map((sop: SOP) => 
-            sop.id === 'email-funnel' ? mergedSOP : sop
-          );
-          localStorage.setItem('sop-builder-sops', JSON.stringify(sopsData));
-        }
-      }
-
-      // Add fresh batching-content SOP from default template
-      const batchingDefault = defaultSOPs.find(sop => sop.id === 'batching-content');
-      if (batchingDefault) {
-        sopsData.push({
-          ...batchingDefault,
-          updatedAt: new Date()
-        });
-        // Save the updated data immediately
-        localStorage.setItem('sop-builder-sops', JSON.stringify(sopsData));
-      }
-      
-      setSops(sopsData);
-    } else {
-      setSops(defaultSOPs);
-      localStorage.setItem('sop-builder-sops', JSON.stringify(defaultSOPs));
-    }
   }, []);
 
   const saveSOPs = (updatedSOPs: SOP[]) => {

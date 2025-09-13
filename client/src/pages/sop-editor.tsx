@@ -283,7 +283,7 @@ export default function SOPEditor() {
                           index === 7 ? 'Tips: Keep it simple to improve\n\nIf opens are low → try a stronger subject on the next email.\n\nIf clicks are low → move the CTA higher and make it clearer.\n\nIf someone buys → confirm they stop the sales funnel.' :
                           'Add your step here'
                         }`}
-                        className="min-h-[60px] resize-none overflow-hidden auto-resize-textarea"
+                        className="min-h-[60px] resize-none overflow-hidden auto-resize-textarea text-gray-900"
                         rows={1}
                       />
                     </div>
@@ -351,7 +351,7 @@ export default function SOPEditor() {
                           index === 7 ? 'Tips: Keep it simple to improve\n\nIf opens are low → try a stronger subject on the next email.\n\nIf clicks are low → move the CTA higher and make it clearer.\n\nIf someone buys → confirm they stop the sales funnel.' :
                           'Add your step here'
                         }`}
-                        className="min-h-[80px] w-full resize-none overflow-y-auto"
+                        className="min-h-[80px] w-full resize-none overflow-y-auto text-gray-900"
                       />
                     </div>
                   </div>
