@@ -117,11 +117,36 @@ export default function ResourceLibrary() {
         method: 'DELETE',
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/resource-library'] });
+    onMutate: async (deletedId) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ['/api/resource-library'] });
+
+      // Snapshot the previous value
+      const previousItems = queryClient.getQueryData(['/api/resource-library']) || [];
+
+      // Optimistically remove the item from the UI immediately
+      queryClient.setQueryData(['/api/resource-library'], (old: any) => 
+        (old || []).filter((item: any) => item.id !== deletedId)
+      );
+
+      // Return a context object with the snapshotted value
+      return { previousItems, deletedId };
+    },
+    onSuccess: (_, __, context) => {
       toast({
         title: "Success",
         description: "Resource deleted from your library",
+      });
+    },
+    onError: (error, deletedId, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousItems) {
+        queryClient.setQueryData(['/api/resource-library'], context.previousItems);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete resource. Please try again.",
+        variant: "destructive",
       });
     },
   });
