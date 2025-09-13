@@ -399,7 +399,7 @@ export default function AutomationToolkit() {
                                 value={flow.automatedReply}
                                 onChange={(e) => updateFlow(flow.id, 'automatedReply', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
-                                placeholder="Action button labels..."
+                                placeholder="DM you send just above the link"
                               />
                             </div>
 
