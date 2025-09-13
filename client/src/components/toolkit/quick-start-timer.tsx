@@ -685,6 +685,7 @@ export default function QuickStartTimer() {
                       inputMode="numeric"
                       pattern="\\d*"
                       autoComplete="off"
+                      placeholder="0"
                       value={hoursStr}
                       onChange={(e) => {
                         let digits = e.target.value.replace(/[^0-9]/g, "");
@@ -693,10 +694,13 @@ export default function QuickStartTimer() {
                         setHoursStr(digits);
                       }}
                       onBlur={() => {
-                        const n = Number(hoursStr || "0");
-                        const clamped = Math.max(0, Math.min(23, isNaN(n) ? 0 : n));
-                        setCustomTime(prev => ({ ...prev, hours: clamped }));
-                        setHoursStr(String(clamped));
+                        if (hoursStr !== "") {
+                          const n = Number(hoursStr);
+                          const clamped = Math.max(0, Math.min(23, isNaN(n) ? 0 : n));
+                          setCustomTime(prev => ({ ...prev, hours: clamped }));
+                        } else {
+                          setCustomTime(prev => ({ ...prev, hours: 0 }));
+                        }
                       }}
                       onFocus={(e) => setTimeout(() => e.target.select(), 0)}
                       className="w-16 no-spinners"
@@ -707,6 +711,7 @@ export default function QuickStartTimer() {
                       inputMode="numeric"
                       pattern="\\d*"
                       autoComplete="off"
+                      placeholder="25"
                       value={minutesStr}
                       onChange={(e) => {
                         let digits = e.target.value.replace(/[^0-9]/g, "");
@@ -715,10 +720,13 @@ export default function QuickStartTimer() {
                         setMinutesStr(digits);
                       }}
                       onBlur={() => {
-                        const n = Number(minutesStr || "1");
-                        const clamped = Math.max(1, Math.min(59, isNaN(n) ? 1 : n));
-                        setCustomTime(prev => ({ ...prev, minutes: clamped }));
-                        setMinutesStr(String(clamped));
+                        if (minutesStr !== "") {
+                          const n = Number(minutesStr);
+                          const clamped = Math.max(1, Math.min(59, isNaN(n) ? 1 : n));
+                          setCustomTime(prev => ({ ...prev, minutes: clamped }));
+                        } else {
+                          setCustomTime(prev => ({ ...prev, minutes: 25 }));
+                        }
                       }}
                       onFocus={(e) => setTimeout(() => e.target.select(), 0)}
                       className="w-16 no-spinners"
