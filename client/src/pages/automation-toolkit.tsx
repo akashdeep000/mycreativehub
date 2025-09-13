@@ -42,7 +42,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     triggerWord: 'PROMPTS',
     dmPrompt: 'Thanks! I\'ve sent the link to your DMs!',
     linkText: 'Hey there! I\'m so happy you\'re here, thanks so much for your interest in my [enter thing] 😊  Just click below and I\'ll send you the link straight there, as well as a freebie to go with!',
-    clickableButtonTitle: 'Download Now',
+    clickableButtonTitle: 'Click to find out more!',
     ctaButtons: 'Grab Yours Today',
     automatedReply: 'Hey there! I\'m so happy you\'re here, thanks so much for your interest in my [enter thing] 😊  Just click below and I\'ll send you the link straight there, as well as a freebie to go with!',
     followUp: 'How are you getting on with the prompts? Any questions?',
