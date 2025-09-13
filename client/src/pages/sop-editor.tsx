@@ -42,7 +42,7 @@ export default function SOPEditor() {
 
   useEffect(() => {
     if (sopId) {
-      const savedSOPs = localStorage.getItem('sop-builder-sops');
+      const savedSOPs = localStorage.getItem('creative-toolkit-sops');
       if (savedSOPs) {
         const sops: SOP[] = JSON.parse(savedSOPs);
         const foundSOP = sops.find(s => s.id === sopId);
@@ -82,13 +82,13 @@ export default function SOPEditor() {
   }, [sop]);
 
   const saveSOPToStorage = (updatedSOP: SOP) => {
-    const savedSOPs = localStorage.getItem('sop-builder-sops');
+    const savedSOPs = localStorage.getItem('creative-toolkit-sops');
     if (savedSOPs) {
       const sops: SOP[] = JSON.parse(savedSOPs);
       const updatedSOPs = sops.map(s => 
         s.id === updatedSOP.id ? { ...updatedSOP, updatedAt: new Date() } : s
       );
-      localStorage.setItem('sop-builder-sops', JSON.stringify(updatedSOPs));
+      localStorage.setItem('creative-toolkit-sops', JSON.stringify(updatedSOPs));
       setSop({ ...updatedSOP, updatedAt: new Date() });
     }
   };
