@@ -240,9 +240,18 @@ export default function SOPEditor() {
                       <Textarea
                         value={step.text}
                         onChange={(e) => updateStepText(step.id, e.target.value)}
-                        placeholder={`Example: ${index === 0 ? 'Create lead magnet' : 
-                          index === 1 ? 'Test email sequences' : 
-                          'Launch email campaign'}`}
+                        placeholder={`Example: ${
+                          index === 0 ? 'Create lead magnet' :
+                          index === 1 ? 'Test email sequences' :
+                          index === 2 ? 'Launch email campaign' :
+                          index === 3 ? 'Set up landing page' :
+                          index === 4 ? 'Configure email automation' :
+                          index === 5 ? 'Add one simple rule\nIf purchased {Product} → Exit the sales funnel (so buyers stop getting pitches).' :
+                          index === 6 ? 'Quick test (always)\nAdd yourself to the trigger → make sure each email lands, links work, mobile looks good.' :
+                          index === 7 ? 'Turn it on\nSwitch the automation ON. Promote lead magnet/product to get signups.' :
+                          index === 8 ? 'Tips: Keep it simple to improve\nIf opens are low → try a stronger subject on the next email.\nIf clicks are low → move the CTA higher and make it clearer.\nIf someone buys → confirm they stop the sales funnel.' :
+                          'Add your step here'
+                        }`}
                         className="min-h-[60px] resize-none"
                       />
                     </div>
@@ -299,9 +308,18 @@ export default function SOPEditor() {
                       <Textarea
                         value={step.text}
                         onChange={(e) => updateStepText(step.id, e.target.value)}
-                        placeholder={`Example: ${index === 0 ? 'Create lead magnet' : 
-                          index === 1 ? 'Test email sequences' : 
-                          'Launch email campaign'}`}
+                        placeholder={`Example: ${
+                          index === 0 ? 'Create lead magnet' :
+                          index === 1 ? 'Test email sequences' :
+                          index === 2 ? 'Launch email campaign' :
+                          index === 3 ? 'Set up landing page' :
+                          index === 4 ? 'Configure email automation' :
+                          index === 5 ? 'Add one simple rule\nIf purchased {Product} → Exit the sales funnel (so buyers stop getting pitches).' :
+                          index === 6 ? 'Quick test (always)\nAdd yourself to the trigger → make sure each email lands, links work, mobile looks good.' :
+                          index === 7 ? 'Turn it on\nSwitch the automation ON. Promote lead magnet/product to get signups.' :
+                          index === 8 ? 'Tips: Keep it simple to improve\nIf opens are low → try a stronger subject on the next email.\nIf clicks are low → move the CTA higher and make it clearer.\nIf someone buys → confirm they stop the sales funnel.' :
+                          'Add your step here'
+                        }`}
                         className="min-h-[80px] w-full resize-none overflow-y-auto"
                       />
                     </div>
