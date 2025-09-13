@@ -78,7 +78,21 @@ export default function SOPBuilderHub() {
   useEffect(() => {
     const savedSOPs = localStorage.getItem('sop-builder-sops');
     if (savedSOPs) {
-      setSops(JSON.parse(savedSOPs));
+      let sopsData = JSON.parse(savedSOPs);
+      
+      // Update Email Funnel SOP if it exists but has fewer than 9 steps
+      const emailFunnelSOP = sopsData.find((sop: SOP) => sop.id === 'email-funnel');
+      if (emailFunnelSOP && emailFunnelSOP.steps.length < 9) {
+        const updatedEmailFunnel = defaultSOPs.find(sop => sop.id === 'email-funnel');
+        if (updatedEmailFunnel) {
+          sopsData = sopsData.map((sop: SOP) => 
+            sop.id === 'email-funnel' ? { ...updatedEmailFunnel, updatedAt: new Date() } : sop
+          );
+          localStorage.setItem('sop-builder-sops', JSON.stringify(sopsData));
+        }
+      }
+      
+      setSops(sopsData);
     } else {
       setSops(defaultSOPs);
       localStorage.setItem('sop-builder-sops', JSON.stringify(defaultSOPs));
