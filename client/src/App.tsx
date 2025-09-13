@@ -73,6 +73,28 @@ function TimerWrapper() {
 }
 
 function MobileHeaderPortal({ navigate }: { navigate: (path: string) => void }) {
+  const handleLogout = () => {
+    const confirmed = window.confirm("Are you sure you want to log out?");
+    if (confirmed) {
+      logout();
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      localStorage.removeItem('token');
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      localStorage.removeItem('token');
+      navigate("/");
+    }
+  };
+
   return createPortal(
     <div 
       className="fixed top-0 right-0 z-[9999] flex gap-2 p-3 md:hidden pointer-events-auto"
@@ -83,28 +105,15 @@ function MobileHeaderPortal({ navigate }: { navigate: (path: string) => void }) 
     >
       <button
         onClick={() => navigate("/help")}
-        className="bg-white border border-gray-200 rounded-full p-3 shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200"
+        className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200"
         data-testid="button-help-mobile"
         aria-label="Help"
       >
         <HelpCircle className="h-5 w-5 text-gray-600" />
       </button>
       <button
-        onClick={async () => {
-          try {
-            await fetch("/api/auth/logout", {
-              method: "POST",
-              credentials: "include",
-            });
-            localStorage.removeItem('token');
-            navigate("/");
-          } catch (error) {
-            console.error("Logout error:", error);
-            localStorage.removeItem('token');
-            navigate("/");
-          }
-        }}
-        className="bg-white border border-gray-200 rounded-full p-3 shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200"
+        onClick={handleLogout}
+        className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200"
         data-testid="button-logout-mobile"
         aria-label="Logout"
       >
