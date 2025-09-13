@@ -671,29 +671,23 @@ export default function QuickStartTimer() {
                   <label className="text-sm font-medium">Custom Duration</label>
                   <div className="flex items-center gap-2">
                     <Input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={customTime.hours.toString()}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9]/g, '');
-                        const num = Math.min(23, Math.max(0, parseInt(value) || 0));
-                        setCustomTime(prev => ({ ...prev, hours: num }));
-                      }}
-                      className="w-16"
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={customTime.hours}
+                      onChange={(e) => setCustomTime(prev => ({ ...prev, hours: parseInt(e.target.value) || 0 }))}
+                      onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
+                      className="w-16 no-spinners"
                     />
                     <span className="text-sm">hours</span>
                     <Input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={customTime.minutes.toString()}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9]/g, '');
-                        const num = Math.min(59, Math.max(1, parseInt(value) || 1));
-                        setCustomTime(prev => ({ ...prev, minutes: num }));
-                      }}
-                      className="w-16"
+                      type="number"
+                      min="1"
+                      max="59"
+                      value={customTime.minutes}
+                      onChange={(e) => setCustomTime(prev => ({ ...prev, minutes: parseInt(e.target.value) || 0 }))}
+                      onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
+                      className="w-16 no-spinners"
                     />
                     <span className="text-sm">minutes</span>
                   </div>
