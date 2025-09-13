@@ -257,9 +257,14 @@ export default function SOPBuilderHub() {
                 Back to Streamline Your Workflow
               </Link>
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-              SOP Builder Hub
-            </h1>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                <FileText className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <h1 className="text-3xl font-bold text-black dark:text-white">
+                SOP Builder Hub
+              </h1>
+            </div>
             <p className="text-gray-600 dark:text-gray-400">
               Create, manage, and track your Standard Operating Procedures. Start with our example SOPs or create your own.
             </p>
@@ -288,14 +293,7 @@ export default function SOPBuilderHub() {
 
                     {/* Steps Summary */}
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      <div className="flex items-center gap-4">
-                        
-                        <div className="flex items-center gap-1">
-                          <Circle className="w-4 h-4" />
-                          <span>{sop.steps.filter(step => !step.completed).length} remaining</span>
-                        </div>
-                      </div>
-                      <div className="mt-2">
+                      <div>
                         Total steps: {sop.steps.length}
                       </div>
                     </div>
