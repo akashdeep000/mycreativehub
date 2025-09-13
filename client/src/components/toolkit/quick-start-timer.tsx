@@ -30,8 +30,8 @@ export default function QuickStartTimer() {
   const [currentTask, setCurrentTask] = useState("");
   const [customTime, setCustomTime] = useState({ hours: 0, minutes: 25 });
   const [showCustomInput, setShowCustomInput] = useState(false);
-  const [hoursStr, setHoursStr] = useState("0");
-  const [minutesStr, setMinutesStr] = useState("25");
+  const [hoursStr, setHoursStr] = useState("");
+  const [minutesStr, setMinutesStr] = useState("");
   const [isFloatingVisible, setIsFloatingVisible] = useState(false);
   const [isFloatingMinimized, setIsFloatingMinimized] = useState(false);
   const [repeatMode, setRepeatMode] = useState(false);
@@ -441,13 +441,13 @@ export default function QuickStartTimer() {
     }
   }, []); // Remove handleSessionComplete from dependencies
 
-  // Sync string states when custom input is shown
+  // Initialize empty string states when custom input is first shown
   useEffect(() => {
-    if (showCustomInput) {
-      setHoursStr(String(customTime.hours));
-      setMinutesStr(String(customTime.minutes));
+    if (showCustomInput && hoursStr === "" && minutesStr === "") {
+      setHoursStr("");
+      setMinutesStr("");
     }
-  }, [showCustomInput, customTime.hours, customTime.minutes]);
+  }, [showCustomInput]);
 
 
   // Initialize notification permissions and restore persistent timer
