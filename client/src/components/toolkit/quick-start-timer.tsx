@@ -675,7 +675,11 @@ export default function QuickStartTimer() {
                       min="0"
                       max="23"
                       value={customTime.hours}
-                      onChange={(e) => setCustomTime(prev => ({ ...prev, hours: parseInt(e.target.value) || 0 }))}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/^0+/, '') || '0';
+                        const num = Math.min(23, Math.max(0, parseInt(value) || 0));
+                        setCustomTime(prev => ({ ...prev, hours: num }));
+                      }}
                       onFocus={(e) => setTimeout(() => e.target.select(), 0)}
                       className="w-16 no-spinners"
                     />
@@ -685,7 +689,11 @@ export default function QuickStartTimer() {
                       min="1"
                       max="59"
                       value={customTime.minutes}
-                      onChange={(e) => setCustomTime(prev => ({ ...prev, minutes: parseInt(e.target.value) || 0 }))}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/^0+/, '') || '1';
+                        const num = Math.min(59, Math.max(1, parseInt(value) || 1));
+                        setCustomTime(prev => ({ ...prev, minutes: num }));
+                      }}
                       onFocus={(e) => setTimeout(() => e.target.select(), 0)}
                       className="w-16 no-spinners"
                     />
