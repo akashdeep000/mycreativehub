@@ -32,7 +32,7 @@ const defaultSOPs: SOP[] = [
       { id: '2', text: 'Choose the trigger (pick one):\n\n- Lead magnet sign-up (joined form/list).\n- Tag applied (e.g., "Interested in Product A").\n- Purchased product (order completed).', completed: false },
       { id: '3', text: 'Set up sales page\n\nBuild your conversion-focused landing page:\n\n• Write compelling headline and subheaders\n• Add benefit-focused bullet points\n• Include social proof (testimonials, reviews, case studies)\n• Create clear call-to-action buttons\n• Set up payment processing and delivery system\n• Test all forms and purchase flows\n\nDone when: sales page is live and all purchase flows tested.', completed: false },
       { id: '4', text: 'Build email sequences\n\nWrite your nurture and sales sequence:\n\n• Welcome email with lead magnet delivery\n• 5-7 nurture emails providing value and building trust\n• 3-5 sales emails with clear offers and urgency\n• Follow-up sequences for non-openers and non-clickers\n• Set up automation triggers and timing\n\nDone when: entire sequence is written, tested, and automated.', completed: false },
-      { id: '5', text: 'Plan social media campaign\nCreate your promotion strategy:\n• Map content to your Content Pillars (behind-scenes, tips, testimonials)\n• Schedule posts in your Time Blocking Calendar\n• Create engagement-driving content (polls, questions, stories)\n• Plan cross-platform promotion (Instagram, Facebook, LinkedIn, TikTok)\n• Set up tracking for clicks and conversions\nDone when: 2-4 weeks of social content is planned and scheduled.', completed: false },
+      { id: '5', text: 'Plan social media campaign\n\nCreate your promotion strategy:\n\n• Map content to your Content Pillars (behind-scenes, tips, testimonials)\n• Schedule posts in your Time Blocking Calendar\n• Create engagement-driving content (polls, questions, stories)\n• Plan cross-platform promotion (Instagram, Facebook, LinkedIn, TikTok)\n• Set up tracking for clicks and conversions\n\nDone when: 2-4 weeks of social content is planned and scheduled.', completed: false },
       { id: '6', text: 'Quick test (always)\nAdd yourself to the trigger → make sure each email lands, links work, mobile looks good.\n• Test on multiple devices and email clients\n• Check all links lead to correct pages\n• Verify lead magnet delivers properly\n• Confirm automation timing is correct\nDone when: you\'ve received and tested the entire customer journey.', completed: false },
       { id: '7', text: 'Turn it on\nSwitch the automation ON. Promote lead magnet/product to get signups.\n• Activate all email sequences\n• Launch social media campaign\n• Send announcement to existing list\n• Monitor performance in first 24 hours\nDone when: funnel is live and generating leads.', completed: false },
       { id: '8', text: 'Monitor and optimize\nTrack performance and make improvements:\n\nIf opens are low → try a stronger subject on the next email.\n\nIf clicks are low → move the CTA higher and make it clearer.\n\nIf someone buys → confirm they stop the sales funnel.\n\nWeekly: Review open rates, click rates, and conversion rates.', completed: false },
@@ -80,7 +80,7 @@ export default function SOPBuilderHub() {
   useEffect(() => {
     const savedSOPs = localStorage.getItem('sop-builder-sops');
     const sopsVersion = localStorage.getItem('sops-version');
-    const currentVersion = '8'; // Version 8 updates Email Funnel SOP Step 4 with improved email sequences formatting
+    const currentVersion = '9'; // Version 9 updates Email Funnel SOP Step 5 with improved social media campaign formatting
     
     if (savedSOPs) {
       let sopsData = JSON.parse(savedSOPs);
@@ -100,7 +100,8 @@ export default function SOPBuilderHub() {
         const hasOldStep2Content = text.includes('Develop marketing assets');
         const hasOldStep3Content = text.includes('page is live, tested, and converting visitors to customers');
         const hasOldStep4Content = text.includes('entire sequence is written, tested, and automated') && !text.includes('\n\nWrite your nurture');
-        return genericPhrases.some(phrase => text.includes(phrase)) || text.length < 50 || hasStepPrefix || hasOldStep2Content || hasOldStep3Content || hasOldStep4Content;
+        const hasOldStep5Content = text.includes('2-4 weeks of social content is planned and scheduled') && !text.includes('\n\nCreate your promotion');
+        return genericPhrases.some(phrase => text.includes(phrase)) || text.length < 50 || hasStepPrefix || hasOldStep2Content || hasOldStep3Content || hasOldStep4Content || hasOldStep5Content;
       };
       
       // Force update Email Funnel SOP with detailed content
