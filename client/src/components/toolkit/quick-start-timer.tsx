@@ -501,6 +501,8 @@ export default function QuickStartTimer() {
   useEffect(() => {
     if (selectedMinutes === "custom") {
       setShowCustomInput(true);
+      setHoursStr("");
+      setMinutesStr("");
     } else {
       setShowCustomInput(false);
     }
@@ -689,7 +691,7 @@ export default function QuickStartTimer() {
                       onChange={(e) => {
                         let digits = e.target.value.replace(/[^0-9]/g, "");
                         // Remove leading zeros immediately when user starts typing
-                        digits = digits.replace(/^0+/, "") || (digits === "0" ? "0" : "");
+                        digits = digits.replace(/^0+/, "");
                         digits = digits.slice(0, 2);
                         setHoursStr(digits);
                       }}
@@ -698,8 +700,6 @@ export default function QuickStartTimer() {
                           const n = Number(hoursStr);
                           const clamped = Math.max(0, Math.min(23, isNaN(n) ? 0 : n));
                           setCustomTime(prev => ({ ...prev, hours: clamped }));
-                        } else {
-                          setCustomTime(prev => ({ ...prev, hours: 0 }));
                         }
                       }}
                       onFocus={(e) => setTimeout(() => e.target.select(), 0)}
@@ -715,7 +715,7 @@ export default function QuickStartTimer() {
                       onChange={(e) => {
                         let digits = e.target.value.replace(/[^0-9]/g, "");
                         // Remove leading zeros immediately when user starts typing
-                        digits = digits.replace(/^0+/, "") || (digits === "0" ? "0" : "");
+                        digits = digits.replace(/^0+/, "");
                         digits = digits.slice(0, 2);
                         setMinutesStr(digits);
                       }}
@@ -724,8 +724,6 @@ export default function QuickStartTimer() {
                           const n = Number(minutesStr);
                           const clamped = Math.max(1, Math.min(59, isNaN(n) ? 1 : n));
                           setCustomTime(prev => ({ ...prev, minutes: clamped }));
-                        } else {
-                          setCustomTime(prev => ({ ...prev, minutes: 25 }));
                         }
                       }}
                       onFocus={(e) => setTimeout(() => e.target.select(), 0)}
