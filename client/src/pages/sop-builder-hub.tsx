@@ -80,13 +80,31 @@ export default function SOPBuilderHub() {
     if (savedSOPs) {
       let sopsData = JSON.parse(savedSOPs);
       
-      // Update Email Funnel SOP if it exists but has fewer than 9 steps
+      // Update Email Funnel SOP if it exists but has fewer than 9 steps or empty steps 6-9
       const emailFunnelSOP = sopsData.find((sop: SOP) => sop.id === 'email-funnel');
-      if (emailFunnelSOP && emailFunnelSOP.steps.length < 9) {
-        const updatedEmailFunnel = defaultSOPs.find(sop => sop.id === 'email-funnel');
-        if (updatedEmailFunnel) {
+      const emailDefault = defaultSOPs.find(sop => sop.id === 'email-funnel');
+      
+      if (emailFunnelSOP && emailDefault) {
+        const needsUpdate = emailFunnelSOP.steps.length < 9 || 
+          emailDefault.steps.slice(5).some((_, idx) => {
+            const existingStep = emailFunnelSOP.steps[5 + idx];
+            return !existingStep || !existingStep.text || !existingStep.text.trim();
+          });
+
+        if (needsUpdate) {
+          const mergedSOP = {
+            ...emailDefault,
+            steps: emailDefault.steps.map((defStep, i) => {
+              const existing = emailFunnelSOP.steps[i];
+              return existing && existing.text?.trim()
+                ? { ...defStep, ...existing, id: defStep.id, text: existing.text, completed: !!existing.completed }
+                : { ...defStep, completed: !!existing?.completed };
+            }),
+            updatedAt: new Date()
+          };
+          
           sopsData = sopsData.map((sop: SOP) => 
-            sop.id === 'email-funnel' ? { ...updatedEmailFunnel, updatedAt: new Date() } : sop
+            sop.id === 'email-funnel' ? mergedSOP : sop
           );
           localStorage.setItem('sop-builder-sops', JSON.stringify(sopsData));
         }
