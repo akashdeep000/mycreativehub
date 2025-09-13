@@ -64,7 +64,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     triggerWord: 'INFO',
     dmPrompt: 'Yay! The Link is in your DMs! ',
     linkText: 'Hey there! 👋 Thanks so much for checking out my [product name] You\'ll get [product qualities] Click to find out more!',
-    clickableButtonTitle: 'See the Menu',
+    clickableButtonTitle: 'Check it out!',
     ctaButtons: 'Start Here',
     automatedReply: 'Here\'s everything you need to know: [LINK]',
     followUp: 'Have you had a chance to look through the info? Any questions?',
