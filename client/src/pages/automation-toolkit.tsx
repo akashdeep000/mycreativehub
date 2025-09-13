@@ -279,22 +279,22 @@ export default function AutomationToolkit() {
                             Trigger Word or Phrase
                           </div>
                           <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
-                            DM Message Prompt
-                          </div>
-                          <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
-                            Link Text /<br />Destination Label
-                          </div>
-                          <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
-                            Call-to-Action Buttons
-                          </div>
-                          <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
                             Automated Replies
                           </div>
                           <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
-                            Follow-Up /<br />Nurture Replies
+                            The Opening DM
+                          </div>
+                          <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
+                            Link Title
+                          </div>
+                          <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
+                            DM with Link
+                          </div>
+                          <div className="bg-white p-3 font-semibold text-sm text-gray-900 border-r border-gray-200">
+                            Link You Will Send
                           </div>
                           <div className="bg-white p-3 font-semibold text-sm text-gray-900">
-                            Bonus / Upsell Messages
+                            Follow Up DM
                           </div>
                         </div>
                       </div>
