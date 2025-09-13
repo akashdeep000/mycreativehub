@@ -1,21 +1,9 @@
 import { Switch, Route } from "wouter";
-import { useEffect, useState } from "react";
-import { HelpCircle, LogOut } from "lucide-react";
-import { useLocation } from "wouter";
-import { createPortal } from "react-dom";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import ScrollToTop from "@/components/ScrollToTop";
 import { TimerProvider, useTimer } from "@/contexts/TimerContext";
@@ -81,57 +69,8 @@ function TimerWrapper() {
   );
 }
 
-function MobileHeaderPortal({ navigate }: { navigate: (path: string) => void }) {
-  // Fixed mobile logout functionality - clean implementation
-  const handleLogoutClick = async () => {
-    if (confirm("Ready to sign off?")) {
-      try {
-        await fetch("/api/auth/logout", {
-          method: "POST",
-          credentials: "include",
-        });
-        localStorage.removeItem('token');
-        navigate("/");
-      } catch (error) {
-        console.error("Logout error:", error);
-        localStorage.removeItem('token');
-        navigate("/");
-      }
-    }
-  };
-
-  return createPortal(
-    <div 
-      className="fixed top-0 right-0 z-[9999] flex gap-2 p-3 md:hidden pointer-events-auto"
-      style={{
-        top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
-        right: 'calc(env(safe-area-inset-right, 0px) + 12px)'
-      }}
-    >
-      <button
-        onClick={() => navigate("/help")}
-        className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200"
-        data-testid="button-help-mobile"
-        aria-label="Help"
-      >
-        <HelpCircle className="h-5 w-5 text-gray-600" />
-      </button>
-      <button
-        onClick={handleLogoutClick}
-        className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200"
-        data-testid="button-logout-mobile"
-        aria-label="Logout"
-      >
-        <LogOut className="h-5 w-5 text-gray-600" />
-      </button>
-    </div>,
-    document.body
-  );
-}
-
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
-  const [, navigate] = useLocation();
 
   // Show loading state while authentication is being checked
   if (isLoading) {
@@ -162,7 +101,6 @@ function Router() {
     <>
       <ScrollToTop />
       <TimerWrapper />
-      <MobileHeaderPortal navigate={navigate} />
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />

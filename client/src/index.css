@@ -154,27 +154,6 @@
   animation: fadeIn 0.5s ease-out;
 }
 
-/* iOS Safari fixed positioning fix - prevent transforms on mobile */
-@media (max-width: 768px) {
-  html, body, #root {
-    transform: none !important;
-    filter: none !important;
-    perspective: none !important;
-    backdrop-filter: none !important;
-  }
-  
-  /* Disable problematic animations on mobile that break fixed positioning */
-  .animate-fade-in {
-    animation: none !important;
-  }
-  
-  /* Ensure window scrolling on mobile */
-  body {
-    overflow: visible !important;
-    height: auto !important;
-  }
-}
-
 /* Focus styles */
 .focus-visible {
   @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
