@@ -258,8 +258,8 @@ export default function SOPBuilderHub() {
               </Link>
             </div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <FileText className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">
+                <FileText className="w-6 h-6 text-white" />
               </div>
               <h1 className="text-3xl font-bold text-black dark:text-white">
                 SOP Builder Hub
