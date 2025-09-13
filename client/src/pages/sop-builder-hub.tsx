@@ -29,7 +29,7 @@ const defaultSOPs: SOP[] = [
     title: 'Email Funnel SOP',
     steps: [
       { id: '1', text: 'Create the automation:\n\n- In your email platform, go to Automations/Workflows → New.\nName it: "Funnel – Product/Lead Magnet".', completed: false },
-      { id: '2', text: 'Develop marketing assets\nCreate all supporting materials:\n• Lead magnet design and copy (PDF, checklist, mini-course)\n• Sales page copy and visuals\n• Social media graphics (Instagram posts, stories, LinkedIn)\n• Email header/footer templates\n• Thank you page design\nDone when: all visual assets are created and copy is written for each touchpoint.', completed: false },
+      { id: '2', text: 'Choose the trigger (pick one):\n\n- Lead magnet sign-up (joined form/list).\n- Tag applied (e.g., "Interested in Product A").\n- Purchased product (order completed).', completed: false },
       { id: '3', text: 'Set up sales page\nBuild your conversion-focused landing page:\n• Write compelling headline and subheaders\n• Add benefit-focused bullet points\n• Include social proof (testimonials, reviews, case studies)\n• Create clear call-to-action buttons\n• Set up payment processing and delivery system\n• Test all forms and purchase flows\nDone when: page is live, tested, and converting visitors to customers.', completed: false },
       { id: '4', text: 'Build email sequences\nWrite your nurture and sales sequence:\n• Welcome email with lead magnet delivery\n• 5-7 nurture emails providing value and building trust\n• 3-5 sales emails with clear offers and urgency\n• Follow-up sequences for non-openers and non-clickers\n• Set up automation triggers and timing\nDone when: entire sequence is written, tested, and automated.', completed: false },
       { id: '5', text: 'Plan social media campaign\nCreate your promotion strategy:\n• Map content to your Content Pillars (behind-scenes, tips, testimonials)\n• Schedule posts in your Time Blocking Calendar\n• Create engagement-driving content (polls, questions, stories)\n• Plan cross-platform promotion (Instagram, Facebook, LinkedIn, TikTok)\n• Set up tracking for clicks and conversions\nDone when: 2-4 weeks of social content is planned and scheduled.', completed: false },
@@ -80,7 +80,7 @@ export default function SOPBuilderHub() {
   useEffect(() => {
     const savedSOPs = localStorage.getItem('sop-builder-sops');
     const sopsVersion = localStorage.getItem('sops-version');
-    const currentVersion = '4'; // Version 4 updates Email Funnel SOP Step 1 with automation creation text
+    const currentVersion = '5'; // Version 5 updates Email Funnel SOP Step 2 with trigger selection text
     
     if (savedSOPs) {
       let sopsData = JSON.parse(savedSOPs);
