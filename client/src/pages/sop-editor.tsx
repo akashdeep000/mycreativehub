@@ -272,6 +272,15 @@ export default function SOPEditor() {
                             e.target.style.height = e.target.scrollHeight + 'px';
                           }, 0);
                         }}
+                        ref={(textarea) => {
+                          if (textarea && step.text) {
+                            // Initial resize when textarea mounts with content
+                            setTimeout(() => {
+                              textarea.style.height = 'auto';
+                              textarea.style.height = textarea.scrollHeight + 'px';
+                            }, 50);
+                          }
+                        }}
                         placeholder={`Example: ${
                           index === 0 ? 'Step 1 - Plan your next 2-4 weeks\nPick goal(s): nurture, launch support, list growth, or evergreen.\nChoose channels: IG feed/Reels, Stories, TikTok, YouTube Shorts, Email, Blog, Pinterest.\nDecide timeline (e.g. 3 IG posts, 2 Reels, 1 email per week).\nList 3-5 content pillar themes you\'ll repeat (e.g., Tips, Behind-the-Scenes, Testimonials, Offers). Use Content Pillars within Content Creation System.\nUse Time Blocking Calendar: plug in key dates (promos, holidays, launches). Done when: you have a filled in calendar and a target number of assets to make.' :
                           index === 1 ? 'Step 2 - Block your batching time\nTake Action! Pick 1-2 batching sessions this week for any given task within your Time Blocking Planner and get to work.\nSet a Quick Start Timer on your dashboard and turn off distractions. Done when: your time is blocked and your workspace/files are ready.' :
@@ -339,7 +348,23 @@ export default function SOPEditor() {
                     <div className="w-full">
                       <Textarea
                         value={step.text}
-                        onChange={(e) => updateStepText(step.id, e.target.value)}
+                        onChange={(e) => {
+                          updateStepText(step.id, e.target.value);
+                          // Auto-resize for mobile too
+                          setTimeout(() => {
+                            e.target.style.height = 'auto';
+                            e.target.style.height = e.target.scrollHeight + 'px';
+                          }, 0);
+                        }}
+                        ref={(textarea) => {
+                          if (textarea && step.text) {
+                            // Initial resize when textarea mounts with content
+                            setTimeout(() => {
+                              textarea.style.height = 'auto';
+                              textarea.style.height = textarea.scrollHeight + 'px';
+                            }, 50);
+                          }
+                        }}
                         placeholder={`Example: ${
                           index === 0 ? 'Step 1 - Plan your next 2-4 weeks\nPick goal(s): nurture, launch support, list growth, or evergreen.\nChoose channels: IG feed/Reels, Stories, TikTok, YouTube Shorts, Email, Blog, Pinterest.\nDecide timeline (e.g. 3 IG posts, 2 Reels, 1 email per week).\nList 3-5 content pillar themes you\'ll repeat (e.g., Tips, Behind-the-Scenes, Testimonials, Offers). Use Content Pillars within Content Creation System.\nUse Time Blocking Calendar: plug in key dates (promos, holidays, launches). Done when: you have a filled in calendar and a target number of assets to make.' :
                           index === 1 ? 'Step 2 - Block your batching time\nTake Action! Pick 1-2 batching sessions this week for any given task within your Time Blocking Planner and get to work.\nSet a Quick Start Timer on your dashboard and turn off distractions. Done when: your time is blocked and your workspace/files are ready.' :
