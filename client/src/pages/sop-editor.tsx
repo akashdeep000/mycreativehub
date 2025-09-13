@@ -277,7 +277,7 @@ export default function SOPEditor() {
                           index === 1 ? 'Develop marketing assets' :
                           index === 2 ? 'Set up sales page' :
                           index === 3 ? 'Build email sequences' :
-                          index === 4 ? 'Configure email automation' :
+                          index === 4 ? 'Plan social media campaign' :
                           index === 5 ? 'Add one simple rule\nIf purchased {Product} → Exit the sales funnel (so buyers stop getting pitches).' :
                           index === 6 ? 'Quick test (always)\nAdd yourself to the trigger → make sure each email lands, links work, mobile looks good.' :
                           index === 7 ? 'Turn it on\nSwitch the automation ON. Promote lead magnet/product to get signups.' :
@@ -346,7 +346,7 @@ export default function SOPEditor() {
                           index === 1 ? 'Develop marketing assets' :
                           index === 2 ? 'Set up sales page' :
                           index === 3 ? 'Build email sequences' :
-                          index === 4 ? 'Configure email automation' :
+                          index === 4 ? 'Plan social media campaign' :
                           index === 5 ? 'Add one simple rule\nIf purchased {Product} → Exit the sales funnel (so buyers stop getting pitches).' :
                           index === 6 ? 'Quick test (always)\nAdd yourself to the trigger → make sure each email lands, links work, mobile looks good.' :
                           index === 7 ? 'Turn it on\nSwitch the automation ON. Promote lead magnet/product to get signups.' :
