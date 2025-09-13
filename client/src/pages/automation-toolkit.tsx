@@ -39,7 +39,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
   {
     id: '1',
     triggerWord: 'PROMPTS',
-    dmPrompt: 'Want my free journaling prompts? Reply \'PROMPTS\' and I\'ll send them to your inbox!',
+    dmPrompt: 'Thanks! I\'ve sent the link to your DMs!',
     linkText: 'Download Now',
     ctaButtons: 'Grab Yours Today',
     automatedReply: 'Hey there! I\'m so happy you\'re here, thanks so much for your interest in my [enter thing] 😊  Just click below and I\'ll send you the link straight there, as well as a freebie to go with!',
