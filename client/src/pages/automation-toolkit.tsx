@@ -268,9 +268,7 @@ export default function AutomationToolkit() {
                     </div>
                     <div>
                       <CardTitle>Conversation Flow Cheat Sheet</CardTitle>
-                      <CardDescription>
-                        Complete automation journey from trigger to upsell - edit any cell and copy to ManyChat
-                      </CardDescription>
+                      <CardDescription>Complete automation journey from trigger to upsell - edit any cell and copy to ManyChat so you don't need to start from scratch every time! (note: scroll the table to view all columns).</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
