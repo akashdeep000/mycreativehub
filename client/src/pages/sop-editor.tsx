@@ -68,8 +68,10 @@ export default function SOPEditor() {
         });
       };
       
-      // Initial resize
-      setTimeout(resizeTextareas, 100);
+      // Initial resize - run multiple times to ensure all content is loaded
+      setTimeout(resizeTextareas, 50);
+      setTimeout(resizeTextareas, 200);
+      setTimeout(resizeTextareas, 500);
       
       // Also resize on window resize
       const handleResize = () => resizeTextareas();
@@ -292,7 +294,7 @@ export default function SOPEditor() {
                           index === 7 ? 'Tips: Keep it simple to improve\n\nIf opens are low → try a stronger subject on the next email.\n\nIf clicks are low → move the CTA higher and make it clearer.\n\nIf someone buys → confirm they stop the sales funnel.' :
                           'Add your step here'
                         }`}
-                        className="min-h-[60px] resize-none overflow-hidden auto-resize-textarea text-gray-900"
+                        className="min-h-[60px] resize-none overflow-y-auto auto-resize-textarea text-gray-900"
                         rows={1}
                       />
                     </div>
