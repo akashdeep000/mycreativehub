@@ -28,14 +28,14 @@ const defaultSOPs: SOP[] = [
     id: 'email-funnel',
     title: 'Email Funnel SOP',
     steps: [
-      { id: '1', text: 'Create launch timeline', completed: false },
-      { id: '2', text: 'Develop marketing assets', completed: false },
-      { id: '3', text: 'Set up sales page', completed: false },
-      { id: '4', text: 'Build email sequences', completed: false },
-      { id: '5', text: 'Plan social media campaign', completed: false },
-      { id: '6', text: 'Quick test (always)\nAdd yourself to the trigger → make sure each email lands, links work, mobile looks good.', completed: false },
-      { id: '7', text: 'Turn it on\nSwitch the automation ON. Promote lead magnet/product to get signups.', completed: false },
-      { id: '8', text: 'Tips: Keep it simple to improve\n\nIf opens are low → try a stronger subject on the next email.\n\nIf clicks are low → move the CTA higher and make it clearer.\n\nIf someone buys → confirm they stop the sales funnel.', completed: false },
+      { id: '1', text: 'Step 1 - Create launch timeline\nSet your launch date and work backwards:\n• Choose launch date (give yourself 4-6 weeks minimum)\n• Map out key milestones: content creation, email sequence, sales page\n• Block time in your Time Blocking Calendar for each milestone\n• Set up project tracking system (Notion, Trello, or simple doc)\nDone when: you have a clear timeline with specific dates for each deliverable.', completed: false },
+      { id: '2', text: 'Step 2 - Develop marketing assets\nCreate all supporting materials:\n• Lead magnet design and copy (PDF, checklist, mini-course)\n• Sales page copy and visuals\n• Social media graphics (Instagram posts, stories, LinkedIn)\n• Email header/footer templates\n• Thank you page design\nDone when: all visual assets are created and copy is written for each touchpoint.', completed: false },
+      { id: '3', text: 'Step 3 - Set up sales page\nBuild your conversion-focused landing page:\n• Write compelling headline and subheaders\n• Add benefit-focused bullet points\n• Include social proof (testimonials, reviews, case studies)\n• Create clear call-to-action buttons\n• Set up payment processing and delivery system\n• Test all forms and purchase flows\nDone when: page is live, tested, and converting visitors to customers.', completed: false },
+      { id: '4', text: 'Step 4 - Build email sequences\nWrite your nurture and sales sequence:\n• Welcome email with lead magnet delivery\n• 5-7 nurture emails providing value and building trust\n• 3-5 sales emails with clear offers and urgency\n• Follow-up sequences for non-openers and non-clickers\n• Set up automation triggers and timing\nDone when: entire sequence is written, tested, and automated.', completed: false },
+      { id: '5', text: 'Step 5 - Plan social media campaign\nCreate your promotion strategy:\n• Map content to your Content Pillars (behind-scenes, tips, testimonials)\n• Schedule posts in your Time Blocking Calendar\n• Create engagement-driving content (polls, questions, stories)\n• Plan cross-platform promotion (Instagram, Facebook, LinkedIn, TikTok)\n• Set up tracking for clicks and conversions\nDone when: 2-4 weeks of social content is planned and scheduled.', completed: false },
+      { id: '6', text: 'Step 6 - Quick test (always)\nAdd yourself to the trigger → make sure each email lands, links work, mobile looks good.\n• Test on multiple devices and email clients\n• Check all links lead to correct pages\n• Verify lead magnet delivers properly\n• Confirm automation timing is correct\nDone when: you\'ve received and tested the entire customer journey.', completed: false },
+      { id: '7', text: 'Step 7 - Turn it on\nSwitch the automation ON. Promote lead magnet/product to get signups.\n• Activate all email sequences\n• Launch social media campaign\n• Send announcement to existing list\n• Monitor performance in first 24 hours\nDone when: funnel is live and generating leads.', completed: false },
+      { id: '8', text: 'Step 8 - Monitor and optimize\nTrack performance and make improvements:\n\nIf opens are low → try a stronger subject on the next email.\n\nIf clicks are low → move the CTA higher and make it clearer.\n\nIf someone buys → confirm they stop the sales funnel.\n\nWeekly: Review open rates, click rates, and conversion rates.', completed: false },
     ],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -44,12 +44,13 @@ const defaultSOPs: SOP[] = [
     id: 'product-launch',
     title: 'Product Launch SOP',
     steps: [
-      { id: '1', text: 'Create launch timeline', completed: false },
-      { id: '2', text: 'Develop marketing assets', completed: false },
-      { id: '3', text: 'Set up sales page', completed: false },
-      { id: '4', text: 'Build email sequences', completed: false },
-      { id: '5', text: 'Plan social media campaign', completed: false },
-      { id: '6', text: 'Execute launch week', completed: false },
+      { id: '1', text: 'Step 1 - Pre-launch planning (4-6 weeks out)\nDefine your launch strategy:\n• Set launch date and create countdown timeline\n• Define target audience and ideal customer avatar\n• Research competitor launches and pricing\n• Plan your unique value proposition and messaging\n• Use your Financial Management tools to set revenue goals\n• Block launch tasks in your Time Blocking Calendar\nDone when: you have a clear launch strategy and timeline documented.', completed: false },
+      { id: '2', text: 'Step 2 - Create your product (3-4 weeks out)\nFinalize your offering:\n• Complete product creation (course, template, service, etc.)\n• Test all functionality and user experience\n• Create product mockups and demo videos\n• Write detailed product descriptions and benefits\n• Set up delivery system (if digital) or fulfillment (if physical)\nDone when: your product is 100% ready and tested.', completed: false },
+      { id: '3', text: 'Step 3 - Build marketing assets (2-3 weeks out)\nCreate all promotional materials:\n• Sales page with compelling copy and visuals\n• Product images, videos, and testimonials\n• Social media graphics and templates\n• Email headers, banners, and promotional graphics\n• Press kit and media resources\n• FAQ document addressing common objections\nDone when: all marketing materials are created and approved.', completed: false },
+      { id: '4', text: 'Step 4 - Set up sales systems (2 weeks out)\nPrepare your sales infrastructure:\n• Configure payment processing and checkout\n• Set up affiliate program if applicable\n• Create customer onboarding sequence\n• Test purchase flow end-to-end\n• Set up analytics and tracking codes\n• Prepare customer support resources\nDone when: customers can successfully purchase and receive your product.', completed: false },
+      { id: '5', text: 'Step 5 - Build anticipation (1-2 weeks out)\nGenerate pre-launch buzz:\n• Send teaser emails to your list\n• Share behind-the-scenes content on social media\n• Partner with influencers or collaborators\n• Schedule podcast interviews or guest posts\n• Create urgency with limited-time bonuses\n• Set up waitlist or early bird offers\nDone when: your audience is excited and ready to buy.', completed: false },
+      { id: '6', text: 'Step 6 - Execute launch week\nGo live with your launch:\n• Send launch announcement email\n• Post across all social media platforms\n• Go live on Instagram/Facebook to announce\n• Follow up with reminder emails (3-4 during launch week)\n• Engage with comments and questions immediately\n• Monitor sales and adjust strategy if needed\nDone when: launch week is complete and you\'ve maximized initial sales.', completed: false },
+      { id: '7', text: 'Step 7 - Post-launch follow-up\nContinue momentum after launch:\n• Send final 24-hour reminder email\n• Thank customers and deliver products\n• Ask for testimonials and reviews\n• Analyze launch performance and metrics\n• Plan next steps (product updates, new launches)\n• Celebrate your success!\nDone when: customers are served and you\'ve captured lessons learned.', completed: false },
     ],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -117,7 +118,7 @@ export default function SOPBuilderHub() {
       
       if (batchingSOP && batchingDefault) {
         // Only update steps 6 and 7 if they're missing or have placeholder content
-        const updatedSteps = batchingSOP.steps.map((step, index) => {
+        const updatedSteps = batchingSOP.steps.map((step: SOPStep, index: number) => {
           if (index === 5 && (!step.text || step.text.trim() === '' || step.text.includes('Step 7 - Upload/Schedule'))) {
             return { ...step, text: batchingDefault.steps[5].text };
           }
