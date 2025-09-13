@@ -55,7 +55,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     linkText: 'Thanks so much for your interest in [insert]! Inside, you\'ll find [list qualities]...can\'t wait for you to join! Click below to grab the link.',
     clickableButtonTitle: 'Grab the link',
     ctaButtons: 'Claim Your Discount',
-    automatedReply: 'Amazing! Use code SAVE30 for 30% off: [LINK]',
+    automatedReply: 'Yay! Here\'s the link to my [thing]. I hope you love it as much as I loved creating it 😍 Below you\'ll also find a link to my Freebie [enter relevant freebie - optional] ',
     followUp: 'Did you use your discount code? Let me know if you need help!',
     bonusUpsell: 'Love your purchase? Get 20% off our premium bundle with code BUNDLE20!'
   },
