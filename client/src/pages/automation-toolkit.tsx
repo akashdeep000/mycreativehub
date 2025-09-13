@@ -57,7 +57,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     ctaButtons: 'Claim Your Discount',
     automatedReply: 'Yay! Here\'s the link to my [thing]. I hope you love it as much as I loved creating it 😍 Below you\'ll also find a link to my Freebie [enter relevant freebie - optional] ',
     followUp: '',
-    bonusUpsell: 'Love your purchase? Get 20% off our premium bundle with code BUNDLE20!'
+    bonusUpsell: 'Don\'t forget to grab your goodies! I promise they\'re worthwhile 😍'
   },
   {
     id: '3',
