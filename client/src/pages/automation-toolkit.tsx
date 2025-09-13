@@ -44,7 +44,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     linkText: 'Hey there! I\'m so happy you\'re here, thanks so much for your interest in my [enter thing] 😊  Just click below and I\'ll send you the link straight there, as well as a freebie to go with!',
     clickableButtonTitle: 'Click to find out more!',
     ctaButtons: 'Grab Yours Today',
-    automatedReply: 'Hey there! I\'m so happy you\'re here, thanks so much for your interest in my [enter thing] 😊  Just click below and I\'ll send you the link straight there, as well as a freebie to go with!',
+    automatedReply: 'Here\'s the link to [the thing]!\n\nP.s If you love it, I\'d be so grateful if you could leave a quick review [then direct them to review page in 2nd link] ',
     followUp: 'How are you getting on with the prompts? Any questions?',
     bonusUpsell: 'Since you grabbed the prompts, you might love our Premium Journal Set — limited-time offer inside!'
   },
