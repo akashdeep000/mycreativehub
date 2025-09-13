@@ -103,7 +103,7 @@ function Router() {
     <>
       <ScrollToTop />
       <TimerWrapper />
-      {createPortal(<MobileTopNav />, document.body)}
+      {createPortal(<MobileTopNav />, document.getElementById('overlay-root')!)}
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />

@@ -47,14 +47,14 @@ export default function MobileTopNav() {
   };
 
   return (
-    <div className="fixed top-0 right-0 p-4 z-[9999] lg:hidden pointer-events-auto">
+    <div className="absolute top-[env(safe-area-inset-top,0.5rem)] right-[env(safe-area-inset-right,1rem)] lg:hidden pointer-events-auto">
       <div className="flex items-center space-x-3">
         {/* Help Button */}
         <Button
           variant="outline"
           size="sm"
           onClick={() => setLocation('/help')}
-          className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm"
+          className="bg-white border-gray-200 shadow-lg"
           data-testid="button-help-mobile"
         >
           <HelpCircle className="w-4 h-4" />
@@ -67,7 +67,7 @@ export default function MobileTopNav() {
               variant="outline"
               size="sm"
               onClick={handleLogoutClick}
-              className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm"
+              className="bg-white border-gray-200 shadow-lg"
               data-testid="button-logout-mobile"
             >
               <LogOut className="w-4 h-4" />
@@ -102,7 +102,7 @@ export default function MobileTopNav() {
             variant="outline"
             size="sm"
             onClick={() => setLocation('/login')}
-            className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm"
+            className="bg-white border-gray-200 shadow-lg"
             data-testid="button-login-mobile"
           >
             <LogIn className="w-4 h-4" />
