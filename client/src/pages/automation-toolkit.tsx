@@ -68,7 +68,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     ctaButtons: 'Start Here',
     automatedReply: 'I\'m so glad you want to check out my [insert thing] I think you\'ll love it! 😍',
     followUp: '',
-    bonusUpsell: 'Ready to get started? Book a free consultation call: [LINK]'
+    bonusUpsell: 'Just checking in! Everything ok? Your links are waiting above! 👆'
   }
 ];
 
