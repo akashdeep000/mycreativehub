@@ -57,14 +57,25 @@ export default function SOPEditor() {
   // Auto-resize textareas on component mount and when SOP changes
   useEffect(() => {
     if (sop) {
-      setTimeout(() => {
+      const resizeTextareas = () => {
         const textareas = document.querySelectorAll('.auto-resize-textarea');
         textareas.forEach((textarea) => {
           const element = textarea as HTMLTextAreaElement;
-          element.style.height = 'auto';
-          element.style.height = element.scrollHeight + 'px';
+          if (element.value) { // Only resize if there's content
+            element.style.height = 'auto';
+            element.style.height = element.scrollHeight + 'px';
+          }
         });
-      }, 50);
+      };
+      
+      // Initial resize
+      setTimeout(resizeTextareas, 100);
+      
+      // Also resize on window resize
+      const handleResize = () => resizeTextareas();
+      window.addEventListener('resize', handleResize);
+      
+      return () => window.removeEventListener('resize', handleResize);
     }
   }, [sop]);
 
@@ -255,15 +266,11 @@ export default function SOPEditor() {
                         value={step.text}
                         onChange={(e) => {
                           updateStepText(step.id, e.target.value);
-                          // Auto-resize textarea for desktop
-                          e.target.style.height = 'auto';
-                          e.target.style.height = e.target.scrollHeight + 'px';
-                        }}
-                        onInput={(e) => {
-                          // Auto-resize on input for desktop
-                          const target = e.target as HTMLTextAreaElement;
-                          target.style.height = 'auto';
-                          target.style.height = target.scrollHeight + 'px';
+                          // Auto-resize textarea for desktop - use setTimeout to ensure DOM update
+                          setTimeout(() => {
+                            e.target.style.height = 'auto';
+                            e.target.style.height = e.target.scrollHeight + 'px';
+                          }, 0);
                         }}
                         placeholder={`Example: ${
                           index === 0 ? 'Create lead magnet' :
@@ -278,7 +285,7 @@ export default function SOPEditor() {
                           'Add your step here'
                         }`}
                         className="min-h-[60px] resize-none overflow-hidden auto-resize-textarea"
-                        style={{ height: 'auto' }}
+                        rows={1}
                       />
                     </div>
                     <div className="flex items-center gap-2">
