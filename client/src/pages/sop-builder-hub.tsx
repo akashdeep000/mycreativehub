@@ -110,6 +110,23 @@ export default function SOPBuilderHub() {
           localStorage.setItem('sop-builder-sops', JSON.stringify(sopsData));
         }
       }
+
+      // Force update Batching Content SOP to always have the latest template
+      const batchingContentSOP = sopsData.find((sop: SOP) => sop.id === 'batching-content');
+      const batchingDefault = defaultSOPs.find(sop => sop.id === 'batching-content');
+      
+      if (batchingContentSOP && batchingDefault) {
+        // Always force update to latest template - replace the entire SOP
+        const updatedSOP = {
+          ...batchingDefault,
+          updatedAt: new Date()
+        };
+        
+        sopsData = sopsData.map((sop: SOP) => 
+          sop.id === 'batching-content' ? updatedSOP : sop
+        );
+        localStorage.setItem('sop-builder-sops', JSON.stringify(sopsData));
+      }
       
       setSops(sopsData);
     } else {
