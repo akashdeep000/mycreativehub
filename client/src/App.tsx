@@ -1,5 +1,6 @@
 import { Switch, Route } from "wouter";
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -48,6 +49,7 @@ import LaunchGrowthPlan from "@/pages/launch-growth-plan";
 import MonthlyContentCalendarV2 from "@/pages/monthly-content-calendar-v2";
 import MonthlyContentCalendarV3 from "@/pages/monthly-content-calendar-v3";
 import Help from "@/pages/help";
+import MobileTopNav from "@/components/layout/mobile-top-nav";
 
 
 function TimerWrapper() {
@@ -101,6 +103,7 @@ function Router() {
     <>
       <ScrollToTop />
       <TimerWrapper />
+      {createPortal(<MobileTopNav />, document.body)}
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />
