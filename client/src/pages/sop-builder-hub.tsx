@@ -77,12 +77,73 @@ export default function SOPBuilderHub() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    // FORCE COMPLETE RESET - Clear ALL SOP data to fix grey text issue
-    localStorage.removeItem('sop-builder-sops');
-    
-    // Load fresh defaults with proper text for steps 6 and 7
-    localStorage.setItem('sop-builder-sops', JSON.stringify(defaultSOPs));
-    setSops(defaultSOPs);
+    const savedSOPs = localStorage.getItem('sop-builder-sops');
+    if (savedSOPs) {
+      let sopsData = JSON.parse(savedSOPs);
+      
+      // Update Email Funnel SOP if it exists but has fewer than 9 steps or empty steps 6-9
+      const emailFunnelSOP = sopsData.find((sop: SOP) => sop.id === 'email-funnel');
+      const emailDefault = defaultSOPs.find(sop => sop.id === 'email-funnel');
+      
+      if (emailFunnelSOP && emailDefault) {
+        const needsUpdate = emailFunnelSOP.steps.length < 9 || 
+          emailDefault.steps.slice(5).some((_, idx) => {
+            const existingStep = emailFunnelSOP.steps[5 + idx];
+            return !existingStep || !existingStep.text || !existingStep.text.trim();
+          });
+
+        if (needsUpdate) {
+          const mergedSOP = {
+            ...emailDefault,
+            steps: emailDefault.steps.map((defStep, i) => {
+              const existing = emailFunnelSOP.steps[i];
+              return existing && existing.text?.trim()
+                ? { ...defStep, ...existing, id: defStep.id, text: existing.text, completed: !!existing.completed }
+                : { ...defStep, completed: !!existing?.completed };
+            }),
+            updatedAt: new Date()
+          };
+          
+          sopsData = sopsData.map((sop: SOP) => 
+            sop.id === 'email-funnel' ? mergedSOP : sop
+          );
+          localStorage.setItem('sop-builder-sops', JSON.stringify(sopsData));
+        }
+      }
+
+      // Ensure batching-content SOP has correct content for steps 6 and 7
+      const batchingSOP = sopsData.find((sop: SOP) => sop.id === 'batching-content');
+      const batchingDefault = defaultSOPs.find(sop => sop.id === 'batching-content');
+      
+      if (batchingSOP && batchingDefault) {
+        // Only update steps 6 and 7 if they're missing or have placeholder content
+        const updatedSteps = batchingSOP.steps.map((step, index) => {
+          if (index === 5 && (!step.text || step.text.trim() === '' || step.text.includes('Step 7 - Upload/Schedule'))) {
+            return { ...step, text: batchingDefault.steps[5].text };
+          }
+          if (index === 6 && (!step.text || step.text.trim() === '' || step.text.includes('Step 8 - Publish day checklist'))) {
+            return { ...step, text: batchingDefault.steps[6].text };
+          }
+          return step;
+        });
+        
+        const updatedBatchingSOP = {
+          ...batchingSOP,
+          steps: updatedSteps,
+          updatedAt: new Date()
+        };
+        
+        sopsData = sopsData.map((sop: SOP) => 
+          sop.id === 'batching-content' ? updatedBatchingSOP : sop
+        );
+        localStorage.setItem('sop-builder-sops', JSON.stringify(sopsData));
+      }
+      
+      setSops(sopsData);
+    } else {
+      setSops(defaultSOPs);
+      localStorage.setItem('sop-builder-sops', JSON.stringify(defaultSOPs));
+    }
   }, []);
 
   const saveSOPs = (updatedSOPs: SOP[]) => {
