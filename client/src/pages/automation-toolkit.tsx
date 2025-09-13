@@ -359,7 +359,7 @@ export default function AutomationToolkit() {
                                 value={flow.linkText}
                                 onChange={(e) => updateFlow(flow.id, 'linkText', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
-                                placeholder="Caption to tell followers what to DM..."
+                                placeholder="Your opening DM to a follower that commented your keyword"
                               />
                             </div>
 
