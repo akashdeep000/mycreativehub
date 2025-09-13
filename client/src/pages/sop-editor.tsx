@@ -173,7 +173,20 @@ export default function SOPEditor() {
         <main className="px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
+          {/* Mobile Navigation - Single Back Arrow */}
+          <div className="flex items-center gap-3 mb-4 lg:hidden">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => window.history.back()}
+              className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* Desktop Navigation - Full Buttons */}
+          <div className="hidden lg:flex items-center gap-4 mb-4">
             <Button 
               variant="ghost" 
               onClick={() => window.location.href = "/"}
