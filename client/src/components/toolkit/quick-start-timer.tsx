@@ -30,6 +30,8 @@ export default function QuickStartTimer() {
   const [currentTask, setCurrentTask] = useState("");
   const [customTime, setCustomTime] = useState({ hours: 0, minutes: 25 });
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [hoursStr, setHoursStr] = useState("0");
+  const [minutesStr, setMinutesStr] = useState("25");
   const [isFloatingVisible, setIsFloatingVisible] = useState(false);
   const [isFloatingMinimized, setIsFloatingMinimized] = useState(false);
   const [repeatMode, setRepeatMode] = useState(false);
@@ -439,6 +441,14 @@ export default function QuickStartTimer() {
     }
   }, []); // Remove handleSessionComplete from dependencies
 
+  // Sync string states when custom input is shown
+  useEffect(() => {
+    if (showCustomInput) {
+      setHoursStr(String(customTime.hours));
+      setMinutesStr(String(customTime.minutes));
+    }
+  }, [showCustomInput, customTime.hours, customTime.minutes]);
+
 
   // Initialize notification permissions and restore persistent timer
   useEffect(() => {
@@ -671,28 +681,36 @@ export default function QuickStartTimer() {
                   <label className="text-sm font-medium">Custom Duration</label>
                   <div className="flex items-center gap-2">
                     <Input
-                      type="number"
-                      min="0"
-                      max="23"
-                      value={customTime.hours}
+                      type="text"
+                      inputMode="numeric"
+                      value={hoursStr}
                       onChange={(e) => {
-                        const value = e.target.value.replace(/^0+/, '') || '0';
-                        const num = Math.min(23, Math.max(0, parseInt(value) || 0));
-                        setCustomTime(prev => ({ ...prev, hours: num }));
+                        const raw = e.target.value;
+                        const sanitized = raw.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+                        setHoursStr(sanitized);
+                      }}
+                      onBlur={() => {
+                        const hours = Math.min(23, Math.max(0, parseInt(hoursStr || '0')));
+                        setCustomTime(prev => ({ ...prev, hours }));
+                        setHoursStr(String(hours));
                       }}
                       onFocus={(e) => setTimeout(() => e.target.select(), 0)}
                       className="w-16 no-spinners"
                     />
                     <span className="text-sm">hours</span>
                     <Input
-                      type="number"
-                      min="1"
-                      max="59"
-                      value={customTime.minutes}
+                      type="text"
+                      inputMode="numeric"
+                      value={minutesStr}
                       onChange={(e) => {
-                        const value = e.target.value.replace(/^0+/, '') || '1';
-                        const num = Math.min(59, Math.max(1, parseInt(value) || 1));
-                        setCustomTime(prev => ({ ...prev, minutes: num }));
+                        const raw = e.target.value;
+                        const sanitized = raw.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+                        setMinutesStr(sanitized);
+                      }}
+                      onBlur={() => {
+                        const minutes = Math.min(59, Math.max(1, parseInt(minutesStr || '1')));
+                        setCustomTime(prev => ({ ...prev, minutes }));
+                        setMinutesStr(String(minutes));
                       }}
                       onFocus={(e) => setTimeout(() => e.target.select(), 0)}
                       className="w-16 no-spinners"
