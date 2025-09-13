@@ -275,7 +275,7 @@ export default function SOPEditor() {
                         placeholder={`Example: ${
                           index === 0 ? 'Step 1 - Plan your next 2-4 weeks\nPick goal(s): nurture, launch support, list growth, or evergreen.\nChoose channels: IG feed/Reels, Stories, TikTok, YouTube Shorts, Email, Blog, Pinterest.\nDecide timeline (e.g. 3 IG posts, 2 Reels, 1 email per week).\nList 3-5 content pillar themes you\'ll repeat (e.g., Tips, Behind-the-Scenes, Testimonials, Offers). Use Content Pillars within Content Creation System.\nUse Time Blocking Calendar: plug in key dates (promos, holidays, launches). Done when: you have a filled in calendar and a target number of assets to make.' :
                           index === 1 ? 'Step 2 - Block your batching time\nTake Action! Pick 1-2 batching sessions this week for any given task within your Time Blocking Planner and get to work.\nSet a Quick Start Timer on your dashboard and turn off distractions. Done when: your time is blocked and your workspace/files are ready.' :
-                          index === 2 ? 'Set up sales page' :
+                          index === 2 ? 'Step 4 - Plan content\nBrain dump 10-20 post ideas tied to your content pillars.\nFor each idea, jot 3-5 bullet points (what to show/say).\nMap ideas to formats (Carousel, Reel, Story, Email). Done when: you have enough outlines to hit your batching target for 2-4 weeks.' :
                           index === 3 ? 'Build email sequences' :
                           index === 4 ? 'Plan social media campaign' :
                           index === 5 ? 'Quick test (always)\nAdd yourself to the trigger → make sure each email lands, links work, mobile looks good.' :
@@ -343,7 +343,7 @@ export default function SOPEditor() {
                         placeholder={`Example: ${
                           index === 0 ? 'Step 1 - Plan your next 2-4 weeks\nPick goal(s): nurture, launch support, list growth, or evergreen.\nChoose channels: IG feed/Reels, Stories, TikTok, YouTube Shorts, Email, Blog, Pinterest.\nDecide timeline (e.g. 3 IG posts, 2 Reels, 1 email per week).\nList 3-5 content pillar themes you\'ll repeat (e.g., Tips, Behind-the-Scenes, Testimonials, Offers). Use Content Pillars within Content Creation System.\nUse Time Blocking Calendar: plug in key dates (promos, holidays, launches). Done when: you have a filled in calendar and a target number of assets to make.' :
                           index === 1 ? 'Step 2 - Block your batching time\nTake Action! Pick 1-2 batching sessions this week for any given task within your Time Blocking Planner and get to work.\nSet a Quick Start Timer on your dashboard and turn off distractions. Done when: your time is blocked and your workspace/files are ready.' :
-                          index === 2 ? 'Set up sales page' :
+                          index === 2 ? 'Step 4 - Plan content\nBrain dump 10-20 post ideas tied to your content pillars.\nFor each idea, jot 3-5 bullet points (what to show/say).\nMap ideas to formats (Carousel, Reel, Story, Email). Done when: you have enough outlines to hit your batching target for 2-4 weeks.' :
                           index === 3 ? 'Build email sequences' :
                           index === 4 ? 'Plan social media campaign' :
                           index === 5 ? 'Quick test (always)\nAdd yourself to the trigger → make sure each email lands, links work, mobile looks good.' :
