@@ -66,7 +66,7 @@ const defaultAutomationFlows: AutomationFlow[] = [
     linkText: 'Hey there! 👋 Thanks so much for checking out my [product name] You\'ll get [product qualities] Click to find out more!',
     clickableButtonTitle: 'Check it out!',
     ctaButtons: 'Start Here',
-    automatedReply: 'Here\'s everything you need to know: [LINK]',
+    automatedReply: 'I\'m so glad you want to check out my [insert thing] I think you\'ll love it! 😍',
     followUp: 'Have you had a chance to look through the info? Any questions?',
     bonusUpsell: 'Ready to get started? Book a free consultation call: [LINK]'
   }
