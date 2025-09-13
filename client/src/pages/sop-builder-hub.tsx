@@ -261,7 +261,7 @@ export default function SOPBuilderHub() {
               <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">
                 <FileText className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-3xl font-bold text-black dark:text-white">
+              <h1 className="text-3xl font-serif font-semibold text-gray-800 dark:text-white">
                 SOP Builder Hub
               </h1>
             </div>
