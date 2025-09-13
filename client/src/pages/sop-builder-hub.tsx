@@ -79,28 +79,47 @@ export default function SOPBuilderHub() {
 
   useEffect(() => {
     const savedSOPs = localStorage.getItem('sop-builder-sops');
+    const sopsVersion = localStorage.getItem('sops-version');
+    const currentVersion = '2'; // Version 2 includes detailed content for all SOPs
+    
     if (savedSOPs) {
       let sopsData = JSON.parse(savedSOPs);
+      let needsVersionUpdate = !sopsVersion || sopsVersion !== currentVersion;
       
-      // Update Email Funnel SOP if it exists but has fewer than 9 steps or empty steps 6-9
+      // Helper function to detect old generic placeholder content
+      const isGenericPlaceholder = (text: string): boolean => {
+        const genericPhrases = [
+          'Create launch timeline',
+          'Develop marketing assets', 
+          'Set up sales page',
+          'Build email sequences',
+          'Plan social media campaign',
+          'Execute launch week'
+        ];
+        return genericPhrases.some(phrase => text.includes(phrase)) || text.length < 50;
+      };
+      
+      // Force update Email Funnel SOP with detailed content
       const emailFunnelSOP = sopsData.find((sop: SOP) => sop.id === 'email-funnel');
       const emailDefault = defaultSOPs.find(sop => sop.id === 'email-funnel');
       
       if (emailFunnelSOP && emailDefault) {
-        const needsUpdate = emailFunnelSOP.steps.length < 9 || 
-          emailDefault.steps.slice(5).some((_, idx) => {
-            const existingStep = emailFunnelSOP.steps[5 + idx];
-            return !existingStep || !existingStep.text || !existingStep.text.trim();
-          });
+        const needsEmailUpdate = needsVersionUpdate || 
+          emailFunnelSOP.steps.length !== emailDefault.steps.length ||
+          emailFunnelSOP.steps.some(step => 
+            !step.text || step.text.trim() === '' || isGenericPlaceholder(step.text)
+          );
 
-        if (needsUpdate) {
+        if (needsEmailUpdate) {
+          console.log('🔄 Migrating Email Funnel SOP with detailed content');
           const mergedSOP = {
             ...emailDefault,
             steps: emailDefault.steps.map((defStep, i) => {
               const existing = emailFunnelSOP.steps[i];
-              return existing && existing.text?.trim()
-                ? { ...defStep, ...existing, id: defStep.id, text: existing.text, completed: !!existing.completed }
-                : { ...defStep, completed: !!existing?.completed };
+              return {
+                ...defStep, 
+                completed: !!existing?.completed
+              };
             }),
             updatedAt: new Date()
           };
@@ -108,7 +127,37 @@ export default function SOPBuilderHub() {
           sopsData = sopsData.map((sop: SOP) => 
             sop.id === 'email-funnel' ? mergedSOP : sop
           );
-          localStorage.setItem('sop-builder-sops', JSON.stringify(sopsData));
+        }
+      }
+      
+      // Force update Product Launch SOP with detailed content
+      const productLaunchSOP = sopsData.find((sop: SOP) => sop.id === 'product-launch');
+      const productDefault = defaultSOPs.find(sop => sop.id === 'product-launch');
+      
+      if (productLaunchSOP && productDefault) {
+        const needsProductUpdate = needsVersionUpdate ||
+          productLaunchSOP.steps.length !== productDefault.steps.length ||
+          productLaunchSOP.steps.some(step => 
+            !step.text || step.text.trim() === '' || isGenericPlaceholder(step.text)
+          );
+
+        if (needsProductUpdate) {
+          console.log('🔄 Migrating Product Launch SOP with detailed content');
+          const mergedSOP = {
+            ...productDefault,
+            steps: productDefault.steps.map((defStep, i) => {
+              const existing = productLaunchSOP.steps[i];
+              return {
+                ...defStep,
+                completed: !!existing?.completed
+              };
+            }),
+            updatedAt: new Date()
+          };
+          
+          sopsData = sopsData.map((sop: SOP) => 
+            sop.id === 'product-launch' ? mergedSOP : sop
+          );
         }
       }
 
@@ -117,7 +166,6 @@ export default function SOPBuilderHub() {
       const batchingDefault = defaultSOPs.find(sop => sop.id === 'batching-content');
       
       if (batchingSOP && batchingDefault) {
-        // Only update steps 6 and 7 if they're missing or have placeholder content
         const updatedSteps = batchingSOP.steps.map((step: SOPStep, index: number) => {
           if (index === 5 && (!step.text || step.text.trim() === '' || step.text.includes('Step 7 - Upload/Schedule'))) {
             return { ...step, text: batchingDefault.steps[5].text };
@@ -137,13 +185,16 @@ export default function SOPBuilderHub() {
         sopsData = sopsData.map((sop: SOP) => 
           sop.id === 'batching-content' ? updatedBatchingSOP : sop
         );
-        localStorage.setItem('sop-builder-sops', JSON.stringify(sopsData));
       }
       
+      // Save updated data and version
+      localStorage.setItem('sop-builder-sops', JSON.stringify(sopsData));
+      localStorage.setItem('sops-version', currentVersion);
       setSops(sopsData);
     } else {
       setSops(defaultSOPs);
       localStorage.setItem('sop-builder-sops', JSON.stringify(defaultSOPs));
+      localStorage.setItem('sops-version', currentVersion);
     }
   }, []);
 
