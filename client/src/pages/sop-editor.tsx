@@ -227,38 +227,84 @@ export default function SOPEditor() {
             {/* Steps List */}
             <div className="space-y-4">
               {sop.steps.map((step, index) => (
-                <div key={step.id} className="flex items-start gap-4 p-4 border rounded-lg bg-white">
-                  <div className="flex items-center gap-3">
-                    <GripVertical className="h-4 w-4 text-gray-400 cursor-move" />
-                    <span className="text-sm font-medium text-gray-500 min-w-[60px]">
-                      Step {index + 1}
-                    </span>
+                <div key={step.id} className="p-4 border rounded-lg bg-white">
+                  {/* Desktop Layout */}
+                  <div className="hidden lg:flex items-start gap-4">
+                    <div className="flex items-center gap-3">
+                      <GripVertical className="h-4 w-4 text-gray-400 cursor-move" />
+                      <span className="text-sm font-medium text-gray-500 min-w-[60px]">
+                        Step {index + 1}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <Textarea
+                        value={step.text}
+                        onChange={(e) => updateStepText(step.id, e.target.value)}
+                        placeholder={`Example: ${index === 0 ? 'Write welcome email sequence' : 
+                          index === 1 ? 'Design email template' : 
+                          'Set up automation in platform'}`}
+                        className="min-h-[60px] resize-none"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={step.completed}
+                        onCheckedChange={() => toggleStepCompletion(step.id)}
+                        className="data-[state=checked]:bg-pink-600 data-[state=checked]:border-pink-600"
+                      />
+                      <span className="text-sm text-gray-600">Completed</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeStep(step.id)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <Textarea
-                      value={step.text}
-                      onChange={(e) => updateStepText(step.id, e.target.value)}
-                      placeholder={`Example: ${index === 0 ? 'Write welcome email sequence' : 
-                        index === 1 ? 'Design email template' : 
-                        'Set up automation in platform'}`}
-                      className="min-h-[60px] resize-none"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={step.completed}
-                      onCheckedChange={() => toggleStepCompletion(step.id)}
-                      className="data-[state=checked]:bg-pink-600 data-[state=checked]:border-pink-600"
-                    />
-                    <span className="text-sm text-gray-600">Completed</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeStep(step.id)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+
+                  {/* Mobile Layout */}
+                  <div className="lg:hidden space-y-3">
+                    {/* Step Number */}
+                    <div className="flex items-center gap-3">
+                      <GripVertical className="h-4 w-4 text-gray-400 cursor-move" />
+                      <span className="text-sm font-medium text-gray-500">
+                        Step {index + 1}
+                      </span>
+                    </div>
+                    
+                    {/* Completion Status and Delete */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={step.completed}
+                          onCheckedChange={() => toggleStepCompletion(step.id)}
+                          className="data-[state=checked]:bg-pink-600 data-[state=checked]:border-pink-600"
+                        />
+                        <span className="text-sm text-gray-600">Completed</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeStep(step.id)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    {/* Full-width Text Input */}
+                    <div className="w-full">
+                      <Textarea
+                        value={step.text}
+                        onChange={(e) => updateStepText(step.id, e.target.value)}
+                        placeholder={`Example: ${index === 0 ? 'Write welcome email sequence' : 
+                          index === 1 ? 'Design email template' : 
+                          'Set up automation in platform'}`}
+                        className="min-h-[80px] w-full resize-none overflow-y-auto"
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
