@@ -273,7 +273,7 @@ export default function SOPEditor() {
                           }, 0);
                         }}
                         placeholder={`Example: ${
-                          index === 0 ? 'Create lead magnet' :
+                          index === 0 ? 'Create launch timeline' :
                           index === 1 ? 'Test email sequences' :
                           index === 2 ? 'Launch email campaign' :
                           index === 3 ? 'Set up landing page' :
@@ -342,7 +342,7 @@ export default function SOPEditor() {
                         value={step.text}
                         onChange={(e) => updateStepText(step.id, e.target.value)}
                         placeholder={`Example: ${
-                          index === 0 ? 'Create lead magnet' :
+                          index === 0 ? 'Create launch timeline' :
                           index === 1 ? 'Test email sequences' :
                           index === 2 ? 'Launch email campaign' :
                           index === 3 ? 'Set up landing page' :
