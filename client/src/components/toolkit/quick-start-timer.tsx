@@ -683,16 +683,20 @@ export default function QuickStartTimer() {
                     <Input
                       type="text"
                       inputMode="numeric"
+                      pattern="\\d*"
+                      autoComplete="off"
                       value={hoursStr}
                       onChange={(e) => {
-                        const raw = e.target.value;
-                        const sanitized = raw.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
-                        setHoursStr(sanitized);
+                        let digits = e.target.value.replace(/[^0-9]/g, "");
+                        if (digits.length > 1) digits = digits.replace(/^0+/, "");
+                        digits = digits.slice(0, 2);
+                        setHoursStr(digits);
                       }}
                       onBlur={() => {
-                        const hours = Math.min(23, Math.max(0, parseInt(hoursStr || '0')));
-                        setCustomTime(prev => ({ ...prev, hours }));
-                        setHoursStr(String(hours));
+                        const n = Number(hoursStr || "0");
+                        const clamped = Math.max(0, Math.min(23, isNaN(n) ? 0 : n));
+                        setCustomTime(prev => ({ ...prev, hours: clamped }));
+                        setHoursStr(String(clamped));
                       }}
                       onFocus={(e) => setTimeout(() => e.target.select(), 0)}
                       className="w-16 no-spinners"
@@ -701,16 +705,20 @@ export default function QuickStartTimer() {
                     <Input
                       type="text"
                       inputMode="numeric"
+                      pattern="\\d*"
+                      autoComplete="off"
                       value={minutesStr}
                       onChange={(e) => {
-                        const raw = e.target.value;
-                        const sanitized = raw.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
-                        setMinutesStr(sanitized);
+                        let digits = e.target.value.replace(/[^0-9]/g, "");
+                        if (digits.length > 1) digits = digits.replace(/^0+/, "");
+                        digits = digits.slice(0, 2);
+                        setMinutesStr(digits);
                       }}
                       onBlur={() => {
-                        const minutes = Math.min(59, Math.max(1, parseInt(minutesStr || '1')));
-                        setCustomTime(prev => ({ ...prev, minutes }));
-                        setMinutesStr(String(minutes));
+                        const n = Number(minutesStr || "1");
+                        const clamped = Math.max(1, Math.min(59, isNaN(n) ? 1 : n));
+                        setCustomTime(prev => ({ ...prev, minutes: clamped }));
+                        setMinutesStr(String(clamped));
                       }}
                       onFocus={(e) => setTimeout(() => e.target.select(), 0)}
                       className="w-16 no-spinners"
