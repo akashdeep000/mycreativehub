@@ -274,7 +274,7 @@ export default function SOPEditor() {
                         }}
                         placeholder={`Example: ${
                           index === 0 ? 'Create launch timeline' :
-                          index === 1 ? 'Test email sequences' :
+                          index === 1 ? 'Develop marketing assets' :
                           index === 2 ? 'Launch email campaign' :
                           index === 3 ? 'Set up landing page' :
                           index === 4 ? 'Configure email automation' :
@@ -343,7 +343,7 @@ export default function SOPEditor() {
                         onChange={(e) => updateStepText(step.id, e.target.value)}
                         placeholder={`Example: ${
                           index === 0 ? 'Create launch timeline' :
-                          index === 1 ? 'Test email sequences' :
+                          index === 1 ? 'Develop marketing assets' :
                           index === 2 ? 'Launch email campaign' :
                           index === 3 ? 'Set up landing page' :
                           index === 4 ? 'Configure email automation' :
