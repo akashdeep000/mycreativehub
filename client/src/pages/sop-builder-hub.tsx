@@ -80,7 +80,7 @@ export default function SOPBuilderHub() {
   useEffect(() => {
     const savedSOPs = localStorage.getItem('sop-builder-sops');
     const sopsVersion = localStorage.getItem('sops-version');
-    const currentVersion = '5'; // Version 5 updates Email Funnel SOP Step 2 with trigger selection text
+    const currentVersion = '6'; // Version 6 forcefully updates Email Funnel SOP Step 2 with trigger selection text
     
     if (savedSOPs) {
       let sopsData = JSON.parse(savedSOPs);
@@ -97,7 +97,8 @@ export default function SOPBuilderHub() {
           'Execute launch week'
         ];
         const hasStepPrefix = /^Step \d+ - /.test(text);
-        return genericPhrases.some(phrase => text.includes(phrase)) || text.length < 50 || hasStepPrefix;
+        const hasOldStep2Content = text.includes('Develop marketing assets');
+        return genericPhrases.some(phrase => text.includes(phrase)) || text.length < 50 || hasStepPrefix || hasOldStep2Content;
       };
       
       // Force update Email Funnel SOP with detailed content
