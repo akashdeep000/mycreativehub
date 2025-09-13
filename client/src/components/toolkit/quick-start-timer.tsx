@@ -19,8 +19,6 @@ export default function QuickStartTimer() {
   const [, setLocation] = useLocation();
   const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const hoursInputRef = useRef<HTMLInputElement>(null);
-  const minutesInputRef = useRef<HTMLInputElement>(null);
   
   // All state variables
   const [task, setTask] = useState("");
@@ -441,32 +439,6 @@ export default function QuickStartTimer() {
     }
   }, []); // Remove handleSessionComplete from dependencies
 
-  // Prevent wheel scrolling on number inputs
-  useEffect(() => {
-    const preventWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      (e.target as HTMLElement).blur();
-    };
-
-    const hoursEl = hoursInputRef.current;
-    const minutesEl = minutesInputRef.current;
-
-    if (hoursEl) {
-      hoursEl.addEventListener('wheel', preventWheel, { passive: false });
-    }
-    if (minutesEl) {
-      minutesEl.addEventListener('wheel', preventWheel, { passive: false });
-    }
-
-    return () => {
-      if (hoursEl) {
-        hoursEl.removeEventListener('wheel', preventWheel);
-      }
-      if (minutesEl) {
-        minutesEl.removeEventListener('wheel', preventWheel);
-      }
-    };
-  }, [showCustomInput]);
 
   // Initialize notification permissions and restore persistent timer
   useEffect(() => {
@@ -699,22 +671,28 @@ export default function QuickStartTimer() {
                   <label className="text-sm font-medium">Custom Duration</label>
                   <div className="flex items-center gap-2">
                     <Input
-                      ref={hoursInputRef}
-                      type="number"
-                      min="0"
-                      max="23"
-                      value={customTime.hours}
-                      onChange={(e) => setCustomTime(prev => ({ ...prev, hours: parseInt(e.target.value) || 0 }))}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={customTime.hours.toString()}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, '');
+                        const num = Math.min(23, Math.max(0, parseInt(value) || 0));
+                        setCustomTime(prev => ({ ...prev, hours: num }));
+                      }}
                       className="w-16"
                     />
                     <span className="text-sm">hours</span>
                     <Input
-                      ref={minutesInputRef}
-                      type="number"
-                      min="1"
-                      max="59"
-                      value={customTime.minutes}
-                      onChange={(e) => setCustomTime(prev => ({ ...prev, minutes: parseInt(e.target.value) || 0 }))}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={customTime.minutes.toString()}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, '');
+                        const num = Math.min(59, Math.max(1, parseInt(value) || 1));
+                        setCustomTime(prev => ({ ...prev, minutes: num }));
+                      }}
                       className="w-16"
                     />
                     <span className="text-sm">minutes</span>
