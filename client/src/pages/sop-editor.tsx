@@ -240,9 +240,9 @@ export default function SOPEditor() {
                       <Textarea
                         value={step.text}
                         onChange={(e) => updateStepText(step.id, e.target.value)}
-                        placeholder={`Example: ${index === 0 ? 'Write welcome email sequence' : 
-                          index === 1 ? 'Design email template' : 
-                          'Set up automation in platform'}`}
+                        placeholder={`Example: ${index === 0 ? 'Create lead magnet' : 
+                          index === 1 ? 'Test email sequences' : 
+                          'Launch email campaign'}`}
                         className="min-h-[60px] resize-none"
                       />
                     </div>
@@ -299,9 +299,9 @@ export default function SOPEditor() {
                       <Textarea
                         value={step.text}
                         onChange={(e) => updateStepText(step.id, e.target.value)}
-                        placeholder={`Example: ${index === 0 ? 'Write welcome email sequence' : 
-                          index === 1 ? 'Design email template' : 
-                          'Set up automation in platform'}`}
+                        placeholder={`Example: ${index === 0 ? 'Create lead magnet' : 
+                          index === 1 ? 'Test email sequences' : 
+                          'Launch email campaign'}`}
                         className="min-h-[80px] w-full resize-none overflow-y-auto"
                       />
                     </div>
