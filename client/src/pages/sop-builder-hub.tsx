@@ -190,7 +190,7 @@ export default function SOPBuilderHub() {
             <div className="space-y-4">
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2">What's an SOP?</h3>
-                <p className="text-gray-600">A Standard Operating Procedure is a step-by-step checklist for repeat tasks, so that you're not starting from scratch every single time.</p>
+                <p className="text-gray-600">A Standard Operating Procedure is a step-by-step checklist for repeatable tasks, so that you're not starting from scratch every single time.</p>
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2">How to use this hub:</h3>
