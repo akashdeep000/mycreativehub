@@ -993,6 +993,24 @@ export const insertCalendarV3Schema = createInsertSchema(calendarV3).omit({
 export type CalendarV3 = typeof calendarV3.$inferSelect;
 export type InsertCalendarV3 = z.infer<typeof insertCalendarV3Schema>;
 
+// Automation Prompts - Dedicated table for automation flow prompts
+export const automationPrompts = pgTable("automation_prompts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  trigger: varchar("trigger").notNull(), // triggerWord
+  automatedReply: text("automated_reply"), // automatedReply
+  openingDM: text("opening_dm"), // dmPrompt
+  buttonTitle: varchar("button_title"), // clickableButtonTitle
+  dmLink: text("dm_link"), // linkText
+  ctaButtons: varchar("cta_buttons"), // ctaButtons
+  followUp: text("follow_up"), // followUp
+  bonusUpsell: text("bonus_upsell"), // bonusUpsell
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("automation_prompts_user_id_idx").on(table.userId),
+]);
+
 // Time Blocking Events - Proper normalized table for events
 export const timeBlockingEvents = pgTable("time_blocking_events", {
   id: varchar("id").primaryKey(),
@@ -1011,11 +1029,19 @@ export const timeBlockingEvents = pgTable("time_blocking_events", {
   index("time_blocking_events_user_id_idx").on(table.userId, table.id),
 ]);
 
+export const insertAutomationPromptSchema = createInsertSchema(automationPrompts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertTimeBlockingEventSchema = createInsertSchema(timeBlockingEvents).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
+export type AutomationPrompt = typeof automationPrompts.$inferSelect;
+export type InsertAutomationPrompt = z.infer<typeof insertAutomationPromptSchema>;
 export type TimeBlockingEvent = typeof timeBlockingEvents.$inferSelect;
 export type InsertTimeBlockingEvent = z.infer<typeof insertTimeBlockingEventSchema>;

@@ -1,0 +1,115 @@
+Title: Persist Automation Toolkit edits & new prompts per user (no resets)
+
+Prompt:
+Fix persistence for Automation Toolkit → Conversation Flow Cheat Sheet so user edits and newly added prompts survive reloads and sign-ins.
+
+Requirements
+
+Unified data model
+Create a Prompt table (Prisma) with fields:
+
+id (string/uuid), userId (string),
+
+trigger (string), automatedReply (string), openingDM (string), buttonTitle (string), dmLink (string),
+
+createdAt, updatedAt.
+If we already have a table for this, adapt it (migrate) to at least these fields. Keep existing data.
+
+REST API (authenticated)
+
+GET /api/automation/prompts → returns only this user’s prompts.
+If none exist, seed once from our current placeholder rows (the cheat sheet defaults), write those seeds to the DB for this user, then return them.
+
+POST /api/automation/prompts → bulk upsert an array of prompts for this user.
+
+POST /api/automation/prompt → create one prompt.
+
+PATCH /api/automation/prompt/:id → update one prompt by id (owner check).
+
+DELETE /api/automation/prompt/:id → delete one prompt by id (owner check).
+
+All routes must require auth; extract userId from the JWT/cookie.
+
+Auth on fetches
+On the frontend, ensure every request to these endpoints sends auth:
+
+If using cookies, fetch(..., { credentials: 'include' }).
+
+If using a bearer token, include Authorization: Bearer <token> from storage.
+Remove any code path that calls the API without credentials.
+
+Frontend state & autosave
+In the Cheat Sheet component:
+
+On mount, GET /api/automation/prompts and set state from the DB result.
+❗️Do not reapply local placeholder arrays after this; placeholders are only for first-time seeding on the server.
+
+Make cells editable; on blur (and with a 400–600ms debounce on change) call PATCH /api/automation/prompt/:id with just the changed fields. Show a small “Saved” tick on success; show a toast on failure.
+
+“Add New Prompt” calls POST /api/automation/prompt then inserts the returned row (with real id) into state.
+
+Deleting a row calls DELETE and removes from state.
+
+Protect against double seeds: since seeding happens server-side only when the user has zero prompts, the UI should never overwrite.
+
+Payload compatibility
+Anywhere the frontend still sends { prompts: AutomationFlow[] } or similar, refactor to the new REST endpoints. Keep any other collections (promptLibrary, flowBuilder, etc.) untouched elsewhere, but the Cheat Sheet specifically must speak the new Prompt API.
+
+Error handling
+If a save fails (401/500), show a non-blocking toast (“Couldn’t save — retrying…”), queue a retry, and do not reset state to placeholders.
+
+Tests / QA checklist (manual OK)
+
+Edit a cell → blur → refresh the page → edit persists.
+
+Add a prompt → refresh → prompt persists.
+
+Delete a prompt → refresh → it’s gone.
+
+Sign out/in → data still there.
+
+Create a brand-new user → first visit seeds default rows once; subsequent visits never re-seed.
+
+Files likely touched (update as appropriate in this repo):
+
+prisma/schema.prisma (or your ORM schema)
+
+server/routes/automation.ts (new) and server/index.ts (wire routes)
+
+src/pages/automation-toolkit/CheatSheet.tsx (or the component rendering the table)
+
+src/lib/api.ts (fetch helpers; ensure credentials: 'include')
+
+Non-goals:
+
+Do not change how other modules save unless they share the exact bug.
+
+Keep the UI/UX the same besides the small “Saved” indicator.
+
+Definition of Done: All QA checks above pass in both Preview and Production builds with a real logged-in user.
+
+Why this fixes your symptoms
+
+Seeding only once (server-side) prevents placeholders from reappearing and stomping user edits.
+
+Authenticated autosave ensures every blur/debounce writes to DB.
+
+Dedicated CRUD endpoints end the payload-shape mismatch that silently dropped saves.
+
+Error handling stops the UI from masking failed saves with fresh placeholders.
+
+If you want a super-quick temporary fallback while they wire this up, you can also add a one-liner local cache so users don’t lose work in a session:
+
+// on load, before network:
+const cache = localStorage.getItem('cheatSheetCache');
+if (cache) setState(JSON.parse(cache));
+
+// whenever state changes:
+useEffect(() => {
+  localStorage.setItem('cheatSheetCache', JSON.stringify(state));
+}, [state]);
+
+
+…but still ship the DB-backed fix above—localStorage is not multi-device or multi-session reliable.
+
+If you hit any specific error messages (e.g., Prisma migration or auth header), paste them here and I’ll help you zero in on the exact line to change.
