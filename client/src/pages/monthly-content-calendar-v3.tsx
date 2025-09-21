@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, ChevronLeft, ChevronRight, Pencil, X, Plus, ArrowLeft, Home, Trash2 } from 'lucide-react';
 import { useDebounce } from '../hooks/use-debounce';
+import { useLocation } from 'wouter';
 import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
 
@@ -51,6 +52,7 @@ const MONTH_NAMES = [
 export default function MonthlyContentCalendarV3() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   
   // State
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -357,15 +359,16 @@ export default function MonthlyContentCalendarV3() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
+      <MobileNav />
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         <div className="max-w-7xl mx-auto">
         {/* Navigation Buttons */}
         {/* Mobile Navigation - Single Back Arrow */}
-        <div className="flex items-center gap-3 mb-6 lg:hidden">
+        <div className="flex items-center gap-3 mb-6 lg:hidden mt-16">
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => window.history.back()}
+            onClick={() => setLocation("/content")}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
