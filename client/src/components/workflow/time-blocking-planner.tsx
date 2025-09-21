@@ -79,7 +79,7 @@ const DEFAULT_BUSINESS_COLOR_TAGS = [
   { id: "tag-7", label: "Creative Time", colour: "#EC4899" } // Pink
 ];
 
-// Old default categories that should be replaced (excluding Planning which is also a business default)
+// Old default categories that should be replaced 
 const OLD_DEFAULT_CATEGORIES = [
   "Focus Time", "Communication", "Creative Work", "Urgent"
 ];
@@ -111,8 +111,12 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [currentMonthOffset, setCurrentMonthOffset] = useState(0);
 
 
-  // Legacy data migration - Add monthKey to existing blocks and update color categories
+  // Legacy data migration - Add monthKey to existing blocks and update color categories (run once only)
+  const [migrationCompleted, setMigrationCompleted] = useState(false);
+  
   useEffect(() => {
+    if (migrationCompleted) return; // Skip if migration already completed
+    
     const currentMonthKey = getCurrentMonthKey();
     let needsMigration = false;
     
@@ -169,7 +173,10 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     if (needsMigration) {
       setData(migratedData);
     }
-  }, []); // Run only once on component mount
+    
+    // Mark migration as completed to prevent future runs
+    setMigrationCompleted(true);
+  }, [migrationCompleted]); // Include dependency to avoid infinite re-runs
 
   // Auto-save functionality with immediate save and cleanup
   useEffect(() => {
