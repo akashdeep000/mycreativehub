@@ -109,6 +109,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   
   // Navigation state - monthly only
   const [currentMonthOffset, setCurrentMonthOffset] = useState(0);
+  
+  // Track when categories are actually modified by user to prevent auto-save overwriting
+  const [dirtyCategories, setDirtyCategories] = useState(false);
 
 
   // Migration logic DISABLED - was causing data corruption by creating duplicate IDs
@@ -122,20 +125,33 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     // Save immediately for critical changes, debounce for minor ones
     const shouldSaveImmediately = data.monthlyView.blocks.length > 0 || data.weeklyView.blocks.length > 0;
     
+    // Only include colourTags in save payload when user actually modified them
+    const saveData = dirtyCategories ? data : {
+      weeklyView: data.weeklyView,
+      monthlyView: data.monthlyView
+      // Omit colourTags to prevent overwriting user's custom categories
+    };
+    
     if (shouldSaveImmediately) {
       // Save immediately when blocks exist
-      onSave(data);
+      onSave(saveData);
+      if (dirtyCategories) {
+        setDirtyCategories(false);
+      }
     } else {
       // Debounce for other changes
       timer = setTimeout(() => {
-        onSave(data);
+        onSave(saveData);
+        if (dirtyCategories) {
+          setDirtyCategories(false);
+        }
       }, 1000);
     }
     
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [data, onSave]);
+  }, [data, onSave, dirtyCategories]);
   
   // Flush any pending saves on unmount
   useEffect(() => {
@@ -614,6 +630,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         colourTags: [...prev.colourTags, newTag]
       }));
       setNewColourTagLabel('');
+      setDirtyCategories(true); // Mark categories as modified
     }
   };
 
@@ -624,6 +641,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         tag.id === tagId ? { ...tag, ...updates } : tag
       )
     }));
+    setDirtyCategories(true); // Mark categories as modified
   };
 
   const updateColourTagColor = (tagId: string, newColor: string) => {
@@ -666,6 +684,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         )
       }
     }));
+    setDirtyCategories(true); // Mark categories as modified
   };
 
   const getColourTagLabel = (colourTagId?: string) => {

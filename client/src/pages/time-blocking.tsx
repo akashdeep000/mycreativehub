@@ -90,7 +90,7 @@ export default function TimeBlocking() {
         });
         
         // Load ALL color categories from calendar (including custom ones)
-        let allColorKeys = defaultTimeBlockingData.colourTags;
+        let allColorKeys = []; // Start empty to avoid overwriting custom categories
         try {
           // Use the current month initially, but this will be replaced by the proper selected month loading
           const colorResponse = await fetch(`/api/calendar-v3/${currentDate.getFullYear()}/${currentDate.getMonth() + 1}?t=${Date.now()}`, {
@@ -164,7 +164,7 @@ export default function TimeBlocking() {
   // Save function that handles both time blocks and color keys
   const handleSave = async (data: any) => {
     try {
-      // Save color keys to calendar database
+      // Save color keys to calendar database (only when provided)
       if (data.colourTags && data.colourTags.length > 0) {
         // Use the selected month from the data, not the current month
         const selectedMonth = data.monthlyView?.selectedMonth ?? new Date().toISOString().slice(0, 7);
