@@ -401,7 +401,7 @@ export default function LaunchGrowthPlan() {
 
           {/* Add/Edit Modal */}
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto z-[60]">
               <DialogHeader>
                 <DialogTitle>
                   {editingPlan ? 'Edit Launch Reflection' : 'New Launch Reflection'}
