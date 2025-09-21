@@ -134,12 +134,18 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     
     // If user has old defaults or unwanted content categories, replace with business-focused ones
     if (hasOldDefaults || hasUnwantedContentCategories) {
-      // Filter out unwanted categories and keep only user-created ones + business defaults
-      const userCreatedTags = data.colourTags.filter(tag => 
-        !OLD_DEFAULT_CATEGORIES.includes(tag.label) &&
-        !unwantedCategories.includes(tag.label) &&
-        !DEFAULT_BUSINESS_COLOR_TAGS.some(def => def.id === tag.id || def.label === tag.label) // Exclude exact matches with business defaults
-      );
+      // Filter out unwanted categories but preserve any custom user-created categories
+      const userCreatedTags = data.colourTags.filter(tag => {
+        // Keep custom categories that are NOT in any default lists
+        const isOldDefault = OLD_DEFAULT_CATEGORIES.includes(tag.label);
+        const isUnwantedContent = unwantedCategories.includes(tag.label);
+        const isBusinessDefault = DEFAULT_BUSINESS_COLOR_TAGS.some(def => def.label === tag.label);
+        
+        // Only keep tags that are none of the above (i.e., truly custom user-created tags)
+        return !isOldDefault && !isUnwantedContent && !isBusinessDefault;
+      });
+      
+      console.log(`🔄 Migration: Found ${userCreatedTags.length} custom categories to preserve:`, userCreatedTags.map(t => t.label));
       
       updatedColourTags = [...DEFAULT_BUSINESS_COLOR_TAGS, ...userCreatedTags];
       needsMigration = true;
