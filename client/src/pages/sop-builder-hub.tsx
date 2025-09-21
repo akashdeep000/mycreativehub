@@ -244,10 +244,10 @@ export default function SOPBuilderHub() {
       <MobileNav />
       
       <div className="lg:ml-64">
-        <div className="p-6">
+        <div className="p-6 pt-20 md:pt-6">
           {/* Header */}
           <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-4 mb-4 mt-16 lg:mt-0">
               <Link 
                 href="/streamline-workflow" 
                 className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
