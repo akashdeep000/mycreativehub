@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar, ArrowLeft, Plus, Edit3, Trash2, Clock, Target, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 import Sidebar from '@/components/layout/sidebar';
 
 
@@ -87,6 +88,7 @@ const getStatusColor = (status: 'in progress' | 'scheduled' | 'completed') => {
 
 export default function PreLaunchTimelinePlanner() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   
   // Initialize launches from localStorage with migration support
   const [launches, setLaunches] = useState<Launch[]>(() => {
@@ -418,11 +420,11 @@ export default function PreLaunchTimelinePlanner() {
           <div className="mb-8">
             <div className="mb-4">
               {/* Mobile Navigation - Single Back Arrow */}
-              <div className="flex items-center gap-3 lg:hidden">
+              <div className="flex items-center gap-3 lg:hidden mt-16">
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => window.history.back()}
+                  onClick={() => setLocation("/launch")}
                   className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -594,11 +596,11 @@ export default function PreLaunchTimelinePlanner() {
         <div className="mb-8">
           <div className="mb-4">
             {/* Mobile Navigation - Single Back Arrow */}
-            <div className="flex items-center gap-3 lg:hidden">
+            <div className="flex items-center gap-3 lg:hidden mt-16">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => window.history.back()}
+                onClick={() => setLocation("/launch")}
                 className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
