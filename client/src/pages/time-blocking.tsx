@@ -155,12 +155,64 @@ export default function TimeBlocking() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // New save function using events API (immediate saves as requested)
+  // Save function that handles both time blocks and color keys
   const handleSave = async (data: any) => {
-    // This function will handle individual event operations
-    // The actual saving will be done in the TimeBlockingPlanner component
-    // using the new events API with immediate save on every change
-    console.log('💾 Save triggered - handled by TimeBlockingPlanner component');
+    try {
+      // Save color keys to calendar database
+      if (data.colourTags && data.colourTags.length > 0) {
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth() + 1;
+        
+        // Convert color tags to the calendar format
+        const colorKeys = data.colourTags.map((tag: any) => ({
+          id: tag.id,
+          label: tag.label,
+          color: tag.colour || tag.color // Handle both spellings
+        }));
+        
+        console.log(`💾 Saving ${colorKeys.length} color keys to calendar database...`);
+        
+        // First, get or create the calendar entry for this month
+        const calendarResponse = await fetch(`/api/calendar-v3/${year}/${month}`, {
+          credentials: 'include'
+        });
+        
+        let calendarData = null;
+        if (calendarResponse.ok) {
+          calendarData = await calendarResponse.json();
+        }
+        
+        // Update the calendar with new color keys
+        const saveResponse = await fetch(`/api/calendar-v3/${year}/${month}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            ...calendarData,
+            colorKeys: colorKeys
+          })
+        });
+        
+        if (saveResponse.ok) {
+          console.log(`✅ Successfully saved ${colorKeys.length} color keys to database`);
+        } else {
+          console.error('❌ Failed to save color keys:', await saveResponse.text());
+        }
+      }
+      
+      // Individual time block saving is handled by TimeBlockingPlanner component
+      console.log('💾 Color keys saved - time blocks handled by TimeBlockingPlanner component');
+    } catch (error) {
+      console.error('❌ Failed to save color keys:', error);
+      toast({
+        title: "Save Error",
+        description: "Failed to save color categories. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   if (isLoading || !isAuthenticated) {
