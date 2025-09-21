@@ -669,18 +669,55 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     }
   };
 
-  const updateColourTag = (tagId: string, updates: Partial<ColourTag>) => {
+  const updateColourTag = async (tagId: string, updates: Partial<ColourTag>) => {
+    // Update state immediately
+    const newColourTags = data.colourTags.map(tag =>
+      tag.id === tagId ? { ...tag, ...updates } : tag
+    );
+    
     setData(prev => ({
       ...prev,
-      colourTags: prev.colourTags.map(tag =>
-        tag.id === tagId ? { ...tag, ...updates } : tag
-      )
+      colourTags: newColourTags
     }));
-    setDirtyCategories(true); // Mark categories as modified
+
+    // Save directly to database immediately
+    try {
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth() + 1;
+      
+      const colorKeys = newColourTags.map((tag: any) => ({
+        id: tag.id,
+        label: tag.label,
+        color: tag.colour || tag.color
+      }));
+      
+      console.log(`🚀 DIRECT SAVE EDIT: Saving ${colorKeys.length} categories after edit...`);
+      
+      const response = await fetch(`/api/calendar-v3/${year}/${month}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          colorKeys: colorKeys
+        })
+      });
+      
+      if (response.ok) {
+        console.log(`✅ DIRECT SAVE EDIT: Successfully saved ${colorKeys.length} categories to database!`);
+      } else {
+        console.error('❌ DIRECT SAVE EDIT: Failed to save categories:', await response.text());
+      }
+    } catch (error) {
+      console.error('❌ DIRECT SAVE EDIT: Error saving categories:', error);
+    }
   };
 
-  const updateColourTagColor = (tagId: string, newColor: string) => {
-    updateColourTag(tagId, { colour: newColor });
+  const updateColourTagColor = async (tagId: string, newColor: string) => {
+    // Update the category color first
+    await updateColourTag(tagId, { colour: newColor });
     
     // Update all blocks using this color tag
     setData(prev => ({
