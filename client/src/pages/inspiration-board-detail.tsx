@@ -966,8 +966,8 @@ export default function InspirationBoardDetail() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => window.history.back()}
-              className="text-gray-600 hover:text-gray-900 lg:hidden"
+              onClick={() => setLocation("/inspiration-hub")}
+              className="text-gray-600 hover:text-gray-900 lg:hidden mt-16"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
