@@ -89,18 +89,16 @@ export default function TimeBlocking() {
           };
         });
         
-        // Load color categories from calendar for compatibility
+        // Load ALL color categories from calendar (including custom ones)
         let allColorKeys = defaultTimeBlockingData.colourTags;
         try {
           const colorResponse = await fetch(`/api/calendar-v3/${currentDate.getFullYear()}/${currentDate.getMonth() + 1}`);
           if (colorResponse.ok) {
             const calendarData = await colorResponse.json();
             if (calendarData.colorKeys && calendarData.colorKeys.length > 0) {
-              // Filter business categories only
-              const businessCategories = ['Email Marketing', 'Content Creation', 'Filming', 'Editing', 'Planning', 'Product Development', 'Creative Time'];
-              allColorKeys = calendarData.colorKeys.filter((key: any) => 
-                businessCategories.includes(key.label)
-              );
+              // Load ALL color keys, including custom ones created by user
+              allColorKeys = calendarData.colorKeys;
+              console.log(`✅ Loaded ${allColorKeys.length} color categories from database (including custom categories)`);
             }
           }
         } catch (error) {
