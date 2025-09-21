@@ -103,7 +103,7 @@ export default function ContentPlanning() {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => window.history.back()}
+              onClick={() => setLocation("/")}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
