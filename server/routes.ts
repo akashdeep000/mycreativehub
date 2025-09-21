@@ -2427,6 +2427,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Automation Prompts CRUD API
+  app.get('/api/automation/prompts', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      let prompts = await storage.getAutomationPrompts(userId);
+      
+      // If no prompts exist, seed with default data
+      if (prompts.length === 0) {
+        const defaultPrompts = [
+          {
+            userId,
+            trigger: 'PROMPTS',
+            automatedReply: 'Here\'s the link to [the thing]!\n\nP.s If you love it, I\'d be so grateful if you could leave a quick review [then direct them to review page in 2nd link]',
+            openingDM: 'Thanks! I\'ve sent the link to your DMs!',
+            buttonTitle: 'Click to find out more!',
+            dmLink: 'Hey there! I\'m so happy you\'re here, thanks so much for your interest in my [enter thing] 😊  Just click below and I\'ll send you the link straight there, as well as a freebie to go with!',
+            ctaButtons: 'Grab Yours Today',
+            followUp: '',
+            bonusUpsell: 'Hey! 👋 just popping back to check how you\'re getting on? Don\'t forget to grab [insert] above!'
+          },
+          {
+            userId,
+            trigger: 'DISCOUNT',
+            automatedReply: 'Yay! Here\'s the link to my [thing]. I hope you love it as much as I loved creating it 😍 Below you\'ll also find a link to my Freebie [enter relevant freebie - optional]',
+            openingDM: 'Sent you a message! 😍',
+            buttonTitle: 'Grab the link',
+            dmLink: 'Thanks so much for your interest in [insert]! Inside, you\'ll find [list qualities]...can\'t wait for you to join! Click below to grab the link.',
+            ctaButtons: 'Claim Your Discount',
+            followUp: '',
+            bonusUpsell: 'Don\'t forget to grab your goodies! I promise they\'re worthwhile 😍'
+          },
+          {
+            userId,
+            trigger: 'INFO',
+            automatedReply: 'I\'m so glad you want to check out my [insert thing] I think you\'ll love it! 😍',
+            openingDM: 'Yay! The Link is in your DMs!',
+            buttonTitle: 'Check it out!',
+            dmLink: 'Hey there! 👋 Thanks so much for checking out my [product name] You\'ll get [product qualities] Click to find out more!',
+            ctaButtons: 'Start Here',
+            followUp: '',
+            bonusUpsell: 'Just checking in! Everything ok? Your links are waiting above! 👆'
+          }
+        ];
+        
+        prompts = await storage.bulkUpsertAutomationPrompts(userId, defaultPrompts);
+      }
+      
+      res.json(prompts);
+    } catch (error) {
+      console.error('Error fetching automation prompts:', error);
+      res.status(500).json({ message: 'Failed to fetch automation prompts' });
+    }
+  });
+
+  app.post('/api/automation/prompts', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { prompts } = req.body;
+      
+      if (!Array.isArray(prompts)) {
+        return res.status(400).json({ message: 'Prompts must be an array' });
+      }
+      
+      const result = await storage.bulkUpsertAutomationPrompts(userId, prompts);
+      res.json(result);
+    } catch (error) {
+      console.error('Error bulk upserting automation prompts:', error);
+      res.status(500).json({ message: 'Failed to save automation prompts' });
+    }
+  });
+
+  app.post('/api/automation/prompt', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const promptData = { ...req.body, userId };
+      
+      const prompt = await storage.createAutomationPrompt(promptData);
+      res.json(prompt);
+    } catch (error) {
+      console.error('Error creating automation prompt:', error);
+      res.status(500).json({ message: 'Failed to create automation prompt' });
+    }
+  });
+
+  app.patch('/api/automation/prompt/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const promptId = req.params.id;
+      
+      // Check ownership
+      const existingPrompt = await storage.getAutomationPrompt(promptId);
+      if (!existingPrompt) {
+        return res.status(404).json({ message: 'Prompt not found' });
+      }
+      if (existingPrompt.userId !== userId) {
+        return res.status(403).json({ message: 'Not authorized to modify this prompt' });
+      }
+      
+      const prompt = await storage.updateAutomationPrompt(promptId, req.body);
+      res.json(prompt);
+    } catch (error) {
+      console.error('Error updating automation prompt:', error);
+      res.status(500).json({ message: 'Failed to update automation prompt' });
+    }
+  });
+
+  app.delete('/api/automation/prompt/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const promptId = req.params.id;
+      
+      // Check ownership
+      const existingPrompt = await storage.getAutomationPrompt(promptId);
+      if (!existingPrompt) {
+        return res.status(404).json({ message: 'Prompt not found' });
+      }
+      if (existingPrompt.userId !== userId) {
+        return res.status(403).json({ message: 'Not authorized to delete this prompt' });
+      }
+      
+      await storage.deleteAutomationPrompt(promptId);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting automation prompt:', error);
+      res.status(500).json({ message: 'Failed to delete automation prompt' });
+    }
+  });
+
   // Focus Timer System - Session Logging
   app.post('/api/persistent/focus-session', jwtAuth, async (req: any, res) => {
     try {

@@ -39,6 +39,7 @@ import {
   moneyMap,
   sopBuilders,
   automationToolkit,
+  automationPrompts,
   focusSessionLogs,
   calendarV2,
   calendarV3,
@@ -116,6 +117,8 @@ import {
   type InsertSopBuilder,
   type AutomationToolkit,
   type InsertAutomationToolkit,
+  type AutomationPrompt,
+  type InsertAutomationPrompt,
   type FocusSessionLog,
   type InsertFocusSessionLog,
   type CalendarV2,
@@ -299,6 +302,14 @@ export interface IStorage {
   
   getAutomationToolkit(userId: string): Promise<AutomationToolkit | undefined>;
   upsertAutomationToolkit(data: InsertAutomationToolkit): Promise<AutomationToolkit>;
+  
+  // Automation Prompts CRUD
+  getAutomationPrompts(userId: string): Promise<AutomationPrompt[]>;
+  getAutomationPrompt(id: string): Promise<AutomationPrompt | undefined>;
+  createAutomationPrompt(data: InsertAutomationPrompt): Promise<AutomationPrompt>;
+  updateAutomationPrompt(id: string, data: Partial<InsertAutomationPrompt>): Promise<AutomationPrompt>;
+  deleteAutomationPrompt(id: string): Promise<void>;
+  bulkUpsertAutomationPrompts(userId: string, prompts: InsertAutomationPrompt[]): Promise<AutomationPrompt[]>;
   
   // Focus Timer System
   logFocusSession(session: InsertFocusSessionLog): Promise<FocusSessionLog>;
@@ -1694,6 +1705,63 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return toolkit;
+  }
+
+  // Automation Prompts CRUD
+  async getAutomationPrompts(userId: string): Promise<AutomationPrompt[]> {
+    return await db
+      .select()
+      .from(automationPrompts)
+      .where(eq(automationPrompts.userId, userId))
+      .orderBy(asc(automationPrompts.createdAt));
+  }
+
+  async getAutomationPrompt(id: string): Promise<AutomationPrompt | undefined> {
+    const [prompt] = await db
+      .select()
+      .from(automationPrompts)
+      .where(eq(automationPrompts.id, id));
+    return prompt;
+  }
+
+  async createAutomationPrompt(data: InsertAutomationPrompt): Promise<AutomationPrompt> {
+    const [prompt] = await db
+      .insert(automationPrompts)
+      .values(data)
+      .returning();
+    return prompt;
+  }
+
+  async updateAutomationPrompt(id: string, data: Partial<InsertAutomationPrompt>): Promise<AutomationPrompt> {
+    const [prompt] = await db
+      .update(automationPrompts)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(automationPrompts.id, id))
+      .returning();
+    return prompt;
+  }
+
+  async deleteAutomationPrompt(id: string): Promise<void> {
+    await db
+      .delete(automationPrompts)
+      .where(eq(automationPrompts.id, id));
+  }
+
+  async bulkUpsertAutomationPrompts(userId: string, prompts: InsertAutomationPrompt[]): Promise<AutomationPrompt[]> {
+    // Delete existing prompts for this user
+    await db
+      .delete(automationPrompts)
+      .where(eq(automationPrompts.userId, userId));
+    
+    // Insert new prompts
+    if (prompts.length === 0) {
+      return [];
+    }
+
+    return await db
+      .insert(automationPrompts)
+      .values(prompts.map(p => ({ ...p, userId })))
+      .returning();
   }
 
   // Focus Timer System
