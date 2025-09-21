@@ -62,7 +62,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-white">
       <Sidebar />
-      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
+      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden pt-20 md:pt-4">
         {/* Welcome Header */}
         <div className="mb-8">
           <h2 className="text-3xl lg:text-4xl font-serif font-semibold text-gray-800 mb-2">
