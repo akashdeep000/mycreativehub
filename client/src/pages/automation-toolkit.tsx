@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -78,6 +78,14 @@ export default function AutomationToolkit() {
   const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
+  // Debug excessive re-rendering
+  const renderCountRef = useRef(0);
+  useEffect(() => {
+    renderCountRef.current += 1;
+    console.log('🔄 AutomationToolkit render count:', renderCountRef.current);
+    console.log('🔄 Render triggered by:', { isAuthenticated, isLoading });
+  });
+
   // Load automation prompts data from API using React Query
   const { data: automationData, isLoading: isDataLoading } = useQuery({
     queryKey: ['/api/automation/prompts'],
@@ -148,8 +156,8 @@ export default function AutomationToolkit() {
     },
   });
 
-  // Debounced save function
-  const debouncedSave = useDebounce(() => {
+  // Memoized save function to prevent infinite re-renders
+  const saveCallback = useCallback(() => {
     if (automationFlows && Array.isArray(automationFlows) && isAuthenticated && !isDataLoading) {
       // Only save if data has changed from defaults
       const isDefaultData = JSON.stringify(automationFlows) === JSON.stringify(defaultAutomationFlows);
@@ -158,11 +166,14 @@ export default function AutomationToolkit() {
         saveMutation.mutate(automationFlows);
       }
     }
-  }, 1000);
+  }, [automationFlows, isAuthenticated, isDataLoading, defaultAutomationFlows, saveMutation]);
+
+  // Debounced save function
+  const debouncedSave = useDebounce(saveCallback, 1000);
 
   useEffect(() => {
     debouncedSave();
-  }, [automationFlows, debouncedSave]);
+  }, [automationFlows]); // Remove debouncedSave from dependencies to prevent infinite loops
 
   // Redirect to login if not authenticated
   useEffect(() => {
