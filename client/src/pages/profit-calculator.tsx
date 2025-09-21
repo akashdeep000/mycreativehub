@@ -517,10 +517,23 @@ export default function ProfitCalculator() {
         <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
           {/* Header */}
           <div className="mb-6">
+            {/* Mobile Navigation - Single Back Arrow */}
+            <div className="flex items-center gap-3 lg:hidden mt-16 mb-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setSelectedCalculation(null)}
+                className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Desktop Navigation - Full Button */}
             <Button
               variant="ghost"
               onClick={() => setSelectedCalculation(null)}
-              className="mb-4 text-gray-600 hover:text-gray-900"
+              className="mb-4 text-gray-600 hover:text-gray-900 hidden lg:flex items-center"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Calculations
