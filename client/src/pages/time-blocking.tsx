@@ -183,7 +183,7 @@ export default function TimeBlocking() {
       <Sidebar />
       <MobileNav />
       <div className="lg:ml-64 max-w-full overflow-x-hidden">
-        <main className="px-4 sm:px-6 lg:px-8 py-6">
+        <main className="px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-6">
           <div className="mb-8">
             <div className="mb-2">
               {/* Mobile: Simple back arrow using browser history */}
