@@ -48,6 +48,7 @@ import LaunchGrowthPlan from "@/pages/launch-growth-plan";
 import MonthlyContentCalendarV2 from "@/pages/monthly-content-calendar-v2";
 import MonthlyContentCalendarV3 from "@/pages/monthly-content-calendar-v3";
 import Help from "@/pages/help";
+import MobileFixedHeader from "@/components/layout/mobile-fixed-header";
 
 
 function TimerWrapper() {
@@ -101,6 +102,7 @@ function Router() {
     <>
       <ScrollToTop />
       <TimerWrapper />
+      <MobileFixedHeader />
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/inspiration-hub/board/:id" component={InspirationBoardDetail} />

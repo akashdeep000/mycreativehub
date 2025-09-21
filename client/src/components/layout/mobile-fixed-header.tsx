@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { HelpCircle, LogOut, LogIn } from "lucide-react";
 
-export default function MobileTopNav() {
+export default function MobileFixedHeader() {
   const [, setLocation] = useLocation();
   const { isAuthenticated } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
@@ -46,11 +47,14 @@ export default function MobileTopNav() {
     performLogout();
   };
 
-  return (
-    <div className="md:hidden"> {/* Only show on mobile ≤ 768px */}
-      {/* Sticky header container */}
-      <div className="sticky top-0 left-0 right-0 z-[9999] bg-white/90 backdrop-blur-sm border-b border-gray-100 pointer-events-auto" 
-           style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+  // Only render on mobile screens (≤ 768px)
+  const headerContent = (
+    <div className="md:hidden"> 
+      {/* Fixed header container using portal */}
+      <div 
+        className="fixed top-0 left-0 right-0 z-[9999] bg-white/90 backdrop-blur-sm border-b border-gray-100 pointer-events-auto"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         <div className="flex justify-end p-4">
           <div className="flex items-center space-x-3">
             {/* Help Button */}
@@ -117,4 +121,9 @@ export default function MobileTopNav() {
       </div>
     </div>
   );
+
+  // Use portal to render at document.body to avoid z-index conflicts
+  return typeof document !== 'undefined' 
+    ? createPortal(headerContent, document.body)
+    : null;
 }

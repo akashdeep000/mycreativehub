@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile fixed header compensation */
+@media (max-width: 768px) {
+  body {
+    padding-top: 4rem; /* Account for fixed mobile header height */
+  }
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);

@@ -6,7 +6,6 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { routeMap, sortModulesByNavigationOrder } from "@/lib/navigation";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
-import MobileTopNav from "@/components/layout/mobile-top-nav";
 import ToolkitCard from "@/components/toolkit/toolkit-card";
 import DailyFocus from "@/components/toolkit/daily-focus";
 import QuickStartTimer from "@/components/toolkit/quick-start-timer-simple";
@@ -63,8 +62,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-white">
       <Sidebar />
-      {/* Add top padding on mobile to account for sticky header (pt-20), normal padding on desktop (md:pt-8) */}
-      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 pt-20 md:pt-8 max-w-full overflow-x-hidden">
+      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         {/* Welcome Header */}
         <div className="mb-8">
           <h2 className="text-3xl lg:text-4xl font-serif font-semibold text-gray-800 mb-2">
@@ -104,8 +102,6 @@ export default function Dashboard() {
       </div>
       {/* Mobile Navigation */}
       <MobileNav />
-      {/* Mobile Top Navigation */}
-      <MobileTopNav />
     </div>
   );
 }
