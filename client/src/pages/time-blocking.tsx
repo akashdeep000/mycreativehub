@@ -164,7 +164,7 @@ export default function TimeBlocking() {
   // Save function that handles both time blocks and color keys
   const handleSave = async (data: any) => {
     try {
-      // Save color keys to calendar database (only when provided)
+      // Save color keys to calendar database (only when explicitly provided by child component)
       if (data.colourTags && data.colourTags.length > 0) {
         // Use the selected month from the data, not the current month
         const selectedMonth = data.monthlyView?.selectedMonth ?? new Date().toISOString().slice(0, 7);

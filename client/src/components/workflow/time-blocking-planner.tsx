@@ -126,7 +126,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     const shouldSaveImmediately = data.monthlyView.blocks.length > 0 || data.weeklyView.blocks.length > 0;
     
     // Only include colourTags in save payload when user actually modified them
-    const saveData = dirtyCategories ? data : {
+    const saveData: any = dirtyCategories ? data : {
       weeklyView: data.weeklyView,
       monthlyView: data.monthlyView
       // Omit colourTags to prevent overwriting user's custom categories
@@ -617,20 +617,55 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   };
 
   // Colour tag management functions
-  const addColourTag = () => {
+  const addColourTag = async () => {
     if (newColourTagLabel.trim()) {
       const newTag: ColourTag = {
-        id: `ck-${Date.now()}`,
+        id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         label: newColourTagLabel.trim(),
         colour: BLOCK_COLOURS[data.colourTags.length % BLOCK_COLOURS.length]
       };
 
+      // Update state immediately
+      const newColourTags = [...data.colourTags, newTag];
       setData(prev => ({
         ...prev,
-        colourTags: [...prev.colourTags, newTag]
+        colourTags: newColourTags
       }));
       setNewColourTagLabel('');
-      setDirtyCategories(true); // Mark categories as modified
+
+      // Save directly to database immediately
+      try {
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth() + 1;
+        
+        const colorKeys = newColourTags.map((tag: any) => ({
+          id: tag.id,
+          label: tag.label,
+          color: tag.colour || tag.color
+        }));
+        
+        console.log(`🚀 DIRECT SAVE: Saving ${colorKeys.length} categories immediately...`);
+        
+        const response = await fetch(`/api/calendar-v3/${year}/${month}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            colorKeys: colorKeys
+          })
+        });
+        
+        if (response.ok) {
+          console.log(`✅ DIRECT SAVE: Successfully saved ${colorKeys.length} categories to database!`);
+        } else {
+          console.error('❌ DIRECT SAVE: Failed to save categories:', await response.text());
+        }
+      } catch (error) {
+        console.error('❌ DIRECT SAVE: Error saving categories:', error);
+      }
     }
   };
 
