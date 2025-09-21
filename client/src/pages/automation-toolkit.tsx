@@ -95,21 +95,30 @@ export default function AutomationToolkit() {
 
   // Update local state when data loads
   useEffect(() => {
-    if (automationData && typeof automationData === 'object' && 'prompts' in automationData && Array.isArray(automationData.prompts)) {
-      setAutomationFlows(automationData.prompts);
+    if (automationData && typeof automationData === 'object' && 'promptLibrary' in automationData && Array.isArray(automationData.promptLibrary)) {
+      setAutomationFlows(automationData.promptLibrary);
     }
   }, [automationData]);
 
   // Mutation for saving automation toolkit data
   const saveMutation = useMutation({
-    mutationFn: async (data: { prompts: AutomationFlow[] }) => {
+    mutationFn: async (prompts: AutomationFlow[]) => {
+      // Convert our automation flows to the backend format
+      const payload = {
+        promptLibrary: prompts, // Store our flows in promptLibrary field
+        flowBuilder: [],
+        instagramCopies: [],
+        prewrittenReplies: {},
+        oneClickFlows: []
+      };
+      
       const response = await fetch('/api/persistent/automation-toolkit', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       
       if (!response.ok) {
@@ -137,7 +146,12 @@ export default function AutomationToolkit() {
 
   useEffect(() => {
     if (debouncedSaveValue && Array.isArray(debouncedSaveValue) && isAuthenticated && !isDataLoading) {
-      saveMutation.mutate({ prompts: debouncedSaveValue });
+      // Only save if data has changed from defaults
+      const isDefaultData = JSON.stringify(debouncedSaveValue) === JSON.stringify(defaultAutomationFlows);
+      if (!isDefaultData) {
+        console.log('Saving automation toolkit data:', debouncedSaveValue);
+        saveMutation.mutate(debouncedSaveValue);
+      }
     }
   }, [debouncedSaveValue, isAuthenticated, isDataLoading, saveMutation]);
 
