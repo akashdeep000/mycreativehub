@@ -176,6 +176,7 @@ export default function AutomationToolkit() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
+      <MobileNav />
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
             
             {/* Header */}
@@ -185,8 +186,8 @@ export default function AutomationToolkit() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => window.history.back()}
-                  className="text-gray-600 hover:text-gray-800 lg:hidden"
+                  onClick={() => setLocation('/streamline-workflow')}
+                  className="text-gray-600 hover:text-gray-800 lg:hidden mt-16"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
