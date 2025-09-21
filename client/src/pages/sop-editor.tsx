@@ -198,7 +198,7 @@ export default function SOPEditor() {
       <Sidebar />
       <MobileNav />
       <div className="lg:ml-64 max-w-full overflow-x-hidden">
-        <main className="px-4 sm:px-6 lg:px-8 py-6">
+        <main className="px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-6">
         {/* Header */}
         <div className="mb-8">
           {/* Mobile Navigation - Single Back Arrow */}
