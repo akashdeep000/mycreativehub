@@ -47,67 +47,73 @@ export default function MobileTopNav() {
   };
 
   return (
-    <div className="fixed top-0 right-0 p-4 z-[9999] lg:hidden pointer-events-auto">
-      <div className="flex items-center space-x-3">
-        {/* Help Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setLocation('/help')}
-          className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm"
-          data-testid="button-help-mobile"
-        >
-          <HelpCircle className="w-4 h-4" />
-        </Button>
-
-        {/* Login/Logout Button */}
-        {isAuthenticated ? (
-          <>
+    <div className="md:hidden"> {/* Only show on mobile ≤ 768px */}
+      {/* Sticky header container */}
+      <div className="sticky top-0 left-0 right-0 z-[9999] bg-white/90 backdrop-blur-sm border-b border-gray-100 pointer-events-auto" 
+           style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="flex justify-end p-4">
+          <div className="flex items-center space-x-3">
+            {/* Help Button */}
             <Button
               variant="outline"
               size="sm"
-              onClick={handleLogoutClick}
+              onClick={() => setLocation('/help')}
               className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm"
-              data-testid="button-logout-mobile"
+              data-testid="button-help-mobile"
             >
-              <LogOut className="w-4 h-4" />
+              <HelpCircle className="w-4 h-4" />
             </Button>
 
-            <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-              <AlertDialogContent className="max-w-sm rounded-2xl bg-white border-0 shadow-2xl">
-                <AlertDialogHeader className="text-center pb-2">
-                  <AlertDialogTitle className="text-xl font-serif text-gray-800">
-                    log out?
-                  </AlertDialogTitle>
-                  <AlertDialogDescription className="text-gray-600 text-sm">
-                    You'll need to sign in again to access your toolkit.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="flex flex-col space-y-2 pt-4">
-                  <AlertDialogAction
-                    onClick={handleLogoutConfirm}
-                    className="w-full bg-pink-500 hover:bg-pink-600 text-white rounded-xl py-3 font-medium"
-                  >
-                    Log Out
-                  </AlertDialogAction>
-                  <AlertDialogCancel className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl py-3 font-medium border-0">
-                    Stay Logged In
-                  </AlertDialogCancel>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setLocation('/login')}
-            className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm"
-            data-testid="button-login-mobile"
-          >
-            <LogIn className="w-4 h-4" />
-          </Button>
-        )}
+            {/* Login/Logout Button */}
+            {isAuthenticated ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogoutClick}
+                  className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm"
+                  data-testid="button-logout-mobile"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+
+                <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+                  <AlertDialogContent className="max-w-sm rounded-2xl bg-white border-0 shadow-2xl">
+                    <AlertDialogHeader className="text-center pb-2">
+                      <AlertDialogTitle className="text-xl font-serif text-gray-800">
+                        log out?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="text-gray-600 text-sm">
+                        You'll need to sign in again to access your toolkit.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex flex-col space-y-2 pt-4">
+                      <AlertDialogAction
+                        onClick={handleLogoutConfirm}
+                        className="w-full bg-pink-500 hover:bg-pink-600 text-white rounded-xl py-3 font-medium"
+                      >
+                        Log Out
+                      </AlertDialogAction>
+                      <AlertDialogCancel className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl py-3 font-medium border-0">
+                        Stay Logged In
+                      </AlertDialogCancel>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLocation('/login')}
+                className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm"
+                data-testid="button-login-mobile"
+              >
+                <LogIn className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

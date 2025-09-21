@@ -63,7 +63,8 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-white">
       <Sidebar />
-      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
+      {/* Add top padding on mobile to account for sticky header (pt-20), normal padding on desktop (md:pt-8) */}
+      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 pt-20 md:pt-8 max-w-full overflow-x-hidden">
         {/* Welcome Header */}
         <div className="mb-8">
           <h2 className="text-3xl lg:text-4xl font-serif font-semibold text-gray-800 mb-2">
