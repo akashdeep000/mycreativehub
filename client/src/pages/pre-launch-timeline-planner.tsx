@@ -600,7 +600,7 @@ export default function PreLaunchTimelinePlanner() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setLocation("/launch")}
+                onClick={() => setSelectedLaunch(null)}
                 className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
