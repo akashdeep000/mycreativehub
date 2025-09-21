@@ -19,7 +19,7 @@ import {
   ArrowLeft,
   Smartphone
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 interface ContentPillar {
   id: string;
@@ -38,6 +38,7 @@ interface SocialMediaStrategy {
 export default function SocialMediaStrategy() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [strategy, setStrategy] = useState<SocialMediaStrategy>({
     contentGoals: "",
     pillars: [
@@ -202,11 +203,11 @@ export default function SocialMediaStrategy() {
         {/* Header */}
         <div className="mb-8">
           {/* Mobile Navigation - Single Back Arrow */}
-          <div className="flex items-center gap-3 mb-4 lg:hidden">
+          <div className="flex items-center gap-3 mb-4 lg:hidden mt-16">
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => window.history.back()}
+              onClick={() => setLocation("/content")}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
