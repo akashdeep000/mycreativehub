@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +19,29 @@ export default function MobileFixedHeader() {
   const [, setLocation] = useLocation();
   const { isAuthenticated } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+
+  // Hide header on scroll
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Show header when at top (within 10px), hide when scrolling down
+      if (currentScrollY <= 10) {
+        setIsHeaderVisible(true);
+      } else if (currentScrollY > lastScrollY) {
+        // Scrolling down - hide header
+        setIsHeaderVisible(false);
+      }
+      
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const performLogout = async () => {
     try {
@@ -50,9 +73,11 @@ export default function MobileFixedHeader() {
   // Only render on mobile screens (≤ 768px)
   const headerContent = (
     <div className="md:hidden"> 
-      {/* Fixed header container using portal */}
+      {/* Fixed header container using portal with hide/show animation */}
       <div 
-        className="fixed top-0 left-0 right-0 z-[9999] bg-white/90 backdrop-blur-sm border-b border-gray-100 pointer-events-auto"
+        className={`fixed top-0 left-0 right-0 z-[9999] bg-white/90 backdrop-blur-sm border-b border-gray-100 pointer-events-auto transition-transform duration-300 ease-in-out ${
+          isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+        }`}
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="flex justify-end p-4">
