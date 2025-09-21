@@ -93,12 +93,16 @@ export default function AutomationToolkit() {
   // State for automation flows
   const [automationFlows, setAutomationFlows] = useState<AutomationFlow[]>(defaultAutomationFlows);
 
-  // Update local state when data loads
+  // Track if we've initialized from server data
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Update local state when data loads (only once)
   useEffect(() => {
-    if (automationData && Array.isArray(automationData)) {
+    if (automationData && Array.isArray(automationData) && !isInitialized) {
       setAutomationFlows(automationData);
+      setIsInitialized(true);
     }
-  }, [automationData]);
+  }, [automationData, isInitialized]);
 
   // Mutation for saving automation prompts data
   const saveMutation = useMutation({
@@ -125,8 +129,7 @@ export default function AutomationToolkit() {
       return response.json();
     },
     onSuccess: (data) => {
-      // Update the React Query cache
-      queryClient.setQueryData(['/api/automation/prompts'], data);
+      // Don't update cache to avoid overriding user input
       toast({
         title: "Saved!",
         description: "Your automation flows have been saved successfully.",
