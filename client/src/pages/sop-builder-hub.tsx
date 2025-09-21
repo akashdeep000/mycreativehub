@@ -244,7 +244,7 @@ export default function SOPBuilderHub() {
       <MobileNav />
       
       <div className="lg:ml-64">
-        <div className="p-6 pt-20 md:pt-6">
+        <div className="p-6 pt-20 md:pt-6 pb-24 lg:pb-6">
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-4 mt-8 lg:mt-0">
