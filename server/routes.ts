@@ -2546,6 +2546,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           daysCount: response.days.length
         });
         
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         res.json(response);
       } else {
         // Return default structure for new calendar
@@ -2568,6 +2571,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
         
         console.log('Calendar V3 GET - Sending default response');
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         res.json(defaultResponse);
       }
     } catch (error) {
@@ -2636,10 +2642,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/calendar-v3', jwtAuth, async (req: any, res) => {
+  app.put('/api/calendar-v3/:year/:month', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { year, month, colorKeys, days } = req.body;
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      const { colorKeys, days } = req.body;
       
       console.log('Calendar V3 PUT - Received data:', {
         userId,
@@ -2670,6 +2678,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         daysCount: response.days.length
       });
       
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.json(response);
     } catch (error) {
       console.error('Error saving calendar v3:', error);
