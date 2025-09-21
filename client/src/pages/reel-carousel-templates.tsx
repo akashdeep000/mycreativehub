@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Play, Video, Image, Home } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 export default function ReelCarouselTemplates() {
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   // Redirect to login if not authenticated
   if (!isLoading && !isAuthenticated) {
@@ -60,11 +61,11 @@ export default function ReelCarouselTemplates() {
         {/* Header */}
         <div className="mb-8">
           {/* Mobile Navigation - Single Back Arrow */}
-          <div className="flex items-center gap-3 mb-4 lg:hidden">
+          <div className="flex items-center gap-3 mb-4 lg:hidden mt-16">
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => window.history.back()}
+              onClick={() => setLocation("/content")}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
