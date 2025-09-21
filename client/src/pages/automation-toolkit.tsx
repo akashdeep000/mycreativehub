@@ -26,13 +26,13 @@ import {
 
 
 interface AutomationFlow {
-  id: string;
-  triggerWord: string;
-  dmPrompt: string;
-  linkText: string;
-  clickableButtonTitle: string;
-  ctaButtons: string;
+  id?: string;
+  trigger: string;
   automatedReply: string;
+  openingDM: string;
+  buttonTitle: string;
+  dmLink: string;
+  ctaButtons: string;
   followUp: string;
   bonusUpsell: string;
 }
@@ -40,10 +40,10 @@ interface AutomationFlow {
 const defaultAutomationFlows: AutomationFlow[] = [
   {
     id: '1',
-    triggerWord: 'PROMPTS',
-    dmPrompt: 'Thanks! I\'ve sent the link to your DMs!',
-    linkText: 'Hey there! I\'m so happy you\'re here, thanks so much for your interest in my [enter thing] 😊  Just click below and I\'ll send you the link straight there, as well as a freebie to go with!',
-    clickableButtonTitle: 'Click to find out more!',
+    trigger: 'PROMPTS',
+    openingDM: 'Thanks! I\'ve sent the link to your DMs!',
+    dmLink: 'Hey there! I\'m so happy you\'re here, thanks so much for your interest in my [enter thing] 😊  Just click below and I\'ll send you the link straight there, as well as a freebie to go with!',
+    buttonTitle: 'Click to find out more!',
     ctaButtons: 'Grab Yours Today',
     automatedReply: 'Here\'s the link to [the thing]!\n\nP.s If you love it, I\'d be so grateful if you could leave a quick review [then direct them to review page in 2nd link] ',
     followUp: '',
@@ -51,10 +51,10 @@ const defaultAutomationFlows: AutomationFlow[] = [
   },
   {
     id: '2', 
-    triggerWord: 'DISCOUNT',
-    dmPrompt: 'Sent you a message! 😍',
-    linkText: 'Thanks so much for your interest in [insert]! Inside, you\'ll find [list qualities]...can\'t wait for you to join! Click below to grab the link.',
-    clickableButtonTitle: 'Grab the link',
+    trigger: 'DISCOUNT',
+    openingDM: 'Sent you a message! 😍',
+    dmLink: 'Thanks so much for your interest in [insert]! Inside, you\'ll find [list qualities]...can\'t wait for you to join! Click below to grab the link.',
+    buttonTitle: 'Grab the link',
     ctaButtons: 'Claim Your Discount',
     automatedReply: 'Yay! Here\'s the link to my [thing]. I hope you love it as much as I loved creating it 😍 Below you\'ll also find a link to my Freebie [enter relevant freebie - optional] ',
     followUp: '',
@@ -62,10 +62,10 @@ const defaultAutomationFlows: AutomationFlow[] = [
   },
   {
     id: '3',
-    triggerWord: 'INFO',
-    dmPrompt: 'Yay! The Link is in your DMs! ',
-    linkText: 'Hey there! 👋 Thanks so much for checking out my [product name] You\'ll get [product qualities] Click to find out more!',
-    clickableButtonTitle: 'Check it out!',
+    trigger: 'INFO',
+    openingDM: 'Yay! The Link is in your DMs! ',
+    dmLink: 'Hey there! 👋 Thanks so much for checking out my [product name] You\'ll get [product qualities] Click to find out more!',
+    buttonTitle: 'Check it out!',
     ctaButtons: 'Start Here',
     automatedReply: 'I\'m so glad you want to check out my [insert thing] I think you\'ll love it! 😍',
     followUp: '',
@@ -78,9 +78,9 @@ export default function AutomationToolkit() {
   const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Load automation toolkit data from API using React Query
+  // Load automation prompts data from API using React Query
   const { data: automationData, isLoading: isDataLoading } = useQuery({
-    queryKey: ['/api/persistent/automation-toolkit'],
+    queryKey: ['/api/automation/prompts'],
     enabled: isAuthenticated && !isLoading,
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error)) {
@@ -95,44 +95,45 @@ export default function AutomationToolkit() {
 
   // Update local state when data loads
   useEffect(() => {
-    if (automationData && typeof automationData === 'object' && 'promptLibrary' in automationData && Array.isArray(automationData.promptLibrary)) {
-      setAutomationFlows(automationData.promptLibrary);
+    if (automationData && Array.isArray(automationData)) {
+      setAutomationFlows(automationData);
     }
   }, [automationData]);
 
-  // Mutation for saving automation toolkit data
+  // Mutation for saving automation prompts data
   const saveMutation = useMutation({
     mutationFn: async (prompts: AutomationFlow[]) => {
-      // Convert our automation flows to the backend format
-      const payload = {
-        promptLibrary: prompts, // Store our flows in promptLibrary field
-        flowBuilder: [],
-        instagramCopies: [],
-        prewrittenReplies: {},
-        oneClickFlows: []
-      };
+      // Filter out database-generated fields (id, createdAt, updatedAt)
+      const cleanedPrompts = prompts.map(prompt => {
+        const { id, createdAt, updatedAt, ...rest } = prompt as any;
+        return rest;
+      });
       
-      const response = await fetch('/api/persistent/automation-toolkit', {
-        method: 'PUT',
+      const response = await fetch('/api/automation/prompts', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ prompts: cleanedPrompts }),
       });
       
       if (!response.ok) {
-        throw new Error('Failed to save automation toolkit data');
+        throw new Error('Failed to save automation prompts data');
       }
       
       return response.json();
     },
     onSuccess: (data) => {
       // Update the React Query cache
-      queryClient.setQueryData(['/api/persistent/automation-toolkit'], data);
+      queryClient.setQueryData(['/api/automation/prompts'], data);
+      toast({
+        title: "Saved!",
+        description: "Your automation flows have been saved successfully.",
+      });
     },
     onError: (error) => {
-      console.error('Failed to save automation toolkit:', error);
+      console.error('Failed to save automation prompts:', error);
       toast({
         title: "Save Failed",
         description: "Unable to save your automation flows. Please try again.",
@@ -141,19 +142,21 @@ export default function AutomationToolkit() {
     },
   });
 
-  // Debounced save using the same pattern as monthly content planner
-  const debouncedSaveValue = useDebounce(automationFlows, 1000);
-
-  useEffect(() => {
-    if (debouncedSaveValue && Array.isArray(debouncedSaveValue) && isAuthenticated && !isDataLoading) {
+  // Debounced save function
+  const debouncedSave = useDebounce(() => {
+    if (automationFlows && Array.isArray(automationFlows) && isAuthenticated && !isDataLoading) {
       // Only save if data has changed from defaults
-      const isDefaultData = JSON.stringify(debouncedSaveValue) === JSON.stringify(defaultAutomationFlows);
+      const isDefaultData = JSON.stringify(automationFlows) === JSON.stringify(defaultAutomationFlows);
       if (!isDefaultData) {
-        console.log('Saving automation toolkit data:', debouncedSaveValue);
-        saveMutation.mutate(debouncedSaveValue);
+        console.log('Saving automation prompts data:', automationFlows);
+        saveMutation.mutate(automationFlows);
       }
     }
-  }, [debouncedSaveValue, isAuthenticated, isDataLoading, saveMutation]);
+  }, 1000);
+
+  useEffect(() => {
+    debouncedSave();
+  }, [automationFlows, debouncedSave]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
