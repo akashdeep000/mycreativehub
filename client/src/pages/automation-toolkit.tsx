@@ -93,16 +93,19 @@ export default function AutomationToolkit() {
   // State for automation flows
   const [automationFlows, setAutomationFlows] = useState<AutomationFlow[]>(defaultAutomationFlows);
 
-  // Track if we've initialized from server data
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  // Update local state when data loads (only once)
+  // Update local state when data loads from server
   useEffect(() => {
-    if (automationData && Array.isArray(automationData) && !isInitialized) {
-      setAutomationFlows(automationData);
-      setIsInitialized(true);
+    if (automationData && Array.isArray(automationData)) {
+      // Only update if the data is actually different from current state
+      const currentDataString = JSON.stringify(automationFlows);
+      const newDataString = JSON.stringify(automationData);
+      
+      if (currentDataString !== newDataString) {
+        console.log('Loading server data into state:', automationData);
+        setAutomationFlows(automationData);
+      }
     }
-  }, [automationData, isInitialized]);
+  }, [automationData]); // Remove automationFlows from dependencies to avoid loops
 
   // Mutation for saving automation prompts data
   const saveMutation = useMutation({
@@ -178,9 +181,14 @@ export default function AutomationToolkit() {
 
   // Automation flow functions
   const updateFlow = (id: string, field: keyof AutomationFlow, value: string) => {
-    setAutomationFlows(prev => prev.map(flow => 
-      flow.id === id ? { ...flow, [field]: value } : flow
-    ));
+    console.log('updateFlow called:', { id, field, value });
+    setAutomationFlows(prev => {
+      const updated = prev.map(flow => 
+        flow.id === id ? { ...flow, [field]: value } : flow
+      );
+      console.log('Updated flows:', updated);
+      return updated;
+    });
     // Note: Auto-save now handled by debounced useEffect above
   };
 
@@ -539,7 +547,7 @@ export default function AutomationToolkit() {
                   </div>
                   
                   {/* Add New Prompt Button */}
-                  <div className="mt-4 flex justify-center">
+                  <div className="mt-4 flex justify-center gap-2">
                     <Button
                       onClick={addNewFlow}
                       variant="outline"
@@ -549,6 +557,21 @@ export default function AutomationToolkit() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                       </svg>
                       Add New Prompt
+                    </Button>
+                    
+                    {/* Test Button to Debug State Updates */}
+                    <Button
+                      onClick={() => {
+                        console.log('Test button clicked - current state:', automationFlows);
+                        // Test if state update works
+                        if (automationFlows.length > 0) {
+                          updateFlow(automationFlows[0].id || '', 'trigger', 'TEST_VALUE_' + Date.now());
+                        }
+                      }}
+                      variant="outline"
+                      className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                    >
+                      Test Update
                     </Button>
                   </div>
                 </CardContent>
