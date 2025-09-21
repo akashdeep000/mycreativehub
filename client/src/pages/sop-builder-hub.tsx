@@ -247,14 +247,13 @@ export default function SOPBuilderHub() {
         <div className="p-6 pt-20 md:pt-6">
           {/* Header */}
           <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4 mt-16 lg:mt-0">
+            <div className="flex items-center gap-4 mb-4 mt-8 lg:mt-0">
               <Link 
                 href="/streamline-workflow" 
-                className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                className="inline-flex items-center p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                 data-testid="link-back-streamline"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Back to Streamline Your Workflow
               </Link>
             </div>
             <div className="flex items-center gap-3 mb-2">
