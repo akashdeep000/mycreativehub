@@ -393,10 +393,13 @@ export default function AutomationToolkit() {
                                   <Copy className="w-3 h-3" />
                                 </Button>
                               </div>
-                              <Textarea
+                              <textarea
                                 value={flow.trigger}
-                                onChange={(e) => updateFlow(flow.id || '', 'trigger', e.target.value)}
-                                className="min-h-16 text-sm resize-none"
+                                onChange={(e) => {
+                                  console.log('❗ REGULAR TEXTAREA onChange fired for trigger field:', e.target.value);
+                                  updateFlow(flow.id || '', 'trigger', e.target.value);
+                                }}
+                                className="min-h-16 text-sm resize-none w-full p-2 border border-gray-300 rounded"
                                 placeholder="KEYWORD"
                               />
                             </div>
@@ -415,7 +418,10 @@ export default function AutomationToolkit() {
                               </div>
                               <Textarea
                                 value={flow.automatedReply}
-                                onChange={(e) => updateFlow(flow.id || '', 'automatedReply', e.target.value)}
+                                onChange={(e) => {
+                                  console.log('❗ onChange fired for automatedReply field:', e.target.value);
+                                  updateFlow(flow.id || '', 'automatedReply', e.target.value);
+                                }}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="First automatic response..."
                               />
