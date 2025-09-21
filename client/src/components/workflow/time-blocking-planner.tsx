@@ -689,7 +689,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       const colorKeys = newColourTags.map((tag: any) => ({
         id: tag.id,
         label: tag.label,
-        color: tag.colour || tag.color
+        colour: tag.colour || tag.color // Keep consistent with loading format
       }));
       
       console.log(`🚀 DIRECT SAVE EDIT: Saving ${colorKeys.length} categories after edit...`);
