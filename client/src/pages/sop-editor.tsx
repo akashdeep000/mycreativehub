@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useParams } from 'wouter';
+import { Link, useParams, useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,7 @@ interface SOP {
 
 export default function SOPEditor() {
   const params = useParams();
+  const [, setLocation] = useLocation();
   const sopId = params.id;
   const [sop, setSop] = useState<SOP | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -201,11 +202,11 @@ export default function SOPEditor() {
         {/* Header */}
         <div className="mb-8">
           {/* Mobile Navigation - Single Back Arrow */}
-          <div className="flex items-center gap-3 mb-4 lg:hidden">
+          <div className="flex items-center gap-3 mb-4 lg:hidden mt-16">
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => window.history.back()}
+              onClick={() => setLocation("/sop-builder-hub")}
               className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
