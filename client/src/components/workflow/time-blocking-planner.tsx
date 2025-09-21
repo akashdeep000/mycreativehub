@@ -111,78 +111,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const [currentMonthOffset, setCurrentMonthOffset] = useState(0);
 
 
-  // Legacy data migration - Add monthKey to existing blocks and update color categories (run once only)
-  const [migrationCompleted, setMigrationCompleted] = useState(false);
-  
-  useEffect(() => {
-    if (migrationCompleted) return; // Skip if migration already completed
-    
-    const currentMonthKey = getCurrentMonthKey();
-    let needsMigration = false;
-    
-    // Check if current color tags contain unwanted content categories or old defaults
-    const unwantedCategories = ['Reel', 'Carousel', 'Photo', 'Promo', 'Story'];
-    let updatedColourTags = data.colourTags;
-    
-    const hasOldDefaults = data.colourTags.some(tag => 
-      OLD_DEFAULT_CATEGORIES.includes(tag.label)
-    );
-    
-    const hasUnwantedContentCategories = data.colourTags.some(tag => 
-      unwantedCategories.includes(tag.label)
-    );
-    
-    // If user has old defaults or unwanted content categories, replace with business-focused ones
-    if (hasOldDefaults || hasUnwantedContentCategories) {
-      // Filter out unwanted categories but preserve any custom user-created categories
-      const userCreatedTags = data.colourTags.filter(tag => {
-        // Keep custom categories that are NOT in any default lists
-        const isOldDefault = OLD_DEFAULT_CATEGORIES.includes(tag.label);
-        const isUnwantedContent = unwantedCategories.includes(tag.label);
-        const isBusinessDefault = DEFAULT_BUSINESS_COLOR_TAGS.some(def => def.label === tag.label);
-        
-        // Only keep tags that are none of the above (i.e., truly custom user-created tags)
-        return !isOldDefault && !isUnwantedContent && !isBusinessDefault;
-      });
-      
-      console.log(`🔄 Migration: Found ${userCreatedTags.length} custom categories to preserve:`, userCreatedTags.map(t => t.label));
-      
-      updatedColourTags = [...DEFAULT_BUSINESS_COLOR_TAGS, ...userCreatedTags];
-      needsMigration = true;
-    }
-    
-    const migratedData = {
-      ...data,
-      colourTags: updatedColourTags,
-      weeklyView: {
-        ...data.weeklyView,
-        blocks: data.weeklyView.blocks.map(block => {
-          if (!block.weekKey) {
-            needsMigration = true;
-            return { ...block, weekKey: getCurrentMonthKey() };
-          }
-          return block;
-        })
-      },
-      monthlyView: {
-        ...data.monthlyView,
-        blocks: data.monthlyView.blocks.map(block => {
-          if (!block.monthKey) {
-            needsMigration = true;
-            return { ...block, monthKey: currentMonthKey };
-          }
-          return block;
-        })
-      }
-    };
-    
-    if (needsMigration) {
-      setData(migratedData);
-    }
-    
-    // Mark migration as completed to prevent future runs
-    setMigrationCompleted(true);
-  }, [migrationCompleted]); // Include dependency to avoid infinite re-runs
+  // Migration logic DISABLED - was causing data corruption by creating duplicate IDs
+  // User has requested this be fixed IMMEDIATELY to prevent further data loss
+  const [migrationCompleted] = useState(true); // Always true to completely disable
 
   // Auto-save functionality with immediate save and cleanup
   useEffect(() => {
