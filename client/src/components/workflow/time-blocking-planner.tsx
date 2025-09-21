@@ -79,9 +79,9 @@ const DEFAULT_BUSINESS_COLOR_TAGS = [
   { id: "tag-7", label: "Creative Time", colour: "#EC4899" } // Pink
 ];
 
-// Old default categories that should be replaced
+// Old default categories that should be replaced (excluding Planning which is also a business default)
 const OLD_DEFAULT_CATEGORIES = [
-  "Focus Time", "Communication", "Creative Work", "Planning", "Urgent"
+  "Focus Time", "Communication", "Creative Work", "Urgent"
 ];
 
 export default function TimeBlockingPlanner({ templateId, initialData, onSave }: TimeBlockingPlannerProps) {
@@ -134,7 +134,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       const userCreatedTags = data.colourTags.filter(tag => 
         !OLD_DEFAULT_CATEGORIES.includes(tag.label) &&
         !unwantedCategories.includes(tag.label) &&
-        !tag.id.startsWith('tag-') // Exclude default business tags to avoid duplicates
+        !DEFAULT_BUSINESS_COLOR_TAGS.some(def => def.id === tag.id || def.label === tag.label) // Exclude exact matches with business defaults
       );
       
       updatedColourTags = [...DEFAULT_BUSINESS_COLOR_TAGS, ...userCreatedTags];
@@ -660,7 +660,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const addColourTag = () => {
     if (newColourTagLabel.trim()) {
       const newTag: ColourTag = {
-        id: `tag-${Date.now()}`,
+        id: `ck-${Date.now()}`,
         label: newColourTagLabel.trim(),
         colour: BLOCK_COLOURS[data.colourTags.length % BLOCK_COLOURS.length]
       };
