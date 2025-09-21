@@ -93,7 +93,12 @@ export default function TimeBlocking() {
         let allColorKeys = defaultTimeBlockingData.colourTags;
         try {
           // Use the current month initially, but this will be replaced by the proper selected month loading
-          const colorResponse = await fetch(`/api/calendar-v3/${currentDate.getFullYear()}/${currentDate.getMonth() + 1}`);
+          const colorResponse = await fetch(`/api/calendar-v3/${currentDate.getFullYear()}/${currentDate.getMonth() + 1}?t=${Date.now()}`, {
+            credentials: 'include',
+            headers: {
+              'Cache-Control': 'no-store'
+            }
+          });
           if (colorResponse.ok) {
             const calendarData = await colorResponse.json();
             if (calendarData.colorKeys && calendarData.colorKeys.length > 0) {
@@ -174,9 +179,12 @@ export default function TimeBlocking() {
         
         console.log(`💾 Saving ${colorKeys.length} color keys to calendar database...`);
         
-        // First, get or create the calendar entry for this month
-        const calendarResponse = await fetch(`/api/calendar-v3/${year}/${month}`, {
-          credentials: 'include'
+        // First, get or create the calendar entry for this month  
+        const calendarResponse = await fetch(`/api/calendar-v3/${year}/${month}?t=${Date.now()}`, {
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-store'
+          }
         });
         
         let calendarData = null;
