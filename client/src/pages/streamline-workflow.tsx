@@ -274,11 +274,11 @@ export default function StreamlineWorkflow() {
             <div className="w-full px-6 sm:px-8 lg:px-12 py-6">
               <div className="flex items-center justify-between mb-6">
                 {/* Mobile Navigation - Single Back Arrow */}
-                <div className="flex items-center gap-3 lg:hidden">
+                <div className="flex items-center gap-3 lg:hidden mt-16">
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => window.history.back()}
+                    onClick={() => setSelectedTemplate(null)}
                     className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
                   >
                     <ArrowLeft className="h-4 w-4" />
