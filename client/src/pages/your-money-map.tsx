@@ -553,11 +553,11 @@ export default function YourMoneyMap() {
         <div className="mb-8">
           <div className="mb-6">
             {/* Mobile Navigation - Single Back Arrow */}
-            <div className="flex items-center gap-3 mb-4 lg:hidden">
+            <div className="flex items-center gap-3 mb-4 lg:hidden mt-16">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => window.history.back()}
+                onClick={() => setLocation('/finance')}
                 className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
