@@ -200,15 +200,15 @@ export default function AutomationToolkit() {
 
   // Add new flow function
   const addNewFlow = () => {
-    const newId = (Math.max(...automationFlows.map(f => parseInt(f.id))) + 1).toString();
+    const newId = (Math.max(...automationFlows.map(f => parseInt(f.id || '0'))) + 1).toString();
     const newFlow: AutomationFlow = {
       id: newId,
-      triggerWord: '',
-      dmPrompt: '',
-      linkText: '',
-      clickableButtonTitle: '',
-      ctaButtons: '',
+      trigger: '',
       automatedReply: '',
+      openingDM: '',
+      buttonTitle: '',
+      dmLink: '',
+      ctaButtons: '',
       followUp: '',
       bonusUpsell: ''
     };
@@ -376,15 +376,15 @@ export default function AutomationToolkit() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => copyToClipboard(flow.triggerWord, "Trigger word copied!")}
+                                  onClick={() => copyToClipboard(flow.trigger, "Trigger word copied!")}
                                   className="text-xs h-6 px-2"
                                 >
                                   <Copy className="w-3 h-3" />
                                 </Button>
                               </div>
                               <Textarea
-                                value={flow.triggerWord}
-                                onChange={(e) => updateFlow(flow.id, 'triggerWord', e.target.value)}
+                                value={flow.trigger}
+                                onChange={(e) => updateFlow(flow.id || '', 'trigger', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="KEYWORD"
                               />
@@ -396,15 +396,15 @@ export default function AutomationToolkit() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => copyToClipboard(flow.dmPrompt, "DM prompt copied!")}
+                                  onClick={() => copyToClipboard(flow.automatedReply, "Automated reply copied!")}
                                   className="text-xs h-6 px-2"
                                 >
                                   <Copy className="w-3 h-3" />
                                 </Button>
                               </div>
                               <Textarea
-                                value={flow.dmPrompt}
-                                onChange={(e) => updateFlow(flow.id, 'dmPrompt', e.target.value)}
+                                value={flow.automatedReply}
+                                onChange={(e) => updateFlow(flow.id || '', 'automatedReply', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="First automatic response..."
                               />
@@ -416,15 +416,15 @@ export default function AutomationToolkit() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => copyToClipboard(flow.linkText, "Link text copied!")}
+                                  onClick={() => copyToClipboard(flow.openingDM, "Opening DM copied!")}
                                   className="text-xs h-6 px-2"
                                 >
                                   <Copy className="w-3 h-3" />
                                 </Button>
                               </div>
                               <Textarea
-                                value={flow.linkText}
-                                onChange={(e) => updateFlow(flow.id, 'linkText', e.target.value)}
+                                value={flow.openingDM}
+                                onChange={(e) => updateFlow(flow.id || '', 'openingDM', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="Your opening DM to a follower that commented your keyword"
                               />
@@ -436,15 +436,15 @@ export default function AutomationToolkit() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => copyToClipboard(flow.clickableButtonTitle, "Clickable button title copied!")}
+                                  onClick={() => copyToClipboard(flow.buttonTitle, "Button title copied!")}
                                   className="text-xs h-6 px-2"
                                 >
                                   <Copy className="w-3 h-3" />
                                 </Button>
                               </div>
                               <Textarea
-                                value={flow.clickableButtonTitle}
-                                onChange={(e) => updateFlow(flow.id, 'clickableButtonTitle', e.target.value)}
+                                value={flow.buttonTitle}
+                                onChange={(e) => updateFlow(flow.id || '', 'buttonTitle', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="Get them to click for link"
                               />
@@ -456,15 +456,15 @@ export default function AutomationToolkit() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => copyToClipboard(flow.automatedReply, "Auto reply copied!")}
+                                  onClick={() => copyToClipboard(flow.dmLink, "DM link copied!")}
                                   className="text-xs h-6 px-2"
                                 >
                                   <Copy className="w-3 h-3" />
                                 </Button>
                               </div>
                               <Textarea
-                                value={flow.automatedReply}
-                                onChange={(e) => updateFlow(flow.id, 'automatedReply', e.target.value)}
+                                value={flow.dmLink}
+                                onChange={(e) => updateFlow(flow.id || '', 'dmLink', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="DM you send just above the link"
                               />
@@ -484,7 +484,7 @@ export default function AutomationToolkit() {
                               </div>
                               <Textarea
                                 value={flow.ctaButtons}
-                                onChange={(e) => updateFlow(flow.id, 'ctaButtons', e.target.value)}
+                                onChange={(e) => updateFlow(flow.id || '', 'ctaButtons', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="Button text for links..."
                               />
@@ -504,7 +504,7 @@ export default function AutomationToolkit() {
                               </div>
                               <Textarea
                                 value={flow.followUp}
-                                onChange={(e) => updateFlow(flow.id, 'followUp', e.target.value)}
+                                onChange={(e) => updateFlow(flow.id || '', 'followUp', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="Link URL..."
                               />
@@ -524,7 +524,7 @@ export default function AutomationToolkit() {
                               </div>
                               <Textarea
                                 value={flow.bonusUpsell}
-                                onChange={(e) => updateFlow(flow.id, 'bonusUpsell', e.target.value)}
+                                onChange={(e) => updateFlow(flow.id || '', 'bonusUpsell', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="Nurture message..."
                               />
