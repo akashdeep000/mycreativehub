@@ -13,6 +13,7 @@ import {
   char,
   uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -733,7 +734,7 @@ export const sopBuilders = pgTable("sop_builders", {
 // Automation System Toolkit Tables
 export const automationToolkit = pgTable("automation_toolkit", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id).unique(),
   promptLibrary: jsonb("prompt_library").notNull().default('[]'), // Saved prompts
   flowBuilder: jsonb("flow_builder").notNull().default('[]'), // Flow builder steps
   instagramCopies: jsonb("instagram_copies").notNull().default('[]'), // Instagram CTA copies
@@ -885,8 +886,7 @@ export type SocialMediaStrategy = typeof socialMediaStrategies.$inferSelect;
 export type InsertSocialMediaStrategy = z.infer<typeof insertSocialMediaStrategySchema>;
 export type ResourceLibraryItem = typeof resourceLibrary.$inferSelect;
 export type InsertResourceLibraryItem = z.infer<typeof insertResourceLibrarySchema>;
-export type ResourceLibraryFolder = typeof resourceLibraryFolders.$inferSelect;
-export type InsertResourceLibraryFolder = z.infer<typeof insertResourceLibraryFolderSchema>;
+// ResourceLibraryFolders table not implemented yet
 export type AffiliateLink = typeof affiliateLinks.$inferSelect;
 export type InsertAffiliateLink = z.infer<typeof insertAffiliateLinkSchema>;
 export type PasswordReset = typeof passwordResets.$inferSelect;
@@ -976,8 +976,8 @@ export const calendarV3 = pgTable("calendar_v3", {
   userId: varchar("user_id").notNull().references(() => users.id),
   year: integer("year").notNull(),
   month: integer("month").notNull(),
-  colorKeys: jsonb("color_keys").$type<ColorKeyV3[]>().notNull().default('[]'),
-  days: jsonb("days").$type<CalendarDayV3[]>().notNull().default('[]'),
+  colorKeys: jsonb("color_keys").$type<ColorKeyV3[]>().notNull().default(sql`'[]'::jsonb`),
+  days: jsonb("days").$type<CalendarDayV3[]>().notNull().default(sql`'[]'::jsonb`),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [

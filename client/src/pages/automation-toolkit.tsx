@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { useDebounce } from "@/hooks/use-debounce";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
@@ -77,8 +78,68 @@ export default function AutomationToolkit() {
   const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
+  // Load automation toolkit data from API using React Query
+  const { data: automationData, isLoading: isDataLoading } = useQuery({
+    queryKey: ['/api/persistent/automation-toolkit'],
+    enabled: isAuthenticated && !isLoading,
+    retry: (failureCount, error) => {
+      if (isUnauthorizedError(error)) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+  });
+
   // State for automation flows
   const [automationFlows, setAutomationFlows] = useState<AutomationFlow[]>(defaultAutomationFlows);
+
+  // Update local state when data loads
+  useEffect(() => {
+    if (automationData && typeof automationData === 'object' && 'prompts' in automationData && Array.isArray(automationData.prompts)) {
+      setAutomationFlows(automationData.prompts);
+    }
+  }, [automationData]);
+
+  // Mutation for saving automation toolkit data
+  const saveMutation = useMutation({
+    mutationFn: async (data: { prompts: AutomationFlow[] }) => {
+      const response = await fetch('/api/persistent/automation-toolkit', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save automation toolkit data');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      // Update the React Query cache
+      queryClient.setQueryData(['/api/persistent/automation-toolkit'], data);
+    },
+    onError: (error) => {
+      console.error('Failed to save automation toolkit:', error);
+      toast({
+        title: "Save Failed",
+        description: "Unable to save your automation flows. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Debounced save using the same pattern as monthly content planner
+  const debouncedSaveValue = useDebounce(automationFlows, 1000);
+
+  useEffect(() => {
+    if (debouncedSaveValue && Array.isArray(debouncedSaveValue) && isAuthenticated && !isDataLoading) {
+      saveMutation.mutate({ prompts: debouncedSaveValue });
+    }
+  }, [debouncedSaveValue, isAuthenticated, isDataLoading, saveMutation]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -95,30 +156,12 @@ export default function AutomationToolkit() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Debounced auto-save function
-  const debounce = (func: Function, wait: number) => {
-    let timeout: NodeJS.Timeout;
-    return function executedFunction(...args: any[]) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  };
-
-  const debouncedSave = debounce(() => {
-    // Auto-save logic would go here
-    console.log("Auto-saving...");
-  }, 1000);
-
   // Automation flow functions
   const updateFlow = (id: string, field: keyof AutomationFlow, value: string) => {
     setAutomationFlows(prev => prev.map(flow => 
       flow.id === id ? { ...flow, [field]: value } : flow
     ));
-    debouncedSave();
+    // Note: Auto-save now handled by debounced useEffect above
   };
 
   // Copy functions
@@ -153,10 +196,10 @@ export default function AutomationToolkit() {
       bonusUpsell: ''
     };
     setAutomationFlows(prev => [...prev, newFlow]);
-    debouncedSave();
+    // Note: Auto-save now handled by debounced useEffect above
   };
 
-  if (isLoading) {
+  if (isLoading || isDataLoading) {
     return (
       <div className="min-h-screen bg-rose-50 flex items-center justify-center">
         <div className="text-center">
