@@ -350,7 +350,7 @@ export default function AffiliateMarketing() {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => setLocation('/')}
+            onClick={() => window.history.back()}
             className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
