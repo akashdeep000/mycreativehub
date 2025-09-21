@@ -57,7 +57,7 @@ export default function ProductLaunch() {
       <div className="mb-8">
         <div className="mb-6">
           {/* Mobile Navigation - Single Back Arrow */}
-          <div className="flex items-center gap-3 lg:hidden">
+          <div className="flex items-center gap-3 lg:hidden mt-16">
             <Button 
               variant="ghost" 
               size="sm" 

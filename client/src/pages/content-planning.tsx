@@ -99,7 +99,7 @@ export default function ContentPlanning() {
         {/* Header */}
         <div className="mb-8">
           {/* Mobile Navigation - Single Back Arrow */}
-          <div className="flex items-center gap-3 mb-6 lg:hidden">
+          <div className="flex items-center gap-3 mb-6 lg:hidden mt-16">
             <Button 
               variant="outline" 
               size="sm" 

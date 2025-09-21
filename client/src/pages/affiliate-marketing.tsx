@@ -346,7 +346,7 @@ export default function AffiliateMarketing() {
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
       <div className="mb-8">
         {/* Mobile Navigation - Single Back Arrow */}
-        <div className="flex items-center gap-3 mb-4 lg:hidden">
+        <div className="flex items-center gap-3 mb-4 lg:hidden mt-16">
           <Button 
             variant="ghost" 
             size="sm" 
