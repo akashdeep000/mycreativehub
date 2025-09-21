@@ -18,13 +18,13 @@ const getCurrentMonthKey = (date = new Date()) => {
 
 const defaultTimeBlockingData = {
   colourTags: [
-    { id: 'tag-1', label: 'Email Marketing', colour: '#3B82F6', selected: true },
-    { id: 'tag-2', label: 'Content Creation', colour: '#10B981', selected: false },
-    { id: 'tag-3', label: 'Filming', colour: '#8B5CF6', selected: false },
-    { id: 'tag-4', label: 'Editing', colour: '#F59E0B', selected: false },
-    { id: 'tag-5', label: 'Planning', colour: '#EF4444', selected: false },
-    { id: 'tag-6', label: 'Product Development', colour: '#14B8A6', selected: false },
-    { id: 'tag-7', label: 'Creative Time', colour: '#EC4899', selected: false }
+    { id: 'tag-1', label: 'Business Operations', colour: '#3B82F6', selected: true },
+    { id: 'tag-4', label: 'Client Calls', colour: '#F59E0B', selected: false },
+    { id: 'tag-6', label: 'Deep Work', colour: '#14B8A6', selected: false },
+    { id: 'tag-7', label: 'Admin', colour: '#EC4899', selected: false },
+    { id: 'tag-8', label: 'Personal Development', colour: '#6366F1', selected: false },
+    { id: 'tag-9', label: 'Strategic Planning', colour: '#F97316', selected: false },
+    { id: 'tag-10', label: 'Networking', colour: '#8B5CF6', selected: false }
   ],
   weeklyView: {
     blocks: []
