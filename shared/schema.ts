@@ -1071,5 +1071,6 @@ export const insertTimeBlockingEventSchema = createInsertSchema(timeBlockingEven
 
 export type AutomationPrompt = typeof automationPrompts.$inferSelect;
 export type InsertAutomationPrompt = z.infer<typeof insertAutomationPromptSchema>;
+export type ConversationPromptV2 = z.infer<typeof conversationPromptV2Schema>;
 export type TimeBlockingEvent = typeof timeBlockingEvents.$inferSelect;
 export type InsertTimeBlockingEvent = z.infer<typeof insertTimeBlockingEventSchema>;

@@ -1709,11 +1709,32 @@ export class DatabaseStorage implements IStorage {
 
   // Automation Prompts CRUD
   async getAutomationPrompts(userId: string): Promise<AutomationPrompt[]> {
-    return await db
+    const prompts = await db
       .select()
       .from(automationPrompts)
       .where(eq(automationPrompts.userId, userId))
       .orderBy(asc(automationPrompts.createdAt));
+    
+    // Migrate V1 to V2 format if needed
+    return prompts.map(prompt => this.migrateAutomationPromptToV2(prompt));
+  }
+
+  // Migration utility to convert V1 to V2 format
+  private migrateAutomationPromptToV2(prompt: AutomationPrompt): AutomationPrompt {
+    // If V2 fields are already populated, return as-is
+    if (prompt.clickableButtonTitle || prompt.dmWithLink || prompt.linkTitle || prompt.linkUrl || prompt.followUpDM) {
+      return prompt;
+    }
+
+    // Map V1 fields to V2 fields
+    return {
+      ...prompt,
+      clickableButtonTitle: prompt.buttonTitle || '',
+      dmWithLink: prompt.dmLink || '',
+      linkTitle: prompt.ctaButtons || '',
+      linkUrl: '', // New field, no legacy equivalent
+      followUpDM: prompt.followUp || ''
+    };
   }
 
   async getAutomationPrompt(id: string): Promise<AutomationPrompt | undefined> {
@@ -1758,10 +1779,25 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
 
-    return await db
+    // Ensure V2 structure for all prompts
+    const v2Prompts = prompts.map(p => ({
+      ...p,
+      userId,
+      // Ensure V2 fields have defaults
+      clickableButtonTitle: p.clickableButtonTitle || '',
+      dmWithLink: p.dmWithLink || '',
+      linkTitle: p.linkTitle || '',
+      linkUrl: p.linkUrl || '',
+      followUpDM: p.followUpDM || ''
+    }));
+
+    const result = await db
       .insert(automationPrompts)
-      .values(prompts.map(p => ({ ...p, userId })))
+      .values(v2Prompts)
       .returning();
+    
+    // Apply migration to returned results to ensure consistency
+    return result.map(prompt => this.migrateAutomationPromptToV2(prompt));
   }
 
   // Focus Timer System
