@@ -27,7 +27,7 @@ interface Prompt {
   trigger: string;                // Trigger Word or Phrase
   automatedReply: string;         // Automated Replies  
   openingDM: string;              // The Opening DM
-  clickableButtonTitle: string;   // Clickable Button Title
+  buttonTitle: string;            // Clickable Button Title (matches schema)
   dmWithLink: string;             // DM with Link
   linkTitle: string;              // Link Title
   linkUrl: string;                // Link You Will Send
@@ -39,7 +39,7 @@ const createPlaceholderPrompt = (): Prompt => ({
   trigger: '',
   automatedReply: '',
   openingDM: '',
-  clickableButtonTitle: '',
+  buttonTitle: '',
   dmWithLink: '',
   linkTitle: '',
   linkUrl: '',
@@ -77,20 +77,22 @@ export default function AutomationToolkit() {
   // Create new prompt mutation
   const createPromptMutation = useMutation({
     mutationFn: async (prompt: Omit<Prompt, 'id'>) => {
-      return await apiRequest('/api/automation/prompt', {
+      const response = await apiRequest('/api/automation/prompt', {
         method: 'POST',
         body: JSON.stringify(prompt),
       });
+      return response;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/automation/prompts'] });
-      setSavingStatus(prev => ({ ...prev, [data.id || 'new']: 'saved' }));
+      setSavingStatus(prev => ({ ...prev, 'new': 'saved' }));
       toast({
         title: "Saved!",
         description: "New prompt created successfully.",
       });
     },
     onError: () => {
+      setSavingStatus(prev => ({ ...prev, 'new': 'error' }));
       toast({
         title: "Save Failed",
         description: "Unable to create prompt. Please try again.",
@@ -102,14 +104,15 @@ export default function AutomationToolkit() {
   // Update prompt mutation
   const updatePromptMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Prompt> }) => {
-      return await apiRequest(`/api/automation/prompt/${id}`, {
+      const response = await apiRequest(`/api/automation/prompt/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
       });
+      return { response, id };
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/automation/prompts'] });
-      setSavingStatus(prev => ({ ...prev, [data.id || 'unknown']: 'saved' }));
+      setSavingStatus(prev => ({ ...prev, [variables.id]: 'saved' }));
     },
     onError: (error, variables) => {
       setSavingStatus(prev => ({ ...prev, [variables.id]: 'error' }));
@@ -144,31 +147,45 @@ export default function AutomationToolkit() {
     },
   });
 
-  // Handle field changes with autosave
-  const handleFieldChange = useCallback((promptId: string | undefined, field: keyof Prompt, value: string) => {
-    // For placeholder row, create new prompt when user starts typing
-    if (!promptId) {
-      const newPrompt = {
-        ...createPlaceholderPrompt(),
-        [field]: value
-      };
-      
-      setSavingStatus(prev => ({ ...prev, 'new': 'saving' }));
-      createPromptMutation.mutate(newPrompt);
-      return;
+  // Update state immediately, save with debounce
+  const updateFieldValue = useCallback((promptId: string | undefined, field: keyof Prompt, value: string) => {
+    // Update UI state immediately
+    if (promptId) {
+      setPrompts(prev => prev.map(prompt => 
+        prompt.id === promptId ? { ...prompt, [field]: value } : prompt
+      ));
     }
+  }, []);
 
-    // Update existing prompt
-    setPrompts(prev => prev.map(prompt => 
-      prompt.id === promptId ? { ...prompt, [field]: value } : prompt
-    ));
+  // Debounced save function (only handles API calls)
+  const debouncedSave = useCallback(
+    useDebounce((promptId: string | undefined, field: keyof Prompt, value: string) => {
+      // For placeholder row, create new prompt when user starts typing
+      if (!promptId) {
+        const newPrompt = {
+          ...createPlaceholderPrompt(),
+          [field]: value
+        };
+        
+        setSavingStatus(prev => ({ ...prev, 'new': 'saving' }));
+        createPromptMutation.mutate(newPrompt);
+        return;
+      }
 
-    setSavingStatus(prev => ({ ...prev, [promptId]: 'saving' }));
-    updatePromptMutation.mutate({ id: promptId, data: { [field]: value } });
-  }, [createPromptMutation, updatePromptMutation]);
+      // Update existing prompt via API
+      setSavingStatus(prev => ({ ...prev, [promptId]: 'saving' }));
+      updatePromptMutation.mutate({ id: promptId, data: { [field]: value } });
+    }, 500),
+    [createPromptMutation, updatePromptMutation]
+  );
 
-  // Debounced field change
-  const debouncedFieldChange = useDebounce(handleFieldChange, 500);
+  // Combined field change handler
+  const handleFieldChange = useCallback((promptId: string | undefined, field: keyof Prompt, value: string) => {
+    // Update UI immediately
+    updateFieldValue(promptId, field, value);
+    // Save with debounce
+    debouncedSave(promptId, field, value);
+  }, [updateFieldValue, debouncedSave]);
 
   // Add new prompt
   const addNewPrompt = () => {
@@ -411,7 +428,7 @@ export default function AutomationToolkit() {
                             </div>
                             <Textarea
                               value={prompt.trigger}
-                              onChange={(e) => debouncedFieldChange(prompt.id, 'trigger', e.target.value)}
+                              onChange={(e) => handleFieldChange(prompt.id, 'trigger', e.target.value)}
                               className="min-h-16 text-sm resize-none"
                               placeholder="Keyword…"
                               data-testid="input-trigger"
@@ -433,7 +450,7 @@ export default function AutomationToolkit() {
                             </div>
                             <Textarea
                               value={prompt.automatedReply}
-                              onChange={(e) => debouncedFieldChange(prompt.id, 'automatedReply', e.target.value)}
+                              onChange={(e) => handleFieldChange(prompt.id, 'automatedReply', e.target.value)}
                               className="min-h-16 text-sm resize-none"
                               placeholder="First automatic response…"
                               data-testid="input-automated-reply"
@@ -455,7 +472,7 @@ export default function AutomationToolkit() {
                             </div>
                             <Textarea
                               value={prompt.openingDM}
-                              onChange={(e) => debouncedFieldChange(prompt.id, 'openingDM', e.target.value)}
+                              onChange={(e) => handleFieldChange(prompt.id, 'openingDM', e.target.value)}
                               className="min-h-16 text-sm resize-none"
                               placeholder="Your opening DM to a follower that commented on your keyword…"
                               data-testid="input-opening-dm"
@@ -468,7 +485,7 @@ export default function AutomationToolkit() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => copyToClipboard(prompt.clickableButtonTitle, "Button title")}
+                                onClick={() => copyToClipboard(prompt.buttonTitle, "Button title")}
                                 className="text-xs h-6 px-2"
                                 data-testid="button-copy-clickable-button-title"
                               >
@@ -476,8 +493,8 @@ export default function AutomationToolkit() {
                               </Button>
                             </div>
                             <Textarea
-                              value={prompt.clickableButtonTitle}
-                              onChange={(e) => debouncedFieldChange(prompt.id, 'clickableButtonTitle', e.target.value)}
+                              value={prompt.buttonTitle}
+                              onChange={(e) => handleFieldChange(prompt.id, 'buttonTitle', e.target.value)}
                               className="min-h-16 text-sm resize-none"
                               placeholder="Get them to click for link…"
                               data-testid="input-clickable-button-title"
@@ -499,7 +516,7 @@ export default function AutomationToolkit() {
                             </div>
                             <Textarea
                               value={prompt.dmWithLink}
-                              onChange={(e) => debouncedFieldChange(prompt.id, 'dmWithLink', e.target.value)}
+                              onChange={(e) => handleFieldChange(prompt.id, 'dmWithLink', e.target.value)}
                               className="min-h-16 text-sm resize-none"
                               placeholder="DM you send just above the link…"
                               data-testid="input-dm-with-link"
@@ -521,7 +538,7 @@ export default function AutomationToolkit() {
                             </div>
                             <Textarea
                               value={prompt.linkTitle}
-                              onChange={(e) => debouncedFieldChange(prompt.id, 'linkTitle', e.target.value)}
+                              onChange={(e) => handleFieldChange(prompt.id, 'linkTitle', e.target.value)}
                               className="min-h-16 text-sm resize-none"
                               placeholder="Button text for links…"
                               data-testid="input-link-title"
@@ -543,7 +560,7 @@ export default function AutomationToolkit() {
                             </div>
                             <Textarea
                               value={prompt.linkUrl}
-                              onChange={(e) => debouncedFieldChange(prompt.id, 'linkUrl', e.target.value)}
+                              onChange={(e) => handleFieldChange(prompt.id, 'linkUrl', e.target.value)}
                               className="min-h-16 text-sm resize-none"
                               placeholder="Link URL…"
                               data-testid="input-link-url"
@@ -565,7 +582,7 @@ export default function AutomationToolkit() {
                             </div>
                             <Textarea
                               value={prompt.followUpDM}
-                              onChange={(e) => debouncedFieldChange(prompt.id, 'followUpDM', e.target.value)}
+                              onChange={(e) => handleFieldChange(prompt.id, 'followUpDM', e.target.value)}
                               className="min-h-16 text-sm resize-none"
                               placeholder="Nurture message…"
                               data-testid="input-follow-up-dm"
