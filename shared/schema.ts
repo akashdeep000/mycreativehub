@@ -993,18 +993,26 @@ export const insertCalendarV3Schema = createInsertSchema(calendarV3).omit({
 export type CalendarV3 = typeof calendarV3.$inferSelect;
 export type InsertCalendarV3 = z.infer<typeof insertCalendarV3Schema>;
 
-// Automation Prompts - Dedicated table for automation flow prompts
+// Automation Prompts V2 - Conversation flow cheat sheet with 8 fields
 export const automationPrompts = pgTable("automation_prompts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
-  trigger: varchar("trigger").notNull(), // triggerWord
-  automatedReply: text("automated_reply"), // automatedReply
-  openingDM: text("opening_dm"), // dmPrompt
-  buttonTitle: varchar("button_title"), // clickableButtonTitle
-  dmLink: text("dm_link"), // linkText
-  ctaButtons: varchar("cta_buttons"), // ctaButtons
-  followUp: text("follow_up"), // followUp
-  bonusUpsell: text("bonus_upsell"), // bonusUpsell
+  trigger: varchar("trigger").notNull(), // Trigger Word or Phrase
+  automatedReply: text("automated_reply"), // Automated Replies
+  openingDM: text("opening_dm"), // The Opening DM
+  clickableButtonTitle: varchar("clickable_button_title"), // Clickable Button Title
+  dmWithLink: text("dm_with_link"), // DM with Link
+  linkTitle: varchar("link_title"), // Link Title
+  linkUrl: varchar("link_url"), // Link You Will Send
+  followUpDM: text("follow_up_dm"), // Follow Up DM
+  
+  // Legacy fields for migration (will be mapped to new structure)
+  buttonTitle: varchar("button_title"), // Legacy - maps to clickableButtonTitle
+  dmLink: text("dm_link"), // Legacy - maps to dmWithLink
+  ctaButtons: varchar("cta_buttons"), // Legacy - maps to linkTitle
+  followUp: text("follow_up"), // Legacy - maps to followUpDM
+  bonusUpsell: text("bonus_upsell"), // Legacy - no longer used
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -1029,10 +1037,30 @@ export const timeBlockingEvents = pgTable("time_blocking_events", {
   index("time_blocking_events_user_id_idx").on(table.userId, table.id),
 ]);
 
-export const insertAutomationPromptSchema = createInsertSchema(automationPrompts).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+// V2 Insert Schema - Only includes the new 8-field structure
+export const insertAutomationPromptSchema = createInsertSchema(automationPrompts).pick({
+  userId: true,
+  trigger: true,
+  automatedReply: true,
+  openingDM: true,
+  clickableButtonTitle: true,
+  dmWithLink: true,
+  linkTitle: true,
+  linkUrl: true,
+  followUpDM: true,
+});
+
+// Create a V2-specific interface for the new structure
+export const conversationPromptV2Schema = z.object({
+  id: z.string().optional(),
+  trigger: z.string(),
+  automatedReply: z.string(),
+  openingDM: z.string(),
+  clickableButtonTitle: z.string(),
+  dmWithLink: z.string(),
+  linkTitle: z.string(),
+  linkUrl: z.string(),
+  followUpDM: z.string(),
 });
 
 export const insertTimeBlockingEventSchema = createInsertSchema(timeBlockingEvents).omit({
