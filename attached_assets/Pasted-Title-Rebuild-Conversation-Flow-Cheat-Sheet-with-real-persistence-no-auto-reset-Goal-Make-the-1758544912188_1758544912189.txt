@@ -1,0 +1,143 @@
+Title
+
+Rebuild “Conversation Flow Cheat Sheet” with real persistence (no auto-reset)
+
+Goal
+
+Make the Conversation Flow Cheat Sheet editable and reliably saved per user. Users can type into any cell, add rows, and delete rows. Edits persist across page reloads and sign-ins. Remove the old example/placeholder seeding that keeps overwriting user data.
+
+Scope (this feature only)
+
+One table with the columns below (same order and labels).
+
+One visual placeholder row on first visit (not stored until user types).
+
+Add Row button.
+
+Delete row (trash icon) per row.
+
+Autosave on edit.
+
+Columns (exact labels, in this order)
+
+Trigger Word or Phrase
+
+Automated Replies
+
+The Opening DM
+
+Clickable Button Title
+
+DM with Link
+
+Link Title
+
+Link You Will Send
+
+Follow Up DM
+
+Placeholder text (light grey, ends with “…”, disappears on focus/typing)
+
+Trigger Word or Phrase → Keyword…
+
+Automated Replies → First automatic response…
+
+The Opening DM → Your opening DM to a follower that commented on your keyword…
+
+Clickable Button Title → Get them to click for link…
+
+DM with Link → DM you send just above the link…
+
+Link Title → Button text for links…
+
+Link You Will Send → Link URL…
+
+Follow Up DM → Nurture message…
+
+Data model (Prisma or equivalent)
+
+Create/ensure a Prompt entity with:
+
+id (string/uuid)
+
+userId (string)
+
+trigger (string)
+
+automatedReply (string)
+
+openingDm (string)
+
+buttonTitle (string)
+
+dmWithLink (string)
+
+linkTitle (string)
+
+linkUrl (string)
+
+followUpDm (string)
+
+createdAt, updatedAt
+
+API (auth required; userId from session/JWT)
+
+GET /api/automation/prompts → returns only this user’s prompts.
+
+If none exist, do not write default examples. The frontend will show a single visual placeholder row.
+
+POST /api/automation/prompt → create one prompt; returns created row.
+
+PATCH /api/automation/prompt/:id → update fields for that prompt (owner check).
+
+DELETE /api/automation/prompt/:id → delete (owner check).
+
+Important: Remove any old code that seeds example rows for the cheat sheet. Nothing should overwrite saved rows.
+
+Frontend behavior
+
+On mount: GET /api/automation/prompts.
+
+If the array is empty, render one visual placeholder row. As soon as the user types in any cell, create a real row via POST, then keep editing via PATCH.
+
+Each cell is editable, placeholder disappears on focus/typing.
+
+Autosave with a 400–600ms debounce on change, or on blur.
+
+Show small “Saving…” → “Saved” inline status per row/cell.
+
+On error, show a toast; do not revert to placeholders.
+
+“Add New Prompt” adds a new blank row using POST, then focuses the first cell.
+
+Trash icon per row calls DELETE, then removes it from state.
+
+All fetches include auth (credentials: 'include' or Authorization: Bearer …), consistent with the rest of the app.
+
+Non-goals
+
+Do not change other modules (flowBuilder, libraries, etc.).
+
+Do not add examples beyond the placeholder text above.
+
+Files likely touched (adjust to this repo)
+
+prisma/schema.prisma (or ORM schema) + migration
+
+API route file, e.g., server/routes/automation.ts and route registration
+
+Cheat sheet component (the table), e.g., src/pages/automation-toolkit/CheatSheet.tsx
+
+Fetch helper, e.g., src/lib/api.ts (ensure auth/credentials)
+
+Acceptance criteria (QA)
+
+Edit any cell → blur → refresh → edit persists.
+
+Click Add New Prompt, type in cells → refresh → row persists.
+
+Delete a row → refresh → row is gone.
+
+Sign out/in → all rows still present.
+
+New user: sees one visual placeholder row; once they type, a real row is created. No example rows ever re-appear.
