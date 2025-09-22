@@ -249,7 +249,20 @@ export default function AutomationToolkit() {
   }
 
   // Show prompts or single placeholder row if empty
-  const displayPrompts = prompts.length > 0 ? prompts : [createPlaceholderPrompt()];
+  // Ensure all fields are strings (not null) to prevent React warnings
+  const safePrompts = prompts.map(prompt => ({
+    ...prompt,
+    trigger: prompt.trigger || '',
+    automatedReply: prompt.automatedReply || '',
+    openingDM: prompt.openingDM || '',
+    buttonTitle: prompt.buttonTitle || '',
+    dmWithLink: prompt.dmWithLink || '',
+    linkTitle: prompt.linkTitle || '',
+    linkUrl: prompt.linkUrl || '',
+    followUpDM: prompt.followUpDM || ''
+  }));
+  
+  const displayPrompts = safePrompts.length > 0 ? safePrompts : [createPlaceholderPrompt()];
 
   return (
     <div className="min-h-screen bg-gray-50">
