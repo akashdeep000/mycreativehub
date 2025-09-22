@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -54,6 +54,7 @@ export default function AutomationToolkit() {
   // State for prompts
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [savingStatus, setSavingStatus] = useState<Record<string, 'saving' | 'saved' | 'error'>>({});
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Load prompts from API
   const { data: promptsData, isLoading: isDataLoading } = useQuery({
@@ -231,6 +232,39 @@ export default function AutomationToolkit() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
+  // Fix horizontal scrolling - prevent trackpad gestures from triggering browser navigation
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // If scrolling horizontally, prevent browser navigation
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        e.stopPropagation();
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      // Prevent browser navigation on touch gestures within scroll area
+      e.stopPropagation();
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      // Allow horizontal scrolling, prevent browser navigation
+      e.stopPropagation();
+    };
+
+    scrollContainer.addEventListener('wheel', handleWheel, { passive: false });
+    scrollContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+    scrollContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+    return () => {
+      scrollContainer.removeEventListener('wheel', handleWheel);
+      scrollContainer.removeEventListener('touchstart', handleTouchStart);
+      scrollContainer.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
   if (isLoading || isDataLoading) {
     return (
       <div className="min-h-screen bg-rose-50 flex items-center justify-center">
@@ -377,7 +411,15 @@ export default function AutomationToolkit() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              <div 
+                ref={scrollContainerRef}
+                className="overflow-x-auto"
+                style={{
+                  overscrollBehaviorX: 'contain',
+                  touchAction: 'pan-x pan-y',
+                  WebkitOverflowScrolling: 'touch'
+                }}
+              >
                 <div className="min-w-[1400px] border border-gray-200 rounded-lg">
                   
                   {/* Table Header */}
