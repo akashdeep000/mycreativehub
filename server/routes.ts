@@ -2431,49 +2431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/automation/prompts', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      let prompts = await storage.getAutomationPrompts(userId);
-      
-      // If no prompts exist, seed with default data
-      if (prompts.length === 0) {
-        const defaultPrompts = [
-          {
-            userId,
-            trigger: 'PROMPTS',
-            automatedReply: 'Here\'s the link to [the thing]!\n\nP.s If you love it, I\'d be so grateful if you could leave a quick review [then direct them to review page in 2nd link]',
-            openingDM: 'Thanks! I\'ve sent the link to your DMs!',
-            buttonTitle: 'Click to find out more!',
-            dmLink: 'Hey there! I\'m so happy you\'re here, thanks so much for your interest in my [enter thing] 😊  Just click below and I\'ll send you the link straight there, as well as a freebie to go with!',
-            ctaButtons: 'Grab Yours Today',
-            followUp: '',
-            bonusUpsell: 'Hey! 👋 just popping back to check how you\'re getting on? Don\'t forget to grab [insert] above!'
-          },
-          {
-            userId,
-            trigger: 'DISCOUNT',
-            automatedReply: 'Yay! Here\'s the link to my [thing]. I hope you love it as much as I loved creating it 😍 Below you\'ll also find a link to my Freebie [enter relevant freebie - optional]',
-            openingDM: 'Sent you a message! 😍',
-            buttonTitle: 'Grab the link',
-            dmLink: 'Thanks so much for your interest in [insert]! Inside, you\'ll find [list qualities]...can\'t wait for you to join! Click below to grab the link.',
-            ctaButtons: 'Claim Your Discount',
-            followUp: '',
-            bonusUpsell: 'Don\'t forget to grab your goodies! I promise they\'re worthwhile 😍'
-          },
-          {
-            userId,
-            trigger: 'INFO',
-            automatedReply: 'I\'m so glad you want to check out my [insert thing] I think you\'ll love it! 😍',
-            openingDM: 'Yay! The Link is in your DMs!',
-            buttonTitle: 'Check it out!',
-            dmLink: 'Hey there! 👋 Thanks so much for checking out my [product name] You\'ll get [product qualities] Click to find out more!',
-            ctaButtons: 'Start Here',
-            followUp: '',
-            bonusUpsell: 'Just checking in! Everything ok? Your links are waiting above! 👆'
-          }
-        ];
-        
-        prompts = await storage.bulkUpsertAutomationPrompts(userId, defaultPrompts);
-      }
-      
+      const prompts = await storage.getAutomationPrompts(userId);
       res.json(prompts);
     } catch (error) {
       console.error('Error fetching automation prompts:', error);
