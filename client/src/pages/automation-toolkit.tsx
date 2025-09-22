@@ -25,53 +25,31 @@ import {
 
 
 
-interface AutomationFlow {
+// V2 Conversation Flow Interface - 8 fields as specified by user
+interface ConversationFlow {
   id?: string;
-  trigger: string;
-  automatedReply: string;
-  openingDM: string;
-  buttonTitle: string;
-  dmLink: string;
-  ctaButtons: string;
-  followUp: string;
-  bonusUpsell: string;
+  trigger: string;                // Trigger Word or Phrase
+  automatedReply: string;         // Automated Replies  
+  openingDM: string;              // The Opening DM
+  clickableButtonTitle: string;   // Clickable Button Title
+  dmWithLink: string;             // DM with Link
+  linkTitle: string;              // Link Title
+  linkUrl: string;                // Link You Will Send
+  followUpDM: string;             // Follow Up DM
 }
 
-const defaultAutomationFlows: AutomationFlow[] = [
-  {
-    id: '1',
-    trigger: 'PROMPTS',
-    openingDM: 'Thanks! I\'ve sent the link to your DMs!',
-    dmLink: 'Hey there! I\'m so happy you\'re here, thanks so much for your interest in my [enter thing] 😊  Just click below and I\'ll send you the link straight there, as well as a freebie to go with!',
-    buttonTitle: 'Click to find out more!',
-    ctaButtons: 'Grab Yours Today',
-    automatedReply: 'Here\'s the link to [the thing]!\n\nP.s If you love it, I\'d be so grateful if you could leave a quick review [then direct them to review page in 2nd link] ',
-    followUp: '',
-    bonusUpsell: 'Hey! 👋 just popping back to check how you\'re getting on? Don\'t forget to grab [insert] above!'
-  },
-  {
-    id: '2', 
-    trigger: 'DISCOUNT',
-    openingDM: 'Sent you a message! 😍',
-    dmLink: 'Thanks so much for your interest in [insert]! Inside, you\'ll find [list qualities]...can\'t wait for you to join! Click below to grab the link.',
-    buttonTitle: 'Grab the link',
-    ctaButtons: 'Claim Your Discount',
-    automatedReply: 'Yay! Here\'s the link to my [thing]. I hope you love it as much as I loved creating it 😍 Below you\'ll also find a link to my Freebie [enter relevant freebie - optional] ',
-    followUp: '',
-    bonusUpsell: 'Don\'t forget to grab your goodies! I promise they\'re worthwhile 😍'
-  },
-  {
-    id: '3',
-    trigger: 'INFO',
-    openingDM: 'Yay! The Link is in your DMs! ',
-    dmLink: 'Hey there! 👋 Thanks so much for checking out my [product name] You\'ll get [product qualities] Click to find out more!',
-    buttonTitle: 'Check it out!',
-    ctaButtons: 'Start Here',
-    automatedReply: 'I\'m so glad you want to check out my [insert thing] I think you\'ll love it! 😍',
-    followUp: '',
-    bonusUpsell: 'Just checking in! Everything ok? Your links are waiting above! 👆'
-  }
-];
+// Single blank starter row instead of examples
+const createBlankFlow = (): ConversationFlow => ({
+  id: `flow-${Date.now()}`,
+  trigger: '',
+  automatedReply: '',
+  openingDM: '',
+  clickableButtonTitle: '',
+  dmWithLink: '',
+  linkTitle: '',
+  linkUrl: '',
+  followUpDM: ''
+});
 
 export default function AutomationToolkit() {
   const { toast } = useToast();
@@ -98,30 +76,54 @@ export default function AutomationToolkit() {
     },
   });
 
-  // State for automation flows
-  const [automationFlows, setAutomationFlows] = useState<AutomationFlow[]>(defaultAutomationFlows);
+  // State for conversation flows
+  const [conversationFlows, setConversationFlows] = useState<ConversationFlow[]>([createBlankFlow()]);
 
   // Update local state when data loads from server
   useEffect(() => {
     if (automationData && Array.isArray(automationData)) {
-      // Only update if the data is actually different from current state
-      const currentDataString = JSON.stringify(automationFlows);
-      const newDataString = JSON.stringify(automationData);
+      // Map server data to V2 format
+      const mappedData: ConversationFlow[] = automationData.map(prompt => ({
+        id: prompt.id,
+        trigger: prompt.trigger || '',
+        automatedReply: prompt.automatedReply || '',
+        openingDM: prompt.openingDM || '',
+        clickableButtonTitle: prompt.clickableButtonTitle || prompt.buttonTitle || '',
+        dmWithLink: prompt.dmWithLink || prompt.dmLink || '',
+        linkTitle: prompt.linkTitle || prompt.ctaButtons || '',
+        linkUrl: prompt.linkUrl || '',
+        followUpDM: prompt.followUpDM || prompt.followUp || ''
+      }));
       
-      if (currentDataString !== newDataString) {
-        console.log('Loading server data into state:', automationData);
-        setAutomationFlows(automationData);
+      // Only update if we have data, otherwise keep the single blank row
+      if (mappedData.length > 0) {
+        const currentDataString = JSON.stringify(conversationFlows);
+        const newDataString = JSON.stringify(mappedData);
+        
+        if (currentDataString !== newDataString) {
+          console.log('Loading server data into state:', mappedData);
+          setConversationFlows(mappedData);
+        }
       }
     }
-  }, [automationData]); // Remove automationFlows from dependencies to avoid loops
+  }, [automationData]); // Remove conversationFlows from dependencies to avoid loops
 
-  // Mutation for saving automation prompts data
+  // Mutation for saving conversation flows data
   const saveMutation = useMutation({
-    mutationFn: async (prompts: AutomationFlow[]) => {
-      // Filter out database-generated fields (id, createdAt, updatedAt)
-      const cleanedPrompts = prompts.map(prompt => {
-        const { id, createdAt, updatedAt, ...rest } = prompt as any;
-        return rest;
+    mutationFn: async (flows: ConversationFlow[]) => {
+      // Map V2 format to database format and filter out database-generated fields
+      const cleanedPrompts = flows.map(flow => {
+        const { id, createdAt, updatedAt, ...rest } = flow as any;
+        return {
+          trigger: rest.trigger || '',
+          automatedReply: rest.automatedReply || '',
+          openingDM: rest.openingDM || '',
+          clickableButtonTitle: rest.clickableButtonTitle || '',
+          dmWithLink: rest.dmWithLink || '',
+          linkTitle: rest.linkTitle || '',
+          linkUrl: rest.linkUrl || '',
+          followUpDM: rest.followUpDM || ''
+        };
       });
       
       const response = await fetch('/api/automation/prompts', {
@@ -158,22 +160,26 @@ export default function AutomationToolkit() {
 
   // Memoized save function to prevent infinite re-renders
   const saveCallback = useCallback(() => {
-    if (automationFlows && Array.isArray(automationFlows) && isAuthenticated && !isDataLoading) {
-      // Only save if data has changed from defaults
-      const isDefaultData = JSON.stringify(automationFlows) === JSON.stringify(defaultAutomationFlows);
-      if (!isDefaultData) {
-        console.log('Saving automation prompts data:', automationFlows);
-        saveMutation.mutate(automationFlows);
+    if (conversationFlows && Array.isArray(conversationFlows) && isAuthenticated && !isDataLoading) {
+      // Only save if we have actual data (not just the blank starter row)
+      const hasActualData = conversationFlows.some(flow => 
+        flow.trigger || flow.automatedReply || flow.openingDM || 
+        flow.clickableButtonTitle || flow.dmWithLink || 
+        flow.linkTitle || flow.linkUrl || flow.followUpDM
+      );
+      if (hasActualData) {
+        console.log('Saving conversation flows data:', conversationFlows);
+        saveMutation.mutate(conversationFlows);
       }
     }
-  }, [automationFlows, isAuthenticated, isDataLoading, defaultAutomationFlows, saveMutation]);
+  }, [conversationFlows, isAuthenticated, isDataLoading, saveMutation]);
 
   // Debounced save function
   const debouncedSave = useDebounce(saveCallback, 1000);
 
   useEffect(() => {
     debouncedSave();
-  }, [automationFlows]); // Remove debouncedSave from dependencies to prevent infinite loops
+  }, [conversationFlows]); // Remove debouncedSave from dependencies to prevent infinite loops
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -190,10 +196,10 @@ export default function AutomationToolkit() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Automation flow functions
-  const updateFlow = (id: string, field: keyof AutomationFlow, value: string) => {
+  // Conversation flow functions
+  const updateFlow = (id: string, field: keyof ConversationFlow, value: string) => {
     console.log('updateFlow called:', { id, field, value });
-    setAutomationFlows(prev => {
+    setConversationFlows(prev => {
       const updated = prev.map(flow => 
         flow.id === id ? { ...flow, [field]: value } : flow
       );
@@ -222,19 +228,8 @@ export default function AutomationToolkit() {
 
   // Add new flow function
   const addNewFlow = () => {
-    const newId = (Math.max(...automationFlows.map(f => parseInt(f.id || '0'))) + 1).toString();
-    const newFlow: AutomationFlow = {
-      id: newId,
-      trigger: '',
-      automatedReply: '',
-      openingDM: '',
-      buttonTitle: '',
-      dmLink: '',
-      ctaButtons: '',
-      followUp: '',
-      bonusUpsell: ''
-    };
-    setAutomationFlows(prev => [...prev, newFlow]);
+    const newFlow = createBlankFlow();
+    setConversationFlows(prev => [...prev, newFlow]);
     // Note: Auto-save now handled by debounced useEffect above
   };
 
@@ -390,8 +385,8 @@ export default function AutomationToolkit() {
 
                       {/* Table Body */}
                       <div className="border-l border-r border-b border-gray-200 rounded-b-lg">
-                        {automationFlows.map((flow, index) => (
-                          <div key={flow.id} className={`grid grid-cols-8 gap-px ${index !== automationFlows.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                        {conversationFlows.map((flow, index) => (
+                          <div key={flow.id} className={`grid grid-cols-8 gap-px ${index !== conversationFlows.length - 1 ? 'border-b border-gray-100' : ''}`}>
                             {/* Trigger Word */}
                             <div className="bg-white p-2 border-r border-gray-100">
                               <div className="flex items-center gap-2 mb-2">
@@ -464,15 +459,15 @@ export default function AutomationToolkit() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => copyToClipboard(flow.buttonTitle, "Button title copied!")}
+                                  onClick={() => copyToClipboard(flow.clickableButtonTitle, "Button title copied!")}
                                   className="text-xs h-6 px-2"
                                 >
                                   <Copy className="w-3 h-3" />
                                 </Button>
                               </div>
                               <Textarea
-                                value={flow.buttonTitle}
-                                onChange={(e) => updateFlow(flow.id || '', 'buttonTitle', e.target.value)}
+                                value={flow.clickableButtonTitle}
+                                onChange={(e) => updateFlow(flow.id || '', 'clickableButtonTitle', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="Get them to click for link"
                               />
@@ -484,15 +479,15 @@ export default function AutomationToolkit() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => copyToClipboard(flow.dmLink, "DM link copied!")}
+                                  onClick={() => copyToClipboard(flow.dmWithLink, "DM link copied!")}
                                   className="text-xs h-6 px-2"
                                 >
                                   <Copy className="w-3 h-3" />
                                 </Button>
                               </div>
                               <Textarea
-                                value={flow.dmLink}
-                                onChange={(e) => updateFlow(flow.id || '', 'dmLink', e.target.value)}
+                                value={flow.dmWithLink}
+                                onChange={(e) => updateFlow(flow.id || '', 'dmWithLink', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="DM you send just above the link"
                               />
@@ -504,15 +499,15 @@ export default function AutomationToolkit() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => copyToClipboard(flow.ctaButtons, "CTA button copied!")}
+                                  onClick={() => copyToClipboard(flow.linkTitle, "Link title copied!")}
                                   className="text-xs h-6 px-2"
                                 >
                                   <Copy className="w-3 h-3" />
                                 </Button>
                               </div>
                               <Textarea
-                                value={flow.ctaButtons}
-                                onChange={(e) => updateFlow(flow.id || '', 'ctaButtons', e.target.value)}
+                                value={flow.linkTitle}
+                                onChange={(e) => updateFlow(flow.id || '', 'linkTitle', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="Button text for links..."
                               />
@@ -524,15 +519,15 @@ export default function AutomationToolkit() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => copyToClipboard(flow.followUp, "Follow-up copied!")}
+                                  onClick={() => copyToClipboard(flow.linkUrl, "Link URL copied!")}
                                   className="text-xs h-6 px-2"
                                 >
                                   <Copy className="w-3 h-3" />
                                 </Button>
                               </div>
                               <Textarea
-                                value={flow.followUp}
-                                onChange={(e) => updateFlow(flow.id || '', 'followUp', e.target.value)}
+                                value={flow.linkUrl}
+                                onChange={(e) => updateFlow(flow.id || '', 'linkUrl', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="Link URL..."
                               />
@@ -544,15 +539,15 @@ export default function AutomationToolkit() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => copyToClipboard(flow.bonusUpsell, "Upsell message copied!")}
+                                  onClick={() => copyToClipboard(flow.followUpDM, "Follow-up DM copied!")}
                                   className="text-xs h-6 px-2"
                                 >
                                   <Copy className="w-3 h-3" />
                                 </Button>
                               </div>
                               <Textarea
-                                value={flow.bonusUpsell}
-                                onChange={(e) => updateFlow(flow.id || '', 'bonusUpsell', e.target.value)}
+                                value={flow.followUpDM}
+                                onChange={(e) => updateFlow(flow.id || '', 'followUpDM', e.target.value)}
                                 className="min-h-16 text-sm resize-none"
                                 placeholder="Nurture message..."
                               />
