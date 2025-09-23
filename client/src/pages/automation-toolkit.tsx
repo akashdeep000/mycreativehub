@@ -234,34 +234,73 @@ export default function AutomationToolkit() {
 
   // Fix horizontal scrolling - prevent trackpad gestures from triggering browser navigation
   useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
+    const el = scrollContainerRef.current;
+    if (!el) return;
 
-    const handleWheel = (e: WheelEvent) => {
-      // If scrolling horizontally, prevent browser navigation
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+    const onWheel = (e: WheelEvent) => {
+      const canScrollX = el.scrollWidth > el.clientWidth;
+      const horizontalIntent = Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.shiftKey;
+      if (!canScrollX || !horizontalIntent) return;
+
+      let delta = e.deltaX;
+      if (delta === 0) delta = e.deltaY; // map vertical wheel when shift/hardware maps
+
+      const max = el.scrollWidth - el.clientWidth;
+      const prev = el.scrollLeft;
+
+      // Always consume the event so browser never sees the swipe
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Programmatic scroll
+      el.scrollLeft = Math.min(max, Math.max(0, prev + delta));
+
+      // Also block at edges (prevents history swipe when at 0 or max)
+      const atLeft = el.scrollLeft <= 0;
+      const atRight = el.scrollLeft >= max - 1;
+      if ((delta < 0 && atLeft) || (delta > 0 && atRight)) {
+        e.preventDefault();
         e.stopPropagation();
       }
     };
 
-    const handleTouchStart = (e: TouchEvent) => {
-      // Prevent browser navigation on touch gestures within scroll area
-      e.stopPropagation();
+    let startX = 0, startY = 0;
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
+    
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      const horizontalIntent = Math.abs(dx) > Math.abs(dy);
+      if (!horizontalIntent) return;
+
+      const max = el.scrollWidth - el.clientWidth;
+      const atLeft = el.scrollLeft <= 0;
+      const atRight = el.scrollLeft >= max - 1;
+      const movingLeft = dx > 0;
+      const movingRight = dx < 0;
+
+      // Consume when horizontal to prevent page nav
+      if (horizontalIntent) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (movingLeft && !atLeft) el.scrollLeft -= Math.abs(dx);
+      if (movingRight && !atRight) el.scrollLeft += Math.abs(dx);
     };
 
-    const handleTouchMove = (e: TouchEvent) => {
-      // Allow horizontal scrolling, prevent browser navigation
-      e.stopPropagation();
-    };
-
-    scrollContainer.addEventListener('wheel', handleWheel, { passive: false });
-    scrollContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
-    scrollContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
-
+    el.addEventListener('wheel', onWheel, { passive: false });
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    
     return () => {
-      scrollContainer.removeEventListener('wheel', handleWheel);
-      scrollContainer.removeEventListener('touchstart', handleTouchStart);
-      scrollContainer.removeEventListener('touchmove', handleTouchMove);
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
     };
   }, []);
 
@@ -416,7 +455,7 @@ export default function AutomationToolkit() {
                 className="overflow-x-auto"
                 style={{
                   overscrollBehaviorX: 'contain',
-                  touchAction: 'pan-x pan-y',
+                  touchAction: 'pan-x pinch-zoom',
                   WebkitOverflowScrolling: 'touch'
                 }}
               >
