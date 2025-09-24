@@ -1069,6 +1069,55 @@ export const insertTimeBlockingEventSchema = createInsertSchema(timeBlockingEven
   updatedAt: true,
 });
 
+// Cheat Sheet Docs - Single document per user with optimistic versioning
+export const cheatSheetDocs = pgTable("cheat_sheet_docs", {
+  userId: varchar("user_id").primaryKey().notNull().references(() => users.id),
+  data: jsonb("data").notNull(), // { version: number, rows: [{ id: string, fields: {...}, updatedAt: number }] }
+  version: integer("version").notNull().default(1), // Increment on each successful save
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Zod schemas for cheat sheet document structure
+export const cheatSheetRowFieldsSchema = z.object({
+  trigger: z.string(),
+  automatedReply: z.string(),
+  openingDm: z.string(),
+  buttonTitle: z.string(),
+  dmWithLink: z.string(),
+  linkTitle: z.string(),
+  linkUrl: z.string(),
+  followUpDm: z.string(),
+});
+
+export const cheatSheetRowSchema = z.object({
+  id: z.string(),
+  fields: cheatSheetRowFieldsSchema,
+  updatedAt: z.number(),
+});
+
+export const cheatSheetDocDataSchema = z.object({
+  version: z.number(),
+  rows: z.array(cheatSheetRowSchema),
+});
+
+export const insertCheatSheetDocSchema = createInsertSchema(cheatSheetDocs).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const cheatSheetDocPutBodySchema = z.object({
+  version: z.number(),
+  rows: z.array(cheatSheetRowSchema),
+});
+
+export type CheatSheetDoc = typeof cheatSheetDocs.$inferSelect;
+export type InsertCheatSheetDoc = z.infer<typeof insertCheatSheetDocSchema>;
+export type CheatSheetDocData = z.infer<typeof cheatSheetDocDataSchema>;
+export type CheatSheetRow = z.infer<typeof cheatSheetRowSchema>;
+export type CheatSheetRowFields = z.infer<typeof cheatSheetRowFieldsSchema>;
+export type CheatSheetDocPutBody = z.infer<typeof cheatSheetDocPutBodySchema>;
+
 export type AutomationPrompt = typeof automationPrompts.$inferSelect;
 export type InsertAutomationPrompt = z.infer<typeof insertAutomationPromptSchema>;
 export type ConversationPromptV2 = z.infer<typeof conversationPromptV2Schema>;

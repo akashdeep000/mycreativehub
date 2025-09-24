@@ -1,0 +1,137 @@
+Title
+
+Make Conversation Flow Cheat Sheet bulletproof (server save, one JSON doc, seed once)
+
+Goal
+
+User edits/added rows in Conversation Flow Cheat Sheet must always persist to the database across reloads, sign-ins, devices, and sessions—no more resets to placeholders.
+
+Approach (mandated)
+
+Use a single-document model per user (not per-cell/per-row writes). Implement optimistic versioning, seed-once on the server, and debounced autosave on the client.
+
+Data model (Prisma or equivalent)
+
+Create/ensure:
+
+model CheatSheetDoc {
+  userId    String  @id        // one doc per user
+  data      Json                // { version:number, rows:[{id, fields{...}, updatedAt}] }
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  version   Int      @default(1) // increment on each successful save
+}
+
+
+Important: No example rows are stored in DB. Placeholders are UI-only.
+
+API (auth required; userId from session/JWT)
+
+GET /api/automation/cheatsheet
+
+If no doc exists for this user, create & return a doc with:
+
+{ "version": 1, "rows": [ { "id": "<uuid>", "fields": { "trigger":"", "automatedReply":"", "openingDm":"", "buttonTitle":"", "dmWithLink":"", "linkTitle":"", "linkUrl":"", "followUpDm":"" }, "updatedAt": 0 } ] }
+
+
+PUT /api/automation/cheatsheet
+
+Body: { version: number, rows: [...] }
+
+If body.version < db.version → return 409 Conflict with { version: db.version, data: db.data } (client must merge & retry).
+
+If ok → upsert doc, increment version and return { version, data }.
+
+All routes must require auth and never return other users’ data.
+
+Frontend behavior
+
+On mount: GET /api/automation/cheatsheet → set state from server; do not inject example rows client-side.
+
+Placeholders are placeholder="..." in the inputs (light grey). The stored values are empty strings until the user types; never write placeholder text into state.
+
+Edits:
+
+Update local state immediately.
+
+Autosave the whole document with a 700–900ms debounce.
+
+Also save on blur and on tab navigate (serialize/await if possible).
+
+Show status: “Saving…” → “Saved ✓” (and “Offline—will retry” if needed).
+
+Save queue:
+
+Serialize saves; one PUT at a time.
+
+Use the version from the last GET/PUT. On 409, merge server’s latest, reapply the local pending change, bump to new version, PUT again.
+
+Do not call any legacy endpoints for this feature.
+
+No reseeding on the client. The only seeding happens server-side when a user has no doc yet.
+
+Column headers (unchanged; exact order)
+
+Trigger Word or Phrase
+
+Automated Replies
+
+The Opening DM
+
+Clickable Button Title
+
+DM with Link
+
+Link Title
+
+Link You Will Send
+
+Follow Up DM
+
+Cell placeholders (UI only; end with “…”, disappear on focus)
+
+Keyword…
+
+First automatic response…
+
+Your opening DM to a follower that commented on your keyword…
+
+Get them to click for link…
+
+DM you send just above the link…
+
+Button text for links…
+
+Link URL…
+
+Nurture message…
+
+QA / Acceptance (must all pass)
+
+Edit persist: Type in multiple cells → reload → all edits remain.
+
+Add row persist: Add two rows → reload → both rows remain.
+
+Delete persist: Delete a row → reload → it stays deleted.
+
+Cross-device: Log in on another browser/device → the same rows appear.
+
+Race safety: While typing quickly then reloading, no data loss; worst case, last keystroke before reload may not save, but prior edits persist.
+
+No placeholder overwrite: Placeholders never appear as real stored values in the DB.
+
+No silent 401/500s: Network tab shows 200/PUTs with increasing version. No legacy calls to old endpoints.
+
+Seed once: New user gets one empty row from the server; never repopulate examples.
+
+Instrumentation (to verify)
+
+Server: log userId, route, result (200/409), and new version.
+
+Client: console.info on save start/success/conflict; surface toast on failure with re-try.
+
+Non-goals
+
+Do not modify other modules’ persistence.
+
+Do not introduce localStorage here (server is the source of truth).
