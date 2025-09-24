@@ -84,11 +84,11 @@ export default function AutomationToolkit() {
     },
   });
 
-  // Initialize with server data - only show ONE row
+  // Initialize with server data - load ALL saved prompts
   useEffect(() => {
     if (serverPrompts && Array.isArray(serverPrompts) && serverPrompts.length > 0) {
-      // Only load the FIRST prompt, not all of them
-      setPrompts([serverPrompts[0]]);
+      // Load ALL saved prompts so user doesn't lose data
+      setPrompts(serverPrompts);
     } else if (serverPrompts && Array.isArray(serverPrompts) && serverPrompts.length === 0) {
       setPrompts([createEmptyPrompt()]);
     }
@@ -314,7 +314,7 @@ export default function AutomationToolkit() {
               <div className="overflow-x-auto">
                 <div className="min-w-[1200px]">
                   {/* Table Header */}
-                  <div className="grid grid-cols-8 gap-4 mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="grid grid-cols-9 gap-4 mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                       Trigger Word or Phrase
                     </div>
@@ -339,12 +339,15 @@ export default function AutomationToolkit() {
                     <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                       Follow Up DM
                     </div>
+                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 text-center">
+                      Actions
+                    </div>
                   </div>
 
                   {/* Table Rows */}
                   {prompts.map((prompt, index) => (
                     <div key={index} className="group relative">
-                      <div className="grid grid-cols-8 gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg mb-4 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+                      <div className="grid grid-cols-9 gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg mb-4 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
                         
                         {/* Trigger */}
                         <div className="relative">
@@ -505,20 +508,21 @@ export default function AutomationToolkit() {
                             <Copy className="h-3 w-3" />
                           </Button>
                         </div>
-                      </div>
 
-                      {/* Delete Button - Only show if more than one row */}
-                      {prompts.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deletePrompt(index)}
-                          className="absolute -right-10 top-4 h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          data-testid={`button-delete-row-${index}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                        {/* Delete Button - 9th Column */}
+                        <div className="flex justify-center items-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deletePrompt(index)}
+                            className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            data-testid={`button-delete-row-${index}`}
+                            title="Delete this row"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   ))}
 
