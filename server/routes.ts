@@ -6,7 +6,7 @@ import { generateToken, jwtAuth, hashPassword, comparePassword } from "./jwtAuth
 import { nanoid } from "nanoid";
 import crypto from "crypto";
 import { Resend } from "resend";
-import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplateInstanceSchema } from "@shared/schema";
+import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplateInstanceSchema, cheatSheetDocPutBodySchema } from "@shared/schema";
 import { db } from "./db";
 import { inspirationBoards } from "@shared/schema";
 
@@ -2510,6 +2510,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting automation prompt:', error);
       res.status(500).json({ message: 'Failed to delete automation prompt' });
+    }
+  });
+
+  // Cheat Sheet Document Routes (Single document per user with optimistic versioning)
+  app.get('/api/automation/cheatsheet', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Try to get existing document
+      let doc = await storage.getCheatSheetDoc(userId);
+      
+      // If no document exists, seed one
+      if (!doc) {
+        doc = await storage.seedCheatSheetDoc(userId);
+      }
+      
+      res.json(doc);
+    } catch (error) {
+      console.error('Error fetching cheat sheet document:', error);
+      res.status(500).json({ message: 'Failed to fetch cheat sheet document' });
+    }
+  });
+
+  app.put('/api/automation/cheatsheet', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Validate request body
+      const { version, rows } = cheatSheetDocPutBodySchema.parse(req.body);
+      
+      // Attempt optimistic update
+      const result = await storage.updateCheatSheetDocOptimistic(userId, version, rows);
+      
+      if (result.success) {
+        res.json(result.doc);
+      } else {
+        // Version conflict - return 409 with current state
+        res.status(409).json({
+          message: 'Version conflict - document was updated by another session',
+          conflict: result.conflict
+        });
+      }
+    } catch (error) {
+      console.error('Error updating cheat sheet document:', error);
+      res.status(500).json({ message: 'Failed to update cheat sheet document' });
     }
   });
 
