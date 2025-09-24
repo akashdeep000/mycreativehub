@@ -159,30 +159,32 @@ export default function AutomationToolkit() {
     }
   });
 
-  // Auto-save when debounced prompts change
+  // Auto-save when debounced prompts change - only save the last edited row
   useEffect(() => {
-    if (hasChanges && debouncedPrompts.length > 0 && !isSaving) {
-      const currentVersion = JSON.stringify(debouncedPrompts);
+    if (hasChanges && lastEditedIndex !== null && !isSaving && debouncedPrompts.length > 0) {
+      const promptToSave = debouncedPrompts[lastEditedIndex];
       
-      // Skip if this is the same as last saved version
-      if (currentVersion === lastSavedVersion) {
-        return;
-      }
-      
-      const promptsToSave = debouncedPrompts.filter(p => 
-        // Only save if at least one field has content
-        p.trigger || p.automatedReply || p.openingDM || p.buttonTitle || 
-        p.dmWithLink || p.linkTitle || p.linkUrl || p.followUpDM
+      // Only save if at least one field has content
+      const hasContent = promptToSave && (
+        promptToSave.trigger || promptToSave.automatedReply || promptToSave.openingDM || 
+        promptToSave.buttonTitle || promptToSave.dmWithLink || promptToSave.linkTitle || 
+        promptToSave.linkUrl || promptToSave.followUpDM
       );
 
-      if (promptsToSave.length > 0) {
+      if (hasContent) {
+        const currentVersion = JSON.stringify(promptToSave);
+        
+        // Skip if this is the same as last saved version
+        if (currentVersion === lastSavedVersion) {
+          return;
+        }
+        
         setIsSaving(true);
         setLastSavedVersion(currentVersion);
-        // Save the first prompt with content
-        saveMutation.mutate(promptsToSave[0]);
+        saveMutation.mutate(promptToSave);
       }
     }
-  }, [debouncedPrompts, hasChanges, isSaving, lastSavedVersion]);
+  }, [debouncedPrompts, hasChanges, isSaving, lastSavedVersion, lastEditedIndex]);
 
   // Update prompt field
   const updatePrompt = useCallback((index: number, field: keyof Prompt, value: string) => {
