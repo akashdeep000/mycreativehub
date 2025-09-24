@@ -186,6 +186,7 @@ export default function AutomationToolkit() {
 
   // Update prompt field
   const updatePrompt = useCallback((index: number, field: keyof Prompt, value: string) => {
+    setLastEditedIndex(index);
     setPrompts(current => {
       const newPrompts = [...current];
       newPrompts[index] = { ...newPrompts[index], [field]: value };
