@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -17,12 +17,12 @@ import {
   Zap,
   MessageSquare,
   Plus,
-  Trash2
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 
-// Simple prompt interface
-interface Prompt {
-  id?: string;
+// Single row interface (keeping same structure for UI compatibility)
+interface CheatSheetRow {
   trigger: string;
   automatedReply: string;
   openingDM: string;
@@ -33,8 +33,16 @@ interface Prompt {
   followUpDM: string;
 }
 
-// Create empty prompt
-const createEmptyPrompt = (): Prompt => ({
+// Document interface matching backend schema
+interface CheatSheetDoc {
+  id: string;
+  version: number;
+  rows: CheatSheetRow[];
+  updatedAt: string;
+}
+
+// Create empty row
+const createEmptyRow = (): CheatSheetRow => ({
   trigger: '',
   automatedReply: '',
   openingDM: '',
@@ -45,8 +53,8 @@ const createEmptyPrompt = (): Prompt => ({
   followUpDM: ''
 });
 
-// Debounce utility
-function useSimpleDebounce<T>(value: T, delay: number): T {
+// Debounce hook for autosave
+function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
@@ -67,16 +75,23 @@ export default function AutomationToolkit() {
   const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   
-  // Simple state - start with single empty row
-  const [prompts, setPrompts] = useState<Prompt[]>([createEmptyPrompt()]);
-  const [hasChanges, setHasChanges] = useState(false);
+  // Document state (single document per user)
+  const [document, setDocument] = useState<CheatSheetDoc | null>(null);
+  const [rows, setRows] = useState<CheatSheetRow[]>([createEmptyRow()]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [lastSavedVersion, setLastSavedVersion] = useState('');
-  const [lastEditedIndex, setLastEditedIndex] = useState<number | null>(0);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [conflictData, setConflictData] = useState<CheatSheetDoc | null>(null);
+  
+  // Track if user has made any edits to distinguish from initial load
+  const hasUserEdited = useRef(false);
+  
+  // Debounced rows for autosave (3 second delay)
+  const debouncedRows = useDebounce(rows, 3000);
 
-  // Load prompts from server
-  const { data: serverPrompts, isLoading: isLoadingPrompts } = useQuery({
-    queryKey: ['/api/automation/prompts'],
+  // Load document from server
+  const { data: serverDoc, isLoading: isLoadingDoc, error: loadError } = useQuery({
+    queryKey: ['/api/automation/cheatsheet'],
     enabled: isAuthenticated && !isLoading,
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error)) return false;
@@ -84,143 +99,164 @@ export default function AutomationToolkit() {
     },
   });
 
-  // Always show just ONE row - either first saved prompt or empty row
+  // Initialize document state when loaded from server
   useEffect(() => {
-    if (serverPrompts && Array.isArray(serverPrompts)) {
-      if (serverPrompts.length > 0) {
-        // Show only the FIRST saved prompt in one row
-        setPrompts([serverPrompts[0]]);
-      } else {
-        // No saved prompts, start with single empty row
-        setPrompts([createEmptyPrompt()]);
-      }
+    if (serverDoc && typeof serverDoc === 'object' && 'rows' in serverDoc && !hasUserEdited.current) {
+      const doc = serverDoc as CheatSheetDoc;
+      setDocument(doc);
+      setRows(doc.rows.length > 0 ? doc.rows : [createEmptyRow()]);
+      setHasUnsavedChanges(false);
+      setSaveError(null);
+      setConflictData(null);
     }
-  }, [serverPrompts]);
+  }, [serverDoc]);
 
-  // Simple debounced save
-  const debouncedPrompts = useSimpleDebounce(prompts, 2000);
-
-  // Save mutation
+  // Save mutation with optimistic versioning and conflict resolution
   const saveMutation = useMutation({
-    mutationFn: async (prompt: Prompt): Promise<Prompt> => {
-      if (prompt.id) {
-        // Update existing
-        const response = await apiRequest(`/api/automation/prompt/${prompt.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify(prompt),
-        });
-        return response.json();
-      } else {
-        // Create new
-        const response = await apiRequest('/api/automation/prompt', {
-          method: 'POST',
-          body: JSON.stringify(prompt),
-        });
-        return response.json();
+    mutationFn: async (rowsToSave: CheatSheetRow[]): Promise<CheatSheetDoc> => {
+      const currentVersion = document?.version || 0;
+      
+      const response = await apiRequest('/api/automation/cheatsheet', {
+        method: 'PUT',
+        body: JSON.stringify({
+          version: currentVersion,
+          rows: rowsToSave
+        }),
+      });
+
+      if (response.status === 409) {
+        // Version conflict - get the conflict data
+        const conflictResponse = await response.json();
+        throw new Error(JSON.stringify({
+          type: 'conflict',
+          conflict: conflictResponse.conflict
+        }));
       }
+
+      if (!response.ok) {
+        throw new Error('Failed to save document');
+      }
+
+      return response.json();
     },
-    onSuccess: (savedPrompt: Prompt, originalPrompt: Prompt) => {
-      // Update the prompt with the server ID
-      setPrompts(current => 
-        current.map(p => 
-          p === originalPrompt ? { ...savedPrompt } : p
-        )
-      );
-      setHasChanges(false);
+    onSuccess: (savedDoc: CheatSheetDoc) => {
+      // Update local document state with server version
+      setDocument(savedDoc);
+      setHasUnsavedChanges(false);
       setIsSaving(false);
+      setSaveError(null);
+      setConflictData(null);
+      
+      // Invalidate the query to ensure consistency
+      queryClient.setQueryData(['/api/automation/cheatsheet'], savedDoc);
     },
-    onError: () => {
+    onError: (error: Error) => {
+      setIsSaving(false);
+      
+      try {
+        const errorData = JSON.parse(error.message);
+        if (errorData.type === 'conflict') {
+          // Handle version conflict
+          setConflictData(errorData.conflict);
+          setSaveError('Document was updated in another window or device. Please resolve the conflict.');
+          toast({
+            title: "Sync Conflict",
+            description: "Your document was updated elsewhere. Please review and resolve the conflict.",
+            variant: "destructive"
+          });
+          return;
+        }
+      } catch {
+        // Not a conflict error, handle as regular error
+      }
+      
+      setSaveError('Failed to save changes. Will retry automatically.');
       toast({
         title: "Save Failed",
-        description: "Could not save changes. Please try again.",
-        variant: "destructive"
-      });
-      setIsSaving(false);
-    }
-  });
-
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return await apiRequest(`/api/automation/prompt/${id}`, {
-        method: 'DELETE',
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/automation/prompts'] });
-      toast({
-        title: "Deleted",
-        description: "Row removed successfully."
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Delete Failed", 
-        description: "Could not delete row. Please try again.",
+        description: "Could not save changes. Will retry automatically.",
         variant: "destructive"
       });
     }
   });
 
-  // Auto-save when debounced prompts change - only save the last edited row
+  // Autosave when debounced rows change
   useEffect(() => {
-    if (hasChanges && lastEditedIndex !== null && !isSaving && debouncedPrompts.length > 0) {
-      const promptToSave = debouncedPrompts[lastEditedIndex];
-      
-      // Only save if at least one field has content
-      const hasContent = promptToSave && (
-        promptToSave.trigger || promptToSave.automatedReply || promptToSave.openingDM || 
-        promptToSave.buttonTitle || promptToSave.dmWithLink || promptToSave.linkTitle || 
-        promptToSave.linkUrl || promptToSave.followUpDM
+    if (hasUnsavedChanges && hasUserEdited.current && !isSaving && !conflictData) {
+      // Check if any row has content
+      const hasContent = debouncedRows.some(row => 
+        Object.values(row).some(value => value.trim().length > 0)
       );
 
       if (hasContent) {
-        const currentVersion = JSON.stringify(promptToSave);
-        
-        // Skip if this is the same as last saved version
-        if (currentVersion === lastSavedVersion) {
-          return;
-        }
-        
         setIsSaving(true);
-        setLastSavedVersion(currentVersion);
-        saveMutation.mutate(promptToSave);
+        setSaveError(null);
+        saveMutation.mutate(debouncedRows);
       }
     }
-  }, [debouncedPrompts, hasChanges, isSaving, lastSavedVersion, lastEditedIndex]);
+  }, [debouncedRows, hasUnsavedChanges, isSaving, conflictData]);
 
-  // Update prompt field
-  const updatePrompt = useCallback((index: number, field: keyof Prompt, value: string) => {
-    setLastEditedIndex(index);
-    setPrompts(current => {
-      const newPrompts = [...current];
-      newPrompts[index] = { ...newPrompts[index], [field]: value };
-      return newPrompts;
+  // Update row field
+  const updateRow = useCallback((index: number, field: keyof CheatSheetRow, value: string) => {
+    hasUserEdited.current = true;
+    setRows(current => {
+      const newRows = [...current];
+      newRows[index] = { ...newRows[index], [field]: value };
+      return newRows;
     });
-    setHasChanges(true);
+    setHasUnsavedChanges(true);
+    setSaveError(null);
   }, []);
 
   // Add new row
-  const addPrompt = useCallback(() => {
-    setPrompts(current => [...current, createEmptyPrompt()]);
+  const addRow = useCallback(() => {
+    hasUserEdited.current = true;
+    setRows(current => [...current, createEmptyRow()]);
+    setHasUnsavedChanges(true);
   }, []);
 
   // Delete row
-  const deletePrompt = useCallback((index: number) => {
-    const prompt = prompts[index];
-    
-    if (prompt.id) {
-      // Delete from server
-      deleteMutation.mutate(prompt.id);
-    }
-    
-    // Remove from local state
-    setPrompts(current => {
-      const newPrompts = current.filter((_, i) => i !== index);
+  const deleteRow = useCallback((index: number) => {
+    hasUserEdited.current = true;
+    setRows(current => {
+      const newRows = current.filter((_, i) => i !== index);
       // Always keep at least one row
-      return newPrompts.length === 0 ? [createEmptyPrompt()] : newPrompts;
+      return newRows.length === 0 ? [createEmptyRow()] : newRows;
     });
-  }, [prompts, deleteMutation]);
+    setHasUnsavedChanges(true);
+  }, []);
+
+  // Resolve conflict by accepting server version
+  const acceptServerVersion = useCallback(() => {
+    if (conflictData) {
+      setDocument(conflictData);
+      setRows(conflictData.rows.length > 0 ? conflictData.rows : [createEmptyRow()]);
+      setHasUnsavedChanges(false);
+      setConflictData(null);
+      setSaveError(null);
+      hasUserEdited.current = false;
+      
+      queryClient.setQueryData(['/api/automation/cheatsheet'], conflictData);
+      
+      toast({
+        title: "Conflict Resolved",
+        description: "Document updated with latest version from server.",
+      });
+    }
+  }, [conflictData]);
+
+  // Resolve conflict by keeping local version
+  const keepLocalVersion = useCallback(() => {
+    if (conflictData) {
+      // Update our document to match server version, then immediately save local changes
+      setDocument(conflictData);
+      setConflictData(null);
+      setSaveError(null);
+      setIsSaving(true);
+      
+      // Save current local rows with new server version
+      saveMutation.mutate(rows);
+    }
+  }, [conflictData, rows]);
 
   // Copy to clipboard
   const copyToClipboard = useCallback((text: string) => {
@@ -238,7 +274,7 @@ export default function AutomationToolkit() {
     }
   }, [isAuthenticated, isLoading, setLocation]);
 
-  if (isLoading || isLoadingPrompts) {
+  if (isLoading || isLoadingDoc) {
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
         <Sidebar />
@@ -256,6 +292,22 @@ export default function AutomationToolkit() {
 
   if (!isAuthenticated) {
     return null;
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+        <Sidebar />
+        <div className="flex-1 lg:ml-64">
+          <MobileNav />
+          <main className="p-6">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-red-500">Failed to load cheat sheet. Please refresh the page.</div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -293,15 +345,67 @@ export default function AutomationToolkit() {
             </div>
           </div>
 
+          {/* Conflict Resolution Banner */}
+          {conflictData && (
+            <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
+                    Sync Conflict Detected
+                  </h3>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-3">
+                    Your document was updated in another window or device. Choose how to resolve:
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={acceptServerVersion}
+                      className="bg-white dark:bg-gray-800"
+                      data-testid="button-accept-server"
+                    >
+                      Use Server Version
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={keepLocalVersion}
+                      className="bg-white dark:bg-gray-800"
+                      data-testid="button-keep-local"
+                    >
+                      Keep My Changes
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Save Status */}
-          {hasChanges && (
-            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          {(hasUnsavedChanges || isSaving || saveError) && !conflictData && (
+            <div className={`mb-4 p-3 border rounded-lg ${
+              saveError 
+                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' 
+                : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+            }`}>
               <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm text-blue-700 dark:text-blue-300">
-                  {isSaving ? "Saving changes..." : "Changes will be saved automatically"}
+                <Zap className={`h-4 w-4 ${
+                  saveError ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'
+                }`} />
+                <span className={`text-sm ${
+                  saveError ? 'text-red-700 dark:text-red-300' : 'text-blue-700 dark:text-blue-300'
+                }`}>
+                  {saveError || (isSaving ? "Saving changes..." : "Changes will be saved automatically")}
                 </span>
               </div>
+            </div>
+          )}
+
+          {/* Document Version Info */}
+          {document && (
+            <div className="mb-4 text-xs text-gray-500 dark:text-gray-400">
+              Document version: {document.version} • Last updated: {new Date(document.updatedAt).toLocaleString()}
             </div>
           )}
 
@@ -348,7 +452,7 @@ export default function AutomationToolkit() {
                   </div>
 
                   {/* Table Rows */}
-                  {prompts.map((prompt, index) => (
+                  {rows.map((row, index) => (
                     <div key={index} className="group relative">
                       <div className="grid grid-cols-9 gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg mb-4 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
                         
@@ -356,15 +460,16 @@ export default function AutomationToolkit() {
                         <div className="relative">
                           <Textarea
                             placeholder="Keyword..."
-                            value={prompt.trigger}
-                            onChange={(e) => updatePrompt(index, 'trigger', e.target.value)}
+                            value={row.trigger}
+                            onChange={(e) => updateRow(index, 'trigger', e.target.value)}
                             className="min-h-[80px] resize-none"
                             data-testid={`input-trigger-${index}`}
+                            disabled={!!conflictData}
                           />
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => copyToClipboard(prompt.trigger)}
+                            onClick={() => copyToClipboard(row.trigger)}
                             className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             data-testid={`button-copy-trigger-${index}`}
                           >
@@ -376,15 +481,16 @@ export default function AutomationToolkit() {
                         <div className="relative">
                           <Textarea
                             placeholder="First automatic response..."
-                            value={prompt.automatedReply}
-                            onChange={(e) => updatePrompt(index, 'automatedReply', e.target.value)}
+                            value={row.automatedReply}
+                            onChange={(e) => updateRow(index, 'automatedReply', e.target.value)}
                             className="min-h-[80px] resize-none"
                             data-testid={`input-automated-reply-${index}`}
+                            disabled={!!conflictData}
                           />
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => copyToClipboard(prompt.automatedReply)}
+                            onClick={() => copyToClipboard(row.automatedReply)}
                             className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             data-testid={`button-copy-automated-reply-${index}`}
                           >
@@ -396,15 +502,16 @@ export default function AutomationToolkit() {
                         <div className="relative">
                           <Textarea
                             placeholder="Your opening DM to a follower that commented on your keyword..."
-                            value={prompt.openingDM}
-                            onChange={(e) => updatePrompt(index, 'openingDM', e.target.value)}
+                            value={row.openingDM}
+                            onChange={(e) => updateRow(index, 'openingDM', e.target.value)}
                             className="min-h-[80px] resize-none"
                             data-testid={`input-opening-dm-${index}`}
+                            disabled={!!conflictData}
                           />
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => copyToClipboard(prompt.openingDM)}
+                            onClick={() => copyToClipboard(row.openingDM)}
                             className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             data-testid={`button-copy-opening-dm-${index}`}
                           >
@@ -416,15 +523,16 @@ export default function AutomationToolkit() {
                         <div className="relative">
                           <Textarea
                             placeholder="Get them to click for link..."
-                            value={prompt.buttonTitle}
-                            onChange={(e) => updatePrompt(index, 'buttonTitle', e.target.value)}
+                            value={row.buttonTitle}
+                            onChange={(e) => updateRow(index, 'buttonTitle', e.target.value)}
                             className="min-h-[80px] resize-none"
                             data-testid={`input-button-title-${index}`}
+                            disabled={!!conflictData}
                           />
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => copyToClipboard(prompt.buttonTitle)}
+                            onClick={() => copyToClipboard(row.buttonTitle)}
                             className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             data-testid={`button-copy-button-title-${index}`}
                           >
@@ -436,15 +544,16 @@ export default function AutomationToolkit() {
                         <div className="relative">
                           <Textarea
                             placeholder="DM you send just above in link..."
-                            value={prompt.dmWithLink}
-                            onChange={(e) => updatePrompt(index, 'dmWithLink', e.target.value)}
+                            value={row.dmWithLink}
+                            onChange={(e) => updateRow(index, 'dmWithLink', e.target.value)}
                             className="min-h-[80px] resize-none"
                             data-testid={`input-dm-with-link-${index}`}
+                            disabled={!!conflictData}
                           />
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => copyToClipboard(prompt.dmWithLink)}
+                            onClick={() => copyToClipboard(row.dmWithLink)}
                             className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             data-testid={`button-copy-dm-with-link-${index}`}
                           >
@@ -456,15 +565,16 @@ export default function AutomationToolkit() {
                         <div className="relative">
                           <Textarea
                             placeholder="Link title..."
-                            value={prompt.linkTitle}
-                            onChange={(e) => updatePrompt(index, 'linkTitle', e.target.value)}
+                            value={row.linkTitle}
+                            onChange={(e) => updateRow(index, 'linkTitle', e.target.value)}
                             className="min-h-[80px] resize-none"
                             data-testid={`input-link-title-${index}`}
+                            disabled={!!conflictData}
                           />
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => copyToClipboard(prompt.linkTitle)}
+                            onClick={() => copyToClipboard(row.linkTitle)}
                             className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             data-testid={`button-copy-link-title-${index}`}
                           >
@@ -476,15 +586,16 @@ export default function AutomationToolkit() {
                         <div className="relative">
                           <Textarea
                             placeholder="https://..."
-                            value={prompt.linkUrl}
-                            onChange={(e) => updatePrompt(index, 'linkUrl', e.target.value)}
+                            value={row.linkUrl}
+                            onChange={(e) => updateRow(index, 'linkUrl', e.target.value)}
                             className="min-h-[80px] resize-none"
                             data-testid={`input-link-url-${index}`}
+                            disabled={!!conflictData}
                           />
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => copyToClipboard(prompt.linkUrl)}
+                            onClick={() => copyToClipboard(row.linkUrl)}
                             className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             data-testid={`button-copy-link-url-${index}`}
                           >
@@ -496,15 +607,16 @@ export default function AutomationToolkit() {
                         <div className="relative">
                           <Textarea
                             placeholder="Follow up message..."
-                            value={prompt.followUpDM}
-                            onChange={(e) => updatePrompt(index, 'followUpDM', e.target.value)}
+                            value={row.followUpDM}
+                            onChange={(e) => updateRow(index, 'followUpDM', e.target.value)}
                             className="min-h-[80px] resize-none"
                             data-testid={`input-follow-up-dm-${index}`}
+                            disabled={!!conflictData}
                           />
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => copyToClipboard(prompt.followUpDM)}
+                            onClick={() => copyToClipboard(row.followUpDM)}
                             className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             data-testid={`button-copy-follow-up-dm-${index}`}
                           >
@@ -517,10 +629,11 @@ export default function AutomationToolkit() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => deletePrompt(index)}
+                            onClick={() => deleteRow(index)}
                             className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                             data-testid={`button-delete-row-${index}`}
                             title="Delete this row"
+                            disabled={!!conflictData}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -531,10 +644,11 @@ export default function AutomationToolkit() {
 
                   {/* Add Row Button */}
                   <Button
-                    onClick={addPrompt}
+                    onClick={addRow}
                     variant="outline"
                     className="w-full mt-4"
                     data-testid="button-add-row"
+                    disabled={!!conflictData}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add New Prompt

@@ -1078,22 +1078,16 @@ export const cheatSheetDocs = pgTable("cheat_sheet_docs", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Zod schemas for cheat sheet document structure
-export const cheatSheetRowFieldsSchema = z.object({
+// Simplified cheat sheet row structure (matching frontend)
+export const cheatSheetRowSchema = z.object({
   trigger: z.string(),
   automatedReply: z.string(),
-  openingDm: z.string(),
+  openingDM: z.string(),
   buttonTitle: z.string(),
   dmWithLink: z.string(),
   linkTitle: z.string(),
   linkUrl: z.string(),
-  followUpDm: z.string(),
-});
-
-export const cheatSheetRowSchema = z.object({
-  id: z.string(),
-  fields: cheatSheetRowFieldsSchema,
-  updatedAt: z.number(),
+  followUpDM: z.string(),
 });
 
 export const cheatSheetDocDataSchema = z.object({

@@ -2383,18 +2383,14 @@ export class DatabaseStorage implements IStorage {
 
   async seedCheatSheetDoc(userId: string): Promise<CheatSheetDoc> {
     const defaultRow: CheatSheetRow = {
-      id: nanoid(),
-      fields: {
-        trigger: "",
-        automatedReply: "",
-        openingDm: "",
-        buttonTitle: "",
-        dmWithLink: "",
-        linkTitle: "",
-        linkUrl: "",
-        followUpDm: "",
-      },
-      updatedAt: 0,
+      trigger: "",
+      automatedReply: "",
+      openingDM: "",
+      buttonTitle: "",
+      dmWithLink: "",
+      linkTitle: "",
+      linkUrl: "",
+      followUpDM: "",
     };
 
     const defaultData: CheatSheetDocData = {
@@ -2449,12 +2445,8 @@ export class DatabaseStorage implements IStorage {
       };
     }
 
-    // Update rows with current timestamp for touched rows
-    const now = Date.now();
-    const updatedRows = rows.map(row => ({
-      ...row,
-      updatedAt: now,
-    }));
+    // Use the rows directly since they already have the correct structure
+    const updatedRows = rows;
 
     const newVersion = currentData.version + 1;
     const newData: CheatSheetDocData = {
