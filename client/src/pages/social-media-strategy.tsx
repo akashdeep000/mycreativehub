@@ -127,11 +127,12 @@ export default function SocialMediaStrategy() {
 
     // Set timeout with longer delay to prevent interrupting typing
     saveTimeoutRef.current = setTimeout(() => {
-      // Only save if there's actual content
+      // Save if there's content OR if pillars structure changed (added/removed pillars)
       const hasContent = strategy.contentGoals.trim() || 
                         strategy.pillars.some(p => p.title.trim() || p.cta.trim());
+      const hasStructuralChanges = strategy.pillars.length > 0; // Always save if there are pillars
       
-      if (hasContent) {
+      if (hasContent || hasStructuralChanges) {
         // Store current state before saving to prevent duplicate saves
         lastSavedRef.current = combinedString;
         
