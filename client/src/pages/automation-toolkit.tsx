@@ -71,6 +71,7 @@ export default function AutomationToolkit() {
   const [prompts, setPrompts] = useState<Prompt[]>([createEmptyPrompt()]);
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [lastSavedVersion, setLastSavedVersion] = useState('');
 
   // Load prompts from server
   const { data: serverPrompts, isLoading: isLoadingPrompts } = useQuery({
@@ -99,16 +100,18 @@ export default function AutomationToolkit() {
     mutationFn: async (prompt: Prompt): Promise<Prompt> => {
       if (prompt.id) {
         // Update existing
-        return await apiRequest(`/api/automation/prompt/${prompt.id}`, {
+        const response = await apiRequest(`/api/automation/prompt/${prompt.id}`, {
           method: 'PATCH',
           body: JSON.stringify(prompt),
-        }) as Promise<Prompt>;
+        });
+        return response.json();
       } else {
         // Create new
-        return await apiRequest('/api/automation/prompt', {
+        const response = await apiRequest('/api/automation/prompt', {
           method: 'POST',
           body: JSON.stringify(prompt),
-        }) as Promise<Prompt>;
+        });
+        return response.json();
       }
     },
     onSuccess: (savedPrompt: Prompt, originalPrompt: Prompt) => {
@@ -156,7 +159,14 @@ export default function AutomationToolkit() {
 
   // Auto-save when debounced prompts change
   useEffect(() => {
-    if (hasChanges && debouncedPrompts.length > 0) {
+    if (hasChanges && debouncedPrompts.length > 0 && !isSaving) {
+      const currentVersion = JSON.stringify(debouncedPrompts);
+      
+      // Skip if this is the same as last saved version
+      if (currentVersion === lastSavedVersion) {
+        return;
+      }
+      
       const promptsToSave = debouncedPrompts.filter(p => 
         // Only save if at least one field has content
         p.trigger || p.automatedReply || p.openingDM || p.buttonTitle || 
@@ -165,11 +175,12 @@ export default function AutomationToolkit() {
 
       if (promptsToSave.length > 0) {
         setIsSaving(true);
+        setLastSavedVersion(currentVersion);
         // Save the first prompt with content
         saveMutation.mutate(promptsToSave[0]);
       }
     }
-  }, [debouncedPrompts, hasChanges, saveMutation]);
+  }, [debouncedPrompts, hasChanges, isSaving, lastSavedVersion]);
 
   // Update prompt field
   const updatePrompt = useCallback((index: number, field: keyof Prompt, value: string) => {
