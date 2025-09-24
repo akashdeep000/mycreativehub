@@ -49,7 +49,7 @@ export default function SocialMediaStrategy() {
   });
 
   // Fetch existing strategy
-  const { data: existingStrategy, isLoading } = useQuery({
+  const { data: existingStrategy, isLoading } = useQuery<SocialMediaStrategy>({
     queryKey: ['/api/social-media-strategy'],
     enabled: !!user,
     retry: false,
@@ -164,13 +164,11 @@ export default function SocialMediaStrategy() {
   };
 
   const addPillar = () => {
-    if (strategy.pillars.length < 5) {
-      const newId = Date.now().toString();
-      setStrategy(prev => ({
-        ...prev,
-        pillars: [...prev.pillars, { id: newId, title: "", cta: "" }]
-      }));
-    }
+    const newId = Date.now().toString();
+    setStrategy(prev => ({
+      ...prev,
+      pillars: [...prev.pillars, { id: newId, title: "", cta: "" }]
+    }));
   };
 
   const removePillar = (id: string) => {
@@ -286,7 +284,6 @@ export default function SocialMediaStrategy() {
                 </CardTitle>
                 <Button
                   onClick={addPillar}
-                  disabled={strategy.pillars.length >= 5}
                   size="sm"
                   variant="outline"
                 >
