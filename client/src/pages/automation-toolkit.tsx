@@ -72,6 +72,7 @@ export default function AutomationToolkit() {
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedVersion, setLastSavedVersion] = useState('');
+  const [lastEditedIndex, setLastEditedIndex] = useState<number | null>(0);
 
   // Load prompts from server
   const { data: serverPrompts, isLoading: isLoadingPrompts } = useQuery({
@@ -83,10 +84,11 @@ export default function AutomationToolkit() {
     },
   });
 
-  // Initialize with server data
+  // Initialize with server data - only show ONE row
   useEffect(() => {
     if (serverPrompts && Array.isArray(serverPrompts) && serverPrompts.length > 0) {
-      setPrompts(serverPrompts);
+      // Only load the FIRST prompt, not all of them
+      setPrompts([serverPrompts[0]]);
     } else if (serverPrompts && Array.isArray(serverPrompts) && serverPrompts.length === 0) {
       setPrompts([createEmptyPrompt()]);
     }
