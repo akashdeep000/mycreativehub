@@ -84,12 +84,12 @@ export default function AutomationToolkit() {
     },
   });
 
-  // Initialize with server data OR single empty row
+  // Always show just ONE row - either first saved prompt or empty row
   useEffect(() => {
     if (serverPrompts && Array.isArray(serverPrompts)) {
       if (serverPrompts.length > 0) {
-        // Load saved prompts from server
-        setPrompts(serverPrompts);
+        // Show only the FIRST saved prompt in one row
+        setPrompts([serverPrompts[0]]);
       } else {
         // No saved prompts, start with single empty row
         setPrompts([createEmptyPrompt()]);
