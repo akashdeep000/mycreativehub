@@ -55,6 +55,7 @@ export default function AutomationToolkit() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [savingStatus, setSavingStatus] = useState<Record<string, 'saving' | 'saved' | 'error'>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const creatingRef = useRef<Record<string, boolean>>({});
 
   // Load prompts from API
   const { data: promptsData, isLoading: isDataLoading } = useQuery({
@@ -68,32 +69,63 @@ export default function AutomationToolkit() {
     },
   });
 
-  // Update state when data loads
+  // Update state when data loads (but don't overwrite during active typing)
   useEffect(() => {
     if (promptsData && Array.isArray(promptsData)) {
-      setPrompts(promptsData);
+      setPrompts(current => {
+        // Don't overwrite local state if we have temp drafts being created
+        const hasLocalDrafts = current.some(p => p.id?.startsWith('temp-'));
+        if (hasLocalDrafts) {
+          // Merge server data with local temp drafts
+          const serverPrompts = promptsData.filter((p: Prompt) => !p.id?.startsWith('temp-'));
+          const localDrafts = current.filter(p => p.id?.startsWith('temp-'));
+          return [...serverPrompts, ...localDrafts];
+        }
+        return promptsData;
+      });
     }
   }, [promptsData]);
 
   // Create new prompt mutation
   const createPromptMutation = useMutation({
-    mutationFn: async (prompt: Omit<Prompt, 'id'>) => {
+    mutationFn: async (prompt: Omit<Prompt, 'id'>): Promise<Prompt> => {
       const response = await apiRequest('/api/automation/prompt', {
         method: 'POST',
         body: JSON.stringify(prompt),
       });
-      return response;
+      return response as Prompt;
     },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/automation/prompts'] });
-      setSavingStatus(prev => ({ ...prev, 'new': 'saved' }));
+    onSuccess: (data: Prompt) => {
+      // Find temp prompt by looking for the newly created data
+      const tempPrompt = prompts.find(p => p.id?.startsWith('temp-'));
+      const tempId = tempPrompt?.id;
+      
+      if (tempId) {
+        // Replace temp draft with real server data
+        setPrompts(current => 
+          current.map(p => p.id === tempId ? { ...data } : p)
+        );
+        
+        // Clear creating flag and update status
+        creatingRef.current[tempId] = false;
+        setSavingStatus(prev => ({ ...prev, [tempId]: 'saved', [data.id || '']: 'saved' }));
+      }
+      
       toast({
         title: "Saved!",
         description: "New prompt created successfully.",
       });
     },
     onError: () => {
-      setSavingStatus(prev => ({ ...prev, 'new': 'error' }));
+      // Find temp prompt and mark as error
+      const tempPrompt = prompts.find(p => p.id?.startsWith('temp-'));
+      const tempId = tempPrompt?.id;
+      
+      if (tempId) {
+        creatingRef.current[tempId] = false;
+        setSavingStatus(prev => ({ ...prev, [tempId]: 'error' }));
+      }
+      
       toast({
         title: "Save Failed",
         description: "Unable to create prompt. Please try again.",
@@ -112,7 +144,10 @@ export default function AutomationToolkit() {
       return { response, id };
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/automation/prompts'] });
+      // Update local state immediately, don't refetch to avoid race conditions
+      setPrompts(current => 
+        current.map(p => p.id === variables.id ? { ...p, ...variables.data } : p)
+      );
       setSavingStatus(prev => ({ ...prev, [variables.id]: 'saved' }));
     },
     onError: (error, variables) => {
@@ -149,44 +184,56 @@ export default function AutomationToolkit() {
   });
 
   // Update state immediately, save with debounce
-  const updateFieldValue = useCallback((promptId: string | undefined, field: keyof Prompt, value: string) => {
-    // Update UI state immediately
-    if (promptId) {
-      setPrompts(prev => prev.map(prompt => 
-        prompt.id === promptId ? { ...prompt, [field]: value } : prompt
-      ));
-    }
+  const updateFieldValue = useCallback((promptId: string, field: keyof Prompt, value: string) => {
+    // Update UI state immediately for all rows (including temp drafts)
+    setPrompts(prev => prev.map(prompt => 
+      prompt.id === promptId ? { ...prompt, [field]: value } : prompt
+    ));
   }, []);
 
-  // Debounced save function (only handles API calls)
+  // Debounced save function (only handles PATCH calls for existing rows)
   const debouncedSave = useCallback(
-    useDebounce((promptId: string | undefined, field: keyof Prompt, value: string) => {
-      // For placeholder row, create new prompt when user starts typing
-      if (!promptId) {
-        const newPrompt = {
-          ...createPlaceholderPrompt(),
-          [field]: value
-        };
-        
-        setSavingStatus(prev => ({ ...prev, 'new': 'saving' }));
-        createPromptMutation.mutate(newPrompt);
-        return;
+    useDebounce((promptId: string, field: keyof Prompt, value: string) => {
+      // Only handle updates to existing rows (never temp drafts)
+      if (!promptId.startsWith('temp-')) {
+        setSavingStatus(prev => ({ ...prev, [promptId]: 'saving' }));
+        updatePromptMutation.mutate({ id: promptId, data: { [field]: value } });
       }
-
-      // Update existing prompt via API
-      setSavingStatus(prev => ({ ...prev, [promptId]: 'saving' }));
-      updatePromptMutation.mutate({ id: promptId, data: { [field]: value } });
     }, 500),
-    [createPromptMutation, updatePromptMutation]
+    [updatePromptMutation]
   );
 
   // Combined field change handler
   const handleFieldChange = useCallback((promptId: string | undefined, field: keyof Prompt, value: string) => {
-    // Update UI immediately
+    // For placeholder rows: create temp draft and fire immediate POST
+    if (!promptId) {
+      // Generate unique temp ID
+      const tempId = `temp-${Date.now()}`;
+      
+      // Prevent multiple creates for same temp ID
+      if (creatingRef.current[tempId]) return;
+      creatingRef.current[tempId] = true;
+      
+      // Create local temp draft with immediate UI update
+      const newPrompt = {
+        ...createPlaceholderPrompt(),
+        id: tempId,
+        [field]: value
+      };
+      
+      setPrompts(prev => prev.map(p => p.id === undefined ? newPrompt : p));
+      setSavingStatus(prev => ({ ...prev, [tempId]: 'saving' }));
+      
+      // Fire immediate POST (no debounce)
+      const { id, ...promptForServer } = newPrompt; // Remove temp ID for server
+      createPromptMutation.mutate(promptForServer);
+      return;
+    }
+
+    // For existing rows: update immediately and debounce save
     updateFieldValue(promptId, field, value);
-    // Save with debounce
     debouncedSave(promptId, field, value);
-  }, [updateFieldValue, debouncedSave]);
+  }, [updateFieldValue, debouncedSave, createPromptMutation]);
 
   // Add new prompt
   const addNewPrompt = () => {
