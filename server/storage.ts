@@ -44,6 +44,7 @@ import {
   calendarV2,
   calendarV3,
   timeBlockingEvents,
+  cheatSheetDocs,
   type CourseWhitelist,
   type InsertCourseWhitelist,
   type User,
@@ -130,6 +131,12 @@ import {
   type CalendarEntryV3,
   type CalendarDayV3,
   type InsertCalendarV2,
+  type CheatSheetDoc,
+  type InsertCheatSheetDoc,
+  type CheatSheetDocData,
+  type CheatSheetRow,
+  type CheatSheetRowFields,
+  type CheatSheetDocPutBody,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, gte, lte, sql, inArray, isNull, gt, ne } from "drizzle-orm";
@@ -342,6 +349,11 @@ export interface IStorage {
   createResetSession(email: string): Promise<ResetSession>;
   getResetSession(resetSessionId: string): Promise<ResetSession | undefined>;
   completePasswordReset(resetSessionId: string, newPasswordHash: string): Promise<{ success: boolean; message: string; user?: User }>;
+  
+  // Cheat Sheet Document Operations (Single document per user with optimistic versioning)
+  getCheatSheetDoc(userId: string): Promise<CheatSheetDoc | undefined>;
+  seedCheatSheetDoc(userId: string): Promise<CheatSheetDoc>;
+  updateCheatSheetDocOptimistic(userId: string, clientVersion: number, rows: CheatSheetRow[]): Promise<{ success: boolean; doc?: CheatSheetDoc; conflict?: { version: number; rows: CheatSheetRow[] } }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2357,6 +2369,140 @@ export class DatabaseStorage implements IStorage {
       message: "Password reset successfully",
       user: updatedUser 
     };
+  }
+
+  // Cheat Sheet Document Operations (Single document per user with optimistic versioning)
+  async getCheatSheetDoc(userId: string): Promise<CheatSheetDoc | undefined> {
+    const [doc] = await db
+      .select()
+      .from(cheatSheetDocs)
+      .where(eq(cheatSheetDocs.userId, userId))
+      .limit(1);
+    return doc;
+  }
+
+  async seedCheatSheetDoc(userId: string): Promise<CheatSheetDoc> {
+    const defaultRow: CheatSheetRow = {
+      id: nanoid(),
+      fields: {
+        trigger: "",
+        automatedReply: "",
+        openingDm: "",
+        buttonTitle: "",
+        dmWithLink: "",
+        linkTitle: "",
+        linkUrl: "",
+        followUpDm: "",
+      },
+      updatedAt: 0,
+    };
+
+    const defaultData: CheatSheetDocData = {
+      version: 1,
+      rows: [defaultRow],
+    };
+
+    const [doc] = await db
+      .insert(cheatSheetDocs)
+      .values({
+        userId,
+        data: defaultData,
+        version: 1,
+      })
+      .onConflictDoNothing()
+      .returning();
+
+    // If no result (already exists), return the existing entry
+    if (!doc) {
+      const existing = await this.getCheatSheetDoc(userId);
+      if (existing) return existing;
+      throw new Error("Failed to seed cheat sheet doc");
+    }
+
+    return doc;
+  }
+
+  async updateCheatSheetDocOptimistic(
+    userId: string,
+    clientVersion: number,
+    rows: CheatSheetRow[]
+  ): Promise<{ success: boolean; doc?: CheatSheetDoc; conflict?: { version: number; rows: CheatSheetRow[] } }> {
+    // Get current document
+    const currentDoc = await this.getCheatSheetDoc(userId);
+    
+    if (!currentDoc) {
+      // No document exists, this shouldn't happen but handle gracefully
+      const seededDoc = await this.seedCheatSheetDoc(userId);
+      return { success: false, conflict: { version: seededDoc.version, rows: (seededDoc.data as CheatSheetDocData).rows } };
+    }
+
+    const currentData = currentDoc.data as CheatSheetDocData;
+
+    // Check for version conflict
+    if (clientVersion < currentData.version) {
+      return { 
+        success: false, 
+        conflict: { 
+          version: currentData.version, 
+          rows: currentData.rows 
+        } 
+      };
+    }
+
+    // Update rows with current timestamp for touched rows
+    const now = Date.now();
+    const updatedRows = rows.map(row => ({
+      ...row,
+      updatedAt: now,
+    }));
+
+    const newVersion = currentData.version + 1;
+    const newData: CheatSheetDocData = {
+      version: newVersion,
+      rows: updatedRows,
+    };
+
+    try {
+      const [updatedDoc] = await db
+        .update(cheatSheetDocs)
+        .set({
+          data: newData,
+          version: newVersion,
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(cheatSheetDocs.userId, userId),
+          eq(cheatSheetDocs.version, currentData.version) // Ensure version hasn't changed
+        ))
+        .returning();
+
+      if (!updatedDoc) {
+        // Version conflict - someone else updated between our read and write
+        const latestDoc = await this.getCheatSheetDoc(userId);
+        if (latestDoc) {
+          const latestData = latestDoc.data as CheatSheetDocData;
+          return { 
+            success: false, 
+            conflict: { 
+              version: latestData.version, 
+              rows: latestData.rows 
+            } 
+          };
+        }
+      }
+
+      return { success: true, doc: updatedDoc };
+    } catch (error) {
+      console.error("Error updating cheat sheet doc:", error);
+      // In case of any error, return current state as conflict
+      return { 
+        success: false, 
+        conflict: { 
+          version: currentData.version, 
+          rows: currentData.rows 
+        } 
+      };
+    }
   }
 }
 
