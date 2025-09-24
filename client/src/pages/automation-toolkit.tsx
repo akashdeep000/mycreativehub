@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { useDebounce } from "@/hooks/use-debounce";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
@@ -21,21 +20,21 @@ import {
   Trash2
 } from "lucide-react";
 
-// Prompt interface - exactly 8 fields as specified
+// Simple prompt interface
 interface Prompt {
   id?: string;
-  trigger: string;                // Trigger Word or Phrase
-  automatedReply: string;         // Automated Replies  
-  openingDM: string;              // The Opening DM
-  buttonTitle: string;            // Clickable Button Title (matches schema)
-  dmWithLink: string;             // DM with Link
-  linkTitle: string;              // Link Title
-  linkUrl: string;                // Link You Will Send
-  followUpDM: string;             // Follow Up DM
+  trigger: string;
+  automatedReply: string;
+  openingDM: string;
+  buttonTitle: string;
+  dmWithLink: string;
+  linkTitle: string;
+  linkUrl: string;
+  followUpDM: string;
 }
 
-// Placeholder row data
-const createPlaceholderPrompt = (): Prompt => ({
+// Create empty prompt
+const createEmptyPrompt = (): Prompt => ({
   trigger: '',
   automatedReply: '',
   openingDM: '',
@@ -46,122 +45,94 @@ const createPlaceholderPrompt = (): Prompt => ({
   followUpDM: ''
 });
 
+// Debounce utility
+function useSimpleDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export default function AutomationToolkit() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   
-  // State for prompts
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
-  const [savingStatus, setSavingStatus] = useState<Record<string, 'saving' | 'saved' | 'error'>>({});
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const creatingRef = useRef<Record<string, boolean>>({});
+  // Simple state
+  const [prompts, setPrompts] = useState<Prompt[]>([createEmptyPrompt()]);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Load prompts from API
-  const { data: promptsData, isLoading: isDataLoading } = useQuery({
+  // Load prompts from server
+  const { data: serverPrompts, isLoading: isLoadingPrompts } = useQuery({
     queryKey: ['/api/automation/prompts'],
     enabled: isAuthenticated && !isLoading,
     retry: (failureCount, error) => {
-      if (isUnauthorizedError(error)) {
-        return false;
-      }
+      if (isUnauthorizedError(error)) return false;
       return failureCount < 3;
     },
   });
 
-  // Update state when data loads (but don't overwrite during active typing)
+  // Initialize with server data
   useEffect(() => {
-    if (promptsData && Array.isArray(promptsData)) {
-      setPrompts(current => {
-        // Don't overwrite local state if we have temp drafts being created
-        const hasLocalDrafts = current.some(p => p.id?.startsWith('temp-'));
-        if (hasLocalDrafts) {
-          // Merge server data with local temp drafts
-          const serverPrompts = promptsData.filter((p: Prompt) => !p.id?.startsWith('temp-'));
-          const localDrafts = current.filter(p => p.id?.startsWith('temp-'));
-          return [...serverPrompts, ...localDrafts];
-        }
-        return promptsData;
-      });
+    if (serverPrompts && Array.isArray(serverPrompts) && serverPrompts.length > 0) {
+      setPrompts(serverPrompts);
+    } else if (serverPrompts && Array.isArray(serverPrompts) && serverPrompts.length === 0) {
+      setPrompts([createEmptyPrompt()]);
     }
-  }, [promptsData]);
+  }, [serverPrompts]);
 
-  // Create new prompt mutation
-  const createPromptMutation = useMutation({
-    mutationFn: async (prompt: Omit<Prompt, 'id'>): Promise<Prompt> => {
-      const response = await apiRequest('/api/automation/prompt', {
-        method: 'POST',
-        body: JSON.stringify(prompt),
-      });
-      return response as Prompt;
-    },
-    onSuccess: (data: Prompt) => {
-      // Find temp prompt by looking for the newly created data
-      const tempPrompt = prompts.find(p => p.id?.startsWith('temp-'));
-      const tempId = tempPrompt?.id;
-      
-      if (tempId) {
-        // Replace temp draft with real server data
-        setPrompts(current => 
-          current.map(p => p.id === tempId ? { ...data } : p)
-        );
-        
-        // Clear creating flag and update status
-        creatingRef.current[tempId] = false;
-        setSavingStatus(prev => ({ ...prev, [tempId]: 'saved', [data.id || '']: 'saved' }));
+  // Simple debounced save
+  const debouncedPrompts = useSimpleDebounce(prompts, 2000);
+
+  // Save mutation
+  const saveMutation = useMutation({
+    mutationFn: async (prompt: Prompt): Promise<Prompt> => {
+      if (prompt.id) {
+        // Update existing
+        return await apiRequest(`/api/automation/prompt/${prompt.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(prompt),
+        }) as Promise<Prompt>;
+      } else {
+        // Create new
+        return await apiRequest('/api/automation/prompt', {
+          method: 'POST',
+          body: JSON.stringify(prompt),
+        }) as Promise<Prompt>;
       }
-      
-      toast({
-        title: "Saved!",
-        description: "New prompt created successfully.",
-      });
+    },
+    onSuccess: (savedPrompt: Prompt, originalPrompt: Prompt) => {
+      // Update the prompt with the server ID
+      setPrompts(current => 
+        current.map(p => 
+          p === originalPrompt ? { ...savedPrompt } : p
+        )
+      );
+      setHasChanges(false);
+      setIsSaving(false);
     },
     onError: () => {
-      // Find temp prompt and mark as error
-      const tempPrompt = prompts.find(p => p.id?.startsWith('temp-'));
-      const tempId = tempPrompt?.id;
-      
-      if (tempId) {
-        creatingRef.current[tempId] = false;
-        setSavingStatus(prev => ({ ...prev, [tempId]: 'error' }));
-      }
-      
       toast({
         title: "Save Failed",
-        description: "Unable to create prompt. Please try again.",
-        variant: "destructive",
+        description: "Could not save changes. Please try again.",
+        variant: "destructive"
       });
-    },
+      setIsSaving(false);
+    }
   });
 
-  // Update prompt mutation
-  const updatePromptMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<Prompt> }) => {
-      const response = await apiRequest(`/api/automation/prompt/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      });
-      return { response, id };
-    },
-    onSuccess: (data, variables) => {
-      // Update local state immediately, don't refetch to avoid race conditions
-      setPrompts(current => 
-        current.map(p => p.id === variables.id ? { ...p, ...variables.data } : p)
-      );
-      setSavingStatus(prev => ({ ...prev, [variables.id]: 'saved' }));
-    },
-    onError: (error, variables) => {
-      setSavingStatus(prev => ({ ...prev, [variables.id]: 'error' }));
-      toast({
-        title: "Save Failed",
-        description: "Unable to save changes. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Delete prompt mutation
-  const deletePromptMutation = useMutation({
+  // Delete mutation
+  const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       return await apiRequest(`/api/automation/prompt/${id}`, {
         method: 'DELETE',
@@ -170,195 +141,95 @@ export default function AutomationToolkit() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/automation/prompts'] });
       toast({
-        title: "Deleted!",
-        description: "Prompt deleted successfully.",
+        title: "Deleted",
+        description: "Row removed successfully."
       });
     },
     onError: () => {
       toast({
-        title: "Delete Failed",
-        description: "Unable to delete prompt. Please try again.",
-        variant: "destructive",
+        title: "Delete Failed", 
+        description: "Could not delete row. Please try again.",
+        variant: "destructive"
       });
-    },
+    }
   });
 
-  // Update state immediately, save with debounce
-  const updateFieldValue = useCallback((promptId: string, field: keyof Prompt, value: string) => {
-    // Update UI state immediately for all rows (including temp drafts)
-    setPrompts(prev => prev.map(prompt => 
-      prompt.id === promptId ? { ...prompt, [field]: value } : prompt
-    ));
+  // Auto-save when debounced prompts change
+  useEffect(() => {
+    if (hasChanges && debouncedPrompts.length > 0) {
+      const promptsToSave = debouncedPrompts.filter(p => 
+        // Only save if at least one field has content
+        p.trigger || p.automatedReply || p.openingDM || p.buttonTitle || 
+        p.dmWithLink || p.linkTitle || p.linkUrl || p.followUpDM
+      );
+
+      if (promptsToSave.length > 0) {
+        setIsSaving(true);
+        // Save the first prompt with content
+        saveMutation.mutate(promptsToSave[0]);
+      }
+    }
+  }, [debouncedPrompts, hasChanges, saveMutation]);
+
+  // Update prompt field
+  const updatePrompt = useCallback((index: number, field: keyof Prompt, value: string) => {
+    setPrompts(current => {
+      const newPrompts = [...current];
+      newPrompts[index] = { ...newPrompts[index], [field]: value };
+      return newPrompts;
+    });
+    setHasChanges(true);
   }, []);
 
-  // Debounced save function (only handles PATCH calls for existing rows)
-  const debouncedSave = useCallback(
-    useDebounce((promptId: string, field: keyof Prompt, value: string) => {
-      // Only handle updates to existing rows (never temp drafts)
-      if (!promptId.startsWith('temp-')) {
-        setSavingStatus(prev => ({ ...prev, [promptId]: 'saving' }));
-        updatePromptMutation.mutate({ id: promptId, data: { [field]: value } });
-      }
-    }, 500),
-    [updatePromptMutation]
-  );
+  // Add new row
+  const addPrompt = useCallback(() => {
+    setPrompts(current => [...current, createEmptyPrompt()]);
+  }, []);
 
-  // Combined field change handler
-  const handleFieldChange = useCallback((promptId: string | undefined, field: keyof Prompt, value: string) => {
-    // For placeholder rows: create temp draft and fire immediate POST
-    if (!promptId) {
-      // Generate unique temp ID
-      const tempId = `temp-${Date.now()}`;
-      
-      // Prevent multiple creates for same temp ID
-      if (creatingRef.current[tempId]) return;
-      creatingRef.current[tempId] = true;
-      
-      // Create local temp draft with immediate UI update
-      const newPrompt = {
-        ...createPlaceholderPrompt(),
-        id: tempId,
-        [field]: value
-      };
-      
-      setPrompts(prev => prev.map(p => p.id === undefined ? newPrompt : p));
-      setSavingStatus(prev => ({ ...prev, [tempId]: 'saving' }));
-      
-      // Fire immediate POST (no debounce)
-      const { id, ...promptForServer } = newPrompt; // Remove temp ID for server
-      createPromptMutation.mutate(promptForServer);
-      return;
+  // Delete row
+  const deletePrompt = useCallback((index: number) => {
+    const prompt = prompts[index];
+    
+    if (prompt.id) {
+      // Delete from server
+      deleteMutation.mutate(prompt.id);
     }
-
-    // For existing rows: update immediately and debounce save
-    updateFieldValue(promptId, field, value);
-    debouncedSave(promptId, field, value);
-  }, [updateFieldValue, debouncedSave, createPromptMutation]);
-
-  // Add new prompt
-  const addNewPrompt = () => {
-    const newPrompt = createPlaceholderPrompt();
-    setSavingStatus(prev => ({ ...prev, 'new': 'saving' }));
-    createPromptMutation.mutate(newPrompt);
-  };
-
-  // Delete prompt
-  const deletePrompt = (id: string) => {
-    deletePromptMutation.mutate(id);
-  };
+    
+    // Remove from local state
+    setPrompts(current => {
+      const newPrompts = current.filter((_, i) => i !== index);
+      // Always keep at least one row
+      return newPrompts.length === 0 ? [createEmptyPrompt()] : newPrompts;
+    });
+  }, [prompts, deleteMutation]);
 
   // Copy to clipboard
-  const copyToClipboard = async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast({
-        title: "Copied!",
-        description: `${label} copied to clipboard.`,
-      });
-    } catch (err) {
-      toast({
-        title: "Copy Failed",
-        description: "Unable to copy to clipboard",
-        variant: "destructive",
-      });
-    }
-  };
+  const copyToClipboard = useCallback((text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: "Text copied to clipboard."
+    });
+  }, [toast]);
 
-  // Authentication redirect
+  // Redirect if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
+      setLocation('/login');
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, isLoading, setLocation]);
 
-  // Fix horizontal scrolling - prevent trackpad gestures from triggering browser navigation
-  useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-
-    const onWheel = (e: WheelEvent) => {
-      const canScrollX = el.scrollWidth > el.clientWidth;
-      const horizontalIntent = Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.shiftKey;
-      if (!canScrollX || !horizontalIntent) return;
-
-      let delta = e.deltaX;
-      if (delta === 0) delta = e.deltaY; // map vertical wheel when shift/hardware maps
-
-      const max = el.scrollWidth - el.clientWidth;
-      const prev = el.scrollLeft;
-
-      // Always consume the event so browser never sees the swipe
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Programmatic scroll
-      el.scrollLeft = Math.min(max, Math.max(0, prev + delta));
-
-      // Also block at edges (prevents history swipe when at 0 or max)
-      const atLeft = el.scrollLeft <= 0;
-      const atRight = el.scrollLeft >= max - 1;
-      if ((delta < 0 && atLeft) || (delta > 0 && atRight)) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    };
-
-    let startX = 0, startY = 0;
-    const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) return;
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-    };
-    
-    const onTouchMove = (e: TouchEvent) => {
-      if (e.touches.length !== 1) return;
-      const dx = e.touches[0].clientX - startX;
-      const dy = e.touches[0].clientY - startY;
-      const horizontalIntent = Math.abs(dx) > Math.abs(dy);
-      if (!horizontalIntent) return;
-
-      const max = el.scrollWidth - el.clientWidth;
-      const atLeft = el.scrollLeft <= 0;
-      const atRight = el.scrollLeft >= max - 1;
-      const movingLeft = dx > 0;
-      const movingRight = dx < 0;
-
-      // Consume when horizontal to prevent page nav
-      if (horizontalIntent) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-      if (movingLeft && !atLeft) el.scrollLeft -= Math.abs(dx);
-      if (movingRight && !atRight) el.scrollLeft += Math.abs(dx);
-    };
-
-    el.addEventListener('wheel', onWheel, { passive: false });
-    el.addEventListener('touchstart', onTouchStart, { passive: true });
-    el.addEventListener('touchmove', onTouchMove, { passive: false });
-    
-    return () => {
-      el.removeEventListener('wheel', onWheel);
-      el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchmove', onTouchMove);
-    };
-  }, []);
-
-  if (isLoading || isDataLoading) {
+  if (isLoading || isLoadingPrompts) {
     return (
-      <div className="min-h-screen bg-rose-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <Zap className="text-white text-2xl" />
-          </div>
-          <p className="text-gray-600">Loading automation toolkit...</p>
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+        <Sidebar />
+        <div className="flex-1 lg:ml-64">
+          <MobileNav />
+          <main className="p-6">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-gray-500">Loading...</div>
+            </div>
+          </main>
         </div>
       </div>
     );
@@ -368,392 +239,288 @@ export default function AutomationToolkit() {
     return null;
   }
 
-  // Show prompts or single placeholder row if empty
-  // Ensure all fields are strings (not null) to prevent React warnings
-  const safePrompts = prompts.map(prompt => ({
-    ...prompt,
-    trigger: prompt.trigger || '',
-    automatedReply: prompt.automatedReply || '',
-    openingDM: prompt.openingDM || '',
-    buttonTitle: prompt.buttonTitle || '',
-    dmWithLink: prompt.dmWithLink || '',
-    linkTitle: prompt.linkTitle || '',
-    linkUrl: prompt.linkUrl || '',
-    followUpDM: prompt.followUpDM || ''
-  }));
-  
-  const displayPrompts = safePrompts.length > 0 ? safePrompts : [createPlaceholderPrompt()];
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
-      <MobileNav />
-      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
+      
+      <div className="flex-1 lg:ml-64">
+        <MobileNav />
         
-        {/* Header */}
-        <div className="mb-8">
-          <div className="mb-4">
-            {/* Mobile: Simple back arrow */}
+        <main className="p-6">
+          {/* Header */}
+          <div className="flex items-center gap-4 mb-6">
             <Button
               variant="ghost"
-              size="sm"
               onClick={() => setLocation('/streamline-workflow')}
-              className="text-gray-600 hover:text-gray-800 lg:hidden mt-16"
+              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+              data-testid="button-back-streamline"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Streamline Your Workflow
             </Button>
-            
-            {/* Desktop: Navigation buttons */}
-            <div className="hidden lg:flex lg:items-center lg:gap-4">
-              <Button 
-                variant="ghost" 
-                onClick={() => setLocation("/dashboard")}
-                className="text-gray-600 hover:text-gray-800"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Main Dashboard
-              </Button>
-              <Button 
-                variant="ghost" 
-                onClick={() => setLocation("/streamline-workflow")}
-                className="text-gray-600 hover:text-gray-800"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Streamline Workflow
-              </Button>
-            </div>
           </div>
-          
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Zap className="text-white text-2xl" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Automation System Toolkit
-            </h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Complete conversation flow cheat sheet - edit any cell and copy directly to ManyChat
-            </p>
-          </div>
-        </div>
 
-        <div className="space-y-8">
-          
-          {/* ManyChat Affiliate Button */}
-          <Card className="border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-red-50">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                    <Zap className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900">
-                      Automate with ManyChat
-                    </h3>
-                    <p className="text-gray-600 text-sm">
-                      Click here to start building your automation (affiliate link)
-                    </p>
-                  </div>
-                </div>
-                <a
-                  href="https://manychat.partnerlinks.io/n6ui2n91rh1n"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-medium rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                >
-                  Start Now
-                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </a>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
+              <MessageSquare className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                Conversation Flow Cheat Sheet
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Build automated conversation flows for social media engagement
+              </p>
+            </div>
+          </div>
+
+          {/* Save Status */}
+          {hasChanges && (
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm text-blue-700 dark:text-blue-300">
+                  {isSaving ? "Saving changes..." : "Changes will be saved automatically"}
+                </span>
               </div>
-            </CardContent>
-          </Card>
-          
-          {/* Conversation Flow Cheat Sheet */}
+            </div>
+          )}
+
+          {/* Conversation Flow Table */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <MessageSquare className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle>Conversation Flow Cheat Sheet</CardTitle>
-                    <CardDescription>
-                      Edit any cell to automatically save. Add rows and delete as needed.
-                    </CardDescription>
-                  </div>
-                </div>
-                <Button 
-                  onClick={addNewPrompt}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  data-testid="button-add-new-prompt"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add New Prompt
-                </Button>
-              </div>
+              <CardTitle>Conversation Flow Mapping</CardTitle>
+              <CardDescription>
+                Plan your automated conversation sequences with precise trigger points and responses
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div 
-                ref={scrollContainerRef}
-                className="overflow-x-auto"
-                style={{
-                  overscrollBehaviorX: 'contain',
-                  touchAction: 'pan-x pinch-zoom',
-                  WebkitOverflowScrolling: 'touch'
-                }}
-              >
-                <div className="min-w-[1400px] border border-gray-200 rounded-lg">
-                  
+              <div className="overflow-x-auto">
+                <div className="min-w-[1200px]">
                   {/* Table Header */}
-                  <div className="bg-gray-50 border-b border-gray-200">
-                    <div className="grid grid-cols-9 gap-px">
-                      <div className="bg-white p-3 font-semibold text-sm text-gray-900">
-                        Trigger Word or Phrase
-                      </div>
-                      <div className="bg-white p-3 font-semibold text-sm text-gray-900">
-                        Automated Replies
-                      </div>
-                      <div className="bg-white p-3 font-semibold text-sm text-gray-900">
-                        The Opening DM
-                      </div>
-                      <div className="bg-white p-3 font-semibold text-sm text-gray-900">
-                        Clickable Button Title
-                      </div>
-                      <div className="bg-white p-3 font-semibold text-sm text-gray-900">
-                        DM with Link
-                      </div>
-                      <div className="bg-white p-3 font-semibold text-sm text-gray-900">
-                        Link Title
-                      </div>
-                      <div className="bg-white p-3 font-semibold text-sm text-gray-900">
-                        Link You Will Send
-                      </div>
-                      <div className="bg-white p-3 font-semibold text-sm text-gray-900">
-                        Follow Up DM
-                      </div>
-                      <div className="bg-white p-3 font-semibold text-sm text-gray-900 text-center">
-                        Actions
-                      </div>
+                  <div className="grid grid-cols-8 gap-4 mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Trigger Word or Phrase
+                    </div>
+                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Automated Replies
+                    </div>
+                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      The Opening DM
+                    </div>
+                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Clickable Button Title
+                    </div>
+                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      DM with Link
+                    </div>
+                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Link Title
+                    </div>
+                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Link You Will Send
+                    </div>
+                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Follow Up DM
                     </div>
                   </div>
 
-                  {/* Table Body */}
-                  <div className="bg-white">
-                    {displayPrompts.map((prompt, index) => {
-                      const promptId = prompt.id || 'placeholder';
-                      const isPlaceholder = !prompt.id;
-                      const status = savingStatus[promptId];
-                      
-                      return (
-                        <div key={promptId} className={`grid grid-cols-9 gap-px ${index !== displayPrompts.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                          
-                          {/* Trigger Word or Phrase */}
-                          <div className="p-3 border-r border-gray-100">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => copyToClipboard(prompt.trigger, "Trigger word")}
-                                className="text-xs h-6 px-2"
-                                data-testid="button-copy-trigger"
-                              >
-                                <Copy className="w-3 h-3" />
-                              </Button>
-                              {status === 'saving' && <span className="text-xs text-blue-500">Saving...</span>}
-                              {status === 'saved' && <span className="text-xs text-green-500">Saved</span>}
-                              {status === 'error' && <span className="text-xs text-red-500">Error</span>}
-                            </div>
-                            <Textarea
-                              value={prompt.trigger}
-                              onChange={(e) => handleFieldChange(prompt.id, 'trigger', e.target.value)}
-                              className="min-h-16 text-sm resize-none"
-                              placeholder="Keyword…"
-                              data-testid="input-trigger"
-                            />
-                          </div>
-
-                          {/* Automated Replies */}
-                          <div className="p-3 border-r border-gray-100">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => copyToClipboard(prompt.automatedReply, "Automated reply")}
-                                className="text-xs h-6 px-2"
-                                data-testid="button-copy-automated-reply"
-                              >
-                                <Copy className="w-3 h-3" />
-                              </Button>
-                            </div>
-                            <Textarea
-                              value={prompt.automatedReply}
-                              onChange={(e) => handleFieldChange(prompt.id, 'automatedReply', e.target.value)}
-                              className="min-h-16 text-sm resize-none"
-                              placeholder="First automatic response…"
-                              data-testid="input-automated-reply"
-                            />
-                          </div>
-
-                          {/* The Opening DM */}
-                          <div className="p-3 border-r border-gray-100">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => copyToClipboard(prompt.openingDM, "Opening DM")}
-                                className="text-xs h-6 px-2"
-                                data-testid="button-copy-opening-dm"
-                              >
-                                <Copy className="w-3 h-3" />
-                              </Button>
-                            </div>
-                            <Textarea
-                              value={prompt.openingDM}
-                              onChange={(e) => handleFieldChange(prompt.id, 'openingDM', e.target.value)}
-                              className="min-h-16 text-sm resize-none"
-                              placeholder="Your opening DM to a follower that commented on your keyword…"
-                              data-testid="input-opening-dm"
-                            />
-                          </div>
-
-                          {/* Clickable Button Title */}
-                          <div className="p-3 border-r border-gray-100">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => copyToClipboard(prompt.buttonTitle, "Button title")}
-                                className="text-xs h-6 px-2"
-                                data-testid="button-copy-clickable-button-title"
-                              >
-                                <Copy className="w-3 h-3" />
-                              </Button>
-                            </div>
-                            <Textarea
-                              value={prompt.buttonTitle}
-                              onChange={(e) => handleFieldChange(prompt.id, 'buttonTitle', e.target.value)}
-                              className="min-h-16 text-sm resize-none"
-                              placeholder="Get them to click for link…"
-                              data-testid="input-clickable-button-title"
-                            />
-                          </div>
-
-                          {/* DM with Link */}
-                          <div className="p-3 border-r border-gray-100">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => copyToClipboard(prompt.dmWithLink, "DM with link")}
-                                className="text-xs h-6 px-2"
-                                data-testid="button-copy-dm-with-link"
-                              >
-                                <Copy className="w-3 h-3" />
-                              </Button>
-                            </div>
-                            <Textarea
-                              value={prompt.dmWithLink}
-                              onChange={(e) => handleFieldChange(prompt.id, 'dmWithLink', e.target.value)}
-                              className="min-h-16 text-sm resize-none"
-                              placeholder="DM you send just above the link…"
-                              data-testid="input-dm-with-link"
-                            />
-                          </div>
-
-                          {/* Link Title */}
-                          <div className="p-3 border-r border-gray-100">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => copyToClipboard(prompt.linkTitle, "Link title")}
-                                className="text-xs h-6 px-2"
-                                data-testid="button-copy-link-title"
-                              >
-                                <Copy className="w-3 h-3" />
-                              </Button>
-                            </div>
-                            <Textarea
-                              value={prompt.linkTitle}
-                              onChange={(e) => handleFieldChange(prompt.id, 'linkTitle', e.target.value)}
-                              className="min-h-16 text-sm resize-none"
-                              placeholder="Button text for links…"
-                              data-testid="input-link-title"
-                            />
-                          </div>
-
-                          {/* Link You Will Send */}
-                          <div className="p-3 border-r border-gray-100">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => copyToClipboard(prompt.linkUrl, "Link URL")}
-                                className="text-xs h-6 px-2"
-                                data-testid="button-copy-link-url"
-                              >
-                                <Copy className="w-3 h-3" />
-                              </Button>
-                            </div>
-                            <Textarea
-                              value={prompt.linkUrl}
-                              onChange={(e) => handleFieldChange(prompt.id, 'linkUrl', e.target.value)}
-                              className="min-h-16 text-sm resize-none"
-                              placeholder="Link URL…"
-                              data-testid="input-link-url"
-                            />
-                          </div>
-
-                          {/* Follow Up DM */}
-                          <div className="p-3 border-r border-gray-100">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => copyToClipboard(prompt.followUpDM, "Follow up DM")}
-                                className="text-xs h-6 px-2"
-                                data-testid="button-copy-follow-up-dm"
-                              >
-                                <Copy className="w-3 h-3" />
-                              </Button>
-                            </div>
-                            <Textarea
-                              value={prompt.followUpDM}
-                              onChange={(e) => handleFieldChange(prompt.id, 'followUpDM', e.target.value)}
-                              className="min-h-16 text-sm resize-none"
-                              placeholder="Nurture message…"
-                              data-testid="input-follow-up-dm"
-                            />
-                          </div>
-
-                          {/* Actions */}
-                          <div className="p-3 flex items-center justify-center">
-                            {!isPlaceholder && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => deletePrompt(prompt.id!)}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                data-testid={`button-delete-prompt-${prompt.id}`}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
+                  {/* Table Rows */}
+                  {prompts.map((prompt, index) => (
+                    <div key={index} className="group relative">
+                      <div className="grid grid-cols-8 gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg mb-4 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+                        
+                        {/* Trigger */}
+                        <div className="relative">
+                          <Textarea
+                            placeholder="Keyword..."
+                            value={prompt.trigger}
+                            onChange={(e) => updatePrompt(index, 'trigger', e.target.value)}
+                            className="min-h-[80px] resize-none"
+                            data-testid={`input-trigger-${index}`}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(prompt.trigger)}
+                            className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            data-testid={`button-copy-trigger-${index}`}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
                         </div>
-                      );
-                    })}
-                  </div>
+
+                        {/* Automated Reply */}
+                        <div className="relative">
+                          <Textarea
+                            placeholder="First automatic response..."
+                            value={prompt.automatedReply}
+                            onChange={(e) => updatePrompt(index, 'automatedReply', e.target.value)}
+                            className="min-h-[80px] resize-none"
+                            data-testid={`input-automated-reply-${index}`}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(prompt.automatedReply)}
+                            className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            data-testid={`button-copy-automated-reply-${index}`}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+
+                        {/* Opening DM */}
+                        <div className="relative">
+                          <Textarea
+                            placeholder="Your opening DM to a follower that commented on your keyword..."
+                            value={prompt.openingDM}
+                            onChange={(e) => updatePrompt(index, 'openingDM', e.target.value)}
+                            className="min-h-[80px] resize-none"
+                            data-testid={`input-opening-dm-${index}`}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(prompt.openingDM)}
+                            className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            data-testid={`button-copy-opening-dm-${index}`}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+
+                        {/* Button Title */}
+                        <div className="relative">
+                          <Textarea
+                            placeholder="Get them to click for link..."
+                            value={prompt.buttonTitle}
+                            onChange={(e) => updatePrompt(index, 'buttonTitle', e.target.value)}
+                            className="min-h-[80px] resize-none"
+                            data-testid={`input-button-title-${index}`}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(prompt.buttonTitle)}
+                            className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            data-testid={`button-copy-button-title-${index}`}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+
+                        {/* DM with Link */}
+                        <div className="relative">
+                          <Textarea
+                            placeholder="DM you send just above in link..."
+                            value={prompt.dmWithLink}
+                            onChange={(e) => updatePrompt(index, 'dmWithLink', e.target.value)}
+                            className="min-h-[80px] resize-none"
+                            data-testid={`input-dm-with-link-${index}`}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(prompt.dmWithLink)}
+                            className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            data-testid={`button-copy-dm-with-link-${index}`}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+
+                        {/* Link Title */}
+                        <div className="relative">
+                          <Textarea
+                            placeholder="Link title..."
+                            value={prompt.linkTitle}
+                            onChange={(e) => updatePrompt(index, 'linkTitle', e.target.value)}
+                            className="min-h-[80px] resize-none"
+                            data-testid={`input-link-title-${index}`}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(prompt.linkTitle)}
+                            className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            data-testid={`button-copy-link-title-${index}`}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+
+                        {/* Link URL */}
+                        <div className="relative">
+                          <Textarea
+                            placeholder="https://..."
+                            value={prompt.linkUrl}
+                            onChange={(e) => updatePrompt(index, 'linkUrl', e.target.value)}
+                            className="min-h-[80px] resize-none"
+                            data-testid={`input-link-url-${index}`}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(prompt.linkUrl)}
+                            className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            data-testid={`button-copy-link-url-${index}`}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+
+                        {/* Follow Up DM */}
+                        <div className="relative">
+                          <Textarea
+                            placeholder="Follow up message..."
+                            value={prompt.followUpDM}
+                            onChange={(e) => updatePrompt(index, 'followUpDM', e.target.value)}
+                            className="min-h-[80px] resize-none"
+                            data-testid={`input-follow-up-dm-${index}`}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(prompt.followUpDM)}
+                            className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            data-testid={`button-copy-follow-up-dm-${index}`}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Delete Button - Only show if more than one row */}
+                      {prompts.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deletePrompt(index)}
+                          className="absolute -right-10 top-4 h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          data-testid={`button-delete-row-${index}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Add Row Button */}
+                  <Button
+                    onClick={addPrompt}
+                    variant="outline"
+                    className="w-full mt-4"
+                    data-testid="button-add-row"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Another Row
+                  </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
-
-        </div>
+        </main>
       </div>
     </div>
   );
