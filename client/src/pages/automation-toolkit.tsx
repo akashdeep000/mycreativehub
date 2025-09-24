@@ -82,12 +82,13 @@ export default function AutomationToolkit() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [conflictData, setConflictData] = useState<CheatSheetDoc | null>(null);
+  const [justSaved, setJustSaved] = useState(false);
   
   // Track if user has made any edits to distinguish from initial load
   const hasUserEdited = useRef(false);
   
-  // Debounced rows for autosave (3 second delay)
-  const debouncedRows = useDebounce(rows, 3000);
+  // Debounced rows for autosave (600ms as requested)
+  const debouncedRows = useDebounce(rows, 600);
 
   // Load document from server
   const { data: serverDoc, isLoading: isLoadingDoc, error: loadError } = useQuery({
@@ -114,7 +115,12 @@ export default function AutomationToolkit() {
   // Save mutation with optimistic versioning and conflict resolution
   const saveMutation = useMutation({
     mutationFn: async (rowsToSave: CheatSheetRow[]): Promise<CheatSheetDoc> => {
-      const currentVersion = document?.version || 0;
+      // Don't save if document hasn't loaded yet - prevents version 0 conflicts
+      if (!document) {
+        throw new Error('Document not loaded yet');
+      }
+      
+      const currentVersion = document.version;
       
       const response = await apiRequest('/api/automation/cheatsheet', {
         method: 'PUT',
@@ -125,7 +131,7 @@ export default function AutomationToolkit() {
       });
 
       if (response.status === 409) {
-        // Version conflict - get the conflict data
+        // Version conflict - get the conflict data and implement retry logic
         const conflictResponse = await response.json();
         throw new Error(JSON.stringify({
           type: 'conflict',
@@ -147,21 +153,51 @@ export default function AutomationToolkit() {
       setSaveError(null);
       setConflictData(null);
       
+      // Show "Saved ✓" state for 2 seconds
+      setJustSaved(true);
+      setTimeout(() => setJustSaved(false), 2000);
+      
       // Invalidate the query to ensure consistency
       queryClient.setQueryData(['/api/automation/cheatsheet'], savedDoc);
     },
-    onError: (error: Error) => {
+    onError: async (error: Error) => {
       setIsSaving(false);
       
       try {
         const errorData = JSON.parse(error.message);
         if (errorData.type === 'conflict') {
-          // Handle version conflict
+          // Implement automatic conflict resolution as requested
+          console.log('Version conflict detected, attempting automatic resolution...');
+          
+          // Re-fetch latest document from server
+          const freshDoc = await queryClient.fetchQuery({
+            queryKey: ['/api/automation/cheatsheet'],
+            retry: false
+          }) as CheatSheetDoc;
+          
+          if (freshDoc) {
+            // Update document state with fresh data
+            setDocument(freshDoc);
+            
+            // Merge user's pending changes with fresh document
+            // In this case, we'll use the user's current rows (last-write-wins approach for simplicity)
+            // More sophisticated merging could be implemented if needed
+            
+            // Retry the save with the new version
+            setTimeout(() => {
+              setIsSaving(true);
+              saveMutation.mutate(rows);
+            }, 100);
+            
+            return; // Don't show error, we're auto-retrying
+          }
+          
+          // Fallback: show conflict UI if auto-resolution fails
           setConflictData(errorData.conflict);
-          setSaveError('Document was updated in another window or device. Please resolve the conflict.');
+          setSaveError('Document was updated elsewhere. Auto-retry failed.');
           toast({
-            title: "Sync Conflict",
-            description: "Your document was updated elsewhere. Please review and resolve the conflict.",
+            title: "Sync Conflict", 
+            description: "Document updated elsewhere. Please refresh the page.",
             variant: "destructive"
           });
           return;
@@ -181,7 +217,8 @@ export default function AutomationToolkit() {
 
   // Autosave when debounced rows change
   useEffect(() => {
-    if (hasUnsavedChanges && hasUserEdited.current && !isSaving && !conflictData) {
+    // Wait for document to load before attempting saves
+    if (hasUnsavedChanges && hasUserEdited.current && !isSaving && !conflictData && document) {
       // Check if any row has content
       const hasContent = debouncedRows.some(row => 
         Object.values(row).some(value => value.trim().length > 0)
@@ -193,7 +230,7 @@ export default function AutomationToolkit() {
         saveMutation.mutate(debouncedRows);
       }
     }
-  }, [debouncedRows, hasUnsavedChanges, isSaving, conflictData]);
+  }, [debouncedRows, hasUnsavedChanges, isSaving, conflictData, document]);
 
   // Update row field
   const updateRow = useCallback((index: number, field: keyof CheatSheetRow, value: string) => {
@@ -205,6 +242,7 @@ export default function AutomationToolkit() {
     });
     setHasUnsavedChanges(true);
     setSaveError(null);
+    setJustSaved(false); // Clear saved state when user starts editing
   }, []);
 
   // Add new row
@@ -383,20 +421,36 @@ export default function AutomationToolkit() {
           )}
 
           {/* Save Status */}
-          {(hasUnsavedChanges || isSaving || saveError) && !conflictData && (
+          {(hasUnsavedChanges || isSaving || saveError || justSaved) && !conflictData && (
             <div className={`mb-4 p-3 border rounded-lg ${
               saveError 
                 ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' 
+                : justSaved
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                 : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
             }`}>
               <div className="flex items-center gap-2">
-                <Zap className={`h-4 w-4 ${
-                  saveError ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'
-                }`} />
+                {saveError ? (
+                  <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                ) : justSaved ? (
+                  <Zap className="h-4 w-4 text-green-600 dark:text-green-400" />
+                ) : (
+                  <Zap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                )}
                 <span className={`text-sm ${
-                  saveError ? 'text-red-700 dark:text-red-300' : 'text-blue-700 dark:text-blue-300'
+                  saveError 
+                    ? 'text-red-700 dark:text-red-300' 
+                    : justSaved
+                    ? 'text-green-700 dark:text-green-300'
+                    : 'text-blue-700 dark:text-blue-300'
                 }`}>
-                  {saveError || (isSaving ? "Saving changes..." : "Changes will be saved automatically")}
+                  {saveError || (
+                    justSaved 
+                      ? "Saved ✓" 
+                      : isSaving 
+                      ? "Saving changes..." 
+                      : "Changes will be saved automatically"
+                  )}
                 </span>
               </div>
             </div>
