@@ -84,11 +84,16 @@ export default function AutomationToolkit() {
     },
   });
 
-  // Initialize with single empty row only
+  // Initialize with server data OR single empty row
   useEffect(() => {
     if (serverPrompts && Array.isArray(serverPrompts)) {
-      // Always start with just one empty row
-      setPrompts([createEmptyPrompt()]);
+      if (serverPrompts.length > 0) {
+        // Load saved prompts from server
+        setPrompts(serverPrompts);
+      } else {
+        // No saved prompts, start with single empty row
+        setPrompts([createEmptyPrompt()]);
+      }
     }
   }, [serverPrompts]);
 
