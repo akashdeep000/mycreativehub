@@ -347,7 +347,7 @@ export default function SocialMediaStrategy() {
                       </div>
                       <div>
                         <Label htmlFor={`pillar-cta-${pillar.id}`} className="text-sm text-gray-600">
-                          Where do you want this pillar to send people?
+                          Call-to-Action (where do you want this pillar to send people?)
                         </Label>
                         <Input
                           id={`pillar-cta-${pillar.id}`}
