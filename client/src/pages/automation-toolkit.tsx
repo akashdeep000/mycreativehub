@@ -67,7 +67,7 @@ export default function AutomationToolkit() {
   const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   
-  // Simple state
+  // Simple state - start with single empty row
   const [prompts, setPrompts] = useState<Prompt[]>([createEmptyPrompt()]);
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -84,12 +84,10 @@ export default function AutomationToolkit() {
     },
   });
 
-  // Initialize with server data - load ALL saved prompts
+  // Initialize with single empty row only
   useEffect(() => {
-    if (serverPrompts && Array.isArray(serverPrompts) && serverPrompts.length > 0) {
-      // Load ALL saved prompts so user doesn't lose data
-      setPrompts(serverPrompts);
-    } else if (serverPrompts && Array.isArray(serverPrompts) && serverPrompts.length === 0) {
+    if (serverPrompts && Array.isArray(serverPrompts)) {
+      // Always start with just one empty row
       setPrompts([createEmptyPrompt()]);
     }
   }, [serverPrompts]);
@@ -534,7 +532,7 @@ export default function AutomationToolkit() {
                     data-testid="button-add-row"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Another Row
+                    Add New Prompt
                   </Button>
                 </div>
               </div>
