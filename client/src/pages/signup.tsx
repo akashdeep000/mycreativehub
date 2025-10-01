@@ -63,7 +63,7 @@ export default function SignUp() {
       
       // Store JWT token in localStorage
       if (responseData.token) {
-        localStorage.setItem('authToken', responseData.token);
+        localStorage.setItem('token', responseData.token);
       }
 
       toast({

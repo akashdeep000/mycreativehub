@@ -28,7 +28,7 @@ export default function Dashboard() {
   useEffect(() => {
     // Only redirect if we're definitely not loading and definitely not authenticated
     // Also check if there's a token in localStorage - if there is, don't redirect yet
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token');
     if (!isLoading && !isAuthenticated && !token) {
       toast({
         title: "Unauthorized",

@@ -78,14 +78,14 @@ export default function MonthlyContentCalendar() {
     queryKey: ['/api/persistent/monthly-content-calendar', year, month],
     queryFn: async () => {
       console.log('Frontend Query - Token check:', {
-        tokenExists: !!localStorage.getItem('authToken'),
-        tokenLength: localStorage.getItem('authToken')?.length,
-        tokenPreview: localStorage.getItem('authToken')?.substring(0, 30) + '...',
+        tokenExists: !!localStorage.getItem('token'),
+        tokenLength: localStorage.getItem('token')?.length,
+        tokenPreview: localStorage.getItem('token')?.substring(0, 30) + '...',
         url: `/api/persistent/monthly-content-calendar/${year}/${month}`
       });
       
       const response = await fetch(`/api/persistent/monthly-content-calendar/${year}/${month}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       
       if (!response.ok) {
@@ -125,9 +125,9 @@ export default function MonthlyContentCalendar() {
       });
       
       console.log('Frontend API - Token check:', {
-        tokenExists: !!localStorage.getItem('authToken'),
-        tokenLength: localStorage.getItem('authToken')?.length,
-        tokenPreview: localStorage.getItem('authToken')?.substring(0, 30) + '...',
+        tokenExists: !!localStorage.getItem('token'),
+        tokenLength: localStorage.getItem('token')?.length,
+        tokenPreview: localStorage.getItem('token')?.substring(0, 30) + '...',
         url: '/api/persistent/monthly-content-calendar',
         method: 'PUT'
       });
