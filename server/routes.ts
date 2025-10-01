@@ -2526,7 +2526,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         doc = await storage.seedCheatSheetDoc(userId);
       }
       
-      res.json(doc);
+      // Transform to frontend-expected format
+      const data = doc.data as any;
+      const transformed = {
+        id: doc.userId,
+        version: doc.version,
+        rows: data.rows || [],
+        updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString()
+      };
+      
+      res.json(transformed);
     } catch (error) {
       console.error('Error fetching cheat sheet document:', error);
       res.status(500).json({ message: 'Failed to fetch cheat sheet document' });
@@ -2543,8 +2552,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Attempt optimistic update
       const result = await storage.updateCheatSheetDocOptimistic(userId, version, rows);
       
-      if (result.success) {
-        res.json(result.doc);
+      if (result.success && result.doc) {
+        // Transform to frontend-expected format
+        const data = result.doc.data as any;
+        const transformed = {
+          id: result.doc.userId,
+          version: result.doc.version,
+          rows: data.rows || [],
+          updatedAt: result.doc.updatedAt?.toISOString() || new Date().toISOString()
+        };
+        res.json(transformed);
       } else {
         // Version conflict - return 409 with current state
         res.status(409).json({

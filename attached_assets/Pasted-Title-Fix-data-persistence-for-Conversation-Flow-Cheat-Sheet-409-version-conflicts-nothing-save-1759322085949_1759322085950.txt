@@ -1,0 +1,117 @@
+Title: Fix data persistence for “Conversation Flow Cheat Sheet” (409 version conflicts; nothing saves)
+
+Context / Evidence
+
+Feature: Automation Toolkit → Conversation Flow Cheat Sheet.
+
+Symptom: Typing into any cell shows “Saving changes…” forever. On refresh, data is lost.
+
+DevTools → Network: repeated PUT /api/automation/cheatsheet returning 409 Conflict.
+
+Example response body shows:
+{"message":"Version conflict - document","conflict":{"version":1,"rows":[...]}}
+
+Replit Database Studio:
+
+Table cheat_sheet_docs exists, but row doesn’t update for my user_id when I edit a cell.
+
+Conclusion: Backend is using optimistic versioning, but the frontend is sending a stale version or not updating it after a server save. The server rejects with 409, so nothing ever persists.
+
+Goal
+Make the Cheat Sheet persist per-user to Postgres (cheat_sheet_docs) with proper optimistic concurrency:
+
+Edits autosave (debounced), 409s are handled (refetch latest, merge/overwrite, retry once).
+
+UI shows Saving… → Saved ✓ (or Error).
+
+Data is visible in Database Studio and survives reload.
+
+Required changes (do this exactly)
+
+Backend (API)
+
+Endpoint: PUT /api/automation/cheatsheet
+
+Accept payload { rows: CheatSheetRow[], version: number }.
+
+Implement conditional upsert with optimistic locking:
+
+If no row for user_id: insert { user_id, data: rows, version: 1 } and return {version: 1, rows}.
+
+If row exists: update only when incoming version matches DB version; increment to version + 1; return {version: newVersion, rows}.
+
+If versions don’t match: return 409 with { message: 'VERSION_CONFLICT', server: {version, rows} }.
+
+Return the new version after every successful save.
+
+Add simple server logs for saves and 409s to aid debugging.
+
+Frontend (Cheat Sheet component)
+
+On load (GET /api/automation/cheatsheet), store {rows, version}.
+
+On edit:
+
+Debounce saves (e.g., 500–800ms) to avoid flooding.
+
+Send PUT with current {rows, version}.
+
+If 200: update local version with the server’s version, show Saved ✓.
+
+If 409:
+
+Refetch server {rows, version}.
+
+Merge strategy: keep my latest edits (client wins) over server data for the same cells.
+
+Retry PUT once with the fresh version.
+
+If it still fails, show a small “Couldn’t save due to a conflict” message and stop the spinner.
+
+Prevent infinite “Saving…”—always resolve to Saved or Error.
+
+Do not use localStorage for final state; only use it as a temporary buffer if the user goes offline (optional).
+
+Schema / Table
+
+Use table cheat_sheet_docs with columns:
+user_id (varchar PK or unique), data (jsonb), version (int), updated_at (timestamp).
+If different, migrate or adapt DAO, but document changes in README.
+
+Developer notes / docs
+
+Add a short README section: where the code lives (files touched), the save flow, and how to reproduce/verify.
+
+Acceptance criteria (must all pass)
+
+Typing ZZZ123 in the first cell:
+
+Network shows one debounced PUT returning 200.
+
+Database Studio → cheat_sheet_docs: row for my user_id updates; data contains ZZZ123; version increments.
+
+Reload the page: ZZZ123 is still there.
+
+Induce a conflict (open two tabs, type in both):
+
+One tab gets 409, automatically refetches, retries, and ends in Saved ✓.
+
+No permanent reliance on localStorage for saved state.
+
+Spinner never hangs indefinitely.
+
+Where to look (probable files)
+
+Frontend: Cheat Sheet component / autosave hook (e.g., AutomationCheatSheet.tsx or similar).
+
+Backend: route/controller for /api/automation/cheatsheet and DAO for cheat_sheet_docs.
+
+Please show in the plan:
+
+The exact API response shapes (success & 409).
+
+The debounced save logic.
+
+The SQL (or query builder) conditional update (optimistic lock) you’ll use.
+
+How you tested: a quick sequence (type → PUT 200 → DB row updated → refresh shows value).
