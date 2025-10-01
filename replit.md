@@ -8,7 +8,7 @@ This full-stack web application serves as a comprehensive digital workspace for 
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (Updated: September 24, 2025)
+## Recent Changes (Updated: October 1, 2025)
 
 ### Conversation Flow Cheat Sheet - Bulletproof Implementation
 - **Requirement**: Develop comprehensive cheat sheet component with single-document persistence, optimistic versioning, server-side seed-once functionality, and robust conflict resolution for zero data loss
@@ -16,11 +16,13 @@ Preferred communication style: Simple, everyday language.
   - **Database Layer**: Created `cheat_sheet_docs` table with PRIMARY KEY on user_id ensuring single document per user, proper defaults (version=1), NOT NULL constraints, and foreign key relationships
   - **Storage Layer**: Implemented robust optimistic concurrency control with atomic version checks, conflict detection when UPDATE affects 0 rows, graceful error handling, and conflict data return
   - **API Layer**: Added GET/PUT endpoints at `/api/automation/cheatsheet` with JWT authentication, 409 status codes on version conflicts, Zod request validation, and comprehensive error handling
-  - **Frontend Implementation**: Complete rebuild of automation-toolkit.tsx with single-document model, 3-second debounced autosave, comprehensive conflict resolution UI with visual banner, form blocking during conflicts, both "Use Server Version" & "Keep My Changes" resolution options, autosave pausing during conflicts, Query cache synchronization, and toast notifications
+  - **Frontend Implementation**: Complete rebuild of automation-toolkit.tsx with single-document model, 600ms debounced autosave, comprehensive conflict resolution UI with visual banner, form blocking during conflicts, both "Use Server Version" & "Keep My Changes" resolution options, autosave pausing during conflicts, Query cache synchronization, and toast notifications
   - **Data Integrity**: Zero data loss through optimistic versioning preventing overwrites, conflict detection at database level, user-controlled resolution with clear options, automatic retry mechanisms, and local edit preservation during conflicts
   - **Architecture**: Single document per user with JSON data structure containing version control and row arrays, optimistic conflict resolution system, server-side seed-once functionality, and bulletproof persistence across navigation and devices
+  - **All 8 Fields Persist Correctly**: trigger, automatedReply, openingDM, buttonTitle, dmWithLink, linkTitle, linkUrl, followUpDM all save and load with proper database transformation
+- **Authentication Required**: Users must be logged in (JWT token in localStorage) for data to persist - all API endpoints are protected by authentication middleware
 - **Status**: ✅ COMPLETED - Production-ready cheat sheet system with bulletproof data integrity and comprehensive conflict resolution
-- **Date**: September 24, 2025
+- **Date**: October 1, 2025
 
 ## Previous Changes (Updated: August 20, 2025)
 
