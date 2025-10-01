@@ -122,6 +122,16 @@ export default function AutomationToolkit() {
       
       const currentVersion = document.version;
       
+      // Debug logging - trace followUpDM through save
+      console.log('[CHEAT SHEET DEBUG] Saving rows:', rowsToSave);
+      rowsToSave.forEach((row, idx) => {
+        console.log(`[CHEAT SHEET DEBUG] Row ${idx}:`, {
+          followUpDM: row.followUpDM,
+          followUpDMLength: row.followUpDM?.length,
+          allFields: Object.keys(row)
+        });
+      });
+      
       const response = await apiRequest('/api/automation/cheatsheet', {
         method: 'PUT',
         body: JSON.stringify({
