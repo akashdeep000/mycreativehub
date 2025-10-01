@@ -122,16 +122,6 @@ export default function AutomationToolkit() {
       
       const currentVersion = document.version;
       
-      // Debug logging - trace followUpDM through save
-      console.log('[CHEAT SHEET DEBUG] Saving rows:', rowsToSave);
-      rowsToSave.forEach((row, idx) => {
-        console.log(`[CHEAT SHEET DEBUG] Row ${idx}:`, {
-          followUpDM: row.followUpDM,
-          followUpDMLength: row.followUpDM?.length,
-          allFields: Object.keys(row)
-        });
-      });
-      
       const response = await apiRequest('/api/automation/cheatsheet', {
         method: 'PUT',
         body: JSON.stringify({
@@ -172,6 +162,19 @@ export default function AutomationToolkit() {
     },
     onError: async (error: Error) => {
       setIsSaving(false);
+      
+      // Check for authentication errors first (server returns 401/403 when not logged in)
+      if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Unauthorized') || error.message.includes('No token')) {
+        setSaveError('❌ Not logged in - changes will NOT save!');
+        setHasUnsavedChanges(false); // Clear unsaved flag to stop retry loop
+        toast({
+          title: "❌ Not Logged In",
+          description: "You must be logged in to save changes. Please log in first!",
+          variant: "destructive",
+          duration: 10000
+        });
+        return;
+      }
       
       try {
         const errorData = JSON.parse(error.message);
