@@ -91,6 +91,7 @@ export default function AutomationToolkit() {
   const rowsRef = useRef(rows);
   const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
   const documentRef = useRef(document);
+  const saveMutationRef = useRef<any>(null);
   
   // Debounced rows for autosave (600ms as requested)
   const debouncedRows = useDebounce(rows, 600);
@@ -238,7 +239,8 @@ export default function AutomationToolkit() {
     rowsRef.current = rows;
     hasUnsavedChangesRef.current = hasUnsavedChanges;
     documentRef.current = document;
-  }, [rows, hasUnsavedChanges, document]);
+    saveMutationRef.current = saveMutation;
+  }, [rows, hasUnsavedChanges, document, saveMutation]);
 
   // Autosave when debounced rows change
   useEffect(() => {
@@ -262,15 +264,15 @@ export default function AutomationToolkit() {
     return () => {
       // Cleanup function only runs on ACTUAL unmount (empty dependency array)
       // Use refs to get latest values without triggering this effect on every keystroke
-      if (hasUnsavedChangesRef.current && hasUserEdited.current && documentRef.current) {
+      if (hasUnsavedChangesRef.current && hasUserEdited.current && documentRef.current && saveMutationRef.current) {
         // Check if any row has content
         const hasContent = rowsRef.current.some(row => 
           Object.values(row).some(value => value.trim().length > 0)
         );
         
         if (hasContent) {
-          // Save immediately using the current (non-debounced) rows
-          saveMutation.mutate(rowsRef.current);
+          // Save immediately using the current (non-debounced) rows and latest mutation
+          saveMutationRef.current.mutate(rowsRef.current);
         }
       }
     };
