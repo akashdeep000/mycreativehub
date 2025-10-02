@@ -245,6 +245,24 @@ export default function AutomationToolkit() {
     }
   }, [debouncedRows, hasUnsavedChanges, isSaving, conflictData, document]);
 
+  // Save immediately on unmount if there are unsaved changes (prevents lost edits when navigating away)
+  useEffect(() => {
+    return () => {
+      // Cleanup function runs when component unmounts
+      if (hasUnsavedChanges && hasUserEdited.current && document) {
+        // Check if any row has content
+        const hasContent = rows.some(row => 
+          Object.values(row).some(value => value.trim().length > 0)
+        );
+        
+        if (hasContent) {
+          // Save immediately using the current (non-debounced) rows
+          saveMutation.mutate(rows);
+        }
+      }
+    };
+  }, [hasUnsavedChanges, rows, document]);
+
   // Update row field
   const updateRow = useCallback((index: number, field: keyof CheatSheetRow, value: string) => {
     hasUserEdited.current = true;
