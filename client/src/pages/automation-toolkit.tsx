@@ -87,6 +87,11 @@ export default function AutomationToolkit() {
   // Track if user has made any edits to distinguish from initial load
   const hasUserEdited = useRef(false);
   
+  // Refs for save-on-unmount (to avoid running cleanup on every keystroke)
+  const rowsRef = useRef(rows);
+  const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
+  const documentRef = useRef(document);
+  
   // Debounced rows for autosave (600ms as requested)
   const debouncedRows = useDebounce(rows, 600);
 
@@ -228,6 +233,13 @@ export default function AutomationToolkit() {
     }
   });
 
+  // Keep refs updated with latest values (for save-on-unmount)
+  useEffect(() => {
+    rowsRef.current = rows;
+    hasUnsavedChangesRef.current = hasUnsavedChanges;
+    documentRef.current = document;
+  }, [rows, hasUnsavedChanges, document]);
+
   // Autosave when debounced rows change
   useEffect(() => {
     // Wait for document to load before attempting saves
@@ -248,20 +260,21 @@ export default function AutomationToolkit() {
   // Save immediately on unmount if there are unsaved changes (prevents lost edits when navigating away)
   useEffect(() => {
     return () => {
-      // Cleanup function runs when component unmounts
-      if (hasUnsavedChanges && hasUserEdited.current && document) {
+      // Cleanup function only runs on ACTUAL unmount (empty dependency array)
+      // Use refs to get latest values without triggering this effect on every keystroke
+      if (hasUnsavedChangesRef.current && hasUserEdited.current && documentRef.current) {
         // Check if any row has content
-        const hasContent = rows.some(row => 
+        const hasContent = rowsRef.current.some(row => 
           Object.values(row).some(value => value.trim().length > 0)
         );
         
         if (hasContent) {
           // Save immediately using the current (non-debounced) rows
-          saveMutation.mutate(rows);
+          saveMutation.mutate(rowsRef.current);
         }
       }
     };
-  }, [hasUnsavedChanges, rows, document]);
+  }, []); // Empty array = cleanup only runs on actual unmount
 
   // Update row field
   const updateRow = useCallback((index: number, field: keyof CheatSheetRow, value: string) => {
