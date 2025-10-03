@@ -744,7 +744,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       }))
     }));
     
-    debouncedSave();
+    setDirtyCategories(true);
   };
 
   const updateColourTagColor = async (tagId: string, newColor: string) => {
@@ -794,7 +794,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       }))
     }));
     
-    debouncedSave();
+    setDirtyCategories(true);
     
     toast({ title: "New tag created successfully", variant: "default" });
   };
