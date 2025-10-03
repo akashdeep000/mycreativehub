@@ -2866,6 +2866,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Default Time Blocking Color Keys
+  const DEFAULT_TIME_BLOCKING_COLOR_KEYS = [
+    { id: 'tb-1', label: 'Deep Work', color: '#3B82F6' },
+    { id: 'tb-2', label: 'Filming', color: '#10B981' },
+    { id: 'tb-3', label: 'Editing', color: '#8B5CF6' },
+    { id: 'tb-4', label: 'Email Marketing', color: '#F59E0B' },
+    { id: 'tb-5', label: 'Social Scheduling', color: '#EF4444' },
+    { id: 'tb-6', label: 'Listing Work', color: '#14B8A6' },
+    { id: 'tb-7', label: 'Admin/Ops', color: '#EC4899' },
+    { id: 'tb-8', label: 'Finance', color: '#6366F1' },
+    { id: 'tb-9', label: 'Product Dev', color: '#F97316' },
+    { id: 'tb-10', label: 'Packing/Shipping', color: '#8B5CF6' },
+    { id: 'tb-11', label: 'Creation Time', color: '#A855F7' },
+  ];
+
+  // Time Blocking Color Keys API Routes
+  app.get('/api/time-blocking-color-keys', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      console.log(`Time Blocking Color Keys GET - User: ${userId}`);
+      
+      // Get global color keys for this user
+      let colorKeys = await storage.getTimeBlockingColorKeys(userId);
+      
+      // If no keys exist, seed defaults
+      if (!colorKeys) {
+        console.log('Time Blocking Color Keys - No keys found, seeding defaults');
+        
+        colorKeys = await storage.upsertTimeBlockingColorKeys({
+          userId,
+          colorKeys: DEFAULT_TIME_BLOCKING_COLOR_KEYS,
+        });
+      }
+      
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({
+        colorKeys: colorKeys.colorKeys || [],
+      });
+    } catch (error) {
+      console.error('Error fetching time blocking color keys:', error);
+      res.status(500).json({ message: 'Failed to fetch color keys' });
+    }
+  });
+
+  app.put('/api/time-blocking-color-keys', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { colorKeys } = req.body;
+      
+      console.log(`Time Blocking Color Keys PUT - User: ${userId}, Keys: ${colorKeys?.length || 0}`);
+      
+      const updated = await storage.upsertTimeBlockingColorKeys({
+        userId,
+        colorKeys: colorKeys || [],
+      });
+      
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({
+        colorKeys: updated.colorKeys || [],
+      });
+    } catch (error) {
+      console.error('Error saving time blocking color keys:', error);
+      res.status(500).json({ message: 'Failed to save color keys' });
+    }
+  });
+
   // Time Blocking Events API Routes
   app.get('/api/time-blocking-events', jwtAuth, async (req: any, res) => {
     try {
