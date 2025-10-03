@@ -99,7 +99,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const month = currentDate.getMonth() + 1;
   
   // Query TIME BLOCKING color keys (not calendar!)
-  const { data: timeBlockingColorData } = useQuery({
+  const { data: timeBlockingColorData, isLoading: colorKeysLoading } = useQuery({
     queryKey: ['/api/time-blocking-color-keys'],
     queryFn: async () => {
       const response = await apiRequest(`/api/time-blocking-color-keys`);
@@ -108,8 +108,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     staleTime: 1000 * 60 * 5 // 5 minute cache
   });
 
-  // Get color keys from time blocking data
-  const colorKeys = timeBlockingColorData?.colorKeys || initialData.colourTags;
+  // Get color keys ONLY from the API (don't use stale initialData)
+  const colorKeys = timeBlockingColorData?.colorKeys || [];
   
   // Update component data when parent provides new data
   useEffect(() => {
