@@ -150,7 +150,7 @@ export default function MonthlyContentCalendarV3() {
   const saveCalendarData = useMutation({
     mutationFn: (data: { year: number; month: number; colorKeys: ColorKey[]; days: CalendarDay[] }) => {
       setSaveStatus('saving');
-      return apiRequest('/api/calendar-v3', {
+      return apiRequest(`/api/calendar-v3/${data.year}/${data.month}`, {
         method: 'PUT',
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' },
@@ -162,6 +162,7 @@ export default function MonthlyContentCalendarV3() {
     },
     onError: (error) => {
       console.error('Save error:', error);
+      console.error('Error details:', { year, month, colorKeysCount: colorKeys.length });
       setSaveStatus('idle');
       toast({ title: "Failed to save calendar", variant: "destructive" });
       queryClient.invalidateQueries({ queryKey: ['/api/calendar-v3', year, month] });
