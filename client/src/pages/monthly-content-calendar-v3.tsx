@@ -66,6 +66,7 @@ export default function MonthlyContentCalendarV3() {
   const [isCreatingNewTag, setIsCreatingNewTag] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#FF6B9D');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
@@ -147,21 +148,22 @@ export default function MonthlyContentCalendarV3() {
   }, 1000);
 
   const saveCalendarData = useMutation({
-    mutationFn: (data: { year: number; month: number; colorKeys: ColorKey[]; days: CalendarDay[] }) =>
-      apiRequest('/api/calendar-v3', {
+    mutationFn: (data: { year: number; month: number; colorKeys: ColorKey[]; days: CalendarDay[] }) => {
+      setSaveStatus('saving');
+      return apiRequest('/api/calendar-v3', {
         method: 'PUT',
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' },
-      }),
+      });
+    },
     onSuccess: () => {
-      // Silent save - no toast notification for cleaner UX
-      // Don't invalidate query immediately to prevent race condition
-      // The optimistic updates should be sufficient
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
     },
     onError: (error) => {
       console.error('Save error:', error);
+      setSaveStatus('idle');
       toast({ title: "Failed to save calendar", variant: "destructive" });
-      // Only refetch on error to restore the correct state
       queryClient.invalidateQueries({ queryKey: ['/api/calendar-v3', year, month] });
     },
   });
@@ -188,7 +190,14 @@ export default function MonthlyContentCalendarV3() {
     // Update the calendar data
     const updatedData = { ...(calendarData as any), colorKeys: updatedColorKeys };
     queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
-    debouncedSave();
+    
+    // Save immediately for color key changes
+    saveCalendarData.mutate({
+      year,
+      month,
+      colorKeys: updatedData.colorKeys,
+      days: updatedData.days,
+    });
   };
 
   const addCalendarEntry = (date: number, colorKeyId: string) => {
@@ -286,7 +295,14 @@ export default function MonthlyContentCalendarV3() {
       const updatedColorKeys = [...colorKeys, newKey];
       const updatedData = { ...(calendarData as any), colorKeys: updatedColorKeys };
       queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
-      debouncedSave();
+      
+      // Save immediately for color key changes
+      saveCalendarData.mutate({
+        year,
+        month,
+        colorKeys: updatedData.colorKeys,
+        days: updatedData.days,
+      });
       
       toast({ title: "New tag created successfully", variant: "default" });
       setIsCreatingNewTag(false);
@@ -305,7 +321,15 @@ export default function MonthlyContentCalendarV3() {
     const updatedColorKeys = colorKeys.filter(key => key.id !== keyId);
     const updatedData = { ...(calendarData as any), colorKeys: updatedColorKeys };
     queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
-    debouncedSave();
+    
+    // Save immediately for color key changes
+    saveCalendarData.mutate({
+      year,
+      month,
+      colorKeys: updatedData.colorKeys,
+      days: updatedData.days,
+    });
+    
     toast({ title: "Tag deleted successfully", variant: "default" });
   };
 
@@ -315,7 +339,15 @@ export default function MonthlyContentCalendarV3() {
     );
     const updatedData = { ...(calendarData as any), colorKeys: updatedColorKeys };
     queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
-    debouncedSave();
+    
+    // Save immediately for color key changes
+    saveCalendarData.mutate({
+      year,
+      month,
+      colorKeys: updatedData.colorKeys,
+      days: updatedData.days,
+    });
+    
     setShowColorPicker(null);
   };
 
@@ -416,8 +448,22 @@ export default function MonthlyContentCalendarV3() {
 
         {/* Color Keys - Time Blocking Style */}
         <div className="bg-white rounded-lg shadow-md border-0 p-6 mb-6">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-3 mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Colour Key</h3>
+            {saveStatus === 'saving' && (
+              <span className="text-sm text-gray-500 flex items-center gap-1">
+                <span className="inline-block w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></span>
+                Saving...
+              </span>
+            )}
+            {saveStatus === 'saved' && (
+              <span className="text-sm text-green-600 flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Saved
+              </span>
+            )}
           </div>
           <p className="text-gray-600 text-sm mb-4">
             Select a colour category, then click a calendar block to apply it. This block will auto-fill with the category name, which you can edit anytime.

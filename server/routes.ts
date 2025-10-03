@@ -2699,30 +2699,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.setHeader('Expires', '0');
         res.json(response);
       } else {
-        // Return default structure for new calendar
-        const defaultResponse = {
+        // Create default calendar in database immediately
+        const defaultColorKeys = [
+          { id: '1', label: 'Email', color: '#3B82F6' },
+          { id: '2', label: 'Reel', color: '#10B981' },
+          { id: '3', label: 'Carousel', color: '#8B5CF6' },
+          { id: '4', label: 'Post', color: '#F59E0B' },
+          { id: '5', label: 'Story', color: '#EF4444' },
+          { id: '6', label: 'YouTube Video', color: '#14B8A6' },
+          { id: '7', label: 'Long Form', color: '#EC4899' },
+          { id: '8', label: 'TikTok', color: '#6366F1' },
+          { id: '9', label: 'Shorts', color: '#F97316' }
+        ];
+        
+        console.log('Calendar V3 GET - Creating new calendar with defaults');
+        
+        // Persist defaults to database immediately
+        const newCalendar = await storage.upsertCalendarV3({
           userId,
           year,
           month,
-          colorKeys: [
-            { id: '1', label: 'Email', color: '#3B82F6' },
-            { id: '2', label: 'Reel', color: '#10B981' },
-            { id: '3', label: 'Carousel', color: '#8B5CF6' },
-            { id: '4', label: 'Post', color: '#F59E0B' },
-            { id: '5', label: 'Story', color: '#EF4444' },
-            { id: '6', label: 'YouTube Video', color: '#14B8A6' },
-            { id: '7', label: 'Long Form', color: '#EC4899' },
-            { id: '8', label: 'TikTok', color: '#6366F1' },
-            { id: '9', label: 'Shorts', color: '#F97316' }
-          ],
+          colorKeys: defaultColorKeys,
           days: []
+        });
+        
+        const response = {
+          userId: newCalendar.userId,
+          year: newCalendar.year,
+          month: newCalendar.month,
+          colorKeys: newCalendar.colorKeys || [],
+          days: newCalendar.days || []
         };
         
-        console.log('Calendar V3 GET - Sending default response');
+        console.log('Calendar V3 GET - Created and sending default calendar:', {
+          id: newCalendar.id,
+          colorKeysCount: response.colorKeys.length
+        });
+        
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
-        res.json(defaultResponse);
+        res.json(response);
       }
     } catch (error) {
       console.error('Error fetching calendar v3:', error);
