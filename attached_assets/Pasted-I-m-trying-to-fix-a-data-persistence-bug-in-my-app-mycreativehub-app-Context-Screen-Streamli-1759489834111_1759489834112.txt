@@ -1,0 +1,29 @@
+I’m trying to fix a data-persistence bug in my app (mycreativehub.app).
+
+Context:
+- Screen: Streamline Your Workflow → Monthly Content Calendar → “Colour Key”.
+- Problem: adding a new tag or editing an existing Colour Key label doesn’t persist. It appears immediately, but after refresh or re-login, changes are gone.
+- Goal: Save Colour Key data permanently to the Postgres (Neon) database under the authenticated user_id, NOT to localStorage or ephemeral state. Changes must survive reloads and re-login.
+- I already fixed a similar persistence issue in “Conversation Flow Cheat Sheet” by saving rows to the DB with versioning and UI feedback (“Saving…” → “Saved ✓”). Do the same level of robustness here.
+
+What to do:
+1) Research the codebase and map the full data path for the Colour Key (UI components, state, API calls, backend handlers, and DB table). Identify where saves currently go (local state/localStorage vs API).
+2) Verify which table is (or should be) used for Colour Key. I see tables like `color_palettes`, `calendar_v3`, and others in the DB. Prefer reusing `color_palettes` scoped by `user_id` if appropriate; otherwise design/confirm the correct table and schema.
+3) Design robust persistence:
+   - Create/confirm API endpoints for create/update/delete Colour Key items.
+   - Persist `{ id, user_id, name/label, colorHex, sortOrder, created_at, updated_at }`.
+   - Use optimistic concurrency or a simple version/updated_at check to avoid 409 conflicts.
+   - Add a 300–500ms debounce on keystrokes; show UI states: “Saving…”, then “Saved ✓”.
+   - On page load, fetch Colour Key from DB by `user_id`. No localStorage fallbacks.
+4) Define acceptance tests:
+   - Add/edit/delete a Colour Key item → refresh → changes still present.
+   - Log out/in → changes still present.
+   - Edits from two tabs don’t clobber each other (last-writer-wins or versioned).
+5) Document everything.
+
+Write all findings and a step-by-step implementation plan to a new file named **Instructions.md** in the repo. Include:
+- Files to change/add (frontend + backend).
+- Table/columns to use (or migration if needed).
+- Precise API contracts (routes, payloads, responses).
+- Error/edge cases (network fail, 409s).
+- Test checklist (manual + any quick unit/integration tests).
