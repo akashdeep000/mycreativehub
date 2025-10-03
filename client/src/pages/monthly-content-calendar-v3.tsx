@@ -284,6 +284,20 @@ export default function MonthlyContentCalendarV3() {
     setEditingKeyValue('');
   };
 
+  // Auto-save when editing color key text (50ms delay)
+  const debouncedEditKeySave = useDebounce((keyId: string, value: string) => {
+    if (value.trim()) {
+      updateColorKey(keyId, { label: value.trim() });
+    }
+  }, 50);
+
+  const handleEditKeyChange = (value: string) => {
+    setEditingKeyValue(value);
+    if (editingKeyId && value.trim()) {
+      debouncedEditKeySave(editingKeyId, value);
+    }
+  };
+
   const addNewCustomTag = () => {
     if (newTagName.trim()) {
       const newKey: ColorKey = {
@@ -517,7 +531,7 @@ export default function MonthlyContentCalendarV3() {
                 {editingKeyId === colorKey.id ? (
                   <Input
                     value={editingKeyValue}
-                    onChange={(e) => setEditingKeyValue(e.target.value)}
+                    onChange={(e) => handleEditKeyChange(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') saveKeyEdit();
                       if (e.key === 'Escape') cancelKeyEdit();
