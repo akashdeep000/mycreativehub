@@ -137,7 +137,7 @@ export default function MonthlyContentCalendarV3() {
   }, [showColorPicker]);
 
   // Debounced save function
-  const debouncedSave = useDebounce(() => {
+  const { debounced: debouncedSave, flush: flushSave } = useDebounce(() => {
     if (!calendarData) return;
     saveCalendarData.mutate({
       year,
@@ -146,6 +146,28 @@ export default function MonthlyContentCalendarV3() {
       days: days
     });
   }, 1000);
+
+  // Flush pending saves on unmount or visibility change
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        flushSave();
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      flushSave();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      flushSave();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [flushSave]);
 
   const saveCalendarData = useMutation({
     mutationFn: (data: { year: number; month: number; colorKeys: ColorKey[]; days: CalendarDay[] }) => {
@@ -286,7 +308,7 @@ export default function MonthlyContentCalendarV3() {
   };
 
   // Auto-save when editing color key text (50ms delay)
-  const debouncedEditKeySave = useDebounce((keyId: string, value: string) => {
+  const { debounced: debouncedEditKeySave } = useDebounce((keyId: string, value: string) => {
     if (value.trim()) {
       updateColorKey(keyId, { label: value.trim() });
     }
