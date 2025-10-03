@@ -479,38 +479,51 @@ export default function AutomationToolkit() {
             </div>
           )}
 
-          {/* Save Status */}
-          {(hasUnsavedChanges || isSaving || saveError || justSaved) && !conflictData && (
-            <div className={`mb-4 p-3 border rounded-lg ${
+          {/* Save Status - Always visible to prevent layout shift */}
+          {!conflictData && (
+            <div className={`mb-4 p-3 border rounded-lg transition-colors ${
               saveError 
                 ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' 
                 : justSaved
                 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                : (hasUnsavedChanges || isSaving)
+                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                : 'bg-gray-50 dark:bg-gray-800/20 border-gray-200 dark:border-gray-700'
             }`}>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 h-5">
                 {saveError ? (
-                  <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  <>
+                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                    <span className="text-sm text-red-700 dark:text-red-300">
+                      {saveError}
+                    </span>
+                  </>
                 ) : justSaved ? (
-                  <Zap className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <>
+                    <Zap className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    <span className="text-sm text-green-700 dark:text-green-300">
+                      Saved ✓
+                    </span>
+                  </>
+                ) : isSaving ? (
+                  <>
+                    <Zap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm text-blue-700 dark:text-blue-300">
+                      Saving changes...
+                    </span>
+                  </>
+                ) : hasUnsavedChanges ? (
+                  <>
+                    <Zap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm text-blue-700 dark:text-blue-300">
+                      Changes will be saved automatically
+                    </span>
+                  </>
                 ) : (
-                  <Zap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    All changes saved
+                  </span>
                 )}
-                <span className={`text-sm ${
-                  saveError 
-                    ? 'text-red-700 dark:text-red-300' 
-                    : justSaved
-                    ? 'text-green-700 dark:text-green-300'
-                    : 'text-blue-700 dark:text-blue-300'
-                }`}>
-                  {saveError || (
-                    justSaved 
-                      ? "Saved ✓" 
-                      : isSaving 
-                      ? "Saving changes..." 
-                      : "Changes will be saved automatically"
-                  )}
-                </span>
               </div>
             </div>
           )}
