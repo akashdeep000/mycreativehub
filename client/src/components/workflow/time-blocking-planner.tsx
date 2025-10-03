@@ -160,7 +160,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       clearTimeout(debouncedSaveColorKeys.current);
     }
     
-    // Save after 50ms
+    // Save after 200ms (enough time to type but fast enough to not lose data)
     debouncedSaveColorKeys.current = setTimeout(() => {
       const colorKeysToSave = colorKeys.map((key: any) => ({
         id: key.id,
@@ -169,7 +169,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       }));
       console.log(`💾 Saving ${colorKeysToSave.length} color keys to database:`, colorKeysToSave.map(k => ({ id: k.id, label: k.label })));
       saveColorKeysMutation.mutate(colorKeysToSave);
-    }, 50);
+    }, 200);
   };
 
 
@@ -914,9 +914,39 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   <Input
                     value={tag.label || ''}
                     onChange={(e) => updateColorKey(tag.id, { label: e.target.value })}
-                    onBlur={() => setEditingColourTag(null)}
+                    onBlur={() => {
+                      // Flush any pending save immediately when user stops editing
+                      if (debouncedSaveColorKeys.current) {
+                        clearTimeout(debouncedSaveColorKeys.current);
+                        const currentData = queryClient.getQueryData<{ colorKeys: any[] }>(['/api/time-blocking-color-keys']);
+                        const currentColorKeys = currentData?.colorKeys || colorKeys;
+                        const colorKeysToSave = currentColorKeys.map((key: any) => ({
+                          id: key.id,
+                          label: key.label || key.label === '' ? key.label : 'Untitled',
+                          color: key.colour || key.color
+                        }));
+                        console.log(`💾 Flushing save on blur: ${colorKeysToSave.length} color keys`);
+                        saveColorKeysMutation.mutate(colorKeysToSave);
+                      }
+                      setEditingColourTag(null);
+                    }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') setEditingColourTag(null);
+                      if (e.key === 'Enter') {
+                        // Flush save immediately on Enter
+                        if (debouncedSaveColorKeys.current) {
+                          clearTimeout(debouncedSaveColorKeys.current);
+                          const currentData = queryClient.getQueryData<{ colorKeys: any[] }>(['/api/time-blocking-color-keys']);
+                          const currentColorKeys = currentData?.colorKeys || colorKeys;
+                          const colorKeysToSave = currentColorKeys.map((key: any) => ({
+                            id: key.id,
+                            label: key.label || key.label === '' ? key.label : 'Untitled',
+                            color: key.colour || key.color
+                          }));
+                          console.log(`💾 Flushing save on Enter: ${colorKeysToSave.length} color keys`);
+                          saveColorKeysMutation.mutate(colorKeysToSave);
+                        }
+                        setEditingColourTag(null);
+                      }
                     }}
                     className="h-6 text-xs w-24"
                     autoFocus
