@@ -1,0 +1,32 @@
+Title: Make Colour Key categories persist to the database (not local) — add/edit/delete must stick across refresh
+
+Problem (production):
+In Streamline Your Workflow → Time Blocking Planner → Monthly Content Planner → Colour Key, when I add a new colour category or edit an existing category’s name, the changes do not persist after I leave the page or refresh. They often revert to the old values or disappear. I need these categories to save permanently to the database, not local storage, and reload reliably.
+
+What I need you to do:
+
+Audit the save/load path for Colour Key and fix persistence so add / edit / delete works for every category.
+
+Ensure the page loads categories from the database on open (no seeding that overwrites user data, no reliance on localStorage as source of truth).
+
+Persist to our production database keyed by the authenticated user_id.
+
+Preserve links from existing calendar blocks to their category (use a stable categoryId; handle renames without breaking blocks).
+
+Handle concurrency safely (e.g., optimistic versioning): no silent conflicts, no duplicate categories on refresh.
+
+Provide clear UI state: “Saving…” then “Saved ✓” (only when the DB write has succeeded). Use a short debounce on typing to avoid chatty writes.
+
+Don’t break the calendar itself or default-category behavior (new blocks should still inherit the active category).
+
+Acceptance tests (how I’ll verify):
+
+Add a new category (name + color), set it active, refresh → category still exists and remains selectable.
+
+Rename an existing category, refresh → blocks that used it still show under the renamed category; no lost assignments.
+
+Delete a category, refresh → category is gone; blocks formerly using it are handled gracefully (either reassigned to a default or clearly marked—no crashes).
+
+Add multiple categories and re-order/activate them, navigate away and back, and log out/in → the exact set/order/labels/colors return for my account.
+
+DevTools shows writes to the server/DB, not only localStorage; no infinite “Saving…” or 409 loops.
