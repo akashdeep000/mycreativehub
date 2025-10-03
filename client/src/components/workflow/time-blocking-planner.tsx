@@ -193,13 +193,13 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         setDirtyCategories(false);
       }
     } else {
-      // Debounce for other changes
+      // Debounce for other changes (50ms for fast save on page exit)
       timer = setTimeout(() => {
         onSave(saveData);
         if (dirtyCategories) {
           setDirtyCategories(false);
         }
-      }, 1000);
+      }, 50);
     }
     
     return () => {
