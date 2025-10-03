@@ -161,40 +161,6 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     console.log(`💾 Saving ${colorKeysToSave.length} color keys immediately:`, colorKeysToSave.map(k => ({ id: k.id, label: k.label })));
     saveColorKeysMutation.mutate(colorKeysToSave);
   };
-  
-  // Flush any pending saves on visibility change or before unload (copying monthly calendar pattern)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        // Get latest color keys from cache and save immediately
-        const currentData = queryClient.getQueryData<{ colorKeys: any[] }>(['/api/time-blocking-color-keys']);
-        if (currentData?.colorKeys) {
-          saveColorKeysImmediately(currentData.colorKeys);
-        }
-      }
-    };
-
-    const handleBeforeUnload = () => {
-      // Get latest color keys from cache and save immediately
-      const currentData = queryClient.getQueryData<{ colorKeys: any[] }>(['/api/time-blocking-color-keys']);
-      if (currentData?.colorKeys) {
-        saveColorKeysImmediately(currentData.colorKeys);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      // Final flush on unmount
-      const currentData = queryClient.getQueryData<{ colorKeys: any[] }>(['/api/time-blocking-color-keys']);
-      if (currentData?.colorKeys) {
-        saveColorKeysImmediately(currentData.colorKeys);
-      }
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [queryClient]);
 
 
   // Migration logic DISABLED - was causing data corruption by creating duplicate IDs
