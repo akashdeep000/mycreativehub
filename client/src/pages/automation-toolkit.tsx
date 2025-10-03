@@ -92,9 +92,6 @@ export default function AutomationToolkit() {
   const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
   const documentRef = useRef(document);
   const saveMutationRef = useRef<any>(null);
-  
-  // Debounced rows for autosave (50ms for near-instant saves)
-  const debouncedRows = useDebounce(rows, 50);
 
   // Load document from server
   const { data: serverDoc, isLoading: isLoadingDoc, error: loadError } = useQuery({
@@ -242,22 +239,22 @@ export default function AutomationToolkit() {
     saveMutationRef.current = saveMutation;
   }, [rows, hasUnsavedChanges, document, saveMutation]);
 
-  // Autosave when debounced rows change
+  // Autosave on every keystroke (no debounce)
   useEffect(() => {
     // Wait for document to load before attempting saves
     if (hasUnsavedChanges && hasUserEdited.current && !isSaving && !conflictData && document) {
       // Check if any row has content
-      const hasContent = debouncedRows.some(row => 
+      const hasContent = rows.some(row => 
         Object.values(row).some(value => value.trim().length > 0)
       );
 
       if (hasContent) {
         setIsSaving(true);
         setSaveError(null);
-        saveMutation.mutate(debouncedRows);
+        saveMutation.mutate(rows);
       }
     }
-  }, [debouncedRows, hasUnsavedChanges, isSaving, conflictData, document]);
+  }, [rows, hasUnsavedChanges, isSaving, conflictData, document]);
 
   // Save immediately on unmount if there are unsaved changes (prevents lost edits when navigating away)
   useEffect(() => {
