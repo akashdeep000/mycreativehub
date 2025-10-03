@@ -98,50 +98,18 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
   
-  // Query calendar data (color keys) using React Query like monthly content planner
-  const { data: calendarData } = useQuery({
-    queryKey: ['/api/calendar-v3', year, month],
+  // Query TIME BLOCKING color keys (not calendar!)
+  const { data: timeBlockingColorData } = useQuery({
+    queryKey: ['/api/time-blocking-color-keys'],
     queryFn: async () => {
-      const response = await apiRequest(`/api/calendar-v3/${year}/${month}`);
+      const response = await apiRequest(`/api/time-blocking-color-keys`);
       return await response.json();
     },
-    staleTime: 0 // Always check for fresh data
+    staleTime: 1000 * 60 * 5 // 5 minute cache
   });
 
-  // Get color keys from calendar data
-  const colorKeys = calendarData?.colorKeys || initialData.colourTags;
-
-  // Debounced save function like monthly content planner
-  const debouncedSave = useDebounce(() => {
-    if (!calendarData) return;
-    saveCalendarData.mutate({
-      year,
-      month,
-      colorKeys: colorKeys,
-      days: calendarData.days || [],
-    });
-  }, 1000);
-
-  // Save mutation like monthly content planner
-  const saveCalendarData = useMutation({
-    mutationFn: (data: { year: number; month: number; colorKeys: any[]; days: any[] }) =>
-      apiRequest('/api/calendar-v3', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      }),
-    onSuccess: () => {
-      console.log('✅ Color keys saved - time blocks handled by TimeBlockingPlanner component');
-    },
-    onError: (error) => {
-      console.error('❌ Failed to save color keys:', error);
-      toast({
-        title: "Save Error",
-        description: "Failed to save color categories. Please try again.",
-        variant: "destructive"
-      });
-    }
-  });
+  // Get color keys from time blocking data
+  const colorKeys = timeBlockingColorData?.colorKeys || initialData.colourTags;
   
   // Update component data when parent provides new data
   useEffect(() => {
@@ -670,68 +638,25 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     return `${displayHour}:00 ${period}`;
   };
 
-  // Colour tag management functions
-  const addColourTag = async () => {
+  // Legacy addColourTag function - now delegates to addNewColorTag
+  const addColourTag = () => {
     if (newColourTagLabel.trim()) {
-      const newTag: ColourTag = {
-        id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        label: newColourTagLabel.trim(),
-        colour: BLOCK_COLOURS[data.colourTags.length % BLOCK_COLOURS.length]
-      };
-
-      // Update state immediately
-      const newColourTags = [...data.colourTags, newTag];
-      setData(prev => ({
-        ...prev,
-        colourTags: newColourTags
-      }));
+      const color = BLOCK_COLOURS[colorKeys.length % BLOCK_COLOURS.length];
+      addNewColorTag(newColourTagLabel.trim(), color);
       setNewColourTagLabel('');
-
-      // Save directly to database immediately
-      try {
-        const currentDate = new Date();
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth() + 1;
-        
-        const colorKeys = newColourTags.map((tag: any) => ({
-          id: tag.id,
-          label: tag.label,
-          color: tag.colour || tag.color
-        }));
-        
-        console.log(`🚀 DIRECT SAVE: Saving ${colorKeys.length} categories immediately...`);
-        
-        const response = await fetch(`/api/calendar-v3/${year}/${month}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            colorKeys: colorKeys
-          })
-        });
-        
-        if (response.ok) {
-          console.log(`✅ DIRECT SAVE: Successfully saved ${colorKeys.length} categories to database!`);
-        } else {
-          console.error('❌ DIRECT SAVE: Failed to save categories:', await response.text());
-        }
-      } catch (error) {
-        console.error('❌ DIRECT SAVE: Error saving categories:', error);
-      }
     }
   };
 
-  // Update color key using the exact pattern from monthly content planner
+  // Update color key - updates cache and triggers save
   const updateColorKey = (id: string, updates: Partial<ColourTag>) => {
     const updatedColorKeys = colorKeys.map((key: any) => 
       key.id === id ? { ...key, ...updates } : key
     );
     
-    // Update the TIME BLOCKING color keys cache (not calendar!)
-    const updatedData = { colorKeys: updatedColorKeys };
-    queryClient.setQueryData(['/api/time-blocking-color-keys'], updatedData);
+    // Update React Query cache immediately for instant UI update
+    queryClient.setQueryData(['/api/time-blocking-color-keys'], { 
+      colorKeys: updatedColorKeys 
+    });
     
     // Also update local state for compatibility
     setData(prev => ({
@@ -744,6 +669,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       }))
     }));
     
+    // Trigger save through parent component
     setDirtyCategories(true);
   };
 
@@ -771,7 +697,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     setShowColorPicker(null);
   };
 
-  // Add new custom color tag using the exact pattern from monthly content planner
+  // Add new custom color tag
   const addNewColorTag = (name: string, color: string) => {
     const newKey = {
       id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -780,8 +706,11 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     };
     
     const updatedColorKeys = [...colorKeys, newKey];
-    const updatedData = { colorKeys: updatedColorKeys };
-    queryClient.setQueryData(['/api/time-blocking-color-keys'], updatedData);
+    
+    // Update React Query cache immediately for instant UI update
+    queryClient.setQueryData(['/api/time-blocking-color-keys'], { 
+      colorKeys: updatedColorKeys 
+    });
     
     // Also update local state for compatibility
     setData(prev => ({
@@ -794,16 +723,19 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       }))
     }));
     
+    // Trigger save through parent component
     setDirtyCategories(true);
     
     toast({ title: "New tag created successfully", variant: "default" });
   };
 
   const deleteColourTag = (tagId: string) => {
-    // Use React Query pattern for deleting like monthly content planner
     const updatedColorKeys = colorKeys.filter((key: any) => key.id !== tagId);
-    const updatedData = { colorKeys: updatedColorKeys };
-    queryClient.setQueryData(['/api/time-blocking-color-keys'], updatedData);
+    
+    // Update React Query cache immediately for instant UI update
+    queryClient.setQueryData(['/api/time-blocking-color-keys'], { 
+      colorKeys: updatedColorKeys 
+    });
     
     // Also update local state for compatibility  
     setData(prev => ({
@@ -823,6 +755,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       }
     }));
     
+    // Trigger save through parent component
     setDirtyCategories(true);
     toast({ title: "Tag deleted successfully", variant: "default" });
   };
