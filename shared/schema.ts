@@ -993,6 +993,24 @@ export const insertCalendarV3Schema = createInsertSchema(calendarV3).omit({
 export type CalendarV3 = typeof calendarV3.$inferSelect;
 export type InsertCalendarV3 = z.infer<typeof insertCalendarV3Schema>;
 
+// Global Color Keys - Single source of truth for color keys per user (shared across all months)
+export const globalColorKeys = pgTable("global_color_keys", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id).unique(),
+  colorKeys: jsonb("color_keys").$type<ColorKeyV3[]>().notNull().default(sql`'[]'::jsonb`),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertGlobalColorKeysSchema = createInsertSchema(globalColorKeys).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type GlobalColorKeys = typeof globalColorKeys.$inferSelect;
+export type InsertGlobalColorKeys = z.infer<typeof insertGlobalColorKeysSchema>;
+
 // Automation Prompts V2 - Conversation flow cheat sheet with 8 fields
 export const automationPrompts = pgTable("automation_prompts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

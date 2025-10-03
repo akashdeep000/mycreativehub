@@ -43,6 +43,7 @@ import {
   focusSessionLogs,
   calendarV2,
   calendarV3,
+  globalColorKeys,
   timeBlockingEvents,
   cheatSheetDocs,
   type CourseWhitelist,
@@ -125,6 +126,8 @@ import {
   type CalendarV2,
   type CalendarV3,
   type InsertCalendarV3,
+  type GlobalColorKeys,
+  type InsertGlobalColorKeys,
   type TimeBlockingEvent,
   type InsertTimeBlockingEvent,
   type ColorKeyV3,
@@ -329,6 +332,10 @@ export interface IStorage {
   // Calendar V3 Operations
   getCalendarV3(userId: string, year: number, month: number): Promise<CalendarV3 | undefined>;
   upsertCalendarV3(data: InsertCalendarV3): Promise<CalendarV3>;
+  
+  // Global Color Keys Operations (shared across all months)
+  getGlobalColorKeys(userId: string): Promise<GlobalColorKeys | undefined>;
+  upsertGlobalColorKeys(data: InsertGlobalColorKeys): Promise<GlobalColorKeys>;
   
   // Time Blocking Events Operations
   getTimeBlockingEvents(userId: string, startDate: Date, endDate: Date): Promise<TimeBlockingEvent[]>;
@@ -1915,6 +1922,35 @@ export class DatabaseStorage implements IStorage {
     });
     
     return calendar;
+  }
+
+  // Global Color Keys Operations (shared across all months)
+  async getGlobalColorKeys(userId: string): Promise<GlobalColorKeys | undefined> {
+    const [globalKeys] = await db
+      .select()
+      .from(globalColorKeys)
+      .where(eq(globalColorKeys.userId, userId));
+    
+    return globalKeys;
+  }
+
+  async upsertGlobalColorKeys(data: InsertGlobalColorKeys): Promise<GlobalColorKeys> {
+    const [keys] = await db
+      .insert(globalColorKeys)
+      .values({
+        ...data,
+        colorKeys: (Array.isArray(data.colorKeys) ? data.colorKeys : []) as any,
+      })
+      .onConflictDoUpdate({
+        target: [globalColorKeys.userId],
+        set: {
+          colorKeys: (Array.isArray(data.colorKeys) ? data.colorKeys : []) as any,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    
+    return keys;
   }
 
   // Time Blocking Events Operations
