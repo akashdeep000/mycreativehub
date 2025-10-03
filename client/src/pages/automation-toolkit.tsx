@@ -93,8 +93,8 @@ export default function AutomationToolkit() {
   const documentRef = useRef(document);
   const saveMutationRef = useRef<any>(null);
   
-  // Debounced rows for autosave (600ms as requested)
-  const debouncedRows = useDebounce(rows, 600);
+  // Debounced rows for autosave (50ms for near-instant saves)
+  const debouncedRows = useDebounce(rows, 50);
 
   // Load document from server
   const { data: serverDoc, isLoading: isLoadingDoc, error: loadError } = useQuery({
