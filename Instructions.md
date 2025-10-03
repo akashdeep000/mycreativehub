@@ -1,95 +1,219 @@
-# Colour Key Data Persistence Bug - Analysis & Implementation Plan
+# Calendar Day Entries Persistence Bug - Analysis & Fix Plan
 
 ## Executive Summary
 
-The Colour Key feature in the Monthly Content Calendar is not persisting changes because of a **critical API route mismatch** between the frontend and backend, combined with a lack of optimistic concurrency control. Changes appear immediately in the UI but are lost after refresh or re-login.
+Calendar day entries (adding/editing/deleting entries in the grid) appear to save but the **last change is lost** after navigation or refresh. Color Keys now persist correctly. This is caused by a **debounced save that doesn't flush on unmount**, so pending saves are cancelled when the user navigates away.
 
 ---
 
 ## 1. Root Cause Analysis
 
-### Primary Issue: API Route Mismatch
+### Primary Issue: Debounced Save Without Flush on Unmount
 
-**Frontend (`client/src/pages/monthly-content-calendar-v3.tsx`, line 153):**
-```typescript
-saveCalendarData.mutate({
-  year,
-  month,
-  colorKeys: colorKeys,
-  days: days
-});
+**Current Behavior:**
 
-// The mutation calls:
-return apiRequest('/api/calendar-v3', {  // ❌ WRONG - missing params
-  method: 'PUT',
-  body: JSON.stringify(data),
-});
-```
+1. User adds a calendar entry → `addCalendarEntry()` → `debouncedSave()` with **1000ms delay**
+2. User edits entry notes → `updateEntryNotes()` → `debouncedSave()` with **1000ms delay**
+3. If user navigates away or refreshes **within that 1000ms window**, the debounce timeout is **cleared and the save never happens**
 
-**Backend (`server/routes.ts`, line 2810):**
-```typescript
-app.put('/api/calendar-v3/:year/:month', jwtAuth, async (req: any, res) => {
-  // ✅ Expects year and month in URL params
-```
-
-**Result:** The PUT request likely returns a 404 or hits no endpoint, so saves fail silently.
-
-### Secondary Issues
-
-1. **No Optimistic Concurrency Control**
-   - Unlike the Conversation Flow Cheat Sheet (which uses versioning), calendar saves have no conflict detection
-   - Multiple tabs or rapid edits can clobber each other
-   
-2. **No Version Field in Schema**
-   - `calendarV3` table lacks a `version` column for tracking changes
-   
-3. **Silent Failures**
-   - The frontend doesn't properly handle save errors or 404s
-   - Users see "Saving..." but errors are hidden
-
----
-
-## 2. Current System Architecture
-
-### Database Schema (`shared/schema.ts`, lines 974-985)
+**The `useDebounce` Hook** (`client/src/hooks/use-debounce.ts`, lines 1-21):
 
 ```typescript
-export const calendarV3 = pgTable("calendar_v3", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  year: integer("year").notNull(),
-  month: integer("month").notNull(),
-  colorKeys: jsonb("color_keys").$type<ColorKeyV3[]>().notNull().default(sql`'[]'::jsonb`),
-  days: jsonb("days").$type<CalendarDayV3[]>().notNull().default(sql`'[]'::jsonb`),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => [
-  uniqueIndex("calendar_v3_user_year_month_idx").on(table.userId, table.year, table.month)
-]);
-```
+export function useDebounce<T extends (...args: any[]) => any>(
+  callback: T,
+  delay: number
+): (...args: Parameters<T>) => void {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-**ColorKey Structure:**
-```typescript
-export interface ColorKeyV3 {
-  id: string;
-  label: string;
-  color: string;
+  return useCallback(
+    (...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);  // ← Cancels previous save
+      }
+      
+      timeoutRef.current = setTimeout(() => {
+        callback(...args);  // ← Only runs if 1000ms passes without interruption
+      }, delay);
+    },
+    [callback, delay]
+  );
 }
 ```
 
-### API Endpoints
+**Critical Flaw:** This hook provides **no cleanup/flush mechanism**. When the component unmounts:
+- The timeout is simply abandoned
+- React clears the timeout reference
+- The pending save **never executes**
+- Data is lost
 
-#### GET `/api/calendar-v3/:year/:month`
-- Fetches calendar data for a specific user/year/month
-- Returns: `{ userId, year, month, colorKeys[], days[] }`
-- Status: ✅ Working correctly
+**Why Color Keys Work:** Color key changes (lines 196, 315, 359) call `saveCalendarData.mutate()` **immediately** with no debounce, so they always persist.
 
-#### PUT `/api/calendar-v3/:year/:month`
-- Saves full calendar data (colorKeys + days)
-- Calls `storage.upsertCalendarV3()` with conflict resolution on `(userId, year, month)`
-- Status: ❌ Not being called due to frontend route mismatch
+---
 
-### Storage Layer (`server/storage.ts`, lines 1885-1918)
+## 2. Current Implementation Details
+
+### File: `client/src/pages/monthly-content-calendar-v3.tsx`
+
+#### Calendar Day Entry Operations
+
+**1. Add Entry** (lines 204-227):
+```typescript
+const addCalendarEntry = (date: number, colorKeyId: string) => {
+  const newEntry: CalendarEntry = {
+    id: `entry_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    colorKeyId,
+    notes: ''
+  };
+
+  // ... update days array ...
+
+  const updatedData = { ...(calendarData as any), days: updatedDays };
+  queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
+  debouncedSave();  // ← 1000ms delay, can be lost on unmount
+};
+```
+
+**2. Update Entry Notes** (lines 229-242):
+```typescript
+const updateEntryNotes = (date: number, entryId: string, notes: string) => {
+  // ... find and update entry ...
+
+  const updatedData = { ...(calendarData as any), days: updatedDays };
+  queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
+  debouncedSave();  // ← 1000ms delay, can be lost on unmount
+};
+```
+
+**3. Delete Entry** (lines 244-266):
+```typescript
+const deleteEntry = (date: number, entryId: string) => {
+  // ... remove entry from days array ...
+
+  const updatedData = { ...(calendarData as any), days: updatedDays };
+  queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
+  
+  // Save immediately for deletes (no debounce delay)
+  saveCalendarData.mutate({  // ← Works correctly, no debounce
+    year,
+    month,
+    colorKeys: updatedData.colorKeys,
+    days: updatedData.days,
+  });
+};
+```
+
+**Observation:** `deleteEntry()` works reliably because it saves **immediately** without debounce.
+
+#### The Debounced Save Function (lines 139-148):
+
+```typescript
+const debouncedSave = useDebounce(() => {
+  if (!calendarData) return;
+  saveCalendarData.mutate({
+    year,
+    month,
+    colorKeys: colorKeys,
+    days: days
+  });
+}, 1000);  // ← 1000ms delay
+```
+
+#### The Save Mutation (lines 150-170):
+
+```typescript
+const saveCalendarData = useMutation({
+  mutationFn: (data: { year: number; month: number; colorKeys: ColorKey[]; days: CalendarDay[] }) => {
+    setSaveStatus('saving');
+    return apiRequest(`/api/calendar-v3/${data.year}/${data.month}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' },
+    });
+  },
+  onSuccess: () => {
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus('idle'), 2000);
+  },
+  onError: (error) => {
+    console.error('Save error:', error);
+    console.error('Error details:', { year, month, colorKeysCount: colorKeys.length });
+    setSaveStatus('idle');
+    toast({ title: "Failed to save calendar", variant: "destructive" });
+    queryClient.invalidateQueries({ queryKey: ['/api/calendar-v3', year, month] });
+  },
+});
+```
+
+**Status:** Routes are correct (`PUT /api/calendar-v3/:year/:month`), body includes both `colorKeys` and `days`. The API itself works fine.
+
+#### Current useEffect Hooks
+
+**Only one useEffect exists** (lines 126-137):
+```typescript
+useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (showColorPicker && !(event.target as Element).closest('.color-picker-container')) {
+      setShowColorPicker(null);
+    }
+  };
+
+  if (showColorPicker) {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }
+}, [showColorPicker]);
+```
+
+**Critical Missing:** There is **NO unmount cleanup** to flush pending saves before component unmounts.
+
+---
+
+## 3. Backend Verification
+
+### API Route: `PUT /api/calendar-v3/:year/:month`
+
+**File:** `server/routes.ts`, lines 2810-2854
+
+```typescript
+app.put('/api/calendar-v3/:year/:month', jwtAuth, async (req: any, res) => {
+  try {
+    const userId = req.user.id;
+    const year = parseInt(req.params.year);
+    const month = parseInt(req.params.month);
+    const { colorKeys, days } = req.body;
+    
+    console.log('Calendar V3 PUT - Received data:', {
+      userId, year, month,
+      colorKeysCount: Array.isArray(colorKeys) ? colorKeys.length : 0,
+      daysCount: Array.isArray(days) ? days.length : 0
+    });
+    
+    const calendar = await storage.upsertCalendarV3({
+      userId, year, month,
+      colorKeys: colorKeys || [],
+      days: days || []
+    });
+    
+    // Returns updated calendar
+    res.json({
+      userId: calendar.userId,
+      year: calendar.year,
+      month: calendar.month,
+      colorKeys: calendar.colorKeys || [],
+      days: calendar.days || []
+    });
+  } catch (error) {
+    console.error('Error saving calendar v3:', error);
+    res.status(500).json({ message: 'Failed to save calendar data' });
+  }
+});
+```
+
+**Status:** ✅ Working correctly. Uses `onConflictDoUpdate` (last-write-wins). No version field yet.
+
+### Storage Layer: `upsertCalendarV3()`
+
+**File:** `server/storage.ts`, lines 1885-1918
 
 ```typescript
 async upsertCalendarV3(data: InsertCalendarV3): Promise<CalendarV3> {
@@ -113,165 +237,13 @@ async upsertCalendarV3(data: InsertCalendarV3): Promise<CalendarV3> {
 }
 ```
 
-**Note:** This implementation uses last-write-wins with `onConflictDoUpdate`. No version checking.
+**Status:** ✅ Working correctly. Saves to PostgreSQL database with upsert logic.
 
-### Frontend Component (`client/src/pages/monthly-content-calendar-v3.tsx`)
+### Database Schema: `calendarV3`
 
-**Key State Variables:**
-- `colorKeys` - array of ColorKey objects
-- `saveStatus` - 'idle' | 'saving' | 'saved'
-
-**Save Flow:**
-1. User edits a tag label or color
-2. `updateColorKey()` updates query cache optimistically
-3. `saveCalendarData.mutate()` is called immediately (no debounce for color key changes)
-4. Mutation sets `saveStatus` to 'saving'
-5. On success, sets to 'saved' for 2 seconds
-
-**Current Issues:**
-- Line 153: Wrong API route (`/api/calendar-v3` instead of `/api/calendar-v3/${year}/${month}`)
-- No 409 conflict handling
-- Error handling only invalidates cache and shows toast, doesn't retry or merge conflicts
-
----
-
-## 3. Reference Implementation: Conversation Flow Cheat Sheet
-
-The Cheat Sheet feature already implements robust persistence with versioning. Key patterns to replicate:
-
-### Database Schema (`shared/schema.ts`, lines 1073-1079)
+**File:** `shared/schema.ts`, lines 974-985
 
 ```typescript
-export const cheatSheetDocs = pgTable("cheat_sheet_docs", {
-  userId: varchar("user_id").primaryKey().notNull(),
-  data: jsonb("data").notNull(), // { version: number, rows: [...] }
-  version: integer("version").notNull().default(1), // ← Version field
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-```
-
-### Optimistic Concurrency in Storage (`server/storage.ts`, lines 2421-2498)
-
-```typescript
-async updateCheatSheetDocOptimistic(
-  userId: string,
-  clientVersion: number,
-  rows: CheatSheetRow[]
-): Promise<{ success: boolean; doc?: CheatSheetDoc; conflict?: {...} }> {
-  const currentDoc = await this.getCheatSheetDoc(userId);
-  const currentData = currentDoc.data as CheatSheetDocData;
-
-  // 1. Check version conflict
-  if (clientVersion < currentData.version) {
-    return { success: false, conflict: { version: currentData.version, rows: currentData.rows } };
-  }
-
-  const newVersion = currentData.version + 1;
-
-  // 2. Atomic update with version check
-  const [updatedDoc] = await db
-    .update(cheatSheetDocs)
-    .set({
-      data: newData,
-      version: newVersion,
-      updatedAt: new Date(),
-    })
-    .where(and(
-      eq(cheatSheetDocs.userId, userId),
-      eq(cheatSheetDocs.version, currentData.version) // ← Compare-and-swap
-    ))
-    .returning();
-
-  if (!updatedDoc) {
-    // 3. Version conflict - refetch and return conflict
-    const latestDoc = await this.getCheatSheetDoc(userId);
-    return { success: false, conflict: { ... } };
-  }
-
-  return { success: true, doc: updatedDoc };
-}
-```
-
-### API Route with 409 Handling (`server/routes.ts`, lines 2545-2576)
-
-```typescript
-app.put('/api/automation/cheatsheet', jwtAuth, async (req: any, res) => {
-  const { version, rows } = cheatSheetDocPutBodySchema.parse(req.body);
-  
-  const result = await storage.updateCheatSheetDocOptimistic(userId, version, rows);
-  
-  if (result.success && result.doc) {
-    res.json(transformed);
-  } else {
-    // Return 409 Conflict with latest server state
-    res.status(409).json({
-      message: 'Version conflict - document was updated by another session',
-      conflict: result.conflict
-    });
-  }
-});
-```
-
-### Frontend Pattern (Inferred)
-1. Fetch document with `version` field
-2. On save, send current `version` in request body
-3. If 409 response, merge or overwrite with server state
-4. Show UI feedback: "Saving..." → "Saved ✓" or "Conflict detected"
-
----
-
-## 4. Proposed Solution
-
-### Option A: Minimal Fix (Recommended for Quick Resolution)
-
-**Goal:** Fix the route mismatch to make saves work immediately.
-
-**Changes:**
-
-1. **Fix Frontend Route** (`client/src/pages/monthly-content-calendar-v3.tsx`, line 153)
-   ```typescript
-   // BEFORE:
-   return apiRequest('/api/calendar-v3', {
-   
-   // AFTER:
-   return apiRequest(`/api/calendar-v3/${year}/${month}`, {
-   ```
-
-2. **Add Error Logging**
-   ```typescript
-   onError: (error) => {
-     console.error('Save error:', error);
-     console.error('Error details:', { year, month, colorKeysCount: colorKeys.length });
-     setSaveStatus('idle');
-     toast({ title: "Failed to save calendar", variant: "destructive" });
-   }
-   ```
-
-3. **Test Acceptance Criteria:**
-   - [ ] Add a new color key → Refresh page → Color key still present
-   - [ ] Edit a color key label → Refresh page → Edit persists
-   - [ ] Change a color key color → Refresh page → Color change persists
-   - [ ] Delete a color key → Refresh page → Deletion persists
-   - [ ] Log out and log back in → All changes still present
-
-**Estimated Effort:** 5 minutes  
-**Risk:** Low  
-**Pros:** Immediate fix, minimal code change  
-**Cons:** Still vulnerable to multi-tab conflicts
-
----
-
-### Option B: Full Robustness (Recommended for Long-Term)
-
-**Goal:** Match the Cheat Sheet's robustness with versioning and conflict handling.
-
-#### 4.1 Database Schema Migration
-
-**Add version column to `calendarV3` table:**
-
-```typescript
-// In shared/schema.ts, update calendarV3 definition:
 export const calendarV3 = pgTable("calendar_v3", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
@@ -279,7 +251,6 @@ export const calendarV3 = pgTable("calendar_v3", {
   month: integer("month").notNull(),
   colorKeys: jsonb("color_keys").$type<ColorKeyV3[]>().notNull().default(sql`'[]'::jsonb`),
   days: jsonb("days").$type<CalendarDayV3[]>().notNull().default(sql`'[]'::jsonb`),
-  version: integer("version").notNull().default(1), // ← ADD THIS
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -287,842 +258,812 @@ export const calendarV3 = pgTable("calendar_v3", {
 ]);
 ```
 
-**Run migration:**
-```bash
-npm run db:push
-```
-
-**Note:** Existing rows will get `version = 1` by default.
+**Status:** ✅ Correct schema. No `version` field yet (not using optimistic concurrency control).
 
 ---
 
-#### 4.2 Backend Storage Layer
+## 4. Why Last Change is Lost: Failure Scenarios
 
-**Update IStorage interface** (`server/storage.ts`, around line 330):
+### Scenario 1: User Navigates Away Within 1 Second
 
+1. User clicks on a calendar day to add an entry
+2. `addCalendarEntry()` is called
+3. `debouncedSave()` schedules a save for 1000ms from now
+4. **User immediately clicks "Back to Content Creation" button (500ms later)**
+5. Component unmounts
+6. React clears the debounce timeout
+7. **Save never happens, entry is lost**
+
+### Scenario 2: User Adds Entry Then Refreshes
+
+1. User adds entry → debounced save pending
+2. User hits F5 or refreshes browser (800ms later)
+3. Page reloads, component unmounts
+4. **Save never happens, entry is lost**
+
+### Scenario 3: User Edits Notes Then Closes Dialog
+
+1. User opens notes dialog, types notes
+2. User clicks "Save" button
+3. `handleNotesEdit()` calls `updateEntryNotes()`
+4. `updateEntryNotes()` calls `debouncedSave()` (1000ms delay)
+5. Dialog closes immediately (user thinks it's saved)
+6. **User navigates away 600ms later**
+7. Component unmounts, **notes update is lost**
+
+### Scenario 4: Multiple Rapid Edits (Debounce Working as Designed)
+
+1. User adds entry 1 → debounce timer starts (1000ms)
+2. User adds entry 2 → debounce timer **restarts** (1000ms)
+3. User adds entry 3 → debounce timer **restarts** (1000ms)
+4. After 1000ms of inactivity, **one save** with all 3 entries
+5. ✅ Works fine if user stays on page
+
+**But if:**
+4. User navigates away 500ms after entry 3
+5. **All 3 entries are lost**
+
+---
+
+## 5. Proposed Solution
+
+### Option A: Immediate Fix (Recommended for Minimal Risk)
+
+**Goal:** Flush pending debounced save on unmount/visibility change to prevent data loss.
+
+**Changes Required:**
+
+#### 5.1 Enhanced useDebounce Hook with Flush Capability
+
+**File:** `client/src/hooks/use-debounce.ts`
+
+**Current Code:**
 ```typescript
-// REPLACE:
-upsertCalendarV3(data: InsertCalendarV3): Promise<CalendarV3>;
+import { useCallback, useRef } from 'react';
 
-// WITH:
-getCalendarV3(userId: string, year: number, month: number): Promise<CalendarV3 | undefined>;
-upsertCalendarV3Optimistic(
-  userId: string,
-  year: number,
-  month: number,
-  clientVersion: number,
-  colorKeys: ColorKeyV3[],
-  days: CalendarDayV3[]
-): Promise<{ success: boolean; calendar?: CalendarV3; conflict?: { version: number; colorKeys: ColorKeyV3[]; days: CalendarDayV3[] } }>;
-```
+export function useDebounce<T extends (...args: any[]) => any>(
+  callback: T,
+  delay: number
+): (...args: Parameters<T>) => void {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-**Implement optimistic update** (`server/storage.ts`, after line 1918):
-
-```typescript
-async upsertCalendarV3Optimistic(
-  userId: string,
-  year: number,
-  month: number,
-  clientVersion: number,
-  colorKeys: ColorKeyV3[],
-  days: CalendarDayV3[]
-): Promise<{ success: boolean; calendar?: CalendarV3; conflict?: { version: number; colorKeys: ColorKeyV3[]; days: CalendarDayV3[] } }> {
-  console.log('CalendarV3 Optimistic UPSERT - Start:', { userId, year, month, clientVersion });
-
-  // Get current calendar
-  const currentCalendar = await this.getCalendarV3(userId, year, month);
-
-  if (!currentCalendar) {
-    // No calendar exists - create with version 1
-    const [newCalendar] = await db
-      .insert(calendarV3)
-      .values({
-        userId,
-        year,
-        month,
-        colorKeys: colorKeys as any,
-        days: days as any,
-        version: 1,
-      })
-      .returning();
-
-    console.log('CalendarV3 - Created new calendar with version 1');
-    return { success: true, calendar: newCalendar };
-  }
-
-  // Check version conflict
-  if (clientVersion < currentCalendar.version) {
-    console.log('CalendarV3 - Version conflict detected:', {
-      clientVersion,
-      serverVersion: currentCalendar.version,
-    });
-    return {
-      success: false,
-      conflict: {
-        version: currentCalendar.version,
-        colorKeys: currentCalendar.colorKeys,
-        days: currentCalendar.days,
-      },
-    };
-  }
-
-  const newVersion = currentCalendar.version + 1;
-
-  // Atomic update with version check
-  const [updatedCalendar] = await db
-    .update(calendarV3)
-    .set({
-      colorKeys: colorKeys as any,
-      days: days as any,
-      version: newVersion,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(calendarV3.userId, userId),
-        eq(calendarV3.year, year),
-        eq(calendarV3.month, month),
-        eq(calendarV3.version, currentCalendar.version) // Compare-and-swap
-      )
-    )
-    .returning();
-
-  if (!updatedCalendar) {
-    // Version conflict - refetch latest
-    const latestCalendar = await this.getCalendarV3(userId, year, month);
-    if (latestCalendar) {
-      console.log('CalendarV3 - Concurrent update conflict');
-      return {
-        success: false,
-        conflict: {
-          version: latestCalendar.version,
-          colorKeys: latestCalendar.colorKeys,
-          days: latestCalendar.days,
-        },
-      };
-    }
-  }
-
-  console.log('CalendarV3 - Save successful, new version:', newVersion);
-  return { success: true, calendar: updatedCalendar };
+  return useCallback(
+    (...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
+      timeoutRef.current = setTimeout(() => {
+        callback(...args);
+      }, delay);
+    },
+    [callback, delay]
+  );
 }
 ```
 
-**Keep legacy `upsertCalendarV3` for migration endpoint:**
+**New Code:**
 ```typescript
-// Keep existing implementation for migration route compatibility
-async upsertCalendarV3(data: InsertCalendarV3): Promise<CalendarV3> {
-  // ... existing implementation unchanged
+import { useCallback, useRef } from 'react';
+
+export function useDebounce<T extends (...args: any[]) => any>(
+  callback: T,
+  delay: number
+): {
+  debounced: (...args: Parameters<T>) => void;
+  flush: () => void;
+  cancel: () => void;
+} {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const argsRef = useRef<Parameters<T> | null>(null);
+
+  const cancel = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    argsRef.current = null;
+  }, []);
+
+  const flush = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (argsRef.current) {
+      callback(...argsRef.current);
+      argsRef.current = null;
+    }
+  }, [callback]);
+
+  const debounced = useCallback(
+    (...args: Parameters<T>) => {
+      argsRef.current = args;
+      
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
+      timeoutRef.current = setTimeout(() => {
+        callback(...args);
+        argsRef.current = null;
+      }, delay);
+    },
+    [callback, delay]
+  );
+
+  return { debounced, flush, cancel };
 }
 ```
 
----
+**Key Changes:**
+1. Store debounce arguments in `argsRef` so we can execute them later
+2. Return an object with `{ debounced, flush, cancel }` instead of just the debounced function
+3. `flush()`: Immediately executes pending callback with stored args
+4. `cancel()`: Cancels pending callback without executing
 
-#### 4.3 Backend API Route
+#### 5.2 Update Calendar Component to Use New Hook
 
-**Update PUT route** (`server/routes.ts`, replace lines 2810-2854):
+**File:** `client/src/pages/monthly-content-calendar-v3.tsx`
+
+**Change 1: Update debouncedSave usage** (lines 139-148):
+
+**Before:**
+```typescript
+const debouncedSave = useDebounce(() => {
+  if (!calendarData) return;
+  saveCalendarData.mutate({
+    year,
+    month,
+    colorKeys: colorKeys,
+    days: days
+  });
+}, 1000);
+```
+
+**After:**
+```typescript
+const { debounced: debouncedSave, flush: flushSave } = useDebounce(() => {
+  if (!calendarData) return;
+  saveCalendarData.mutate({
+    year,
+    month,
+    colorKeys: colorKeys,
+    days: days
+  });
+}, 1000);
+```
+
+**Change 2: Add unmount cleanup** (add after line 137, before line 139):
 
 ```typescript
-app.put('/api/calendar-v3/:year/:month', jwtAuth, async (req: any, res) => {
-  try {
-    const userId = req.user.id;
-    const year = parseInt(req.params.year);
-    const month = parseInt(req.params.month);
-    const { colorKeys, days, version } = req.body;
-
-    // Validate version is provided
-    if (typeof version !== 'number') {
-      return res.status(400).json({ message: 'Version is required for optimistic concurrency control' });
+// Flush pending saves on unmount or visibility change
+useEffect(() => {
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'hidden') {
+      flushSave();
     }
+  };
 
-    console.log('Calendar V3 PUT - Received data:', {
-      userId,
-      year,
-      month,
-      version,
-      colorKeysCount: Array.isArray(colorKeys) ? colorKeys.length : 0,
-      daysCount: Array.isArray(days) ? days.length : 0,
-    });
+  const handleBeforeUnload = () => {
+    flushSave();
+  };
 
-    // Attempt optimistic update
-    const result = await storage.upsertCalendarV3Optimistic(
-      userId,
-      year,
-      month,
-      version,
-      colorKeys || [],
-      days || []
-    );
+  // Listen for visibility changes (tab switching, minimizing)
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  
+  // Listen for page unload/refresh
+  window.addEventListener('beforeunload', handleBeforeUnload);
 
-    if (result.success && result.calendar) {
-      const response = {
-        userId: result.calendar.userId,
-        year: result.calendar.year,
-        month: result.calendar.month,
-        colorKeys: result.calendar.colorKeys || [],
-        days: result.calendar.days || [],
-        version: result.calendar.version,
-      };
-
-      console.log('Calendar V3 PUT - Save successful:', {
-        newVersion: result.calendar.version,
-        colorKeysCount: response.colorKeys.length,
-      });
-
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      res.json(response);
-    } else {
-      // Version conflict - return 409 with latest server state
-      console.log('Calendar V3 PUT - Version conflict, returning 409');
-      res.status(409).json({
-        message: 'Version conflict - calendar was updated by another session',
-        conflict: {
-          version: result.conflict!.version,
-          colorKeys: result.conflict!.colorKeys,
-          days: result.conflict!.days,
-        },
-      });
-    }
-  } catch (error) {
-    console.error('Error saving calendar v3:', error);
-    res.status(500).json({ message: 'Failed to save calendar data' });
-  }
-});
+  // Cleanup: flush on unmount
+  return () => {
+    flushSave();
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+  };
+}, [flushSave]);
 ```
 
-**Update GET route to return version** (`server/routes.ts`, around line 2730):
+**Change 3: Update debouncedEditKeySave usage** (lines 289-293):
 
+**Before:**
 ```typescript
-const response = {
-  userId: newCalendar.userId,
-  year: newCalendar.year,
-  month: newCalendar.month,
-  colorKeys: newCalendar.colorKeys || [],
-  days: newCalendar.days || [],
-  version: newCalendar.version, // ← ADD THIS
-};
-```
-
----
-
-#### 4.4 Shared Schema Validation
-
-**Add request body schema** (`shared/schema.ts`, after line 994):
-
-```typescript
-export const calendarV3PutBodySchema = z.object({
-  year: z.number(),
-  month: z.number(),
-  version: z.number(),
-  colorKeys: z.array(z.object({
-    id: z.string(),
-    label: z.string(),
-    color: z.string(),
-  })),
-  days: z.array(z.object({
-    date: z.string(),
-    entries: z.array(z.any()),
-  })),
-});
-
-export type CalendarV3PutBody = z.infer<typeof calendarV3PutBodySchema>;
-```
-
-**Update exports:**
-```typescript
-export type CalendarV3 = typeof calendarV3.$inferSelect;
-export type InsertCalendarV3 = z.infer<typeof insertCalendarV3Schema>;
-export type CalendarV3PutBody = z.infer<typeof calendarV3PutBodySchema>; // ← ADD
-```
-
----
-
-#### 4.5 Frontend Component Updates
-
-**Update interfaces** (`client/src/pages/monthly-content-calendar-v3.tsx`, after line 30):
-
-```typescript
-interface CalendarData {
-  userId: string;
-  year: number;
-  month: number;
-  colorKeys: ColorKey[];
-  days: CalendarDay[];
-  version: number; // ← ADD THIS
-}
-```
-
-**Add version tracking state** (after line 69):
-
-```typescript
-const [localVersion, setLocalVersion] = useState<number>(1);
-```
-
-**Update query to track version** (lines 75-109):
-
-```typescript
-const { data: calendarData, isLoading, refetch } = useQuery({
-  queryKey: ['/api/calendar-v3', year, month],
-  queryFn: async () => {
-    const response = await apiRequest(`/api/calendar-v3/${year}/${month}`);
-    const data = await response.json();
-    console.log('V3Calendar - Raw API response:', data);
-    
-    // Update local version whenever we fetch from server
-    if (data?.version) {
-      setLocalVersion(data.version);
-    }
-    
-    // ... migration logic unchanged ...
-    
-    return data;
-  },
-  staleTime: 5 * 60 * 1000,
-  gcTime: 10 * 60 * 1000,
-  refetchOnMount: true,
-});
-```
-
-**Fix save mutation route and add version** (lines 150-169):
-
-```typescript
-const saveCalendarData = useMutation({
-  mutationFn: (data: { year: number; month: number; colorKeys: ColorKey[]; days: CalendarDay[] }) => {
-    setSaveStatus('saving');
-    return apiRequest(`/api/calendar-v3/${year}/${month}`, { // ← FIX ROUTE
-      method: 'PUT',
-      body: JSON.stringify({
-        ...data,
-        version: localVersion, // ← ADD VERSION
-      }),
-      headers: { 'Content-Type': 'application/json' },
-    });
-  },
-  onSuccess: async (response) => {
-    const data = await response.json();
-    
-    // Update local version to server's new version
-    if (data?.version) {
-      setLocalVersion(data.version);
-    }
-    
-    setSaveStatus('saved');
-    setTimeout(() => setSaveStatus('idle'), 2000);
-  },
-  onError: async (error: any) => {
-    console.error('Save error:', error);
-    
-    // Handle 409 Conflict
-    if (error.status === 409) {
-      const conflictData = await error.json();
-      console.log('Version conflict detected:', conflictData);
-      
-      // Update local state with server's version
-      setLocalVersion(conflictData.conflict.version);
-      
-      // Update query cache with server data
-      queryClient.setQueryData(['/api/calendar-v3', year, month], {
-        ...calendarData,
-        colorKeys: conflictData.conflict.colorKeys,
-        days: conflictData.conflict.days,
-        version: conflictData.conflict.version,
-      });
-      
-      toast({
-        title: "Calendar updated by another session",
-        description: "Your changes have been merged with the latest version.",
-        variant: "default",
-      });
-    } else {
-      toast({ title: "Failed to save calendar", variant: "destructive" });
-    }
-    
-    setSaveStatus('idle');
-    queryClient.invalidateQueries({ queryKey: ['/api/calendar-v3', year, month] });
-  },
-});
-```
-
-**Add debounce for label edits** (lines 287-292):
-
-```typescript
-// Change debounce time from 50ms to 300ms for better grouping
 const debouncedEditKeySave = useDebounce((keyId: string, value: string) => {
   if (value.trim()) {
     updateColorKey(keyId, { label: value.trim() });
   }
-}, 300); // ← Change from 50 to 300ms
+}, 50);
 ```
 
----
+**After:**
+```typescript
+const { debounced: debouncedEditKeySave } = useDebounce((keyId: string, value: string) => {
+  if (value.trim()) {
+    updateColorKey(keyId, { label: value.trim() });
+  }
+}, 50);
+```
 
-## 5. Testing Plan
-
-### 5.1 Manual Acceptance Tests
-
-**Test 1: Basic Persistence**
-1. Navigate to Monthly Content Calendar
-2. Add a new color key with label "Test Tag" and color #FF6B9D
-3. Refresh the page
-4. ✅ Verify: "Test Tag" is still present with correct color
-
-**Test 2: Label Edit Persistence**
-1. Click edit on an existing tag
-2. Change label to "Updated Label"
-3. Wait for "Saved ✓" indicator
-4. Refresh the page
-5. ✅ Verify: Label is "Updated Label"
-
-**Test 3: Color Change Persistence**
-1. Click the color dot on a tag
-2. Select a different color from the grid
-3. Wait for "Saved ✓"
-4. Refresh the page
-5. ✅ Verify: Color has changed
-
-**Test 4: Delete Persistence**
-1. Delete a color key
-2. Wait for "Saved ✓"
-3. Refresh the page
-4. ✅ Verify: Tag is still deleted
-
-**Test 5: Re-login Persistence**
-1. Make several changes (add, edit, delete tags)
-2. Log out
-3. Log back in
-4. Navigate to calendar
-5. ✅ Verify: All changes are still present
-
-**Test 6: Multi-Tab Conflict Handling (Option B only)**
-1. Open calendar in two browser tabs (same month)
-2. Tab 1: Edit tag "A" → "A-Modified"
-3. Tab 2: Edit tag "B" → "B-Modified"
-4. Tab 2: Wait for save
-5. Tab 1: Make another edit
-6. ✅ Verify: Tab 1 shows conflict toast and merges changes
-7. ✅ Verify: Both edits are preserved after refresh
-
-**Test 7: Rapid Edits**
-1. Rapidly type into a tag label field
-2. Wait for "Saving..." → "Saved ✓"
-3. Refresh page
-4. ✅ Verify: Final typed value is saved
-
-**Test 8: Network Failure Recovery**
-1. Open browser DevTools → Network tab
-2. Set throttling to "Offline"
-3. Edit a tag
-4. ✅ Verify: Error toast appears
-5. Re-enable network
-6. Make another edit
-7. ✅ Verify: Save succeeds
+**Note:** We don't need to flush color key edits because `updateColorKey()` already saves immediately (line 196).
 
 ---
 
-### 5.2 Edge Cases
+### Option B: Robust Long-Term Solution (Follow-Up)
 
-**Edge Case 1: Empty Color Keys**
-- Calendar with 0 color keys → Add first tag → Refresh → ✅ Tag persists
+**Goal:** Add optimistic concurrency control with versioning (like Cheat Sheet feature).
 
-**Edge Case 2: Maximum Color Keys**
-- Add 20+ color keys → Refresh → ✅ All tags present
+**Benefits:**
+- Prevents multi-tab conflicts
+- Detects concurrent edits
+- Provides 409 conflict handling
 
-**Edge Case 3: Special Characters in Labels**
-- Labels with emojis, accents, quotes: "Test's \"Tag\" 🎨"
-- ✅ Verify: Label saves and displays correctly after refresh
+**Effort:** 2-3 hours (follow instructions from previous `Instructions.md` for Option B)
 
-**Edge Case 4: Month Navigation**
-- Add tag to January calendar
-- Navigate to February
-- Navigate back to January
-- ✅ Verify: Tag is still in January
-
-**Edge Case 5: Concurrent Month Edits (Option B only)**
-- Tab 1: Edit January calendar
-- Tab 2: Edit February calendar
-- Both save simultaneously
-- ✅ Verify: No conflicts (different month = different DB rows)
+**Recommendation:** Implement **Option A first** to stop data loss immediately, then schedule Option B for robust multi-tab safety.
 
 ---
 
-## 6. Implementation Checklist
+## 6. Implementation Plan: Option A (Step-by-Step)
 
-### Option A: Minimal Fix (5 minutes)
+### Phase 1: Update useDebounce Hook (10 min)
 
-- [ ] **Frontend:** Fix API route in `saveCalendarData.mutate()`
-  - File: `client/src/pages/monthly-content-calendar-v3.tsx`
-  - Line: 153
-  - Change: `/api/calendar-v3` → `/api/calendar-v3/${year}/${month}`
+**Step 1.1:** Open `client/src/hooks/use-debounce.ts`
 
-- [ ] **Frontend:** Add error logging
-  - Lines: 163-169
-  - Add: Log error details (year, month, colorKeysCount)
+**Step 1.2:** Replace entire file with enhanced version:
 
-- [ ] **Test:** Run all acceptance tests from Section 5.1 (excluding Test 6)
+```typescript
+import { useCallback, useRef } from 'react';
 
-- [ ] **Verify:** Check browser console for any errors during save
+export function useDebounce<T extends (...args: any[]) => any>(
+  callback: T,
+  delay: number
+): {
+  debounced: (...args: Parameters<T>) => void;
+  flush: () => void;
+  cancel: () => void;
+} {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const argsRef = useRef<Parameters<T> | null>(null);
 
-- [ ] **Verify:** Check server logs for successful PUT requests
+  const cancel = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    argsRef.current = null;
+  }, []);
 
----
+  const flush = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (argsRef.current) {
+      callback(...argsRef.current);
+      argsRef.current = null;
+    }
+  }, [callback]);
 
-### Option B: Full Robustness (2-3 hours)
+  const debounced = useCallback(
+    (...args: Parameters<T>) => {
+      argsRef.current = args;
+      
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
+      timeoutRef.current = setTimeout(() => {
+        callback(...args);
+        argsRef.current = null;
+      }, delay);
+    },
+    [callback, delay]
+  );
 
-#### Phase 1: Database Schema (15 min)
-- [ ] **Schema:** Add `version` column to `calendarV3` table
-  - File: `shared/schema.ts`
-  - Location: After line 979
-  - Code: `version: integer("version").notNull().default(1),`
+  return { debounced, flush, cancel };
+}
+```
 
-- [ ] **Schema:** Add `CalendarV3PutBody` type and validation schema
-  - File: `shared/schema.ts`
-  - Location: After line 994
-
-- [ ] **Migration:** Run `npm run db:push` to apply schema changes
-
-- [ ] **Verify:** Check database that `version` column exists with default value 1
-
-#### Phase 2: Backend Storage (45 min)
-- [ ] **Storage Interface:** Add `upsertCalendarV3Optimistic` method signature
-  - File: `server/storage.ts`
-  - Location: Around line 330
-
-- [ ] **Storage Implementation:** Implement `upsertCalendarV3Optimistic`
-  - File: `server/storage.ts`
-  - Location: After line 1918
-  - Copy pattern from `updateCheatSheetDocOptimistic` (lines 2421-2498)
-
-- [ ] **Storage:** Keep legacy `upsertCalendarV3` for migration route
-
-- [ ] **Test:** Add console.log statements to verify version increments
-
-#### Phase 3: Backend API Route (30 min)
-- [ ] **Route:** Update PUT `/api/calendar-v3/:year/:month` handler
-  - File: `server/routes.ts`
-  - Location: Lines 2810-2854
-  - Add: Version validation, optimistic update call, 409 conflict response
-
-- [ ] **Route:** Update GET `/api/calendar-v3/:year/:month` to return version
-  - File: `server/routes.ts`
-  - Location: Around line 2730
-
-- [ ] **Test:** Use curl/Postman to test PUT with version field
-
-#### Phase 4: Frontend Component (60 min)
-- [ ] **Interface:** Add `version` field to `CalendarData` interface
-  - File: `client/src/pages/monthly-content-calendar-v3.tsx`
-  - Location: After line 30
-
-- [ ] **State:** Add `localVersion` state variable
-  - Location: After line 69
-
-- [ ] **Query:** Update `queryFn` to track server version
-  - Location: Lines 75-109
-  - Add: `setLocalVersion(data.version)`
-
-- [ ] **Mutation:** Fix route and add version to request body
-  - Location: Lines 150-169
-  - Change route + add `version: localVersion`
-
-- [ ] **Mutation:** Implement 409 conflict handler in `onError`
-  - Merge server state, update `localVersion`, show toast
-
-- [ ] **Mutation:** Update `onSuccess` to track new version
-  - Add: `setLocalVersion(data.version)`
-
-- [ ] **Debounce:** Increase label edit debounce to 300-500ms
-  - Location: Line 292
-
-- [ ] **Test:** Verify "Saving..." and "Saved ✓" indicators work
-
-#### Phase 5: Testing & Validation (30 min)
-- [ ] **Test:** Run all manual acceptance tests (Section 5.1)
-- [ ] **Test:** Run all edge case tests (Section 5.2)
-- [ ] **Test:** Multi-tab conflict test (Test 6)
-- [ ] **Test:** Network failure test (Test 8)
-- [ ] **Verify:** Check browser console for no errors
-- [ ] **Verify:** Check server logs for version increments
-- [ ] **Verify:** Database inspection - verify version column updates correctly
-
-#### Phase 6: Documentation (15 min)
-- [ ] **Code Comments:** Add JSDoc comments to `upsertCalendarV3Optimistic`
-- [ ] **README:** Update replit.md with calendar persistence architecture
-- [ ] **README:** Document version conflict resolution behavior
-- [ ] **CHANGELOG:** Add entry for "Implemented robust Colour Key persistence"
+**Step 1.3:** Save file
 
 ---
 
-## 7. Rollback Plan
+### Phase 2: Update Calendar Component (20 min)
+
+**Step 2.1:** Open `client/src/pages/monthly-content-calendar-v3.tsx`
+
+**Step 2.2:** Update debouncedSave usage (around line 139):
+
+**Find:**
+```typescript
+  // Debounced save function
+  const debouncedSave = useDebounce(() => {
+```
+
+**Replace with:**
+```typescript
+  // Debounced save function
+  const { debounced: debouncedSave, flush: flushSave } = useDebounce(() => {
+```
+
+**Step 2.3:** Add unmount cleanup useEffect (insert after line 137, before debouncedSave):
+
+```typescript
+  // Flush pending saves on unmount or visibility change
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        flushSave();
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      flushSave();
+    };
+
+    // Listen for visibility changes (tab switching, minimizing)
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Listen for page unload/refresh
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Cleanup: flush on unmount
+    return () => {
+      flushSave();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [flushSave]);
+
+  // Debounced save function
+```
+
+**Step 2.4:** Update debouncedEditKeySave usage (around line 289):
+
+**Find:**
+```typescript
+  const debouncedEditKeySave = useDebounce((keyId: string, value: string) => {
+```
+
+**Replace with:**
+```typescript
+  const { debounced: debouncedEditKeySave } = useDebounce((keyId: string, value: string) => {
+```
+
+**Step 2.5:** Save file
+
+---
+
+### Phase 3: Testing (30 min)
+
+#### Test 1: Add Entry Then Navigate Immediately
+
+**Steps:**
+1. Open Monthly Content Calendar
+2. Click on a calendar day to add an entry
+3. Immediately click "Back to Content Creation" (within 1 second)
+4. Navigate back to calendar
+5. ✅ **Verify:** Entry is still present
+
+**Expected:** Flush on unmount saves the entry before navigation.
+
+---
+
+#### Test 2: Edit Notes Then Refresh
+
+**Steps:**
+1. Add an entry to a calendar day
+2. Click the entry to open notes dialog
+3. Type "Test notes 123"
+4. Click "Save" to close dialog
+5. Immediately refresh the page (F5) within 1 second
+6. ✅ **Verify:** Notes are "Test notes 123" (not lost)
+
+**Expected:** Flush on beforeunload saves notes before refresh.
+
+---
+
+#### Test 3: Add Multiple Entries Rapidly Then Navigate
+
+**Steps:**
+1. Click day 1 to add entry
+2. Click day 2 to add entry
+3. Click day 3 to add entry
+4. Immediately navigate away (500ms later)
+5. Navigate back to calendar
+6. ✅ **Verify:** All 3 entries are present
+
+**Expected:** Flush on unmount saves all pending changes.
+
+---
+
+#### Test 4: Switch Browser Tabs
+
+**Steps:**
+1. Add a calendar entry
+2. Immediately switch to another browser tab (Ctrl+Tab or Cmd+Tab)
+3. Wait 5 seconds
+4. Switch back to calendar tab
+5. Refresh the page
+6. ✅ **Verify:** Entry is still present
+
+**Expected:** Flush on visibilitychange saves when tab becomes hidden.
+
+---
+
+#### Test 5: Delete Entry (Should Still Work Immediately)
+
+**Steps:**
+1. Add an entry
+2. Click the entry to open notes dialog
+3. Click "Delete Entry"
+4. Navigate away immediately
+5. Navigate back to calendar
+6. ✅ **Verify:** Entry is deleted (not restored)
+
+**Expected:** Delete already saves immediately (no debounce), so it should work as before.
+
+---
+
+#### Test 6: Color Key Edit (Should Still Work)
+
+**Steps:**
+1. Edit a color key label to "Updated Tag"
+2. Navigate away immediately
+3. Navigate back to calendar
+4. ✅ **Verify:** Color key label is "Updated Tag"
+
+**Expected:** Color key updates save immediately (no debounce), so they should work as before.
+
+---
+
+#### Test 7: Browser Console Verification
+
+**Steps:**
+1. Open browser DevTools → Console tab
+2. Add a calendar entry
+3. Navigate away immediately
+4. Check console logs
+
+**Expected Logs:**
+```
+V3Calendar - Raw API response: { colorKeys: [...], days: [...] }
+Calendar V3 PUT - Received data: { userId: '...', year: 2025, month: 1, daysCount: 1 }
+CalendarV3 UPSERT - Saving data: { userId: '...', daysCount: 1 }
+```
+
+✅ **Verify:** No errors, PUT request was sent.
+
+---
+
+#### Test 8: Database Verification
+
+**SQL Query:**
+```sql
+SELECT user_id, year, month, 
+       jsonb_array_length(days) as days_count,
+       jsonb_pretty(days) as days_formatted,
+       updated_at
+FROM calendar_v3
+WHERE user_id = 'YOUR_USER_ID' AND year = 2025 AND month = 1;
+```
+
+**Steps:**
+1. Add 2 entries to the calendar
+2. Navigate away immediately
+3. Run SQL query in Replit Database pane
+
+✅ **Verify:** `days_count = 2`, entries are visible in `days_formatted`, `updated_at` is recent.
+
+---
+
+### Phase 4: Edge Cases (15 min)
+
+#### Edge Case 1: Rapid Debounce Flushes
+
+**Scenario:** User rapidly switches tabs back and forth
+
+**Steps:**
+1. Add entry → switch tab → switch back → add entry → switch tab
+2. Repeat 5 times rapidly
+
+✅ **Verify:** All entries are saved (no duplicate saves, no lost saves)
+
+---
+
+#### Edge Case 2: Network Failure During Flush
+
+**Steps:**
+1. Open DevTools → Network tab → Set throttling to "Offline"
+2. Add calendar entry
+3. Navigate away (triggers flush)
+4. Re-enable network
+5. Navigate back to calendar
+
+✅ **Verify:** Entry is not saved (expected, network was offline). No console errors about unhandled promises.
+
+---
+
+#### Edge Case 3: Component Unmount Mid-Save
+
+**Scenario:** Flush triggers save, but mutation is still in flight when component unmounts
+
+**Steps:**
+1. Open DevTools → Network tab → Set throttling to "Slow 3G"
+2. Add calendar entry
+3. Navigate away immediately (triggers flush)
+4. **Do not wait for save to complete**
+5. Wait 10 seconds
+6. Navigate back to calendar
+
+✅ **Verify:** Entry is saved (mutation completes even after unmount because React Query handles cleanup)
+
+---
+
+## 7. Acceptance Criteria
+
+### Primary Criteria
+
+- [ ] **AC1:** Adding a calendar entry and immediately navigating away preserves the entry
+- [ ] **AC2:** Editing entry notes and immediately refreshing the page preserves the notes
+- [ ] **AC3:** Adding multiple entries rapidly and navigating away preserves all entries
+- [ ] **AC4:** Switching browser tabs triggers a save (visibilitychange)
+- [ ] **AC5:** Refreshing the page triggers a save (beforeunload)
+- [ ] **AC6:** Component unmount triggers a save (cleanup)
+
+### Negative Criteria (Should Not Break)
+
+- [ ] **AC7:** Deleting entries still works immediately (no regression)
+- [ ] **AC8:** Color key edits still work immediately (no regression)
+- [ ] **AC9:** Normal debounce behavior works (multiple rapid edits only trigger one save after 1000ms)
+- [ ] **AC10:** No duplicate saves or race conditions
+
+### UX Criteria
+
+- [ ] **AC11:** "Saving..." indicator appears when flush happens
+- [ ] **AC12:** No visible delay or blocking behavior on navigation
+- [ ] **AC13:** No console errors or warnings
+
+---
+
+## 8. Rollback Plan
 
 If issues arise after deployment:
 
-### Option A Rollback:
-1. Revert frontend route change
-2. Redeploy frontend
-3. No database changes to rollback
+### Step 1: Revert Calendar Component (5 min)
 
-### Option B Rollback:
-1. **Phase 1: Immediate Fix (5 min)**
-   - Revert frontend changes (git revert)
-   - Redeploy frontend
-   - Backend will continue to work with old frontend
+```bash
+git diff client/src/pages/monthly-content-calendar-v3.tsx
+git checkout HEAD -- client/src/pages/monthly-content-calendar-v3.tsx
+```
 
-2. **Phase 2: Backend Rollback (15 min)**
-   - Revert backend routes and storage changes
-   - Redeploy backend
-   - Legacy `upsertCalendarV3` continues to work
-
-3. **Phase 3: Database Rollback (if needed)**
-   - Run SQL: `ALTER TABLE calendar_v3 DROP COLUMN version;`
-   - Or: Leave version column (harmless, defaults to 1)
+**Result:** Component reverts to old debounce behavior (data loss bug returns, but no new bugs).
 
 ---
 
-## 8. Success Metrics
+### Step 2: Revert useDebounce Hook (5 min)
 
-**Quantitative:**
-- [ ] 0 save failures in browser console logs
-- [ ] 100% persistence rate (changes survive refresh/re-login)
-- [ ] < 500ms save latency (time from edit to "Saved ✓")
-- [ ] 0 data loss incidents in multi-tab scenarios (Option B)
+```bash
+git diff client/src/hooks/use-debounce.ts
+git checkout HEAD -- client/src/hooks/use-debounce.ts
+```
 
-**Qualitative:**
-- [ ] Users report no more lost edits
-- [ ] "Saving..." indicator shows predictably
-- [ ] Conflict resolution (if any) is transparent to users
+**Result:** Hook reverts to simple timeout-only version.
 
 ---
 
-## 9. Files to Modify
+### Step 3: Redeploy
 
-### Option A (Minimal Fix)
+```bash
+npm run build
 ```
-client/src/pages/monthly-content-calendar-v3.tsx (1 line change)
-```
 
-### Option B (Full Robustness)
-```
-shared/schema.ts (3 additions)
-  - calendarV3 table: add version column
-  - CalendarV3PutBody type
-  - calendarV3PutBodySchema validation
-
-server/storage.ts (2 additions)
-  - IStorage interface: upsertCalendarV3Optimistic signature
-  - DatabaseStorage: upsertCalendarV3Optimistic implementation (~80 lines)
-
-server/routes.ts (2 modifications)
-  - GET /api/calendar-v3/:year/:month: return version field
-  - PUT /api/calendar-v3/:year/:month: use optimistic update + 409 handling (~60 lines)
-
-client/src/pages/monthly-content-calendar-v3.tsx (5 modifications)
-  - CalendarData interface: add version field
-  - State: add localVersion tracking
-  - useQuery: update localVersion on fetch
-  - useMutation: fix route, send version, handle 409
-  - Debounce: increase delay to 300-500ms
-```
+**Result:** Application is back to pre-fix state.
 
 ---
 
-## 10. API Contracts
-
-### GET `/api/calendar-v3/:year/:month`
-
-**Request:**
-```http
-GET /api/calendar-v3/2025/1
-Authorization: Bearer <jwt_token>
-```
-
-**Response (200 OK):**
-```json
-{
-  "userId": "user_123",
-  "year": 2025,
-  "month": 1,
-  "version": 5,
-  "colorKeys": [
-    {
-      "id": "tag-1",
-      "label": "Email",
-      "color": "#3B82F6"
-    },
-    {
-      "id": "custom_1735000000_abc123",
-      "label": "My Custom Tag",
-      "color": "#FF6B9D"
-    }
-  ],
-  "days": [
-    {
-      "date": "1",
-      "entries": [
-        {
-          "id": "entry_1735000000_xyz789",
-          "colorKeyId": "tag-1",
-          "label": "Email",
-          "color": "#3B82F6",
-          "notes": "Newsletter draft",
-          "time": ""
-        }
-      ]
-    }
-  ]
-}
-```
-
----
-
-### PUT `/api/calendar-v3/:year/:month` (Option B)
-
-**Request:**
-```http
-PUT /api/calendar-v3/2025/1
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
-
-{
-  "year": 2025,
-  "month": 1,
-  "version": 5,
-  "colorKeys": [
-    {
-      "id": "tag-1",
-      "label": "Email - Updated",
-      "color": "#3B82F6"
-    }
-  ],
-  "days": [...]
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "userId": "user_123",
-  "year": 2025,
-  "month": 1,
-  "version": 6,
-  "colorKeys": [...],
-  "days": [...]
-}
-```
-
-**Response (409 Conflict):**
-```json
-{
-  "message": "Version conflict - calendar was updated by another session",
-  "conflict": {
-    "version": 7,
-    "colorKeys": [...],
-    "days": [...]
-  }
-}
-```
-
-**Response (400 Bad Request):**
-```json
-{
-  "message": "Version is required for optimistic concurrency control"
-}
-```
-
-**Response (500 Internal Server Error):**
-```json
-{
-  "message": "Failed to save calendar data"
-}
-```
-
----
-
-## 11. Monitoring & Debugging
+## 9. Monitoring & Debugging
 
 ### Browser Console Logs to Watch
+
+**Successful save on flush:**
 ```javascript
-// Successful save flow:
-"V3Calendar - Raw API response: { version: 5, colorKeys: [...] }"
-"Calendar V3 PUT - Sending version: 5"
-"Calendar V3 PUT - Save successful, new version: 6"
+"V3Calendar - Raw API response: { days: [...], colorKeys: [...] }"
+"Calendar V3 PUT - Received data: { daysCount: 1 }"
+"CalendarV3 UPSERT - Saving data: { daysCount: 1 }"
+"CalendarV3 UPSERT - Save successful"
+```
 
-// Conflict detection:
-"Version conflict detected: { clientVersion: 5, serverVersion: 6 }"
-"Calendar updated by another session (toast)"
+**Visibility change flush:**
+```javascript
+// User switches tabs
+"visibilityState: hidden"
+// Flush triggered, mutation fires
+"Calendar V3 PUT - Received data: { daysCount: 2 }"
+```
 
-// Error conditions:
-"Save error: { status: 409, message: '...' }"
-"Error saving calendar v3: ..."
+**Unmount flush:**
+```javascript
+// User navigates away
+"useEffect cleanup: flushing pending save"
+"Calendar V3 PUT - Received data: { daysCount: 1 }"
 ```
 
 ### Server Logs to Watch
+
 ```
-CalendarV3 GET - Querying for: { userId: '...', year: 2025, month: 1 }
-CalendarV3 GET - Database result: { found: true, colorKeysCount: 5 }
-
-Calendar V3 PUT - Received data: { userId: '...', year: 2025, month: 1, version: 5 }
-CalendarV3 Optimistic UPSERT - Start: { userId: '...', version: 5 }
-CalendarV3 - Save successful, new version: 6
-Calendar V3 PUT - Save successful: { newVersion: 6, colorKeysCount: 5 }
-
-// Or conflict:
-CalendarV3 - Version conflict detected: { clientVersion: 5, serverVersion: 6 }
-Calendar V3 PUT - Version conflict, returning 409
+Calendar V3 PUT - Received data: { userId: 'user_123', year: 2025, month: 1, daysCount: 1 }
+CalendarV3 UPSERT - Saving data: { userId: 'user_123', daysCount: 1 }
+CalendarV3 UPSERT - Save successful: { id: 123, savedDays: [...] }
+Calendar V3 PUT - Sending response: { daysCount: 1 }
 ```
 
-### Database Queries for Verification
+### Add Debug Logging (Optional)
 
-**Check version increments:**
-```sql
-SELECT id, user_id, year, month, version, updated_at, 
-       jsonb_array_length(color_keys) as color_key_count
-FROM calendar_v3
-WHERE user_id = 'user_123' AND year = 2025 AND month = 1;
+Add to `client/src/pages/monthly-content-calendar-v3.tsx`, inside the new useEffect:
+
+```typescript
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      console.log('[Calendar] visibilityState:', document.visibilityState);
+      if (document.visibilityState === 'hidden') {
+        console.log('[Calendar] Flushing save due to visibility change');
+        flushSave();
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      console.log('[Calendar] Flushing save due to beforeunload');
+      flushSave();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      console.log('[Calendar] Component unmounting, flushing save');
+      flushSave();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [flushSave]);
 ```
 
-**Verify color keys stored correctly:**
-```sql
-SELECT user_id, year, month, version, 
-       jsonb_pretty(color_keys) as color_keys_formatted
-FROM calendar_v3
-WHERE user_id = 'user_123' AND year = 2025 AND month = 1;
-```
+**Remove these logs after testing.**
 
 ---
 
-## 12. Known Limitations & Future Work
+## 10. Files to Modify
 
-### Current Limitations
-1. **No offline support** - Changes fail if network is unavailable (acceptable for MVP)
-2. **Last-write-wins within version** - If two edits happen on same version before first save completes, second overwrites first (rare, acceptable)
-3. **No edit history/undo** - User can't see who made changes or revert (future enhancement)
+```
+client/src/hooks/use-debounce.ts
+  - Add flush() and cancel() methods
+  - Store args in ref for delayed execution
+  - Return { debounced, flush, cancel } object
 
-### Future Enhancements
-1. **Real-time sync** - Use WebSockets to push changes to all open tabs immediately
-2. **Granular versioning** - Version individual color keys instead of entire calendar
-3. **Conflict resolution UI** - Show diff view when conflicts occur, let user choose which changes to keep
-4. **Activity log** - Track who changed what and when (useful for shared calendars in future)
-5. **Undo/Redo** - Store change history for 24 hours, allow reverting
+client/src/pages/monthly-content-calendar-v3.tsx
+  - Update debouncedSave usage to destructure { debounced, flush }
+  - Add useEffect for unmount/visibility/beforeunload cleanup
+  - Update debouncedEditKeySave usage to destructure { debounced }
+```
+
+**No backend changes required.**
 
 ---
 
-## 13. Conclusion
+## 11. Alternative Approaches Considered
 
-**Problem:** Colour Key edits appear to save but disappear after refresh due to API route mismatch.
+### Alternative 1: Remove Debounce Entirely
 
-**Root Cause:** Frontend calls `PUT /api/calendar-v3` but backend expects `PUT /api/calendar-v3/:year/:month`.
+**Approach:** Remove debounce, save immediately on every change like color keys do.
 
-**Quick Fix (Option A):** Change 1 line in frontend to fix route. 5 minutes.
+**Pros:**
+- Simplest fix
+- Guaranteed persistence
+- No flush logic needed
 
-**Robust Fix (Option B):** Add versioning like Cheat Sheet feature for conflict-safe saves. 2-3 hours.
+**Cons:**
+- Many API calls (if user types rapidly)
+- Performance impact on server
+- Database write load
 
-**Recommended Approach:** 
-- **Immediate:** Deploy Option A to stop data loss
-- **Follow-up:** Implement Option B for long-term robustness
+**Verdict:** ❌ Not recommended. Debounce is good UX for grouping rapid edits.
 
-Both options ensure changes survive refresh and re-login. Option B additionally prevents multi-tab conflicts.
+---
+
+### Alternative 2: Manual Save Button
+
+**Approach:** Add a "Save Calendar" button, remove autosave.
+
+**Pros:**
+- User has full control
+- No debounce complexity
+
+**Cons:**
+- ❌ **Violates user's constraint:** "Don't add a manual Save button"
+- Bad UX (users forget to click Save)
+
+**Verdict:** ❌ Not allowed per requirements.
+
+---
+
+### Alternative 3: Save on Every Keystroke (No Debounce)
+
+**Approach:** Save immediately when user types notes.
+
+**Pros:**
+- Guaranteed persistence
+
+**Cons:**
+- API call on every keystroke = bad performance
+- Server overload
+
+**Verdict:** ❌ Not recommended. Debounce is better.
+
+---
+
+### Alternative 4: Increase Debounce Delay
+
+**Approach:** Change debounce from 1000ms to 5000ms, assuming users stay longer.
+
+**Pros:**
+- Fewer API calls
+
+**Cons:**
+- **Still loses data** if user navigates within 5 seconds
+- Worse UX (longer delay)
+
+**Verdict:** ❌ Doesn't solve root cause.
+
+---
+
+## 12. Success Metrics
+
+**Quantitative:**
+- [ ] 0 data loss incidents (entries lost after navigation)
+- [ ] 100% persistence rate in all test scenarios
+- [ ] < 100ms overhead for flush on unmount
+- [ ] 0 duplicate saves (flush doesn't double-save)
+
+**Qualitative:**
+- [ ] Users report no more lost calendar entries
+- [ ] "Saving..." indicator shows during flush
+- [ ] No visible performance degradation
+
+---
+
+## 13. Known Limitations & Future Work
+
+### Current Limitations (Option A)
+
+1. **No version conflict detection** - Last-write-wins if two tabs edit simultaneously (acceptable for now)
+2. **No offline support** - Changes fail if network is unavailable during flush (acceptable)
+3. **No retry logic** - If flush fails, data is lost (rare, acceptable for MVP)
+
+### Future Enhancements (Option B)
+
+1. **Optimistic concurrency control** - Add `version` field like Cheat Sheet feature
+2. **Conflict resolution UI** - Show diff when 409 conflict occurs
+3. **Offline queue** - Queue saves when offline, flush when online
+4. **Real-time sync** - WebSocket for multi-tab sync
+
+**Recommendation:** Implement Option A now, schedule Option B for Q2 2025.
+
+---
+
+## 14. Conclusion
+
+**Problem:** Calendar day entries are lost when user navigates away within 1 second of adding/editing.
+
+**Root Cause:** `useDebounce` hook has no flush mechanism, so pending saves are cancelled on unmount.
+
+**Solution:** Add `flush()` method to hook, call it on unmount/visibilitychange/beforeunload.
+
+**Effort:** 45 minutes (10 min hook + 20 min component + 15 min testing)
+
+**Risk:** Low (isolated changes, extensive testing, easy rollback)
+
+**Impact:** Eliminates data loss, maintains current UX, no performance impact.
 
 ---
 
