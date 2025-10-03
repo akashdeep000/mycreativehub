@@ -167,6 +167,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
         label: key.label || key.label === '' ? key.label : 'Untitled', // Preserve empty strings if user types them
         color: key.colour || key.color
       }));
+      console.log(`💾 Saving ${colorKeysToSave.length} color keys to database:`, colorKeysToSave.map(k => ({ id: k.id, label: k.label })));
       saveColorKeysMutation.mutate(colorKeysToSave);
     }, 50);
   };
@@ -685,7 +686,11 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
 
   // Update color key - updates cache and triggers 50ms debounced save to DB
   const updateColorKey = (id: string, updates: Partial<ColourTag>) => {
-    const updatedColorKeys = colorKeys.map((key: any) => 
+    // Get current color keys from cache to ensure we have the latest
+    const currentData = queryClient.getQueryData<{ colorKeys: any[] }>(['/api/time-blocking-color-keys']);
+    const currentColorKeys = currentData?.colorKeys || colorKeys;
+    
+    const updatedColorKeys = currentColorKeys.map((key: any) => 
       key.id === id ? { ...key, ...updates } : key
     );
     
@@ -741,7 +746,11 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       colour: color
     };
     
-    const updatedColorKeys = [...colorKeys, newKey];
+    // Get current color keys from cache to ensure we have the latest
+    const currentData = queryClient.getQueryData<{ colorKeys: any[] }>(['/api/time-blocking-color-keys']);
+    const currentColorKeys = currentData?.colorKeys || colorKeys;
+    
+    const updatedColorKeys = [...currentColorKeys, newKey];
     
     // Update React Query cache immediately for instant UI update
     queryClient.setQueryData(['/api/time-blocking-color-keys'], { 
@@ -766,7 +775,11 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   };
 
   const deleteColourTag = (tagId: string) => {
-    const updatedColorKeys = colorKeys.filter((key: any) => key.id !== tagId);
+    // Get current color keys from cache to ensure we have the latest
+    const currentData = queryClient.getQueryData<{ colorKeys: any[] }>(['/api/time-blocking-color-keys']);
+    const currentColorKeys = currentData?.colorKeys || colorKeys;
+    
+    const updatedColorKeys = currentColorKeys.filter((key: any) => key.id !== tagId);
     
     // Update React Query cache immediately for instant UI update
     queryClient.setQueryData(['/api/time-blocking-color-keys'], { 
