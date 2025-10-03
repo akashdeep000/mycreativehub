@@ -105,7 +105,27 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       const response = await apiRequest(`/api/time-blocking-color-keys`);
       return await response.json();
     },
-    staleTime: 1000 * 60 * 5 // 5 minute cache
+    staleTime: 0, // Always refetch to get latest from DB
+    refetchOnMount: true, // Always get fresh data on mount
+  });
+
+  // Mutation for saving color keys to database with 50ms debounce
+  const saveColorKeysMutation = useMutation({
+    mutationFn: async (colorKeys: any[]) => {
+      const response = await apiRequest('/api/time-blocking-color-keys', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ colorKeys }),
+      });
+      if (!response.ok) throw new Error('Failed to save color keys');
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      // Update cache with DB response (single source of truth)
+      queryClient.setQueryData(['/api/time-blocking-color-keys'], { 
+        colorKeys: data.colorKeys 
+      });
+    },
   });
 
   // Get color keys ONLY from the API (don't use stale initialData)
@@ -130,6 +150,26 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   
   // Track when categories are actually modified by user to prevent auto-save overwriting
   const [dirtyCategories, setDirtyCategories] = useState(false);
+  
+  // Debounced save function with 50ms delay for fast saves as user types
+  const debouncedSaveColorKeys = useRef<NodeJS.Timeout | null>(null);
+  
+  const saveColorKeysWithDebounce = (colorKeys: any[]) => {
+    // Clear any pending save
+    if (debouncedSaveColorKeys.current) {
+      clearTimeout(debouncedSaveColorKeys.current);
+    }
+    
+    // Save after 50ms
+    debouncedSaveColorKeys.current = setTimeout(() => {
+      const colorKeysToSave = colorKeys.map((key: any) => ({
+        id: key.id,
+        label: key.label || key.label === '' ? key.label : 'Untitled', // Preserve empty strings if user types them
+        color: key.colour || key.color
+      }));
+      saveColorKeysMutation.mutate(colorKeysToSave);
+    }, 50);
+  };
 
 
   // Migration logic DISABLED - was causing data corruption by creating duplicate IDs
@@ -643,7 +683,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     }
   };
 
-  // Update color key - updates cache and triggers save
+  // Update color key - updates cache and triggers 50ms debounced save to DB
   const updateColorKey = (id: string, updates: Partial<ColourTag>) => {
     const updatedColorKeys = colorKeys.map((key: any) => 
       key.id === id ? { ...key, ...updates } : key
@@ -665,12 +705,12 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       }))
     }));
     
-    // Trigger save through parent component
-    setDirtyCategories(true);
+    // Save to database with 50ms debounce (saves as user types)
+    saveColorKeysWithDebounce(updatedColorKeys);
   };
 
   const updateColourTagColor = async (tagId: string, newColor: string) => {
-    // Update the category color first
+    // Update the category color (this will trigger debounced save)
     updateColorKey(tagId, { colour: newColor });
     
     // Update all blocks using this color tag
@@ -719,8 +759,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       }))
     }));
     
-    // Trigger save through parent component
-    setDirtyCategories(true);
+    // Save to database immediately (new tags)
+    saveColorKeysWithDebounce(updatedColorKeys);
     
     toast({ title: "New tag created successfully", variant: "default" });
   };
@@ -751,8 +791,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       }
     }));
     
-    // Trigger save through parent component
-    setDirtyCategories(true);
+    // Save to database immediately (deletions)
+    saveColorKeysWithDebounce(updatedColorKeys);
     toast({ title: "Tag deleted successfully", variant: "default" });
   };
 
@@ -859,7 +899,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
               <div className="flex items-center gap-1">
                 {editingColourTag === tag.id ? (
                   <Input
-                    value={tag.label}
+                    value={tag.label || ''}
                     onChange={(e) => updateColorKey(tag.id, { label: e.target.value })}
                     onBlur={() => setEditingColourTag(null)}
                     onKeyDown={(e) => {
@@ -871,7 +911,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                 ) : (
                   <>
                     <span className="text-sm px-1">
-                      {tag.label}
+                      {tag.label || 'Untitled'}
                     </span>
                     <button
                       className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-white/20 rounded"
