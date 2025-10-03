@@ -111,12 +111,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   // Get color keys ONLY from the API (don't use stale initialData)
   const colorKeys = timeBlockingColorData?.colorKeys || [];
   
-  // Update component data when parent provides new data
-  useEffect(() => {
-    if (initialData && initialData !== data) {
-      setData(initialData);
-    }
-  }, [initialData]);
+  // DON'T sync with initialData - it contains stale data from parent
+  // The component manages its own state from the API query
   // Only monthly view now - removed weekly view completely
   const [editingTimeBlock, setEditingTimeBlock] = useState<string | null>(null);
   const [draggedBlock, setDraggedBlock] = useState<TimeBlock | null>(null);
