@@ -264,15 +264,31 @@ export default function AutomationToolkit() {
     return () => {
       // Cleanup function only runs on ACTUAL unmount (empty dependency array)
       // Use refs to get latest values without triggering this effect on every keystroke
-      if (hasUnsavedChangesRef.current && hasUserEdited.current && documentRef.current && saveMutationRef.current) {
+      if (hasUnsavedChangesRef.current && hasUserEdited.current && documentRef.current) {
         // Check if any row has content
         const hasContent = rowsRef.current.some(row => 
           Object.values(row).some(value => value.trim().length > 0)
         );
         
         if (hasContent) {
-          // Save immediately using the current (non-debounced) rows and latest mutation
-          saveMutationRef.current.mutate(rowsRef.current);
+          // Use synchronous fetch with keepalive to ensure save completes even after unmount
+          const token = localStorage.getItem('token');
+          if (token) {
+            fetch('/api/automation/cheatsheet', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                version: documentRef.current.version,
+                rows: rowsRef.current
+              }),
+              keepalive: true // Ensures request completes even if page unloads
+            }).catch(() => {
+              // Silently fail - user is navigating away anyway
+            });
+          }
         }
       }
     };
