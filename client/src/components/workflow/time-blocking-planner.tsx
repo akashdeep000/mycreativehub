@@ -151,26 +151,50 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   // Track when categories are actually modified by user to prevent auto-save overwriting
   const [dirtyCategories, setDirtyCategories] = useState(false);
   
-  // Debounced save function with 50ms delay for fast saves as user types
-  const debouncedSaveColorKeys = useRef<NodeJS.Timeout | null>(null);
-  
-  const saveColorKeysWithDebounce = (colorKeys: any[]) => {
-    // Clear any pending save
-    if (debouncedSaveColorKeys.current) {
-      clearTimeout(debouncedSaveColorKeys.current);
-    }
-    
-    // Save after 200ms (enough time to type but fast enough to not lose data)
-    debouncedSaveColorKeys.current = setTimeout(() => {
-      const colorKeysToSave = colorKeys.map((key: any) => ({
-        id: key.id,
-        label: key.label || key.label === '' ? key.label : 'Untitled', // Preserve empty strings if user types them
-        color: key.colour || key.color
-      }));
-      console.log(`💾 Saving ${colorKeysToSave.length} color keys to database:`, colorKeysToSave.map(k => ({ id: k.id, label: k.label })));
-      saveColorKeysMutation.mutate(colorKeysToSave);
-    }, 200);
+  // Immediate save function (copying monthly calendar pattern)
+  const saveColorKeysImmediately = (colorKeys: any[]) => {
+    const colorKeysToSave = colorKeys.map((key: any) => ({
+      id: key.id,
+      label: key.label || key.label === '' ? key.label : 'Untitled',
+      color: key.colour || key.color
+    }));
+    console.log(`💾 Saving ${colorKeysToSave.length} color keys immediately:`, colorKeysToSave.map(k => ({ id: k.id, label: k.label })));
+    saveColorKeysMutation.mutate(colorKeysToSave);
   };
+  
+  // Flush any pending saves on visibility change or before unload (copying monthly calendar pattern)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // Get latest color keys from cache and save immediately
+        const currentData = queryClient.getQueryData<{ colorKeys: any[] }>(['/api/time-blocking-color-keys']);
+        if (currentData?.colorKeys) {
+          saveColorKeysImmediately(currentData.colorKeys);
+        }
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      // Get latest color keys from cache and save immediately
+      const currentData = queryClient.getQueryData<{ colorKeys: any[] }>(['/api/time-blocking-color-keys']);
+      if (currentData?.colorKeys) {
+        saveColorKeysImmediately(currentData.colorKeys);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      // Final flush on unmount
+      const currentData = queryClient.getQueryData<{ colorKeys: any[] }>(['/api/time-blocking-color-keys']);
+      if (currentData?.colorKeys) {
+        saveColorKeysImmediately(currentData.colorKeys);
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [queryClient]);
 
 
   // Migration logic DISABLED - was causing data corruption by creating duplicate IDs
@@ -710,8 +734,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       }))
     }));
     
-    // Save to database with 50ms debounce (saves as user types)
-    saveColorKeysWithDebounce(updatedColorKeys);
+    // Save immediately to database (copying monthly calendar pattern - no debounce)
+    saveColorKeysImmediately(updatedColorKeys);
   };
 
   const updateColourTagColor = async (tagId: string, newColor: string) => {
@@ -769,7 +793,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     }));
     
     // Save to database immediately (new tags)
-    saveColorKeysWithDebounce(updatedColorKeys);
+    saveColorKeysImmediately(updatedColorKeys);
     
     toast({ title: "New tag created successfully", variant: "default" });
   };
@@ -805,7 +829,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     }));
     
     // Save to database immediately (deletions)
-    saveColorKeysWithDebounce(updatedColorKeys);
+    saveColorKeysImmediately(updatedColorKeys);
     toast({ title: "Tag deleted successfully", variant: "default" });
   };
 
@@ -914,39 +938,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
                   <Input
                     value={tag.label || ''}
                     onChange={(e) => updateColorKey(tag.id, { label: e.target.value })}
-                    onBlur={() => {
-                      // Flush any pending save immediately when user stops editing
-                      if (debouncedSaveColorKeys.current) {
-                        clearTimeout(debouncedSaveColorKeys.current);
-                        const currentData = queryClient.getQueryData<{ colorKeys: any[] }>(['/api/time-blocking-color-keys']);
-                        const currentColorKeys = currentData?.colorKeys || colorKeys;
-                        const colorKeysToSave = currentColorKeys.map((key: any) => ({
-                          id: key.id,
-                          label: key.label || key.label === '' ? key.label : 'Untitled',
-                          color: key.colour || key.color
-                        }));
-                        console.log(`💾 Flushing save on blur: ${colorKeysToSave.length} color keys`);
-                        saveColorKeysMutation.mutate(colorKeysToSave);
-                      }
-                      setEditingColourTag(null);
-                    }}
+                    onBlur={() => setEditingColourTag(null)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        // Flush save immediately on Enter
-                        if (debouncedSaveColorKeys.current) {
-                          clearTimeout(debouncedSaveColorKeys.current);
-                          const currentData = queryClient.getQueryData<{ colorKeys: any[] }>(['/api/time-blocking-color-keys']);
-                          const currentColorKeys = currentData?.colorKeys || colorKeys;
-                          const colorKeysToSave = currentColorKeys.map((key: any) => ({
-                            id: key.id,
-                            label: key.label || key.label === '' ? key.label : 'Untitled',
-                            color: key.colour || key.color
-                          }));
-                          console.log(`💾 Flushing save on Enter: ${colorKeysToSave.length} color keys`);
-                          saveColorKeysMutation.mutate(colorKeysToSave);
-                        }
-                        setEditingColourTag(null);
-                      }
+                      if (e.key === 'Enter') setEditingColourTag(null);
                     }}
                     className="h-6 text-xs w-24"
                     autoFocus
