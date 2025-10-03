@@ -230,52 +230,81 @@ export default function MonthlyContentCalendarV3() {
       notes: ''
     };
 
-    const dayIndex = days.findIndex(d => d.date === date);
+    // Get fresh data from cache to avoid race conditions
+    const currentData = queryClient.getQueryData(['/api/calendar-v3', year, month]) as any;
+    const currentDays = currentData?.days || [];
+    const currentColorKeys = currentData?.colorKeys || [];
+
+    const dayIndex = currentDays.findIndex((d: CalendarDay) => d.date === date);
     let updatedDays: CalendarDay[];
 
     if (dayIndex >= 0) {
-      updatedDays = [...days];
+      updatedDays = [...currentDays];
       updatedDays[dayIndex] = {
         ...updatedDays[dayIndex],
         entries: [...updatedDays[dayIndex].entries, newEntry]
       };
     } else {
-      updatedDays = [...days, { date, entries: [newEntry] }];
+      updatedDays = [...currentDays, { date, entries: [newEntry] }];
     }
 
-    const updatedData = { ...(calendarData as any), days: updatedDays };
+    const updatedData = { ...currentData, days: updatedDays, colorKeys: currentColorKeys };
     queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
-    debouncedSave();
+    
+    // Save immediately when adding entries (no debounce delay)
+    saveCalendarData.mutate({
+      year,
+      month,
+      colorKeys: updatedData.colorKeys,
+      days: updatedData.days,
+    });
   };
 
   const updateEntryNotes = (date: number, entryId: string, notes: string) => {
-    const dayIndex = days.findIndex(d => d.date === date);
+    // Get fresh data from cache to avoid race conditions
+    const currentData = queryClient.getQueryData(['/api/calendar-v3', year, month]) as any;
+    const currentDays = currentData?.days || [];
+    const currentColorKeys = currentData?.colorKeys || [];
+
+    const dayIndex = currentDays.findIndex((d: CalendarDay) => d.date === date);
     if (dayIndex === -1) return;
 
-    const updatedDays = [...days];
-    const entryIndex = updatedDays[dayIndex].entries.findIndex(e => e.id === entryId);
+    const updatedDays = [...currentDays];
+    const entryIndex = updatedDays[dayIndex].entries.findIndex((e: CalendarEntry) => e.id === entryId);
     if (entryIndex === -1) return;
 
     updatedDays[dayIndex].entries[entryIndex].notes = notes;
 
-    const updatedData = { ...(calendarData as any), days: updatedDays };
+    const updatedData = { ...currentData, days: updatedDays, colorKeys: currentColorKeys };
     queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
-    debouncedSave();
+    
+    // Save immediately when updating notes (no debounce delay)
+    saveCalendarData.mutate({
+      year,
+      month,
+      colorKeys: updatedData.colorKeys,
+      days: updatedData.days,
+    });
   };
 
   const deleteEntry = (date: number, entryId: string) => {
-    const dayIndex = days.findIndex(d => d.date === date);
+    // Get fresh data from cache to avoid race conditions
+    const currentData = queryClient.getQueryData(['/api/calendar-v3', year, month]) as any;
+    const currentDays = currentData?.days || [];
+    const currentColorKeys = currentData?.colorKeys || [];
+
+    const dayIndex = currentDays.findIndex((d: CalendarDay) => d.date === date);
     if (dayIndex === -1) return;
 
-    const updatedDays = [...days];
-    updatedDays[dayIndex].entries = updatedDays[dayIndex].entries.filter(e => e.id !== entryId);
+    const updatedDays = [...currentDays];
+    updatedDays[dayIndex].entries = updatedDays[dayIndex].entries.filter((e: CalendarEntry) => e.id !== entryId);
 
     // Remove day if no entries left
     if (updatedDays[dayIndex].entries.length === 0) {
       updatedDays.splice(dayIndex, 1);
     }
 
-    const updatedData = { ...(calendarData as any), days: updatedDays };
+    const updatedData = { ...currentData, days: updatedDays, colorKeys: currentColorKeys };
     queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
     
     // Save immediately for deletes (no debounce delay)
