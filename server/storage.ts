@@ -337,6 +337,10 @@ export interface IStorage {
   getGlobalColorKeys(userId: string): Promise<GlobalColorKeys | undefined>;
   upsertGlobalColorKeys(data: InsertGlobalColorKeys): Promise<GlobalColorKeys>;
   
+  // Time Blocking Color Keys Operations (global per user)
+  getTimeBlockingColorKeys(userId: string): Promise<TimeBlockingColorKeys | undefined>;
+  upsertTimeBlockingColorKeys(data: InsertTimeBlockingColorKeys): Promise<TimeBlockingColorKeys>;
+  
   // Time Blocking Events Operations
   getTimeBlockingEvents(userId: string, startDate: Date, endDate: Date): Promise<TimeBlockingEvent[]>;
   getTimeBlockingEvent(id: string): Promise<TimeBlockingEvent | undefined>;
@@ -1943,6 +1947,35 @@ export class DatabaseStorage implements IStorage {
       })
       .onConflictDoUpdate({
         target: [globalColorKeys.userId],
+        set: {
+          colorKeys: (Array.isArray(data.colorKeys) ? data.colorKeys : []) as any,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    
+    return keys;
+  }
+
+  // Time Blocking Color Keys Operations (global per user)
+  async getTimeBlockingColorKeys(userId: string): Promise<TimeBlockingColorKeys | undefined> {
+    const [keys] = await db
+      .select()
+      .from(timeBlockingColorKeys)
+      .where(eq(timeBlockingColorKeys.userId, userId));
+    
+    return keys;
+  }
+
+  async upsertTimeBlockingColorKeys(data: InsertTimeBlockingColorKeys): Promise<TimeBlockingColorKeys> {
+    const [keys] = await db
+      .insert(timeBlockingColorKeys)
+      .values({
+        ...data,
+        colorKeys: (Array.isArray(data.colorKeys) ? data.colorKeys : []) as any,
+      })
+      .onConflictDoUpdate({
+        target: [timeBlockingColorKeys.userId],
         set: {
           colorKeys: (Array.isArray(data.colorKeys) ? data.colorKeys : []) as any,
           updatedAt: new Date(),
