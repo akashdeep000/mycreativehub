@@ -658,6 +658,7 @@ export default function MonthlyContentCalendarV3() {
                       if (e.key === 'Enter') addNewCustomTag();
                       if (e.key === 'Escape') cancelNewTag();
                     }}
+                    onBlur={addNewCustomTag}
                     placeholder="Tag name"
                     className="text-sm font-medium h-7 w-24"
                     autoFocus
