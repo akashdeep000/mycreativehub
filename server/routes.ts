@@ -2677,70 +2677,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Calendar V3 GET - User: ${userId}, Year: ${year}, Month: ${month}`);
       
+      // Get the month-specific calendar (for days data)
       const calendar = await storage.getCalendarV3(userId, year, month);
       
-      if (calendar) {
-        // Return calendar with default empty arrays if needed
-        const response = {
-          userId: calendar.userId,
-          year: calendar.year,
-          month: calendar.month,
-          colorKeys: calendar.colorKeys || [],
-          days: calendar.days || []
-        };
+      // Get global color keys
+      let globalKeys = await storage.getGlobalColorKeys(userId);
+      
+      // Backward compatibility: If no global keys exist, seed from existing data or defaults
+      if (!globalKeys) {
+        console.log('Calendar V3 GET - No global keys found, seeding...');
         
-        console.log('Calendar V3 GET - Sending response:', {
-          colorKeysCount: response.colorKeys.length,
-          daysCount: response.days.length
+        let seedColorKeys = [];
+        
+        // Try to seed from current month's data if it exists
+        if (calendar && calendar.colorKeys && calendar.colorKeys.length > 0) {
+          seedColorKeys = calendar.colorKeys;
+          console.log('Calendar V3 GET - Seeding from current month data');
+        } else {
+          // Use default color keys
+          seedColorKeys = [
+            { id: '1', label: 'Email', color: '#3B82F6' },
+            { id: '2', label: 'Reel', color: '#10B981' },
+            { id: '3', label: 'Carousel', color: '#8B5CF6' },
+            { id: '4', label: 'Post', color: '#F59E0B' },
+            { id: '5', label: 'Story', color: '#EF4444' },
+            { id: '6', label: 'YouTube Video', color: '#14B8A6' },
+            { id: '7', label: 'Long Form', color: '#EC4899' },
+            { id: '8', label: 'TikTok', color: '#6366F1' },
+            { id: '9', label: 'Shorts', color: '#F97316' }
+          ];
+          console.log('Calendar V3 GET - Seeding with default keys');
+        }
+        
+        // Create global color keys
+        globalKeys = await storage.upsertGlobalColorKeys({
+          userId,
+          colorKeys: seedColorKeys
         });
-        
-        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-        res.json(response);
-      } else {
-        // Create default calendar in database immediately
-        const defaultColorKeys = [
-          { id: '1', label: 'Email', color: '#3B82F6' },
-          { id: '2', label: 'Reel', color: '#10B981' },
-          { id: '3', label: 'Carousel', color: '#8B5CF6' },
-          { id: '4', label: 'Post', color: '#F59E0B' },
-          { id: '5', label: 'Story', color: '#EF4444' },
-          { id: '6', label: 'YouTube Video', color: '#14B8A6' },
-          { id: '7', label: 'Long Form', color: '#EC4899' },
-          { id: '8', label: 'TikTok', color: '#6366F1' },
-          { id: '9', label: 'Shorts', color: '#F97316' }
-        ];
-        
-        console.log('Calendar V3 GET - Creating new calendar with defaults');
-        
-        // Persist defaults to database immediately
-        const newCalendar = await storage.upsertCalendarV3({
+      }
+      
+      // If calendar doesn't exist for this month, create it with empty days
+      if (!calendar) {
+        console.log('Calendar V3 GET - Creating new calendar for month');
+        await storage.upsertCalendarV3({
           userId,
           year,
           month,
-          colorKeys: defaultColorKeys,
+          colorKeys: [], // Empty - we use global keys now
           days: []
         });
-        
-        const response = {
-          userId: newCalendar.userId,
-          year: newCalendar.year,
-          month: newCalendar.month,
-          colorKeys: newCalendar.colorKeys || [],
-          days: newCalendar.days || []
-        };
-        
-        console.log('Calendar V3 GET - Created and sending default calendar:', {
-          id: newCalendar.id,
-          colorKeysCount: response.colorKeys.length
-        });
-        
-        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-        res.json(response);
       }
+      
+      const response = {
+        userId,
+        year,
+        month,
+        colorKeys: globalKeys.colorKeys || [],
+        days: calendar?.days || []
+      };
+      
+      console.log('Calendar V3 GET - Sending response:', {
+        colorKeysCount: response.colorKeys.length,
+        daysCount: response.days.length,
+        source: 'global'
+      });
+      
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.json(response);
     } catch (error) {
       console.error('Error fetching calendar v3:', error);
       res.status(500).json({ message: 'Failed to fetch calendar data' });
@@ -2822,11 +2827,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         daysCount: Array.isArray(days) ? days.length : 0
       });
       
+      // Save color keys GLOBALLY (not month-specific)
+      const globalKeys = await storage.upsertGlobalColorKeys({
+        userId,
+        colorKeys: colorKeys || []
+      });
+      
+      // Save days to month-specific calendar (colorKeys field empty since we use global now)
       const calendar = await storage.upsertCalendarV3({
         userId,
         year,
         month,
-        colorKeys: colorKeys || [],
+        colorKeys: [], // Empty - using global keys
         days: days || []
       });
       
@@ -2834,13 +2846,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: calendar.userId,
         year: calendar.year,
         month: calendar.month,
-        colorKeys: calendar.colorKeys || [],
+        colorKeys: globalKeys.colorKeys || [],
         days: calendar.days || []
       };
       
       console.log('Calendar V3 PUT - Sending response:', {
         colorKeysCount: response.colorKeys.length,
-        daysCount: response.days.length
+        daysCount: response.days.length,
+        colorKeysSavedAs: 'global'
       });
       
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
