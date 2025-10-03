@@ -125,6 +125,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       queryClient.setQueryData(['/api/time-blocking-color-keys'], { 
         colorKeys: data.colorKeys 
       });
+      // Show "saved" status for 2 seconds
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
     },
   });
 
@@ -151,6 +154,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   // Track when categories are actually modified by user to prevent auto-save overwriting
   const [dirtyCategories, setDirtyCategories] = useState(false);
   
+  // Save status for user feedback
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  
   // Immediate save function (copying monthly calendar pattern)
   const saveColorKeysImmediately = (colorKeys: any[]) => {
     const colorKeysToSave = colorKeys.map((key: any) => ({
@@ -159,6 +165,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       color: key.colour || key.color
     }));
     console.log(`💾 Saving ${colorKeysToSave.length} color keys immediately:`, colorKeysToSave.map(k => ({ id: k.id, label: k.label })));
+    setSaveStatus('saving');
     saveColorKeysMutation.mutate(colorKeysToSave);
   };
 
@@ -844,10 +851,20 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const renderColourKeyPanel = () => (
     <Card className="mb-6">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Palette className="h-5 w-5" />
-          Colour Key
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Palette className="h-5 w-5" />
+            Colour Key
+          </CardTitle>
+          {saveStatus === 'saved' && (
+            <span className="text-sm text-green-600 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Saved
+            </span>
+          )}
+        </div>
         <CardDescription>Select a colour category, then click a calendar block to apply it. The block will auto-fill with the category name.</CardDescription>
       </CardHeader>
       <CardContent>

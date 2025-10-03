@@ -163,44 +163,15 @@ export default function TimeBlocking() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Save function that handles both time blocks and color keys
+  // Save function - color keys are now handled by TimeBlockingPlanner component directly
+  // This function is kept for compatibility but doesn't save color keys anymore
   const handleSave = async (data: any) => {
     try {
-      // Save color keys to time blocking database (global, not month-specific)
-      if (data.colourTags && data.colourTags.length > 0) {
-        const colorKeys = data.colourTags.map((tag: any) => ({
-          id: tag.id,
-          label: tag.label,
-          color: tag.colour || tag.color
-        }));
-        
-        console.log(`💾 Saving ${colorKeys.length} time blocking color keys...`);
-        
-        const saveKeysResponse = await fetch('/api/time-blocking-color-keys', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({ colorKeys }),
-        });
-        
-        if (!saveKeysResponse.ok) {
-          console.error('Failed to save time blocking color keys');
-        } else {
-          console.log('✅ Time blocking color keys saved successfully');
-        }
-      }
-      
-      // Individual time block saving is handled by TimeBlockingPlanner component
-      console.log('💾 Color keys saved - time blocks handled by TimeBlockingPlanner component');
+      // Color keys are saved immediately by TimeBlockingPlanner component
+      // DO NOT save them here to avoid race conditions with stale data
+      console.log('💾 Save triggered - color keys handled by TimeBlockingPlanner component');
     } catch (error) {
-      console.error('❌ Failed to save color keys:', error);
-      toast({
-        title: "Save Error",
-        description: "Failed to save color categories. Please try again.",
-        variant: "destructive"
-      });
+      console.error('❌ Save error:', error);
     }
   };
 
