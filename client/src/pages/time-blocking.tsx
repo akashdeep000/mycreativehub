@@ -18,13 +18,17 @@ const getCurrentMonthKey = (date = new Date()) => {
 
 const defaultTimeBlockingData = {
   colourTags: [
-    { id: 'tag-1', label: 'Business Operations', colour: '#3B82F6', selected: true },
-    { id: 'tag-4', label: 'Client Calls', colour: '#F59E0B', selected: false },
-    { id: 'tag-6', label: 'Deep Work', colour: '#14B8A6', selected: false },
-    { id: 'tag-7', label: 'Admin', colour: '#EC4899', selected: false },
-    { id: 'tag-8', label: 'Personal Development', colour: '#6366F1', selected: false },
-    { id: 'tag-9', label: 'Strategic Planning', colour: '#F97316', selected: false },
-    { id: 'tag-10', label: 'Networking', colour: '#8B5CF6', selected: false }
+    { id: 'tb-1', label: 'Deep Work', colour: '#3B82F6', selected: true },
+    { id: 'tb-2', label: 'Filming', colour: '#10B981', selected: false },
+    { id: 'tb-3', label: 'Editing', colour: '#8B5CF6', selected: false },
+    { id: 'tb-4', label: 'Email Marketing', colour: '#F59E0B', selected: false },
+    { id: 'tb-5', label: 'Social Scheduling', colour: '#EF4444', selected: false },
+    { id: 'tb-6', label: 'Listing Work', colour: '#14B8A6', selected: false },
+    { id: 'tb-7', label: 'Admin/Ops', colour: '#EC4899', selected: false },
+    { id: 'tb-8', label: 'Finance', colour: '#6366F1', selected: false },
+    { id: 'tb-9', label: 'Product Dev', colour: '#F97316', selected: false },
+    { id: 'tb-10', label: 'Packing/Shipping', colour: '#8B5CF6', selected: false },
+    { id: 'tb-11', label: 'Creation Time', colour: '#A855F7', selected: false }
   ],
   weeklyView: {
     blocks: []
@@ -89,34 +93,32 @@ export default function TimeBlocking() {
           };
         });
         
-        // Load ALL color categories from calendar (including custom ones)
-        let allColorKeys = []; // Start empty to avoid overwriting custom categories
+        // Load time blocking color keys from dedicated API
+        let allColorKeys = [];
         try {
-          // Use the current month initially, but this will be replaced by the proper selected month loading
-          const colorResponse = await fetch(`/api/calendar-v3/${currentDate.getFullYear()}/${currentDate.getMonth() + 1}?t=${Date.now()}`, {
+          console.log('🔄 Loading time blocking color keys...');
+          const colorResponse = await fetch('/api/time-blocking-color-keys', {
             credentials: 'include',
             headers: {
               'Cache-Control': 'no-store'
             }
           });
+          
           if (colorResponse.ok) {
-            const calendarData = await colorResponse.json();
-            if (calendarData.colorKeys && calendarData.colorKeys.length > 0) {
-              // Load ALL color keys, including custom ones created by user
-              allColorKeys = calendarData.colorKeys;
-              console.log(`✅ Loaded ${allColorKeys.length} color categories from database (including custom categories)`);
-            }
+            const data = await colorResponse.json();
+            allColorKeys = data.colorKeys || [];
+            console.log(`✅ Loaded ${allColorKeys.length} time blocking color keys`);
           }
         } catch (error) {
-          console.log('Using default color categories');
+          console.log('Using default time blocking color categories');
         }
         
         // Update state with loaded data
-        const colourTags = allColorKeys.map((key: any) => ({
+        const colourTags = allColorKeys.map((key: any, index: number) => ({
           id: key.id,
           label: key.label,
-          colour: key.colour || key.color,
-          selected: key.id === 'tag-1' // First tag selected by default
+          colour: key.color,
+          selected: index === 0 // First tag selected by default
         }));
         
         setTimeBlockingData({
@@ -164,51 +166,29 @@ export default function TimeBlocking() {
   // Save function that handles both time blocks and color keys
   const handleSave = async (data: any) => {
     try {
-      // Save color keys to calendar database (only when explicitly provided by child component)
+      // Save color keys to time blocking database (global, not month-specific)
       if (data.colourTags && data.colourTags.length > 0) {
-        // Use the selected month from the data, not the current month
-        const selectedMonth = data.monthlyView?.selectedMonth ?? new Date().toISOString().slice(0, 7);
-        const [year, month] = selectedMonth.split('-').map(Number);
-        
-        // Convert color tags to the calendar format
         const colorKeys = data.colourTags.map((tag: any) => ({
           id: tag.id,
           label: tag.label,
-          color: tag.colour || tag.color // Handle both spellings
+          color: tag.colour || tag.color
         }));
         
-        console.log(`💾 Saving ${colorKeys.length} color keys to calendar database...`);
+        console.log(`💾 Saving ${colorKeys.length} time blocking color keys...`);
         
-        // First, get or create the calendar entry for this month  
-        const calendarResponse = await fetch(`/api/calendar-v3/${year}/${month}?t=${Date.now()}`, {
-          credentials: 'include',
-          headers: {
-            'Cache-Control': 'no-store'
-          }
-        });
-        
-        let calendarData = null;
-        if (calendarResponse.ok) {
-          calendarData = await calendarResponse.json();
-        }
-        
-        // Update the calendar with new color keys
-        const saveResponse = await fetch(`/api/calendar-v3/${year}/${month}`, {
+        const saveKeysResponse = await fetch('/api/time-blocking-color-keys', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
-          body: JSON.stringify({
-            ...calendarData,
-            colorKeys: colorKeys
-          })
+          body: JSON.stringify({ colorKeys }),
         });
         
-        if (saveResponse.ok) {
-          console.log(`✅ Successfully saved ${colorKeys.length} color keys to database`);
+        if (!saveKeysResponse.ok) {
+          console.error('Failed to save time blocking color keys');
         } else {
-          console.error('❌ Failed to save color keys:', await saveResponse.text());
+          console.log('✅ Time blocking color keys saved successfully');
         }
       }
       
