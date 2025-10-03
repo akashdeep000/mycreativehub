@@ -729,9 +729,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       key.id === id ? { ...key, ...updates } : key
     );
     
-    // Update the calendar data immediately in React Query cache
-    const updatedData = { ...calendarData, colorKeys: updatedColorKeys };
-    queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
+    // Update the TIME BLOCKING color keys cache (not calendar!)
+    const updatedData = { colorKeys: updatedColorKeys };
+    queryClient.setQueryData(['/api/time-blocking-color-keys'], updatedData);
     
     // Also update local state for compatibility
     setData(prev => ({
@@ -780,8 +780,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
     };
     
     const updatedColorKeys = [...colorKeys, newKey];
-    const updatedData = { ...calendarData, colorKeys: updatedColorKeys };
-    queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
+    const updatedData = { colorKeys: updatedColorKeys };
+    queryClient.setQueryData(['/api/time-blocking-color-keys'], updatedData);
     
     // Also update local state for compatibility
     setData(prev => ({
@@ -802,8 +802,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   const deleteColourTag = (tagId: string) => {
     // Use React Query pattern for deleting like monthly content planner
     const updatedColorKeys = colorKeys.filter((key: any) => key.id !== tagId);
-    const updatedData = { ...calendarData, colorKeys: updatedColorKeys };
-    queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
+    const updatedData = { colorKeys: updatedColorKeys };
+    queryClient.setQueryData(['/api/time-blocking-color-keys'], updatedData);
     
     // Also update local state for compatibility  
     setData(prev => ({
@@ -823,7 +823,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       }
     }));
     
-    debouncedSave();
+    setDirtyCategories(true);
     toast({ title: "Tag deleted successfully", variant: "default" });
   };
 
