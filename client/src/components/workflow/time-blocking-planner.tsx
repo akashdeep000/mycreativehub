@@ -176,8 +176,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
   useEffect(() => {
     let timer: NodeJS.Timeout;
     
-    // Save immediately for critical changes, debounce for minor ones
-    const shouldSaveImmediately = data.monthlyView.blocks.length > 0 || data.weeklyView.blocks.length > 0;
+    // Save immediately for critical changes (blocks or color key edits), debounce for minor ones
+    const shouldSaveImmediately = data.monthlyView.blocks.length > 0 || data.weeklyView.blocks.length > 0 || dirtyCategories;
     
     // Only include colourTags in save payload when user actually modified them
     const saveData: any = dirtyCategories ? data : {
