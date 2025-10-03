@@ -1011,6 +1011,22 @@ export const insertGlobalColorKeysSchema = createInsertSchema(globalColorKeys).o
 export type GlobalColorKeys = typeof globalColorKeys.$inferSelect;
 export type InsertGlobalColorKeys = z.infer<typeof insertGlobalColorKeysSchema>;
 
+// Time Blocking Color Keys - Global per user (shared across all time periods)
+export const timeBlockingColorKeys = pgTable("time_blocking_color_keys", {
+  userId: varchar("user_id").primaryKey().notNull().references(() => users.id),
+  colorKeys: jsonb("color_keys").$type<ColorKeyV3[]>().notNull().default(sql`'[]'::jsonb`),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertTimeBlockingColorKeysSchema = createInsertSchema(timeBlockingColorKeys).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type TimeBlockingColorKeys = typeof timeBlockingColorKeys.$inferSelect;
+export type InsertTimeBlockingColorKeys = z.infer<typeof insertTimeBlockingColorKeysSchema>;
+
 // Automation Prompts V2 - Conversation flow cheat sheet with 8 fields
 export const automationPrompts = pgTable("automation_prompts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
