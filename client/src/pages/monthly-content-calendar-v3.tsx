@@ -103,16 +103,23 @@ export default function MonthlyContentCalendarV3() {
       
       return data;
     },
+    select: (data) => {
+      // Normalize data structure: transform 'colour' to 'color' for ALL data
+      return {
+        ...data,
+        colorKeys: (data?.colorKeys || []).map((key: any) => ({
+          ...key,
+          color: key.colour || key.color
+        }))
+      };
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
-    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnMount: false, // Disable refetch on mount - we update cache manually after mutations
   });
 
-  // Map colorKeys with correct property names (API returns 'colour', interface expects 'color')
-  const colorKeys: ColorKey[] = ((calendarData as any)?.colorKeys || []).map((key: any) => ({
-    ...key,
-    color: key.colour || key.color // Handle both API response format and local format
-  }));
+  // Extract normalized data
+  const colorKeys: ColorKey[] = (calendarData as any)?.colorKeys || [];
   const days: CalendarDay[] = (calendarData as any)?.days || [];
 
   // Debug logging
@@ -182,16 +189,16 @@ export default function MonthlyContentCalendarV3() {
     onSuccess: (serverData) => {
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
-      // Transform server response to match frontend format (colour -> color)
-      const transformedData = {
+      // Normalize server response to match select function format (colour -> color)
+      const normalizedData = {
         ...serverData,
         colorKeys: (serverData.colorKeys || []).map((key: any) => ({
           ...key,
           color: key.colour || key.color
         }))
       };
-      // Update cache with transformed server response to maintain stable IDs (prevents flash)
-      queryClient.setQueryData(['/api/calendar-v3', year, month], transformedData);
+      // Update cache with normalized data (same structure as select function produces)
+      queryClient.setQueryData(['/api/calendar-v3', year, month], normalizedData);
     },
     onError: (error) => {
       console.error('Save error:', error);
