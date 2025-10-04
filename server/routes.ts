@@ -2919,7 +2919,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Default Time Blocking Color Keys
   const DEFAULT_TIME_BLOCKING_COLOR_KEYS = [
     { id: 'tb-1', label: 'Deep Work', color: '#3B82F6' },
-    { id: 'tb-2', label: 'Filming', color: '#10B981' },
+    { id: 'tb-2', label: 'Reel', color: '#10B981' },
     { id: 'tb-3', label: 'Editing', color: '#8B5CF6' },
     { id: 'tb-4', label: 'Email Marketing', color: '#F59E0B' },
     { id: 'tb-5', label: 'Social Scheduling', color: '#EF4444' },
