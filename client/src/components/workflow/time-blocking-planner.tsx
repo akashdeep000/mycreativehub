@@ -137,8 +137,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
   
   // Sync local data state when initialData prop changes (important for post-login data loading!)
   useEffect(() => {
-    if (initialData && initialData.monthlyView?.blocks) {
-      setData(initialData);
+    setData(initialData);
+    if (initialData.colourTags && initialData.colourTags.length > 0) {
+      setActiveColourTagId(initialData.colourTags[0].id);
     }
   }, [initialData]);
   
