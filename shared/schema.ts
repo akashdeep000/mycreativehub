@@ -293,7 +293,9 @@ export const socialMediaStrategies = pgTable("social_media_strategies", {
   pillars: jsonb("pillars").notNull(), // Array of { id: string, title: string, cta: string }
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  uniqueUserId: uniqueIndex("social_media_strategy_user_unique").on(table.userId),
+}));
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
