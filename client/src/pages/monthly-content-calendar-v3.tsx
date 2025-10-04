@@ -103,22 +103,12 @@ export default function MonthlyContentCalendarV3() {
       
       return data;
     },
-    select: (data) => {
-      // Normalize data structure: transform 'colour' to 'color' for ALL data
-      return {
-        ...data,
-        colorKeys: (data?.colorKeys || []).map((key: any) => ({
-          ...key,
-          color: key.colour || key.color
-        }))
-      };
-    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnMount: false, // Disable refetch on mount - we update cache manually after mutations
   });
 
-  // Extract normalized data
+  // Extract data (server now always returns 'color' field)
   const colorKeys: ColorKey[] = (calendarData as any)?.colorKeys || [];
   const days: CalendarDay[] = (calendarData as any)?.days || [];
 
@@ -189,16 +179,8 @@ export default function MonthlyContentCalendarV3() {
     onSuccess: (serverData) => {
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
-      // Normalize server response to match select function format (colour -> color)
-      const normalizedData = {
-        ...serverData,
-        colorKeys: (serverData.colorKeys || []).map((key: any) => ({
-          ...key,
-          color: key.colour || key.color
-        }))
-      };
-      // Update cache with normalized data (same structure as select function produces)
-      queryClient.setQueryData(['/api/calendar-v3', year, month], normalizedData);
+      // Server already returns normalized data with 'color' field
+      queryClient.setQueryData(['/api/calendar-v3', year, month], serverData);
     },
     onError: (error) => {
       console.error('Save error:', error);

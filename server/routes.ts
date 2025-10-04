@@ -2691,7 +2691,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Try to seed from current month's data if it exists
         if (calendar && calendar.colorKeys && calendar.colorKeys.length > 0) {
-          seedColorKeys = calendar.colorKeys;
+          seedColorKeys = calendar.colorKeys.map((key: any) => ({
+            id: key.id,
+            label: key.label,
+            color: key.colour || key.color // Normalize to 'color'
+          }));
           console.log('Calendar V3 GET - Seeding from current month data');
         } else {
           // Use default color keys
@@ -2728,11 +2732,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Normalize colorKeys to always use 'color' field (not 'colour')
+      const normalizedColorKeys = (globalKeys.colorKeys || []).map((key: any) => ({
+        id: key.id,
+        label: key.label,
+        color: key.colour || key.color
+      }));
+      
       const response = {
         userId,
         year,
         month,
-        colorKeys: globalKeys.colorKeys || [],
+        colorKeys: normalizedColorKeys,
         days: calendar?.days || []
       };
       
@@ -2827,10 +2838,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         daysCount: Array.isArray(days) ? days.length : 0
       });
       
+      // Normalize colorKeys to always use 'color' field (not 'colour')
+      const normalizedColorKeys = (colorKeys || []).map((key: any) => ({
+        id: key.id,
+        label: key.label,
+        color: key.colour || key.color
+      }));
+      
       // Save color keys GLOBALLY (not month-specific)
       const globalKeys = await storage.upsertGlobalColorKeys({
         userId,
-        colorKeys: colorKeys || []
+        colorKeys: normalizedColorKeys
       });
       
       // Save days to month-specific calendar (colorKeys field empty since we use global now)
@@ -2842,11 +2860,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         days: days || []
       });
       
+      // Normalize response colorKeys to always use 'color' field
+      const responseColorKeys = (globalKeys.colorKeys || []).map((key: any) => ({
+        id: key.id,
+        label: key.label,
+        color: key.colour || key.color
+      }));
+      
       const response = {
         userId: calendar.userId,
         year: calendar.year,
         month: calendar.month,
-        colorKeys: globalKeys.colorKeys || [],
+        colorKeys: responseColorKeys,
         days: calendar.days || []
       };
       
