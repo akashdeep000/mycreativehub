@@ -101,8 +101,12 @@ export default function SocialMediaStrategy() {
 
   // Load existing strategy from fresh database fetch (prevent circular updates)
   useEffect(() => {
+    // CRITICAL: Wait until loading is done before hydrating state
+    if (isLoading) return;
+    
     // Only hydrate state once from the first successful network fetch
-    if (existingStrategy && !hasLoadedInitialData.current && dataUpdatedAt > 0) {
+    if (existingStrategy && !hasLoadedInitialData.current) {
+      console.log('[LOAD] Loading data from database:', existingStrategy);
       hasLoadedInitialData.current = true;
       setStrategy({
         contentGoals: existingStrategy.contentGoals || "",
@@ -117,7 +121,7 @@ export default function SocialMediaStrategy() {
       });
     }
     // After initial load, local state is the source of truth (ignore subsequent fetches)
-  }, [existingStrategy, dataUpdatedAt]);
+  }, [existingStrategy, isLoading]);
 
   // Immediate auto-save - saves on every keystroke with no delay
   const lastSavedRef = useRef<string>('');
