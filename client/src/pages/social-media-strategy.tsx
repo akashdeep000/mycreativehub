@@ -146,6 +146,14 @@ export default function SocialMediaStrategy() {
       lastSavedRef.current = combinedString;
       setSaveStatus('saving');
       
+      // DEBUG: Log what we're about to save
+      console.log('[SAVE] About to save:', {
+        contentGoals: strategy.contentGoals,
+        pillars: strategy.pillars,
+        hasLoadedInitialData: hasLoadedInitialData.current,
+        dataUpdatedAt
+      });
+      
       saveMutation.mutate({
         contentGoals: strategy.contentGoals,
         pillars: strategy.pillars
