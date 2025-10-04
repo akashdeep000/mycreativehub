@@ -39,6 +39,10 @@ export default function SocialMediaStrategy() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  
+  // Save status for user feedback
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  
   const [strategy, setStrategy] = useState<SocialMediaStrategy>({
     contentGoals: "",
     pillars: [
@@ -53,6 +57,8 @@ export default function SocialMediaStrategy() {
     queryKey: ['/api/social-media-strategy'],
     enabled: !!user,
     retry: false,
+    staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
+    refetchOnMount: false, // Don't refetch when navigating back
   });
 
   // Save strategy mutation
@@ -64,9 +70,11 @@ export default function SocialMediaStrategy() {
         body: JSON.stringify(strategyData),
       });
     },
-    onSuccess: () => {
-      // Silent auto-save - no toast notifications for automatic saves
-      queryClient.invalidateQueries({ queryKey: ['/api/social-media-strategy'] });
+    onSuccess: (data) => {
+      // Update cache directly with server response (no refetch = no race condition)
+      queryClient.setQueryData(['/api/social-media-strategy'], data);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -135,6 +143,7 @@ export default function SocialMediaStrategy() {
       if (hasContent || hasStructuralChanges) {
         // Store current state before saving to prevent duplicate saves
         lastSavedRef.current = combinedString;
+        setSaveStatus('saving');
         
         saveMutation.mutate({
           contentGoals: strategy.contentGoals,
@@ -369,8 +378,16 @@ export default function SocialMediaStrategy() {
           </Card>
 
           {/* Auto-save indicator */}
-          <div className="text-center text-sm text-gray-500">
-            Your strategy is automatically saved as you type
+          <div className="text-center text-sm">
+            {saveStatus === 'saving' && (
+              <span className="text-gray-500">Saving...</span>
+            )}
+            {saveStatus === 'saved' && (
+              <span className="text-green-600">✓ Saved</span>
+            )}
+            {saveStatus === 'idle' && (
+              <span className="text-gray-500">Your strategy is automatically saved as you type</span>
+            )}
           </div>
         </div>
       </div>
