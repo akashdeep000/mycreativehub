@@ -55,13 +55,13 @@ export default function SocialMediaStrategy() {
     ]
   });
 
-  // Fetch existing strategy
-  const { data: existingStrategy, isLoading } = useQuery<SocialMediaStrategy>({
+  // Fetch existing strategy - ALWAYS fetch fresh from database on mount
+  const { data: existingStrategy, isLoading, dataUpdatedAt } = useQuery<SocialMediaStrategy>({
     queryKey: ['/api/social-media-strategy'],
     enabled: !!user,
     retry: false,
-    staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
-    refetchOnMount: false, // Don't refetch when navigating back
+    staleTime: 0, // Always fetch fresh data from database
+    refetchOnMount: true, // CRITICAL: Always refetch on mount to prevent stale cache overwrites
   });
 
   // Save strategy mutation
@@ -99,10 +99,10 @@ export default function SocialMediaStrategy() {
     },
   });
 
-  // Load existing strategy ONCE on initial mount only (prevent circular updates)
+  // Load existing strategy from fresh database fetch (prevent circular updates)
   useEffect(() => {
-    // Only load from cache on the very first time we get data
-    if (existingStrategy && !hasLoadedInitialData.current) {
+    // Only hydrate state once from the first successful network fetch
+    if (existingStrategy && !hasLoadedInitialData.current && dataUpdatedAt > 0) {
       hasLoadedInitialData.current = true;
       setStrategy({
         contentGoals: existingStrategy.contentGoals || "",
@@ -116,8 +116,8 @@ export default function SocialMediaStrategy() {
         updatedAt: existingStrategy.updatedAt
       });
     }
-    // After initial load, local state is the source of truth (ignore cache updates)
-  }, [existingStrategy]);
+    // After initial load, local state is the source of truth (ignore subsequent fetches)
+  }, [existingStrategy, dataUpdatedAt]);
 
   // Immediate auto-save - saves on every keystroke with no delay
   const lastSavedRef = useRef<string>('');
