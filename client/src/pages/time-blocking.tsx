@@ -58,7 +58,7 @@ export default function TimeBlocking() {
     };
   };
 
-  // Load time blocking events with React Query (auto-refetches on mount!)
+  // Load time blocking events with React Query
   const { startStr, endStr } = getDateRange();
   const { data: eventsData, isLoading: eventsLoading } = useQuery({
     queryKey: ['/api/time-blocking-events', startStr, endStr],
@@ -69,8 +69,8 @@ export default function TimeBlocking() {
       console.log(`✅ Loaded ${events.length} time blocking events from database`);
       return events;
     },
-    staleTime: 0, // Always refetch to get latest from DB
-    refetchOnMount: true, // KEY FIX: Always get fresh data when returning to page
+    staleTime: 5 * 60 * 1000, // 5 minutes - cache is updated by mutations
+    refetchOnMount: false, // Don't refetch on mount - mutations update cache directly
     enabled: isAuthenticated && !!user, // Only run when authenticated
   });
 
@@ -84,8 +84,8 @@ export default function TimeBlocking() {
       console.log(`✅ Loaded ${data.colorKeys?.length || 0} time blocking color keys`);
       return data;
     },
-    staleTime: 0,
-    refetchOnMount: true,
+    staleTime: 5 * 60 * 1000, // 5 minutes - cache is updated by mutations
+    refetchOnMount: false, // Don't refetch on mount - mutations update cache directly
     enabled: isAuthenticated && !!user,
   });
 
@@ -219,7 +219,6 @@ export default function TimeBlocking() {
               initialData={timeBlockingData}
               onSave={handleSave}
               onBlockSaved={handleBlockSaved}
-              key={`timeblocking-${JSON.stringify(timeBlockingData).substring(0, 50)}`}
             />
           </div>
         </main>
