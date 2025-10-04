@@ -106,8 +106,8 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
       const response = await apiRequest(`/api/time-blocking-color-keys`);
       return await response.json();
     },
-    staleTime: 0, // Always refetch to get latest from DB
-    refetchOnMount: true, // Always get fresh data on mount
+    staleTime: 5 * 60 * 1000, // 5 minutes - cache is updated by mutations
+    refetchOnMount: false, // Don't refetch on mount - mutations update cache directly
   });
 
   // Mutation for saving color keys to database with 50ms debounce
@@ -617,8 +617,15 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
 
       console.log(`✅ Event deleted: ${blockId}`);
       
-      // Invalidate parent page's query cache to trigger refetch on navigation
-      queryClient.invalidateQueries({ queryKey: ['/api/time-blocking-events'] });
+      // Update React Query cache directly (no refetch needed)
+      const { startStr, endStr } = getDateRangeForCache();
+      queryClient.setQueryData(
+        ['/api/time-blocking-events', startStr, endStr],
+        (oldData: any) => {
+          const existingEvents = oldData || [];
+          return existingEvents.filter((e: any) => e.id !== blockId);
+        }
+      );
       
       // Notify parent that block was saved (deleted is also a save action)
       onBlockSaved?.();
@@ -670,8 +677,19 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
 
       console.log('✅ Calendar deleted successfully');
       
-      // Invalidate parent page's query cache to trigger refetch on navigation
-      queryClient.invalidateQueries({ queryKey: ['/api/time-blocking-events'] });
+      // Update React Query cache directly (no refetch needed)
+      const { startStr, endStr } = getDateRangeForCache();
+      queryClient.setQueryData(
+        ['/api/time-blocking-events', startStr, endStr],
+        (oldData: any) => {
+          const existingEvents = oldData || [];
+          const currentMonthKey = getCurrentMonthKey();
+          const blocksToDelete = data.monthlyView.blocks
+            .filter(block => block.monthKey === currentMonthKey)
+            .map(block => block.id);
+          return existingEvents.filter((e: any) => !blocksToDelete.includes(e.id));
+        }
+      );
       
       // Notify parent that blocks were saved (deleted)
       onBlockSaved?.();
