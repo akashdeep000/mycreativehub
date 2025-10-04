@@ -138,10 +138,21 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
   // Sync local data state when initialData prop changes (important for post-login data loading!)
   useEffect(() => {
     setData(initialData);
+    
+    // Only reset active color if the current selection no longer exists in the new data
     if (initialData.colourTags && initialData.colourTags.length > 0) {
-      setActiveColourTagId(initialData.colourTags[0].id);
+      const currentActiveExists = initialData.colourTags.some(
+        tag => tag.id === activeColourTagId
+      );
+      
+      // Reset to first tag only if:
+      // 1. No active color is set, OR
+      // 2. The currently active color was deleted
+      if (!activeColourTagId || !currentActiveExists) {
+        setActiveColourTagId(initialData.colourTags[0].id);
+      }
     }
-  }, [initialData]);
+  }, [initialData, activeColourTagId]);
   
   // Only monthly view now - removed weekly view completely
   const [editingTimeBlock, setEditingTimeBlock] = useState<string | null>(null);
