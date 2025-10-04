@@ -2723,7 +2723,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }));
           console.log('Calendar V3 GET - Seeding from current month data');
         } else {
-          // Use default color keys
+          // Default color keys for Monthly Content Calendar
+          // These are the global seed values used when creating a new user's first calendar
+          // or when no existing calendar data is available to seed from.
+          // This list affects ONLY new calendars - existing saved calendars are never modified.
           seedColorKeys = [
             { id: '1', label: 'Email', color: '#3B82F6' },
             { id: '2', label: 'Reel', color: '#10B981' },
