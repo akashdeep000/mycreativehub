@@ -1875,18 +1875,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post('/api/social-media-strategy', jwtAuth, async (req: any, res) => {
+    const userId = req.user.id;
+    const { contentGoals, pillars, version } = req.body;
+    
     try {
-      const userId = req.user.id;
-      const { contentGoals, pillars } = req.body;
+      console.log('Social Media Strategy POST - Received:', {
+        userId,
+        version,
+        hasContentGoals: !!contentGoals,
+        pillarsCount: Array.isArray(pillars) ? pillars.length : 0
+      });
       
       const strategy = await storage.upsertSocialMediaStrategy({
         userId,
         contentGoals,
-        pillars
+        pillars,
+        version
       });
       
+      console.log('Social Media Strategy POST - Saved successfully, new version:', strategy.version);
       res.json(strategy);
-    } catch (error) {
+    } catch (error: any) {
+      // Check for version conflict
+      if (error.message && error.message.startsWith('VERSION_CONFLICT:')) {
+        const serverVersion = parseInt(error.message.split(':')[1]);
+        console.log('Social Media Strategy POST - Version conflict detected:', {
+          clientVersion: version,
+          serverVersion
+        });
+        
+        // Return 409 with conflict data
+        const currentStrategy = await storage.getSocialMediaStrategy(userId);
+        return res.status(409).json({
+          message: "Version conflict",
+          conflict: currentStrategy
+        });
+      }
+      
       console.error("Error saving social media strategy:", error);
       res.status(500).json({ message: "Failed to save social media strategy" });
     }

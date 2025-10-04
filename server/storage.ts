@@ -1134,16 +1134,36 @@ export class DatabaseStorage implements IStorage {
     return strategy;
   }
 
-  async upsertSocialMediaStrategy(strategyData: InsertSocialMediaStrategy): Promise<SocialMediaStrategy> {
-    // Use atomic upsert to avoid race conditions from rapid auto-save
+  async upsertSocialMediaStrategy(strategyData: InsertSocialMediaStrategy & { version?: number }): Promise<SocialMediaStrategy> {
+    const { version: clientVersion, ...dataWithoutVersion} = strategyData;
+    
+    // If version is provided, check for conflicts
+    if (clientVersion !== undefined) {
+      const existing = await this.getSocialMediaStrategy(strategyData.userId!);
+      
+      if (existing && existing.version !== clientVersion) {
+        // Version conflict - throw special error
+        throw new Error(`VERSION_CONFLICT:${existing.version}`);
+      }
+    }
+    
+    // Calculate new version
+    const existing = await this.getSocialMediaStrategy(strategyData.userId!);
+    const newVersion = existing ? existing.version + 1 : 1;
+    
+    // Use atomic upsert with version increment
     const [strategy] = await db
       .insert(socialMediaStrategies)
-      .values(strategyData)
+      .values({
+        ...dataWithoutVersion,
+        version: newVersion,
+      })
       .onConflictDoUpdate({
         target: socialMediaStrategies.userId,
         set: {
-          contentGoals: strategyData.contentGoals,
-          pillars: strategyData.pillars,
+          contentGoals: dataWithoutVersion.contentGoals,
+          pillars: dataWithoutVersion.pillars,
+          version: newVersion,
           updatedAt: new Date(),
         },
       })

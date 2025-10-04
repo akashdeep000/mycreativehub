@@ -31,6 +31,7 @@ interface ContentPillar {
 interface SocialMediaStrategy {
   id?: number;
   userId?: string;
+  version: number;
   contentGoals: string;
   pillars: ContentPillar[];
   updatedAt?: string;
@@ -48,6 +49,7 @@ export default function SocialMediaStrategy() {
   const hasLoadedInitialData = useRef(false);
   
   const [strategy, setStrategy] = useState<SocialMediaStrategy>({
+    version: 0,
     contentGoals: "",
     pillars: [
       { id: "1", title: "", cta: "" },
@@ -55,6 +57,8 @@ export default function SocialMediaStrategy() {
       { id: "3", title: "", cta: "" }
     ]
   });
+  
+  const [conflictData, setConflictData] = useState<SocialMediaStrategy | null>(null);
 
   // Fetch existing strategy - ALWAYS fetch fresh from database on mount
   const { data: existingStrategy, isLoading, dataUpdatedAt } = useQuery<SocialMediaStrategy>({
@@ -65,22 +69,52 @@ export default function SocialMediaStrategy() {
     refetchOnMount: true, // CRITICAL: Always refetch on mount to prevent stale cache overwrites
   });
 
-  // Save strategy mutation
+  // Save strategy mutation with conflict handling
   const saveMutation = useMutation({
-    mutationFn: async (strategyData: SocialMediaStrategy) => {
-      return await apiRequest('/api/social-media-strategy', {
+    mutationFn: async (strategyData: SocialMediaStrategy): Promise<SocialMediaStrategy> => {
+      console.log('Saving social media strategy:', {
+        version: strategyData.version,
+        hasContentGoals: !!strategyData.contentGoals,
+        pillarsCount: strategyData.pillars.length
+      });
+      
+      const response = await apiRequest('/api/social-media-strategy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(strategyData),
       });
+      
+      if (response.status === 409) {
+        // Version conflict - get the conflict data
+        const conflictResponse = await response.json();
+        throw new Error(JSON.stringify({
+          type: 'conflict',
+          conflict: conflictResponse.conflict
+        }));
+      }
+      
+      if (!response.ok) {
+        throw new Error('Failed to save strategy');
+      }
+      
+      return response.json();
     },
-    onSuccess: (data) => {
-      // Update cache directly with server response (no refetch = no race condition)
-      queryClient.setQueryData(['/api/social-media-strategy'], data);
+    onSuccess: (savedStrategy: SocialMediaStrategy) => {
+      console.log('Saved social media strategy ✓, new version:', savedStrategy.version);
+      
+      // Update local state with server version
+      setStrategy(savedStrategy);
+      setConflictData(null);
+      
+      // Update cache directly with server response
+      queryClient.setQueryData(['/api/social-media-strategy'], savedStrategy);
+      
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
     },
-    onError: (error) => {
+    onError: async (error: any) => {
+      setSaveStatus('idle');
+      
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -92,6 +126,38 @@ export default function SocialMediaStrategy() {
         }, 500);
         return;
       }
+      
+      // Check for version conflict
+      try {
+        const errorData = JSON.parse(error.message);
+        if (errorData.type === 'conflict') {
+          console.log('Version conflict detected, refetching latest data...');
+          
+          // Refetch the latest data from server
+          const freshStrategy = await queryClient.fetchQuery({
+            queryKey: ['/api/social-media-strategy'],
+            retry: false
+          }) as SocialMediaStrategy;
+          
+          if (freshStrategy) {
+            console.log('Got fresh strategy from server, version:', freshStrategy.version);
+            setStrategy(freshStrategy);
+            setConflictData(freshStrategy);
+            
+            toast({
+              title: "Data Updated Elsewhere",
+              description: "The strategy was updated in another tab. Your changes were not saved. Please review and save again.",
+              variant: "destructive",
+              duration: 5000
+            });
+          }
+          
+          return;
+        }
+      } catch (parseError) {
+        // Not a JSON error, fall through to generic error
+      }
+      
       toast({
         title: "Error",
         description: "Failed to save strategy. Please try again.",
@@ -111,7 +177,9 @@ export default function SocialMediaStrategy() {
       
       // Only hydrate if there's actual data from the database
       if (existingStrategy) {
+        console.log('Loading existing strategy from DB, version:', existingStrategy.version);
         setStrategy({
+          version: existingStrategy.version || 1,
           contentGoals: existingStrategy.contentGoals || "",
           pillars: existingStrategy.pillars || [
             { id: "1", title: "", cta: "" },
@@ -122,6 +190,7 @@ export default function SocialMediaStrategy() {
           userId: existingStrategy.userId,
           updatedAt: existingStrategy.updatedAt
         });
+        setConflictData(null);
       }
     }
     // After initial load, local state is the source of truth (ignore subsequent fetches)
@@ -133,15 +202,23 @@ export default function SocialMediaStrategy() {
 
     // CRITICAL: Don't auto-save until initial data has loaded (prevents overwriting with empty state)
     if (!hasLoadedInitialData.current) return;
+    
+    // Don't save if there's a conflict
+    if (conflictData) {
+      console.log('Skipping save due to unresolved conflict');
+      return;
+    }
 
     // Only save if there's actual content (not just empty structure)
     const hasContent = strategy.contentGoals.trim() || 
                       strategy.pillars.some(p => p.title.trim() || p.cta.trim());
     
     if (hasContent) {
+      console.log('Saving goals...');
       setSaveStatus('saving');
       
       saveMutation.mutate({
+        version: strategy.version,
         contentGoals: strategy.contentGoals,
         pillars: strategy.pillars
       });
@@ -198,6 +275,12 @@ export default function SocialMediaStrategy() {
         pillar.id === id ? { ...pillar, [field]: value } : pillar
       )
     }));
+  };
+  
+  // Instant save on blur
+  const handleBlur = () => {
+    console.log('Blur event - flushing pending save');
+    flushSave();
   };
 
   const addPillar = () => {
@@ -315,8 +398,10 @@ export default function SocialMediaStrategy() {
                   id="content-goals"
                   value={strategy.contentGoals}
                   onChange={(e) => updateContentGoals(e.target.value)}
+                  onBlur={handleBlur}
                   placeholder="Grow email list, drive product visibility, build brand trust..."
                   className="min-h-[100px] resize-none"
+                  data-testid="textarea-content-goals"
                 />
               </div>
             </CardContent>
@@ -381,6 +466,7 @@ export default function SocialMediaStrategy() {
                           id={`pillar-title-${pillar.id}`}
                           value={pillar.title}
                           onChange={(e) => updatePillar(pillar.id, 'title', e.target.value)}
+                          onBlur={handleBlur}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.currentTarget.blur();
@@ -388,6 +474,7 @@ export default function SocialMediaStrategy() {
                           }}
                           placeholder="e.g., Behind the Scenes"
                           className="mt-1"
+                          data-testid={`input-pillar-title-${index}`}
                         />
                       </div>
                       <div>
@@ -398,6 +485,7 @@ export default function SocialMediaStrategy() {
                           id={`pillar-cta-${pillar.id}`}
                           value={pillar.cta}
                           onChange={(e) => updatePillar(pillar.id, 'cta', e.target.value)}
+                          onBlur={handleBlur}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.currentTarget.blur();
@@ -405,6 +493,7 @@ export default function SocialMediaStrategy() {
                           }}
                           placeholder="e.g., Shop, Newsletter, Podcast..."
                           className="mt-1"
+                          data-testid={`input-pillar-cta-${index}`}
                         />
                       </div>
                     </CardContent>
