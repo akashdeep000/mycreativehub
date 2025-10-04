@@ -118,6 +118,7 @@ function Router() {
         <Route path="/monthly-content-calendar-v3" component={MonthlyContentCalendarV3} />
 
         <Route path="/time-blocking-planner" component={TimeBlocking} />
+        <Route path="/time-blocking" component={TimeBlocking} />
         <Route path="/finance" component={FinanceTracker} />
         <Route path="/your-money-map" component={YourMoneyMap} />
         <Route path="/affiliate-marketing" component={AffiliateMarketing} />
