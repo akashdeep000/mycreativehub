@@ -43,6 +43,9 @@ export default function SocialMediaStrategy() {
   // Save status for user feedback
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   
+  // Track if we've loaded initial data from cache (prevent circular updates)
+  const hasLoadedInitialData = useRef(false);
+  
   const [strategy, setStrategy] = useState<SocialMediaStrategy>({
     contentGoals: "",
     pillars: [
@@ -96,9 +99,11 @@ export default function SocialMediaStrategy() {
     },
   });
 
-  // Load existing strategy when data is available
+  // Load existing strategy ONCE on initial mount only (prevent circular updates)
   useEffect(() => {
-    if (existingStrategy) {
+    // Only load from cache on the very first time we get data
+    if (existingStrategy && !hasLoadedInitialData.current) {
+      hasLoadedInitialData.current = true;
       setStrategy({
         contentGoals: existingStrategy.contentGoals || "",
         pillars: existingStrategy.pillars || [
@@ -111,6 +116,7 @@ export default function SocialMediaStrategy() {
         updatedAt: existingStrategy.updatedAt
       });
     }
+    // After initial load, local state is the source of truth (ignore cache updates)
   }, [existingStrategy]);
 
   // Immediate auto-save - saves on every keystroke with no delay
