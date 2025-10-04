@@ -110,7 +110,6 @@ export default function SocialMediaStrategy() {
       
       // Only hydrate if there's actual data from the database
       if (existingStrategy) {
-        console.log('[LOAD] Loading data from database:', existingStrategy);
         setStrategy({
           contentGoals: existingStrategy.contentGoals || "",
           pillars: existingStrategy.pillars || [
@@ -122,8 +121,6 @@ export default function SocialMediaStrategy() {
           userId: existingStrategy.userId,
           updatedAt: existingStrategy.updatedAt
         });
-      } else {
-        console.log('[LOAD] No existing data found, using default empty state');
       }
     }
     // After initial load, local state is the source of truth (ignore subsequent fetches)

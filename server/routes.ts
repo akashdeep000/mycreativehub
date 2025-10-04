@@ -1868,8 +1868,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const strategy = await storage.getSocialMediaStrategy(userId);
       
-      // Return null if no strategy exists OR if content_goals is null
-      if (!strategy || strategy.contentGoals === null) {
+      // Return null if no strategy exists OR if all content is empty
+      if (!strategy) {
+        return res.json(null);
+      }
+      
+      // Check if there's any actual content
+      const hasContentGoals = strategy.contentGoals && strategy.contentGoals.trim();
+      const hasPillarContent = strategy.pillars && Array.isArray(strategy.pillars) && strategy.pillars.some((p: any) => 
+        (p.title && p.title.trim()) || (p.cta && p.cta.trim())
+      );
+      
+      // Only return data if there's actual content, otherwise return null
+      if (!hasContentGoals && !hasPillarContent) {
         return res.json(null);
       }
       
