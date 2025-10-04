@@ -104,21 +104,27 @@ export default function SocialMediaStrategy() {
     // CRITICAL: Wait until loading is done before hydrating state
     if (isLoading) return;
     
-    // Only hydrate state once from the first successful network fetch
-    if (existingStrategy && !hasLoadedInitialData.current) {
-      console.log('[LOAD] Loading data from database:', existingStrategy);
+    // Mark as loaded once loading finishes, even if there's no data
+    if (!hasLoadedInitialData.current) {
       hasLoadedInitialData.current = true;
-      setStrategy({
-        contentGoals: existingStrategy.contentGoals || "",
-        pillars: existingStrategy.pillars || [
-          { id: "1", title: "", cta: "" },
-          { id: "2", title: "", cta: "" },
-          { id: "3", title: "", cta: "" }
-        ],
-        id: existingStrategy.id,
-        userId: existingStrategy.userId,
-        updatedAt: existingStrategy.updatedAt
-      });
+      
+      // Only hydrate if there's actual data from the database
+      if (existingStrategy) {
+        console.log('[LOAD] Loading data from database:', existingStrategy);
+        setStrategy({
+          contentGoals: existingStrategy.contentGoals || "",
+          pillars: existingStrategy.pillars || [
+            { id: "1", title: "", cta: "" },
+            { id: "2", title: "", cta: "" },
+            { id: "3", title: "", cta: "" }
+          ],
+          id: existingStrategy.id,
+          userId: existingStrategy.userId,
+          updatedAt: existingStrategy.updatedAt
+        });
+      } else {
+        console.log('[LOAD] No existing data found, using default empty state');
+      }
     }
     // After initial load, local state is the source of truth (ignore subsequent fetches)
   }, [existingStrategy, isLoading]);
