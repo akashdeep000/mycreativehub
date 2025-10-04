@@ -1135,29 +1135,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertSocialMediaStrategy(strategyData: InsertSocialMediaStrategy): Promise<SocialMediaStrategy> {
-    // First check if a strategy exists for this user
-    const existingStrategy = await this.getSocialMediaStrategy(strategyData.userId!);
-    
-    if (existingStrategy) {
-      // Update existing strategy
-      const [strategy] = await db
-        .update(socialMediaStrategies)
-        .set({
+    // Use atomic upsert to avoid race conditions from rapid auto-save
+    const [strategy] = await db
+      .insert(socialMediaStrategies)
+      .values(strategyData)
+      .onConflictDoUpdate({
+        target: socialMediaStrategies.userId,
+        set: {
           contentGoals: strategyData.contentGoals,
           pillars: strategyData.pillars,
           updatedAt: new Date(),
-        })
-        .where(eq(socialMediaStrategies.userId, strategyData.userId!))
-        .returning();
-      return strategy;
-    } else {
-      // Insert new strategy
-      const [strategy] = await db
-        .insert(socialMediaStrategies)
-        .values(strategyData)
-        .returning();
-      return strategy;
-    }
+        },
+      })
+      .returning();
+    return strategy;
   }
 
   // Resource Library
