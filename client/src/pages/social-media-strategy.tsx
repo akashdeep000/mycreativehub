@@ -113,8 +113,7 @@ export default function SocialMediaStrategy() {
     }
   }, [existingStrategy]);
 
-  // Auto-save with proper debouncing to prevent text loss during typing
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Immediate auto-save - saves on every keystroke with no delay
   const lastSavedRef = useRef<string>('');
 
   // Create stable string representations for comparison
@@ -128,36 +127,21 @@ export default function SocialMediaStrategy() {
     // Skip if no change from last saved state
     if (combinedString === lastSavedRef.current) return;
 
-    // Clear existing timeout
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    // Set timeout with longer delay to prevent interrupting typing
-    saveTimeoutRef.current = setTimeout(() => {
-      // Save if there's content OR if pillars structure changed (added/removed pillars)
-      const hasContent = strategy.contentGoals.trim() || 
-                        strategy.pillars.some(p => p.title.trim() || p.cta.trim());
-      const hasStructuralChanges = strategy.pillars.length > 0; // Always save if there are pillars
+    // Save immediately on every change
+    const hasContent = strategy.contentGoals.trim() || 
+                      strategy.pillars.some(p => p.title.trim() || p.cta.trim());
+    const hasStructuralChanges = strategy.pillars.length > 0;
+    
+    if (hasContent || hasStructuralChanges) {
+      // Store current state before saving to prevent duplicate saves
+      lastSavedRef.current = combinedString;
+      setSaveStatus('saving');
       
-      if (hasContent || hasStructuralChanges) {
-        // Store current state before saving to prevent duplicate saves
-        lastSavedRef.current = combinedString;
-        setSaveStatus('saving');
-        
-        saveMutation.mutate({
-          contentGoals: strategy.contentGoals,
-          pillars: strategy.pillars
-        });
-      }
-    }, 3000); // Increased to 3 seconds to allow complete typing of words/phrases
-
-    // Cleanup timeout on unmount
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
+      saveMutation.mutate({
+        contentGoals: strategy.contentGoals,
+        pillars: strategy.pillars
+      });
+    }
   }, [combinedString, user, saveMutation, strategy.contentGoals, strategy.pillars]);
 
   const updateContentGoals = (goals: string) => {
@@ -386,7 +370,7 @@ export default function SocialMediaStrategy() {
               <span className="text-green-600">✓ Saved</span>
             )}
             {saveStatus === 'idle' && (
-              <span className="text-gray-500">Your strategy is automatically saved as you type</span>
+              <span className="text-gray-500">Changes are saved immediately</span>
             )}
           </div>
         </div>
