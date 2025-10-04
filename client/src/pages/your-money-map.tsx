@@ -622,16 +622,6 @@ export default function YourMoneyMap() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
-                </SelectContent>
-              </Select>
               <Select value={currency} onValueChange={setCurrency}>
                 <SelectTrigger className="w-24">
                   <SelectValue />
