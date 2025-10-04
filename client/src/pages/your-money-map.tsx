@@ -639,9 +639,7 @@ export default function YourMoneyMap() {
           
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-700">
-                1 Card
-              </Badge>
+              <Badge variant="secondary" className="bg-green-100 text-green-700">Click Save to add this entry to your Expense Library.</Badge>
             </div>
           </div>
         </div>
