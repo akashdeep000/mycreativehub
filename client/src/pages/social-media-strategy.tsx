@@ -45,10 +45,11 @@ export default function SocialMediaStrategy() {
   // Save status for user feedback
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   
-  // Track if we've loaded initial data from cache (prevent circular updates)
+  // Track if we've loaded initial data
   const hasLoadedInitialData = useRef(false);
   
-  const [strategy, setStrategy] = useState<SocialMediaStrategy>({
+  // Server state (source of truth from DB)
+  const [serverStrategy, setServerStrategy] = useState<SocialMediaStrategy>({
     version: 0,
     contentGoals: "",
     pillars: [
@@ -58,15 +59,28 @@ export default function SocialMediaStrategy() {
     ]
   });
   
+  // Local draft state (for inputs while editing)
+  const [draftContentGoals, setDraftContentGoals] = useState("");
+  const [draftPillars, setDraftPillars] = useState<ContentPillar[]>([
+    { id: "1", title: "", cta: "" },
+    { id: "2", title: "", cta: "" },
+    { id: "3", title: "", cta: "" }
+  ]);
+  
+  // Track which fields are being edited (prevent server overwrites)
+  const [isEditingGoals, setIsEditingGoals] = useState(false);
+  const [editingPillarField, setEditingPillarField] = useState<string | null>(null);
+  
   const [conflictData, setConflictData] = useState<SocialMediaStrategy | null>(null);
 
-  // Fetch existing strategy - ALWAYS fetch fresh from database on mount
-  const { data: existingStrategy, isLoading, dataUpdatedAt } = useQuery<SocialMediaStrategy>({
+  // Fetch existing strategy - disable refetchOnWindowFocus to prevent overwrites while editing
+  const { data: existingStrategy, isLoading } = useQuery<SocialMediaStrategy>({
     queryKey: ['/api/social-media-strategy'],
     enabled: !!user,
     retry: false,
-    staleTime: 0, // Always fetch fresh data from database
-    refetchOnMount: true, // CRITICAL: Always refetch on mount to prevent stale cache overwrites
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false, // Don't refetch when user focuses window while editing
   });
 
   // Save strategy mutation with conflict handling
@@ -102,8 +116,19 @@ export default function SocialMediaStrategy() {
     onSuccess: (savedStrategy: SocialMediaStrategy) => {
       console.log('Saved social media strategy ✓, new version:', savedStrategy.version);
       
-      // Update local state with server version
-      setStrategy(savedStrategy);
+      // Update server state (but NOT draft if user is editing)
+      setServerStrategy(savedStrategy);
+      
+      // Only update draft if NOT currently editing
+      if (!isEditingGoals) {
+        setDraftContentGoals(savedStrategy.contentGoals);
+      }
+      
+      // Update pillars if not editing any pillar field
+      if (!editingPillarField) {
+        setDraftPillars(savedStrategy.pillars);
+      }
+      
       setConflictData(null);
       
       // Update cache directly with server response
@@ -141,12 +166,23 @@ export default function SocialMediaStrategy() {
           
           if (freshStrategy) {
             console.log('Got fresh strategy from server, version:', freshStrategy.version);
-            setStrategy(freshStrategy);
+            
+            // Update server state
+            setServerStrategy(freshStrategy);
+            
+            // Only update drafts if NOT currently editing
+            if (!isEditingGoals) {
+              setDraftContentGoals(freshStrategy.contentGoals);
+            }
+            if (!editingPillarField) {
+              setDraftPillars(freshStrategy.pillars);
+            }
+            
             setConflictData(freshStrategy);
             
             toast({
               title: "Data Updated Elsewhere",
-              description: "The strategy was updated in another tab. Your changes were not saved. Please review and save again.",
+              description: "The strategy was updated in another tab. Your current edits are preserved. Review before saving.",
               variant: "destructive",
               duration: 5000
             });
@@ -166,19 +202,17 @@ export default function SocialMediaStrategy() {
     },
   });
 
-  // Load existing strategy from fresh database fetch (prevent circular updates)
+  // Load existing strategy from fresh database fetch
   useEffect(() => {
-    // CRITICAL: Wait until loading is done before hydrating state
     if (isLoading) return;
     
-    // Mark as loaded once loading finishes, even if there's no data
     if (!hasLoadedInitialData.current) {
       hasLoadedInitialData.current = true;
       
-      // Only hydrate if there's actual data from the database
       if (existingStrategy) {
         console.log('Loading existing strategy from DB, version:', existingStrategy.version);
-        setStrategy({
+        
+        const loadedStrategy = {
           version: existingStrategy.version || 1,
           contentGoals: existingStrategy.contentGoals || "",
           pillars: existingStrategy.pillars || [
@@ -189,41 +223,43 @@ export default function SocialMediaStrategy() {
           id: existingStrategy.id,
           userId: existingStrategy.userId,
           updatedAt: existingStrategy.updatedAt
-        });
+        };
+        
+        // Initialize both server and draft state
+        setServerStrategy(loadedStrategy);
+        setDraftContentGoals(loadedStrategy.contentGoals);
+        setDraftPillars(loadedStrategy.pillars);
         setConflictData(null);
       }
     }
-    // After initial load, local state is the source of truth (ignore subsequent fetches)
   }, [existingStrategy, isLoading]);
 
-  // Debounced auto-save - saves 1 second after user stops typing
+  // Debounced auto-save - shorter delay (500ms) for better responsiveness
   const { debounced: debouncedSave, flush: flushSave } = useDebounce(() => {
     if (!user) return;
 
-    // CRITICAL: Don't auto-save until initial data has loaded (prevents overwriting with empty state)
     if (!hasLoadedInitialData.current) return;
     
-    // Don't save if there's a conflict
     if (conflictData) {
       console.log('Skipping save due to unresolved conflict');
       return;
     }
 
-    // Only save if there's actual content (not just empty structure)
-    const hasContent = strategy.contentGoals.trim() || 
-                      strategy.pillars.some(p => p.title.trim() || p.cta.trim());
+    // Use draft state for saving
+    const hasContent = draftContentGoals.trim() || 
+                      draftPillars.some(p => p.title.trim() || p.cta.trim());
     
     if (hasContent) {
       console.log('Saving goals...');
       setSaveStatus('saving');
       
       saveMutation.mutate({
-        version: strategy.version,
-        contentGoals: strategy.contentGoals,
-        pillars: strategy.pillars
+        version: serverStrategy.version,
+        contentGoals: draftContentGoals,
+        pillars: draftPillars
       });
     }
-  }, 1000);
+  }, 500); // Reduced from 1000ms to 500ms
 
   // Flush pending saves on unmount or visibility change
   useEffect(() => {
@@ -251,54 +287,59 @@ export default function SocialMediaStrategy() {
   const lastSavedRef = useRef<string>('');
 
   // Create stable string representations for comparison
-  const contentGoalsString = strategy.contentGoals;
-  const pillarsString = strategy.pillars.map(p => `${p.id}:${p.title}:${p.cta}`).join('|');
+  const contentGoalsString = draftContentGoals;
+  const pillarsString = draftPillars.map(p => `${p.id}:${p.title}:${p.cta}`).join('|');
   const combinedString = `${contentGoalsString}||${pillarsString}`;
 
   useEffect(() => {
-    // Skip if no change from last saved state
     if (combinedString === lastSavedRef.current) return;
 
-    // Update tracking ref and trigger debounced save
     lastSavedRef.current = combinedString;
     debouncedSave();
   }, [combinedString, debouncedSave]);
 
+  // Content Goals handlers
   const updateContentGoals = (goals: string) => {
-    setStrategy(prev => ({ ...prev, contentGoals: goals }));
+    setDraftContentGoals(goals);
   };
 
+  const handleGoalsFocus = () => {
+    setIsEditingGoals(true);
+  };
+
+  const handleGoalsBlur = () => {
+    setIsEditingGoals(false);
+    console.log('Blur event (goals) - flushing pending save');
+    flushSave();
+  };
+
+  // Pillar handlers
   const updatePillar = (id: string, field: 'title' | 'cta', value: string) => {
-    setStrategy(prev => ({
-      ...prev,
-      pillars: prev.pillars.map(pillar =>
+    setDraftPillars(prev =>
+      prev.map(pillar =>
         pillar.id === id ? { ...pillar, [field]: value } : pillar
       )
-    }));
+    );
   };
-  
-  // Instant save on blur
-  const handleBlur = () => {
-    console.log('Blur event - flushing pending save');
+
+  const handlePillarFocus = (pillarId: string, field: 'title' | 'cta') => {
+    setEditingPillarField(`${pillarId}-${field}`);
+  };
+
+  const handlePillarBlur = () => {
+    setEditingPillarField(null);
+    console.log('Blur event (pillar) - flushing pending save');
     flushSave();
   };
 
   const addPillar = () => {
     const newId = Date.now().toString();
-    setStrategy(prev => ({
-      ...prev,
-      pillars: [...prev.pillars, { id: newId, title: "", cta: "" }]
-    }));
+    setDraftPillars(prev => [...prev, { id: newId, title: "", cta: "" }]);
   };
 
   const removePillar = (id: string) => {
-    setStrategy(prev => ({
-      ...prev,
-      pillars: prev.pillars.filter(pillar => pillar.id !== id)
-    }));
+    setDraftPillars(prev => prev.filter(pillar => pillar.id !== id));
   };
-
-
 
   if (isLoading) {
     return (
@@ -396,9 +437,10 @@ export default function SocialMediaStrategy() {
                 </Label>
                 <Textarea
                   id="content-goals"
-                  value={strategy.contentGoals}
+                  value={draftContentGoals}
                   onChange={(e) => updateContentGoals(e.target.value)}
-                  onBlur={handleBlur}
+                  onFocus={handleGoalsFocus}
+                  onBlur={handleGoalsBlur}
                   placeholder="Grow email list, drive product visibility, build brand trust..."
                   className="min-h-[100px] resize-none"
                   data-testid="textarea-content-goals"
@@ -412,13 +454,14 @@ export default function SocialMediaStrategy() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <Smartphone className="w-5 h-5 text-orange-500" />
+                  <Target className="w-5 h-5 text-orange-500" />
                   Content Pillars
                 </CardTitle>
                 <Button
                   onClick={addPillar}
                   size="sm"
-                  variant="outline"
+                  className="bg-orange-500 hover:bg-orange-600"
+                  data-testid="button-add-pillar"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Pillar
@@ -426,7 +469,7 @@ export default function SocialMediaStrategy() {
               </div>
             </CardHeader>
             <CardContent>
-              {strategy.pillars.length === 0 ? (
+              {draftPillars.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-gray-500 mb-4">No content pillars yet. Add your first pillar to get started!</p>
                   <Button
@@ -440,7 +483,7 @@ export default function SocialMediaStrategy() {
                 </div>
               ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {strategy.pillars.map((pillar, index) => (
+                  {draftPillars.map((pillar, index) => (
                   <Card key={pillar.id} className="shadow-md border-0 bg-white">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
@@ -452,6 +495,7 @@ export default function SocialMediaStrategy() {
                           size="sm"
                           variant="ghost"
                           className="text-red-500 hover:text-red-600"
+                          data-testid={`button-remove-pillar-${index}`}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -466,7 +510,8 @@ export default function SocialMediaStrategy() {
                           id={`pillar-title-${pillar.id}`}
                           value={pillar.title}
                           onChange={(e) => updatePillar(pillar.id, 'title', e.target.value)}
-                          onBlur={handleBlur}
+                          onFocus={() => handlePillarFocus(pillar.id, 'title')}
+                          onBlur={handlePillarBlur}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.currentTarget.blur();
@@ -485,7 +530,8 @@ export default function SocialMediaStrategy() {
                           id={`pillar-cta-${pillar.id}`}
                           value={pillar.cta}
                           onChange={(e) => updatePillar(pillar.id, 'cta', e.target.value)}
-                          onBlur={handleBlur}
+                          onFocus={() => handlePillarFocus(pillar.id, 'cta')}
+                          onBlur={handlePillarBlur}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.currentTarget.blur();

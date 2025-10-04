@@ -1,0 +1,53 @@
+I’m seeing a typing bug on My Social Media Strategy (the Content Goals and Content Pillars fields): while typing, characters get deleted or revert. This is a state-overwrite issue (remote refetch/mutation is resetting the controlled input).
+
+What I want
+
+Diagnose and fix the controlled input overwrite for these two fields.
+
+Keep the existing persistence (save to DB, not local storage), but never clobber a user’s in-progress typing.
+
+Follow this approach (match our working patterns in Calendar/Cheat Sheet):
+
+Use a local draft state per field (e.g., draftGoals, draftPillars) that controls the input while focused/dirty.
+
+Pause/ignore remote updates while the field is being edited:
+
+Don’t overwrite the input from query results if isEditing or isDirty is true.
+
+Disable query refetch on focus while editing.
+
+Save behavior:
+
+Debounced save (≈300–500ms) on change and an immediate save on blur.
+
+On successful save, reconcile and clear isDirty.
+
+On 409 conflict, merge server changes without replacing the user’s current cursor text; re-apply the draft.
+
+Lifecycle guards: add beforeunload and visibilitychange handlers to flush a pending save.
+
+Keep the UI feedback: “Saving…” → “Saved ✓”.
+
+No localStorage/sessionStorage for persistence.
+
+Do not change unrelated pages. If needed, create a small hook for “draft with server sync” and use it only here.
+
+Acceptance criteria
+
+Typing in either field never drops or reorders characters.
+
+Refresh / navigate / logout+login: content persists.
+
+Switching tabs or fast navigation does not lose the last keystrokes.
+
+No console errors; no use of localStorage/sessionStorage.
+
+In two open tabs, a save in tab A does not overwrite what I’m currently typing in tab B; after I blur in tab B, both sets of changes reconcile safely.
+
+Files likely involved
+
+client/src/pages/social-media-strategy*.tsx (or the exact file for this page)
+
+Any shared hooks used for saving/queries on this page
+
+If anything blocks you (file paths, API shape), tell me exactly what you need. Then implement and test against the acceptance criteria.
