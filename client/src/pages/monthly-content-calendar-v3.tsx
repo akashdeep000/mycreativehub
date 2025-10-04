@@ -210,16 +210,12 @@ export default function MonthlyContentCalendarV3() {
       key.id === id ? { ...key, ...updates } : key
     );
     
-    // Update the calendar data
-    const updatedData = { ...(calendarData as any), colorKeys: updatedColorKeys };
-    queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
-    
-    // Save immediately for color key changes
+    // Save immediately - cache will be updated by onSuccess
     saveCalendarData.mutate({
       year,
       month,
-      colorKeys: updatedData.colorKeys,
-      days: updatedData.days,
+      colorKeys: updatedColorKeys,
+      days: days,
     });
   };
 
@@ -248,15 +244,12 @@ export default function MonthlyContentCalendarV3() {
       updatedDays = [...currentDays, { date, entries: [newEntry] }];
     }
 
-    const updatedData = { ...currentData, days: updatedDays, colorKeys: currentColorKeys };
-    queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
-    
-    // Save immediately when adding entries (no debounce delay)
+    // Save immediately - cache will be updated by onSuccess
     saveCalendarData.mutate({
       year,
       month,
-      colorKeys: updatedData.colorKeys,
-      days: updatedData.days,
+      colorKeys: currentColorKeys,
+      days: updatedDays,
     });
   };
 
@@ -275,15 +268,12 @@ export default function MonthlyContentCalendarV3() {
 
     updatedDays[dayIndex].entries[entryIndex].notes = notes;
 
-    const updatedData = { ...currentData, days: updatedDays, colorKeys: currentColorKeys };
-    queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
-    
-    // Save immediately when updating notes (no debounce delay)
+    // Save immediately - cache will be updated by onSuccess
     saveCalendarData.mutate({
       year,
       month,
-      colorKeys: updatedData.colorKeys,
-      days: updatedData.days,
+      colorKeys: currentColorKeys,
+      days: updatedDays,
     });
   };
 
@@ -304,15 +294,12 @@ export default function MonthlyContentCalendarV3() {
       updatedDays.splice(dayIndex, 1);
     }
 
-    const updatedData = { ...currentData, days: updatedDays, colorKeys: currentColorKeys };
-    queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
-    
-    // Save immediately for deletes (no debounce delay)
+    // Save immediately - cache will be updated by onSuccess
     saveCalendarData.mutate({
       year,
       month,
-      colorKeys: updatedData.colorKeys,
-      days: updatedData.days,
+      colorKeys: currentColorKeys,
+      days: updatedDays,
     });
   };
 
