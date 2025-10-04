@@ -130,6 +130,9 @@ export default function SocialMediaStrategy() {
   useEffect(() => {
     if (!user) return;
 
+    // CRITICAL: Don't auto-save until initial data has loaded (prevents overwriting with empty state)
+    if (!hasLoadedInitialData.current) return;
+
     // Skip if no change from last saved state
     if (combinedString === lastSavedRef.current) return;
 
@@ -253,9 +256,20 @@ export default function SocialMediaStrategy() {
           {/* Content Goals Section */}
           <Card className="shadow-md border-0 bg-white">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-orange-500" />
-                Content Goals
+              <CardTitle className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-5 h-5 text-orange-500" />
+                  Content Goals
+                </div>
+                {/* Save indicator next to title */}
+                <div className="text-sm">
+                  {saveStatus === 'saving' && (
+                    <span className="text-gray-500">Saving...</span>
+                  )}
+                  {saveStatus === 'saved' && (
+                    <span className="text-green-600">✓ Saved</span>
+                  )}
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -366,19 +380,6 @@ export default function SocialMediaStrategy() {
               )}
             </CardContent>
           </Card>
-
-          {/* Auto-save indicator */}
-          <div className="text-center text-sm">
-            {saveStatus === 'saving' && (
-              <span className="text-gray-500">Saving...</span>
-            )}
-            {saveStatus === 'saved' && (
-              <span className="text-green-600">✓ Saved</span>
-            )}
-            {saveStatus === 'idle' && (
-              <span className="text-gray-500">Changes are saved immediately</span>
-            )}
-          </div>
         </div>
       </div>
     </div>
