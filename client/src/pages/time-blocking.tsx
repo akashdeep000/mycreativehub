@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from 'wouter';
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import BackToDashboard from "@/components/BackToDashboard";
@@ -43,110 +45,77 @@ export default function TimeBlocking() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [, setLocation] = useLocation();
-  const [timeBlockingData, setTimeBlockingData] = useState(defaultTimeBlockingData);
 
-  // Load existing events using the new events API (with real persistence)
-  useEffect(() => {
-    const loadTimeBlockingEvents = async () => {
-      try {
-        console.log('🔄 Loading time blocking events from database...');
-        
-        // Calculate range for current month (load current and adjacent months for full view)
-        const currentDate = new Date();
-        const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-        const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0);
-        
-        const startStr = startDate.toISOString().split('T')[0];
-        const endStr = endDate.toISOString().split('T')[0];
-        
-        // Load events from the new events API
-        const response = await fetch(`/api/time-blocking-events?startDate=${startStr}&endDate=${endStr}`, {
-          credentials: 'include',
-          headers: {
-            'Cache-Control': 'no-store' // Prevent stale cache as requested
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to load events: ${response.status}`);
-        }
-        
-        const events = await response.json();
-        console.log(`✅ Loaded ${events.length} time blocking events from database`);
-        
-        // Convert events to time blocks format
-        const allBlocks = events.map((event: any) => {
-          // Extract date and time from the timestamp using UTC to avoid timezone issues
-          const startDateTime = new Date(event.startTime);
-          const dateStr = startDateTime.toISOString().split('T')[0]; // YYYY-MM-DD
-          const timeStr = startDateTime.toISOString().split('T')[1].substring(0, 5); // HH:mm from UTC
-          
-          return {
-            id: event.id, // Use the database UUID
-            title: event.title,
-            startTime: timeStr, // Just the time portion (HH:mm)
-            duration: 1,
-            colour: event.color,
-            colourTagId: event.colorKeyId, // Fixed field name
-            day: dateStr, // Date in YYYY-MM-DD format
-            monthKey: getCurrentMonthKey(startDateTime)
-          };
-        });
-        
-        // Load time blocking color keys from dedicated API
-        let allColorKeys = [];
-        try {
-          console.log('🔄 Loading time blocking color keys...');
-          const colorResponse = await fetch('/api/time-blocking-color-keys', {
-            credentials: 'include',
-            headers: {
-              'Cache-Control': 'no-store'
-            }
-          });
-          
-          if (colorResponse.ok) {
-            const data = await colorResponse.json();
-            allColorKeys = data.colorKeys || [];
-            console.log(`✅ Loaded ${allColorKeys.length} time blocking color keys`);
-          }
-        } catch (error) {
-          console.log('Using default time blocking color categories');
-        }
-        
-        // Update state with loaded data
-        const colourTags = allColorKeys.map((key: any, index: number) => ({
-          id: key.id,
-          label: key.label,
-          colour: key.color,
-          selected: index === 0 // First tag selected by default
-        }));
-        
-        setTimeBlockingData({
-          colourTags: colourTags.length > 0 ? colourTags : defaultTimeBlockingData.colourTags,
-          weeklyView: { blocks: [] }, // Legacy - keep empty
-          monthlyView: {
-            blocks: allBlocks,
-            selectedMonth: new Date().toISOString().substring(0, 7)
-          }
-        });
-        
-        console.log(`✅ Initialized time blocking data: ${allBlocks.length} blocks, ${colourTags.length} categories`);
-      } catch (error) {
-        console.error('❌ Failed to load time blocking events:', error);
-        toast({
-          title: "Load Error",
-          description: "Failed to load your saved events. Using defaults.",
-          variant: "destructive"
-        });
-        // Fall back to defaults
-        setTimeBlockingData(defaultTimeBlockingData);
-      }
+  // Calculate date range for loading events (current month + adjacent months)
+  const getDateRange = () => {
+    const currentDate = new Date();
+    const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0);
+    return {
+      startStr: startDate.toISOString().split('T')[0],
+      endStr: endDate.toISOString().split('T')[0]
     };
-    
-    if (isAuthenticated && user) {
-      loadTimeBlockingEvents();
+  };
+
+  // Load time blocking events with React Query (auto-refetches on mount!)
+  const { startStr, endStr } = getDateRange();
+  const { data: eventsData, isLoading: eventsLoading } = useQuery({
+    queryKey: ['/api/time-blocking-events', startStr, endStr],
+    queryFn: async () => {
+      console.log('🔄 Loading time blocking events from database...');
+      const response = await apiRequest(`/api/time-blocking-events?startDate=${startStr}&endDate=${endStr}`);
+      const events = await response.json();
+      console.log(`✅ Loaded ${events.length} time blocking events from database`);
+      return events;
+    },
+    staleTime: 0, // Always refetch to get latest from DB
+    refetchOnMount: true, // KEY FIX: Always get fresh data when returning to page
+    enabled: isAuthenticated && !!user, // Only run when authenticated
+  });
+
+  // Load color keys with React Query
+  const { data: colorKeysData } = useQuery({
+    queryKey: ['/api/time-blocking-color-keys'],
+    queryFn: async () => {
+      console.log('🔄 Loading time blocking color keys...');
+      const response = await apiRequest('/api/time-blocking-color-keys');
+      const data = await response.json();
+      console.log(`✅ Loaded ${data.colorKeys?.length || 0} time blocking color keys`);
+      return data;
+    },
+    staleTime: 0,
+    refetchOnMount: true,
+    enabled: isAuthenticated && !!user,
+  });
+
+  // Convert loaded data to time blocking format
+  const timeBlockingData = {
+    colourTags: colorKeysData?.colorKeys?.map((key: any, index: number) => ({
+      id: key.id,
+      label: key.label,
+      colour: key.color,
+      selected: index === 0
+    })) || defaultTimeBlockingData.colourTags,
+    weeklyView: { blocks: [] },
+    monthlyView: {
+      blocks: eventsData?.map((event: any) => {
+        const startDateTime = new Date(event.startTime);
+        const dateStr = startDateTime.toISOString().split('T')[0];
+        const timeStr = startDateTime.toISOString().split('T')[1].substring(0, 5);
+        return {
+          id: event.id,
+          title: event.title,
+          startTime: timeStr,
+          duration: 1,
+          colour: event.color,
+          colourTagId: event.colorKeyId,
+          day: dateStr,
+          monthKey: getCurrentMonthKey(startDateTime)
+        };
+      }) || [],
+      selectedMonth: new Date().toISOString().substring(0, 7)
     }
-  }, [isAuthenticated, user, toast]);
+  };
   
   // Redirect to login if not authenticated
   useEffect(() => {
