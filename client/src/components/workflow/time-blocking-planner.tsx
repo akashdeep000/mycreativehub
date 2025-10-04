@@ -283,6 +283,17 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
     setCurrentMonthOffset(0);
   };
 
+  // Helper to get date range for query cache updates (matches parent page logic)
+  const getDateRangeForCache = () => {
+    const currentDate = new Date();
+    const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0);
+    return {
+      startStr: startDate.toISOString().split('T')[0],
+      endStr: endDate.toISOString().split('T')[0]
+    };
+  };
+
   const createTimeBlock = async (day: string, hour: number, title?: string, colourTagId?: string) => {
     const useColourTagId = colourTagId || activeColourTagId;
     const selectedColourTag = data.colourTags.find(tag => tag.id === useColourTagId);
@@ -345,8 +356,17 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
       const savedEvent = await response.json();
       console.log(`✅ Event created with ID: ${savedEvent.id}`);
       
-      // Invalidate parent page's query cache to trigger refetch on navigation
-      queryClient.invalidateQueries({ queryKey: ['/api/time-blocking-events'] });
+      // Update React Query cache directly (no refetch needed)
+      const { startStr, endStr } = getDateRangeForCache();
+      queryClient.setQueryData(
+        ['/api/time-blocking-events', startStr, endStr],
+        (oldData: any) => {
+          const existingEvents = oldData || [];
+          // Add new event if it doesn't already exist
+          const eventExists = existingEvents.some((e: any) => e.id === savedEvent.id);
+          return eventExists ? existingEvents : [...existingEvents, savedEvent];
+        }
+      );
       
       // Notify parent that block was saved
       onBlockSaved?.();
@@ -382,9 +402,21 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
             },
             credentials: 'include',
             body: JSON.stringify(updatePayload)
-          }).then(() => {
-            // Invalidate again after sync update
-            queryClient.invalidateQueries({ queryKey: ['/api/time-blocking-events'] });
+          }).then(async (updateResponse) => {
+            // Update React Query cache directly with updated event
+            if (updateResponse.ok) {
+              const updatedEvent = await updateResponse.json();
+              const { startStr, endStr } = getDateRangeForCache();
+              queryClient.setQueryData(
+                ['/api/time-blocking-events', startStr, endStr],
+                (oldData: any) => {
+                  const existingEvents = oldData || [];
+                  return existingEvents.map((e: any) => 
+                    e.id === updatedEvent.id ? updatedEvent : e
+                  );
+                }
+              );
+            }
           }).catch(error => {
             console.error('❌ Failed to sync modified block:', error);
           });
