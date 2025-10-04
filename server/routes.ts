@@ -1867,6 +1867,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const strategy = await storage.getSocialMediaStrategy(userId);
+      
+      // Return null if no strategy exists OR if content_goals is null
+      if (!strategy || strategy.contentGoals === null) {
+        return res.json(null);
+      }
+      
       res.json(strategy);
     } catch (error) {
       console.error("Error fetching social media strategy:", error);
