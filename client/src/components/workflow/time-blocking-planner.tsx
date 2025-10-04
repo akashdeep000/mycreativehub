@@ -47,6 +47,7 @@ interface TimeBlockingPlannerProps {
   templateId: number;
   initialData: TimeBlockingData;
   onSave: (data: TimeBlockingData) => void;
+  onBlockSaved?: () => void; // Callback when a block is saved
 }
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -87,7 +88,7 @@ const OLD_DEFAULT_CATEGORIES = [
   "Focus Time", "Communication", "Creative Work", "Urgent"
 ];
 
-export default function TimeBlockingPlanner({ templateId, initialData, onSave }: TimeBlockingPlannerProps) {
+export default function TimeBlockingPlanner({ templateId, initialData, onSave, onBlockSaved }: TimeBlockingPlannerProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -341,6 +342,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       // Invalidate parent page's query cache to trigger refetch on navigation
       queryClient.invalidateQueries({ queryKey: ['/api/time-blocking-events'] });
       
+      // Notify parent that block was saved
+      onBlockSaved?.();
+      
       // Update the block with real database ID and sync any changes made during creation
       setData(currentData => {
         const tempBlock = currentData.monthlyView.blocks.find(block => block.id === tempId);
@@ -501,6 +505,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       // Invalidate parent page's query cache to trigger refetch on navigation
       queryClient.invalidateQueries({ queryKey: ['/api/time-blocking-events'] });
       
+      // Notify parent that block was saved
+      onBlockSaved?.();
+      
     } catch (error) {
       console.error('❌ Failed to update time block:', error);
       
@@ -565,6 +572,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       // Invalidate parent page's query cache to trigger refetch on navigation
       queryClient.invalidateQueries({ queryKey: ['/api/time-blocking-events'] });
       
+      // Notify parent that block was saved (deleted is also a save action)
+      onBlockSaved?.();
+      
     } catch (error) {
       console.error('❌ Failed to delete time block:', error);
       
@@ -614,6 +624,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       
       // Invalidate parent page's query cache to trigger refetch on navigation
       queryClient.invalidateQueries({ queryKey: ['/api/time-blocking-events'] });
+      
+      // Notify parent that blocks were saved (deleted)
+      onBlockSaved?.();
       
       // Show success toast
       toast({

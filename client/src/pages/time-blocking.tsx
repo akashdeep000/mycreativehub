@@ -45,6 +45,7 @@ export default function TimeBlocking() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [, setLocation] = useLocation();
+  const [blockSaveStatus, setBlockSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   // Calculate date range for loading events (current month + adjacent months)
   const getDateRange = () => {
@@ -144,6 +145,12 @@ export default function TimeBlocking() {
     }
   };
 
+  // Callback for TimeBlockingPlanner to update save status
+  const handleBlockSaved = () => {
+    setBlockSaveStatus('saved');
+    setTimeout(() => setBlockSaveStatus('idle'), 2000); // Show for 2 seconds
+  };
+
   if (isLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -194,6 +201,14 @@ export default function TimeBlocking() {
                 <CalendarDays className="h-6 w-6 text-white" />
               </div>
               Time Blocking Planner
+              {blockSaveStatus === 'saved' && (
+                <span className="text-sm text-green-600 flex items-center gap-1 ml-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Saved
+                </span>
+              )}
             </h1>
             <p className="text-gray-600">Colour-code your tasks and block focused time to get them done.</p>
           </div>
@@ -203,6 +218,7 @@ export default function TimeBlocking() {
               templateId={1}
               initialData={timeBlockingData}
               onSave={handleSave}
+              onBlockSaved={handleBlockSaved}
               key={`timeblocking-${JSON.stringify(timeBlockingData).substring(0, 50)}`}
             />
           </div>
