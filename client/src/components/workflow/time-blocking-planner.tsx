@@ -338,6 +338,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       const savedEvent = await response.json();
       console.log(`✅ Event created with ID: ${savedEvent.id}`);
       
+      // Invalidate parent page's query cache to trigger refetch on navigation
+      queryClient.invalidateQueries({ queryKey: ['/api/time-blocking-events'] });
+      
       // Update the block with real database ID and sync any changes made during creation
       setData(currentData => {
         const tempBlock = currentData.monthlyView.blocks.find(block => block.id === tempId);
@@ -369,6 +372,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
             },
             credentials: 'include',
             body: JSON.stringify(updatePayload)
+          }).then(() => {
+            // Invalidate again after sync update
+            queryClient.invalidateQueries({ queryKey: ['/api/time-blocking-events'] });
           }).catch(error => {
             console.error('❌ Failed to sync modified block:', error);
           });
@@ -492,6 +498,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
 
       console.log(`✅ Event updated: ${blockId}`);
       
+      // Invalidate parent page's query cache to trigger refetch on navigation
+      queryClient.invalidateQueries({ queryKey: ['/api/time-blocking-events'] });
+      
     } catch (error) {
       console.error('❌ Failed to update time block:', error);
       
@@ -553,6 +562,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
 
       console.log(`✅ Event deleted: ${blockId}`);
       
+      // Invalidate parent page's query cache to trigger refetch on navigation
+      queryClient.invalidateQueries({ queryKey: ['/api/time-blocking-events'] });
+      
     } catch (error) {
       console.error('❌ Failed to delete time block:', error);
       
@@ -599,6 +611,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
       await Promise.all(deletePromises);
 
       console.log('✅ Calendar deleted successfully');
+      
+      // Invalidate parent page's query cache to trigger refetch on navigation
+      queryClient.invalidateQueries({ queryKey: ['/api/time-blocking-events'] });
       
       // Show success toast
       toast({
