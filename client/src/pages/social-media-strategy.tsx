@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { useDebounce } from "@/hooks/use-debounce";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import BackToDashboard from "@/components/BackToDashboard";
@@ -126,7 +127,50 @@ export default function SocialMediaStrategy() {
     // After initial load, local state is the source of truth (ignore subsequent fetches)
   }, [existingStrategy, isLoading]);
 
-  // Immediate auto-save - saves on every keystroke with no delay
+  // Debounced auto-save - saves 1 second after user stops typing
+  const { debounced: debouncedSave, flush: flushSave } = useDebounce(() => {
+    if (!user) return;
+
+    // CRITICAL: Don't auto-save until initial data has loaded (prevents overwriting with empty state)
+    if (!hasLoadedInitialData.current) return;
+
+    // Only save if there's actual content (not just empty structure)
+    const hasContent = strategy.contentGoals.trim() || 
+                      strategy.pillars.some(p => p.title.trim() || p.cta.trim());
+    
+    if (hasContent) {
+      setSaveStatus('saving');
+      
+      saveMutation.mutate({
+        contentGoals: strategy.contentGoals,
+        pillars: strategy.pillars
+      });
+    }
+  }, 1000);
+
+  // Flush pending saves on unmount or visibility change
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        flushSave();
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      flushSave();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      flushSave();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [flushSave]);
+
+  // Track changes and trigger debounced save
   const lastSavedRef = useRef<string>('');
 
   // Create stable string representations for comparison
@@ -135,29 +179,13 @@ export default function SocialMediaStrategy() {
   const combinedString = `${contentGoalsString}||${pillarsString}`;
 
   useEffect(() => {
-    if (!user) return;
-
-    // CRITICAL: Don't auto-save until initial data has loaded (prevents overwriting with empty state)
-    if (!hasLoadedInitialData.current) return;
-
     // Skip if no change from last saved state
     if (combinedString === lastSavedRef.current) return;
 
-    // Only save if there's actual content (not just empty structure)
-    const hasContent = strategy.contentGoals.trim() || 
-                      strategy.pillars.some(p => p.title.trim() || p.cta.trim());
-    
-    if (hasContent) {
-      // Store current state before saving to prevent duplicate saves
-      lastSavedRef.current = combinedString;
-      setSaveStatus('saving');
-      
-      saveMutation.mutate({
-        contentGoals: strategy.contentGoals,
-        pillars: strategy.pillars
-      });
-    }
-  }, [combinedString, user, saveMutation, strategy.contentGoals, strategy.pillars]);
+    // Update tracking ref and trigger debounced save
+    lastSavedRef.current = combinedString;
+    debouncedSave();
+  }, [combinedString, debouncedSave]);
 
   const updateContentGoals = (goals: string) => {
     setStrategy(prev => ({ ...prev, contentGoals: goals }));
