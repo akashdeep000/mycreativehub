@@ -170,19 +170,28 @@ export default function MonthlyContentCalendarV3() {
   }, [flushSave]);
 
   const saveCalendarData = useMutation({
-    mutationFn: (data: { year: number; month: number; colorKeys: ColorKey[]; days: CalendarDay[] }) => {
+    mutationFn: async (data: { year: number; month: number; colorKeys: ColorKey[]; days: CalendarDay[] }) => {
       setSaveStatus('saving');
-      return apiRequest(`/api/calendar-v3/${data.year}/${data.month}`, {
+      const response = await apiRequest(`/api/calendar-v3/${data.year}/${data.month}`, {
         method: 'PUT',
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' },
       });
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (serverData) => {
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
-      // Invalidate and refetch to sync with server data
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar-v3', year, month] });
+      // Transform server response to match frontend format (colour -> color)
+      const transformedData = {
+        ...serverData,
+        colorKeys: (serverData.colorKeys || []).map((key: any) => ({
+          ...key,
+          color: key.colour || key.color
+        }))
+      };
+      // Update cache with transformed server response to maintain stable IDs (prevents flash)
+      queryClient.setQueryData(['/api/calendar-v3', year, month], transformedData);
     },
     onError: (error) => {
       console.error('Save error:', error);
@@ -361,15 +370,13 @@ export default function MonthlyContentCalendarV3() {
       };
       
       const updatedColorKeys = [...colorKeys, newKey];
-      const updatedData = { ...(calendarData as any), colorKeys: updatedColorKeys };
-      queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
       
-      // Save immediately for color key changes
+      // Save immediately for color key changes (no optimistic update to prevent flash)
       saveCalendarData.mutate({
         year,
         month,
-        colorKeys: updatedData.colorKeys,
-        days: updatedData.days,
+        colorKeys: updatedColorKeys,
+        days: days,
       });
       
       toast({ title: "New tag created successfully", variant: "default" });
@@ -387,15 +394,13 @@ export default function MonthlyContentCalendarV3() {
 
   const deleteColorKey = (keyId: string) => {
     const updatedColorKeys = colorKeys.filter(key => key.id !== keyId);
-    const updatedData = { ...(calendarData as any), colorKeys: updatedColorKeys };
-    queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
     
-    // Save immediately for color key changes
+    // Save immediately for color key changes (no optimistic update to prevent flash)
     saveCalendarData.mutate({
       year,
       month,
-      colorKeys: updatedData.colorKeys,
-      days: updatedData.days,
+      colorKeys: updatedColorKeys,
+      days: days,
     });
     
     toast({ title: "Tag deleted successfully", variant: "default" });
@@ -405,15 +410,13 @@ export default function MonthlyContentCalendarV3() {
     const updatedColorKeys = colorKeys.map(key => 
       key.id === keyId ? { ...key, color: newColor } : key
     );
-    const updatedData = { ...(calendarData as any), colorKeys: updatedColorKeys };
-    queryClient.setQueryData(['/api/calendar-v3', year, month], updatedData);
     
-    // Save immediately for color key changes
+    // Save immediately for color key changes (no optimistic update to prevent flash)
     saveCalendarData.mutate({
       year,
       month,
-      colorKeys: updatedData.colorKeys,
-      days: updatedData.days,
+      colorKeys: updatedColorKeys,
+      days: days,
     });
     
     setShowColorPicker(null);
