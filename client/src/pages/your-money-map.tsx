@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import { Link, useLocation } from "wouter";
@@ -37,8 +39,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Pencil,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from "lucide-react";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface BudgetItem {
   id: string;
@@ -84,10 +88,20 @@ interface MonthlySnapshot {
   };
 }
 
+interface MoneyMapData {
+  currency: string;
+  period: string;
+  goalsData: any;
+  incomeExpensesData: any;
+  savingsData: any;
+  monthlySnapshots: MonthlySnapshot[];
+}
+
 export default function YourMoneyMap() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
+  
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [currency, setCurrency] = useState('GBP');
   
@@ -103,21 +117,96 @@ export default function YourMoneyMap() {
   const [incomeExpenseItems, setIncomeExpenseItems] = useState<IncomeExpenseItem[]>([]);
   const [taxPercentage, setTaxPercentage] = useState(25);
   const [customAllocations, setCustomAllocations] = useState<CustomAllocation[]>([]);
-  // Category names state
   const [taxCategoryName, setTaxCategoryName] = useState('Tax Amount');
-  
-  // Edit states for category names
   const [editingTax, setEditingTax] = useState(false);
   const [trackerNotes, setTrackerNotes] = useState('');
-
-
-
-
 
   // Monthly Snapshots State
   const [monthlySnapshots, setMonthlySnapshots] = useState<MonthlySnapshot[]>([]);
   const [showMonthlyRecords, setShowMonthlyRecords] = useState(false);
   const [expandedSnapshots, setExpandedSnapshots] = useState<Set<string>>(new Set());
+
+  // Save status
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const hasLoadedInitialData = useRef(false);
+
+  // Fetch money map data from database
+  const { data: moneyMapData, isLoading: dataLoading, error: dataError } = useQuery<MoneyMapData>({
+    queryKey: ['/api/persistent/money-map'],
+    enabled: !!user,
+    retry: 1,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+
+  // Save mutation
+  const saveMutation = useMutation({
+    mutationFn: async (data: Partial<MoneyMapData>) => {
+      console.log('Saving money map to database:', data);
+      const response = await apiRequest('/api/persistent/money-map', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save money map');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (savedData) => {
+      console.log('Money map saved successfully ✓');
+      queryClient.setQueryData(['/api/persistent/money-map'], savedData);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    },
+    onError: (error: any) => {
+      console.error('Error saving money map:', error);
+      setSaveStatus('idle');
+      toast({
+        title: "Save Failed",
+        description: "Could not save your financial data. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Load initial data from database
+  useEffect(() => {
+    if (dataLoading || !moneyMapData || hasLoadedInitialData.current) return;
+    
+    hasLoadedInitialData.current = true;
+    console.log('Loading money map from database:', moneyMapData);
+    
+    // Load global settings
+    if (moneyMapData.currency) {
+      setCurrency(moneyMapData.currency);
+    }
+    if (moneyMapData.period) {
+      setSelectedPeriod(moneyMapData.period);
+    }
+    
+    // Load monthly snapshots
+    if (moneyMapData.monthlySnapshots && Array.isArray(moneyMapData.monthlySnapshots)) {
+      setMonthlySnapshots(moneyMapData.monthlySnapshots);
+    }
+    
+    // Load current period data from incomeExpensesData
+    if (moneyMapData.incomeExpensesData) {
+      const periodKey = getCurrentPeriodKey();
+      const periodData = moneyMapData.incomeExpensesData[periodKey];
+      
+      if (periodData) {
+        setBudgetItems(periodData.budgetItems || []);
+        setBudgetNotes(periodData.budgetNotes || '');
+        setIncomeExpenseItems(periodData.incomeExpenseItems || []);
+        setTaxPercentage(periodData.taxPercentage || 25);
+        setCustomAllocations(periodData.customAllocations || []);
+        setTrackerNotes(periodData.trackerNotes || '');
+      }
+    }
+  }, [moneyMapData, dataLoading]);
 
   // Helper functions for period navigation
   const getCurrentPeriodKey = () => {
@@ -142,6 +231,9 @@ export default function YourMoneyMap() {
   };
 
   const navigatePeriod = (direction: 'prev' | 'next') => {
+    // Save current period data before navigating
+    savePeriodData();
+    
     const newDate = new Date(currentDate);
     if (selectedPeriod === 'monthly') {
       if (direction === 'prev') {
@@ -159,99 +251,126 @@ export default function YourMoneyMap() {
     setCurrentDate(newDate);
   };
 
-  const saveDraftForCurrentPeriod = () => {
+  const savePeriodData = () => {
+    if (!hasLoadedInitialData.current) return;
+    
     const periodKey = getCurrentPeriodKey();
-    const currentData = {
+    const currentPeriodData = {
       budgetItems,
       budgetNotes,
       incomeExpenseItems,
       taxPercentage,
       customAllocations,
-      selectedPeriod,
-      currency
+      trackerNotes,
     };
     
-    const newDrafts = { ...drafts, [periodKey]: currentData };
-    setDrafts(newDrafts);
-    localStorage.setItem('your-money-map-drafts', JSON.stringify(newDrafts));
-  };
-
-  const loadDraftForCurrentPeriod = () => {
-    const periodKey = getCurrentPeriodKey();
-    const savedDrafts = localStorage.getItem('your-money-map-drafts');
+    // Merge with existing income/expenses data
+    const updatedIncomeExpensesData = {
+      ...(moneyMapData?.incomeExpensesData || {}),
+      [periodKey]: currentPeriodData
+    };
     
-    if (savedDrafts) {
-      try {
-        const parsedDrafts = JSON.parse(savedDrafts);
-        setDrafts(parsedDrafts);
-        
-        if (parsedDrafts[periodKey]) {
-          const draft = parsedDrafts[periodKey];
-          setBudgetItems(draft.budgetItems || []);
-          setBudgetNotes(draft.budgetNotes || '');
-          setIncomeExpenseItems(draft.incomeExpenseItems || []);
-          setTaxPercentage(draft.taxPercentage || 25);
-          setCustomAllocations(draft.customAllocations || []);
-          return true;
-        }
-      } catch (error) {
-        console.error('Error loading drafts:', error);
-      }
-    }
-    return false;
+    saveToDatabase({
+      currency,
+      period: selectedPeriod,
+      incomeExpensesData: updatedIncomeExpensesData,
+      monthlySnapshots,
+    });
   };
 
-  // Load data from localStorage on component mount
-  useEffect(() => {
-    const savedData = localStorage.getItem('your-money-map-data');
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        setSelectedPeriod(parsed.selectedPeriod || 'monthly');
-        // Force update to GBP as new default, regardless of saved currency
-        // This ensures all users get the new GBP default
-        setCurrency('GBP');
-        setMonthlySnapshots(parsed.monthlySnapshots || []);
-        // Always start with current date instead of restoring saved date
-        // This ensures the money map opens on the current month/period
-        setCurrentDate(new Date());
-      } catch (error) {
-        console.error('Error loading saved data:', error);
-      }
-    }
-  }, []);
+  const saveToDatabase = (data: Partial<MoneyMapData>) => {
+    setSaveStatus('saving');
+    saveMutation.mutate(data);
+  };
 
-  // Load draft for current period when period changes
+  // Load data for current period when period changes
   useEffect(() => {
-    if (!loadDraftForCurrentPeriod()) {
-      // Reset to empty state if no draft exists
+    if (!hasLoadedInitialData.current || !moneyMapData) return;
+    
+    const periodKey = getCurrentPeriodKey();
+    const periodData = moneyMapData.incomeExpensesData?.[periodKey];
+    
+    if (periodData) {
+      setBudgetItems(periodData.budgetItems || []);
+      setBudgetNotes(periodData.budgetNotes || '');
+      setIncomeExpenseItems(periodData.incomeExpenseItems || []);
+      setTaxPercentage(periodData.taxPercentage || 25);
+      setCustomAllocations(periodData.customAllocations || []);
+      setTrackerNotes(periodData.trackerNotes || '');
+    } else {
+      // Reset to empty state if no data exists for this period
       setBudgetItems([]);
       setBudgetNotes('');
       setIncomeExpenseItems([]);
       setTaxPercentage(25);
       setCustomAllocations([]);
+      setTrackerNotes('');
     }
   }, [currentDate, selectedPeriod]);
 
-  // Save data to localStorage whenever state changes
-  // Note: We don't save currentDate so the app always starts with current month
-  useEffect(() => {
-    const dataToSave = {
-      selectedPeriod,
-      currency,
-      monthlySnapshots
-    };
-    localStorage.setItem('your-money-map-data', JSON.stringify(dataToSave));
-  }, [selectedPeriod, currency, monthlySnapshots]);
+  // Auto-save with debounce
+  const { debounced: debouncedSave, flush: flushSave } = useDebounce(() => {
+    savePeriodData();
+  }, 1000);
 
-  // Auto-save draft when data changes
+  // Trigger save when data changes
+  const lastSavedRef = useRef<string>('');
+  const combinedString = JSON.stringify({
+    budgetItems,
+    budgetNotes,
+    incomeExpenseItems,
+    taxPercentage,
+    customAllocations,
+    trackerNotes,
+    currency,
+    selectedPeriod,
+  });
+
   useEffect(() => {
-    saveDraftForCurrentPeriod();
-  }, [budgetItems, budgetNotes, incomeExpenseItems, taxPercentage, customAllocations]);
+    if (!hasLoadedInitialData.current) return;
+    if (combinedString === lastSavedRef.current) return;
+    
+    lastSavedRef.current = combinedString;
+    debouncedSave();
+  }, [combinedString, debouncedSave]);
+
+  // Save monthly snapshots when they change
+  useEffect(() => {
+    if (!hasLoadedInitialData.current) return;
+    
+    saveToDatabase({
+      currency,
+      period: selectedPeriod,
+      incomeExpensesData: moneyMapData?.incomeExpensesData || {},
+      monthlySnapshots,
+    });
+  }, [monthlySnapshots]);
+
+  // Flush on unmount
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        flushSave();
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      flushSave();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      flushSave();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [flushSave]);
 
   // Authentication check
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       toast({
         title: "Unauthorized",
         description: "You are logged out. Logging in again...",
@@ -262,10 +381,50 @@ export default function YourMoneyMap() {
       }, 500);
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, authLoading, toast]);
 
-  if (isLoading || !isAuthenticated) {
+  if (authLoading || !isAuthenticated) {
     return null;
+  }
+
+  if (dataLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Sidebar />
+        <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 flex items-center justify-center h-screen">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-500" />
+            <p className="text-gray-600">Loading your financial data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (dataError) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Sidebar />
+        <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 flex items-center justify-center h-screen">
+          <Card className="max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <AlertCircle className="w-5 h-5" />
+                Error Loading Data
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 mb-4">
+                We couldn't load your financial data. Please try refreshing the page.
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Refresh Page
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   const getCurrencySymbol = (currencyCode: string) => {
@@ -367,10 +526,6 @@ export default function YourMoneyMap() {
       profitMargin
     };
   };
-
-
-
-
 
   // Custom Allocations Functions
   const addCustomAllocation = () => {
@@ -545,9 +700,12 @@ export default function YourMoneyMap() {
     });
   };
 
+  const trackerTotals = getTrackerTotals();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
+      <MobileNav />
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="mb-8">
@@ -560,7 +718,7 @@ export default function YourMoneyMap() {
                 onClick={() => setLocation('/finance')}
                 className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
               >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-4 h-4" />
               </Button>
             </div>
             
@@ -590,9 +748,24 @@ export default function YourMoneyMap() {
             <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-xl flex items-center justify-center">
               <BarChart3 className="w-6 h-6 text-white" />
             </div>
-            <div>
+            <div className="flex-1">
               <h1 className="text-3xl font-serif font-semibold text-gray-800">Your Money Map</h1>
               <p className="text-gray-600">Complete financial dashboard for creative businesses</p>
+            </div>
+            {/* Save indicator */}
+            <div className="text-sm">
+              {saveStatus === 'saving' && (
+                <span className="text-gray-500 flex items-center gap-2">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Saving...
+                </span>
+              )}
+              {saveStatus === 'saved' && (
+                <span className="text-green-600 flex items-center gap-2">
+                  <CheckCircle className="w-3 h-3" />
+                  Saved
+                </span>
+              )}
             </div>
           </div>
           
@@ -639,7 +812,7 @@ export default function YourMoneyMap() {
           
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-700">Click Save to add this entry to your Expense Library.</Badge>
+              <Badge variant="secondary" className="bg-green-100 text-green-700">Click Save to add this entry to your Monthly Records</Badge>
             </div>
           </div>
         </div>
@@ -676,26 +849,27 @@ export default function YourMoneyMap() {
                       />
                       <Input
                         type="number"
-                        placeholder="Amount"
+                        placeholder="0"
                         value={item.actualAmount || ''}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'actualAmount', parseFloat(e.target.value) || 0)}
                         onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                        onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
-                        className="w-32 no-spinners"
+                        className="w-32"
                       />
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => deleteIncomeExpenseItem(item.id)}
+                        className="text-red-500 hover:text-red-600"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   ))}
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => addIncomeExpenseItem('income')}
-                    className="w-full"
+                    className="w-full border-dashed border-green-300 text-green-600 hover:bg-green-50"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Income Source
@@ -715,7 +889,7 @@ export default function YourMoneyMap() {
                   {incomeExpenseItems.filter(item => item.type === 'expense').map((item) => (
                     <div key={item.id} className="flex gap-2">
                       <Input
-                        placeholder="Expense item"
+                        placeholder="Expense category"
                         value={item.category}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'category', e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
@@ -723,239 +897,177 @@ export default function YourMoneyMap() {
                       />
                       <Input
                         type="number"
-                        placeholder="Amount"
+                        placeholder="0"
                         value={item.actualAmount || ''}
                         onChange={(e) => updateIncomeExpenseItem(item.id, 'actualAmount', parseFloat(e.target.value) || 0)}
                         onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                        onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
-                        className="w-32 no-spinners"
+                        className="w-32"
                       />
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => deleteIncomeExpenseItem(item.id)}
+                        className="text-red-500 hover:text-red-600"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   ))}
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => addIncomeExpenseItem('expense')}
-                    className="w-full"
+                    className="w-full border-dashed border-red-300 text-red-600 hover:bg-red-50"
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Expense Item
+                    Add Expense
                   </Button>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Percentage Allocations */}
-            <Card className="shadow-md border-0">
-              <CardHeader>
-                <CardTitle>Percentage Allocations</CardTitle>
-                <CardDescription>
-                  Input the percentage you want to save in the following categories and they will automatically appear in your Financial Summary
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      {editingTax ? (
-                        <Input
-                          type="text"
-                          value={taxCategoryName}
-                          onChange={(e) => setTaxCategoryName(e.target.value)}
-                          onBlur={() => setEditingTax(false)}
-                          onKeyDown={(e) => e.key === 'Enter' && setEditingTax(false)}
-                          className="flex-1 text-sm font-medium"
-                          autoFocus
-                        />
-                      ) : (
-                        <span className="flex-1 text-sm font-medium">{taxCategoryName}</span>
-                      )}
-                      <button
-                        onClick={() => setEditingTax(true)}
-                        className="hover:text-blue-600 transition-colors"
-                      >
-                        <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-600" />
-                      </button>
-                      <span className="text-sm font-medium">(%)</span>
+            {/* Summary */}
+            <Card className="shadow-md border-0 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <CardContent className="p-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-sm text-gray-600 mb-1">Total Income</div>
+                    <div className="text-xl font-bold text-green-600">
+                      {formatCurrency(trackerTotals.actualIncome)}
                     </div>
-                    <Input
-                      id="tax-percentage"
-                      type="number"
-                      value={taxPercentage}
-                      onChange={(e) => setTaxPercentage(parseFloat(e.target.value) || 0)}
-                      onFocus={(e) => e.target.select()}
-                      onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
-                      placeholder="25"
-                      className="no-spinners"
-                    />
                   </div>
-                  {/* Custom Allocations */}
-                  <div className="md:col-span-2">
-                    <div className="space-y-4">
-                      {customAllocations.map((allocation) => (
-                        <div key={allocation.id} className="flex gap-2 items-end">
-                          <div className="flex-1">
-                            <label className="text-sm font-medium mb-1 block">Allocation Name</label>
-                            <Input
-                              type="text"
-                              placeholder="e.g., Personal Pay, Emergency Fund"
-                              value={allocation.name}
-                              onChange={(e) => updateCustomAllocation(allocation.id, 'name', e.target.value)}
-                              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                            />
-                          </div>
-                          <div className="w-24">
-                            <label className="text-sm font-medium mb-1 block">%</label>
-                            <Input
-                              type="number"
-                              placeholder="0"
-                              value={allocation.percentage || ''}
-                              onChange={(e) => updateCustomAllocation(allocation.id, 'percentage', parseFloat(e.target.value) || 0)}
-                              onFocus={(e) => e.target.select()}
-                              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                              onWheel={(e) => { e.preventDefault(); e.currentTarget.blur(); }}
-                              className="no-spinners"
-                            />
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => deleteCustomAllocation(allocation.id)}
-                            className="mb-0"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                      <Button 
-                        variant="outline" 
-                        onClick={addCustomAllocation}
-                        className="w-full"
+                  <div className="text-center">
+                    <div className="text-sm text-gray-600 mb-1">Total Expenses</div>
+                    <div className="text-xl font-bold text-red-600">
+                      {formatCurrency(trackerTotals.actualExpenses)}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-sm text-gray-600 mb-1">Profit</div>
+                    <div className={`text-xl font-bold ${trackerTotals.actualProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                      {formatCurrency(trackerTotals.actualProfit)}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-sm text-gray-600 mb-1">Profit Margin</div>
+                    <div className="text-xl font-bold text-purple-600">
+                      {trackerTotals.profitMargin.toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tax and Allocations */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Tax */}
+              <Card className="shadow-md border-0">
+                <CardHeader>
+                  <CardTitle className="text-lg">Tax Set Aside</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Tax Percentage</Label>
+                    <div className="flex items-center gap-4">
+                      <Input
+                        type="number"
+                        value={taxPercentage}
+                        onChange={(e) => setTaxPercentage(parseFloat(e.target.value) || 0)}
+                        className="w-20"
+                      />
+                      <span className="text-sm text-gray-600">%</span>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-orange-50 rounded-lg">
+                    <div className="text-sm text-gray-600 mb-1">Tax Amount ({taxPercentage}%)</div>
+                    <div className="text-2xl font-bold text-orange-600">
+                      {formatCurrency(trackerTotals.taxAmount)}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Custom Allocations */}
+              <Card className="shadow-md border-0">
+                <CardHeader>
+                  <CardTitle className="text-lg">Custom Allocations</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {customAllocations.map((allocation) => (
+                    <div key={allocation.id} className="flex gap-2">
+                      <Input
+                        placeholder="Name (e.g., Savings)"
+                        value={allocation.name}
+                        onChange={(e) => updateCustomAllocation(allocation.id, 'name', e.target.value)}
+                        className="flex-1"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={allocation.percentage || ''}
+                        onChange={(e) => updateCustomAllocation(allocation.id, 'percentage', parseFloat(e.target.value) || 0)}
+                        className="w-20"
+                      />
+                      <span className="flex items-center text-sm text-gray-600">%</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteCustomAllocation(allocation.id)}
+                        className="text-red-500"
                       >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add New % Allocation
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Tracker Summary */}
-            <Card className="shadow-md border-0">
-              <CardHeader>
-                <CardTitle>Financial Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-xl font-bold text-green-600">
-                      {formatCurrency(getTrackerTotals().actualIncome)}
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addCustomAllocation}
+                    className="w-full border-dashed"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Allocation
+                  </Button>
+                  {customAllocations.length > 0 && (
+                    <div className="p-4 bg-indigo-50 rounded-lg">
+                      <div className="text-sm text-gray-600 mb-1">Total Allocations</div>
+                      <div className="text-2xl font-bold text-indigo-600">
+                        {formatCurrency(trackerTotals.customAllocationsTotal)}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600">Actual Income</div>
-                  </div>
-                  <div className="text-center p-4 bg-red-50 rounded-lg">
-                    <div className="text-xl font-bold text-red-600">
-                      {formatCurrency(getTrackerTotals().actualExpenses)}
-                    </div>
-                    <div className="text-sm text-gray-600">Actual Expenses</div>
-                  </div>
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className={`text-xl font-bold ${getTrackerTotals().actualProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                      {formatCurrency(getTrackerTotals().actualProfit)}
-                    </div>
-                    <div className="text-sm text-gray-600">Gross Profit</div>
-                  </div>
-                  <div className="text-center p-4 bg-purple-50 rounded-lg">
-                    <div className="text-xl font-bold text-purple-600">
-                      {getTrackerTotals().profitMargin.toFixed(1)}%
-                    </div>
-                    <div className="text-sm text-gray-600">Profit Margin</div>
-                  </div>
-                </div>
-                
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-orange-50 rounded-lg">
-                    <div className="text-lg font-bold text-orange-600">
-                      {formatCurrency(getTrackerTotals().taxAmount)}
-                    </div>
-                    <div className="text-sm text-gray-600">{taxCategoryName}</div>
-                  </div>
-                  <div className="text-center p-4 bg-indigo-50 rounded-lg">
-                    <div className="space-y-2">
-                      <div className="text-lg font-bold text-indigo-600">Custom Allocations</div>
-                      {getTrackerTotals().customAllocations.map((allocation) => (
-                        <div key={allocation.id} className="flex justify-between items-center text-sm">
-                          <div className="text-gray-600">{allocation.name || 'Unnamed'}</div>
-                          <div className="font-medium text-indigo-600">
-                            {formatCurrency(allocation.amount)}
-                          </div>
-                        </div>
-                      ))}
-                      {customAllocations.length === 0 && (
-                        <div className="text-sm text-gray-500 italic">No allocations</div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-center p-4 bg-teal-50 rounded-lg">
-                    <div className="text-lg font-bold text-teal-600">
-                      {formatCurrency(getTrackerTotals().availableAfterAllocations)}
-                    </div>
-                    <div className="text-sm text-gray-600">Net Profit (after tax and allocations)</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Save Button */}
-            <Card className="shadow-md border-0 bg-gradient-to-r from-blue-50 to-indigo-50 mt-6">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Save className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">
-                        Save your progress for {selectedPeriod === 'monthly' ? 'this month' : 'this quarter'}
-                      </p>
-                      <p className="text-xs text-gray-600">Creates a permanent record for tracking your income/expenses</p>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={saveMonthlySnapshot}
-                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    💾 Save {selectedPeriod === 'monthly' 
-                      ? currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-                      : getCurrentPeriodLabel().replace('📘 ', '')
-                    }
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
+            <div className="flex justify-end gap-3">
+              <Button
+                onClick={exportToCSV}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Export CSV
+              </Button>
+              <Button
+                onClick={saveMonthlySnapshot}
+                className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Save to Monthly Records
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
-
-        {/* Monthly Records Section */}
-        <Card className="shadow-md border-0 mt-6">
-          <CardHeader>
+        {/* Monthly Records */}
+        <Card className="shadow-lg border-0">
+          <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
             <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Archive className="w-5 h-5 text-gray-600" />
+              <div className="flex items-center gap-2 text-xl">
+                <Calendar className="w-6 h-6 text-purple-600" />
                 Monthly Records
-                <Badge variant="secondary" className="ml-2">
-                  {monthlySnapshots.length} Saved
-                </Badge>
               </div>
               <div className="flex items-center gap-2">
                 {monthlySnapshots.length > 0 && (
@@ -1110,7 +1222,7 @@ export default function YourMoneyMap() {
                             </div>
                             
                             <div>
-                              <h5 className="font-medium mb-3 text-red-600">Expenses</h5>
+                              <h5 className="font-medium mb-3 text-red-600">Expense Categories</h5>
                               <div className="space-y-2">
                                 {snapshot.incomeExpenseItems.filter(item => item.type === 'expense').map((item, index) => (
                                   <div key={index} className="flex justify-between text-sm">
@@ -1123,6 +1235,26 @@ export default function YourMoneyMap() {
                               </div>
                             </div>
                           </div>
+
+                          {/* Custom Allocations Detail */}
+                          {snapshot.customAllocations.length > 0 && (
+                            <div className="mt-6">
+                              <h5 className="font-medium mb-3 text-indigo-600">Custom Allocations Breakdown</h5>
+                              <div className="space-y-2">
+                                {snapshot.customAllocations.map((allocation, index) => {
+                                  const amount = (snapshot.summary.profit - snapshot.summary.taxSetAside) * (allocation.percentage / 100);
+                                  return (
+                                    <div key={index} className="flex justify-between text-sm">
+                                      <span>{allocation.name} ({allocation.percentage}%)</span>
+                                      <span className="font-medium">
+                                        {getCurrencySymbol(snapshot.currency)}{amount.toLocaleString()}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1133,7 +1265,6 @@ export default function YourMoneyMap() {
           )}
         </Card>
       </div>
-      <MobileNav />
     </div>
   );
 }
