@@ -1,0 +1,69 @@
+I’m trying to fix data persistence on the My Social Media Strategy page. Two inputs are affected:
+
+Content Goals (multiline text box)
+
+Content Pillars (list/inputs)
+
+Problem:
+Typing appears to save, but after leaving the page and returning, the content is gone. I need these fields to persist in the database (not localStorage), load from DB on page open, and show “Saving…” → “Saved ✓” like our working areas.
+
+What I want you to do:
+
+Research deeply across the codebase
+
+Find the exact files/components for the Social Strategy page and these two inputs.
+
+Trace the full data path: UI → API → storage → DB.
+
+Confirm whether we’re hitting a backend route and updating a DB row, or just using local/session storage or stale cache.
+
+Compare to our working patterns
+
+Use the same persistence approach as our Conversation Flow Cheat Sheet and Calendar v3 (optimistic save, short debounce if any, React Query cache update, correct invalidation, optional versioning, 409 handling).
+
+Do not change anything in those working areas—only use them as reference.
+
+Identify concrete root causes (with file + line refs)
+Examples to check:
+
+Wrong/missing API route or payload; missing table/columns
+
+Save mutation not awaited / not called on blur
+
+Debounce not flushing on unmount/navigation
+
+React Query queryKey mismatch → stale cache shown after re-enter
+
+Initial placeholder/local seeding overwriting DB state on mount
+
+No DB read on mount / reading month-scoped doc instead of global
+
+Write a minimal, non-breaking plan to fix persistence
+
+Database as single source of truth (no localStorage).
+
+Save on input (and blur) with optimistic UI and “Saving…” → “Saved ✓” (~2s) feedback.
+
+Load from DB on mount; avoid showing stale placeholder that overwrites DB data.
+
+Correct cache invalidation/refetch so the latest text appears instantly when returning.
+
+Keep performance and current UI intact.
+
+If a schema/table is missing, propose the smallest safe addition (Option A minimal; Option B robust with versioning), plus a rollback plan.
+
+Deliverable
+
+Write the full plan into Instructions-social-strategy-persistence.md at the repo root.
+
+Include: root cause analysis; exact files/lines to change; API contracts; DB schema/keys; acceptance criteria; and a short manual test checklist.
+
+Acceptance criteria for the final fix (to include in the plan):
+
+Type/edit in Content Goals → see “Saving…” then “Saved ✓”; refresh or re-enter → text persists.
+
+Add/edit Content Pillars → same behavior; persists across refresh/re-login.
+
+No use of localStorage/sessionStorage for these fields.
+
+No regressions to other pages.
