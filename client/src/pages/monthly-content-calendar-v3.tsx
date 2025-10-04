@@ -181,6 +181,8 @@ export default function MonthlyContentCalendarV3() {
     onSuccess: () => {
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
+      // Invalidate and refetch to sync with server data
+      queryClient.invalidateQueries({ queryKey: ['/api/calendar-v3', year, month] });
     },
     onError: (error) => {
       console.error('Save error:', error);
