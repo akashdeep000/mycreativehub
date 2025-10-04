@@ -146,23 +146,14 @@ export default function SocialMediaStrategy() {
     // Skip if no change from last saved state
     if (combinedString === lastSavedRef.current) return;
 
-    // Save immediately on every change
+    // Only save if there's actual content (not just empty structure)
     const hasContent = strategy.contentGoals.trim() || 
                       strategy.pillars.some(p => p.title.trim() || p.cta.trim());
-    const hasStructuralChanges = strategy.pillars.length > 0;
     
-    if (hasContent || hasStructuralChanges) {
+    if (hasContent) {
       // Store current state before saving to prevent duplicate saves
       lastSavedRef.current = combinedString;
       setSaveStatus('saving');
-      
-      // DEBUG: Log what we're about to save
-      console.log('[SAVE] About to save:', {
-        contentGoals: strategy.contentGoals,
-        pillars: strategy.pillars,
-        hasLoadedInitialData: hasLoadedInitialData.current,
-        dataUpdatedAt
-      });
       
       saveMutation.mutate({
         contentGoals: strategy.contentGoals,
