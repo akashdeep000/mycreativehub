@@ -135,25 +135,6 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
   // Get color keys ONLY from the API (don't use stale initialData)
   const colorKeys = timeBlockingColorData?.colorKeys || [];
   
-  // Sync local data state when initialData prop changes (important for post-login data loading!)
-  useEffect(() => {
-    setData(initialData);
-    
-    // Only reset active color if the current selection no longer exists in the new data
-    if (initialData.colourTags && initialData.colourTags.length > 0) {
-      const currentActiveExists = initialData.colourTags.some(
-        tag => tag.id === activeColourTagId
-      );
-      
-      // Reset to first tag only if:
-      // 1. No active color is set, OR
-      // 2. The currently active color was deleted
-      if (!activeColourTagId || !currentActiveExists) {
-        setActiveColourTagId(initialData.colourTags[0].id);
-      }
-    }
-  }, [initialData, activeColourTagId]);
-  
   // Only monthly view now - removed weekly view completely
   const [editingTimeBlock, setEditingTimeBlock] = useState<string | null>(null);
   const [draggedBlock, setDraggedBlock] = useState<TimeBlock | null>(null);
@@ -174,6 +155,25 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
   
   // Save status for user feedback
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  
+  // Sync local data state when initialData prop changes (important for post-login data loading!)
+  useEffect(() => {
+    setData(initialData);
+    
+    // Only reset active color if the current selection no longer exists in the new data
+    if (initialData.colourTags && initialData.colourTags.length > 0) {
+      const currentActiveExists = initialData.colourTags.some(
+        tag => tag.id === activeColourTagId
+      );
+      
+      // Reset to first tag only if:
+      // 1. No active color is set, OR
+      // 2. The currently active color was deleted
+      if (!activeColourTagId || !currentActiveExists) {
+        setActiveColourTagId(initialData.colourTags[0].id);
+      }
+    }
+  }, [initialData, activeColourTagId]);
   
   // Immediate save function (copying monthly calendar pattern)
   const saveColorKeysImmediately = (colorKeys: any[]) => {
