@@ -538,10 +538,20 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
         throw new Error(`Failed to update event: ${response.status}`);
       }
 
+      const updatedEvent = await response.json();
       console.log(`✅ Event updated: ${blockId}`);
       
-      // Invalidate parent page's query cache to trigger refetch on navigation
-      queryClient.invalidateQueries({ queryKey: ['/api/time-blocking-events'] });
+      // Update React Query cache directly (no refetch needed)
+      const { startStr, endStr } = getDateRangeForCache();
+      queryClient.setQueryData(
+        ['/api/time-blocking-events', startStr, endStr],
+        (oldData: any) => {
+          const existingEvents = oldData || [];
+          return existingEvents.map((e: any) => 
+            e.id === updatedEvent.id ? updatedEvent : e
+          );
+        }
+      );
       
       // Notify parent that block was saved
       onBlockSaved?.();
