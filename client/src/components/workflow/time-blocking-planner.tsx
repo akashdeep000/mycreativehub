@@ -580,76 +580,61 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
   };
 
   const deleteTimeBlock = async (blockId: string) => {
-    console.log(`🔄 Deleting time block: ${blockId}`);
-    
-    // Store the block to restore if deletion fails
-    const blockToDelete = data.monthlyView.blocks.find(block => block.id === blockId);
-    
-    // Optimistic update - remove from UI immediately
-    const updatedData = {
+    // INSTANT UI UPDATE - Do this FIRST before anything else
+    setData({
       ...data,
       monthlyView: {
         ...data.monthlyView,
         blocks: data.monthlyView.blocks.filter(block => block.id !== blockId)
       }
-    };
-    
-    setData(updatedData);
-    
-    // Show success toast immediately
-    toast({
-      title: "Deleted ✓",
-      description: "Time block removed successfully",
-      duration: 2000
     });
+    
+    // Everything else happens AFTER the UI update
+    const blockToDelete = data.monthlyView.blocks.find(block => block.id === blockId);
+    
+    // Background tasks - run async without blocking
+    setTimeout(() => {
+      toast({
+        title: "Deleted ✓",
+        description: "Time block removed",
+        duration: 1500
+      });
+    }, 0);
 
     try {
-      // Delete from server in background
       const response = await fetch(`/api/time-blocking-events/${blockId}`, {
         method: 'DELETE',
-        headers: { 
-          'Cache-Control': 'no-store'
-        },
+        headers: { 'Cache-Control': 'no-store' },
         credentials: 'include'
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to delete event: ${response.status}`);
-      }
-
-      console.log(`✅ Event deleted: ${blockId}`);
+      if (!response.ok) throw new Error(`Failed to delete: ${response.status}`);
       
-      // Update React Query cache directly (no refetch needed)
+      // Update cache
       const { startStr, endStr } = getDateRangeForCache();
       queryClient.setQueryData(
         ['/api/time-blocking-events', startStr, endStr],
-        (oldData: any) => {
-          const existingEvents = oldData || [];
-          return existingEvents.filter((e: any) => e.id !== blockId);
-        }
+        (oldData: any) => (oldData || []).filter((e: any) => e.id !== blockId)
       );
       
-      // Notify parent that block was saved (deleted is also a save action)
       onBlockSaved?.();
       
     } catch (error) {
-      console.error('❌ Failed to delete time block:', error);
+      console.error('Delete failed:', error);
       
-      // If server delete failed, restore the block
       if (blockToDelete) {
-        const restoredData = {
+        setData({
           ...data,
           monthlyView: {
             ...data.monthlyView,
             blocks: [...data.monthlyView.blocks, blockToDelete]
           }
-        };
-        setData(restoredData);
+        });
       }
       
       toast({
         title: "Delete Failed",
-        description: "Could not delete the time block. It has been restored.",
+        description: "Block restored",
         variant: "destructive"
       });
     }
