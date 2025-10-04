@@ -971,6 +971,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave }:
               onKeyDown={(e) => {
                 if (e.key === 'Enter') addColourTag();
               }}
+              onBlur={addColourTag}
             />
             <Button
               size="sm"
