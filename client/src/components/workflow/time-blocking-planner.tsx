@@ -582,6 +582,9 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
   const deleteTimeBlock = async (blockId: string) => {
     console.log(`🔄 Deleting time block: ${blockId}`);
     
+    // Store the block to restore if deletion fails
+    const blockToDelete = data.monthlyView.blocks.find(block => block.id === blockId);
+    
     // Optimistic update - remove from UI immediately
     const updatedData = {
       ...data,
@@ -592,7 +595,6 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
     };
     
     setData(updatedData);
-    onSave(updatedData);
     
     // Show success toast immediately
     toast({
@@ -634,16 +636,16 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
       console.error('❌ Failed to delete time block:', error);
       
       // If server delete failed, restore the block
-      const restoredData = {
-        ...data,
-        monthlyView: {
-          ...data.monthlyView,
-          blocks: [...data.monthlyView.blocks]
-        }
-      };
-      
-      setData(restoredData);
-      onSave(restoredData);
+      if (blockToDelete) {
+        const restoredData = {
+          ...data,
+          monthlyView: {
+            ...data.monthlyView,
+            blocks: [...data.monthlyView.blocks, blockToDelete]
+          }
+        };
+        setData(restoredData);
+      }
       
       toast({
         title: "Delete Failed",
