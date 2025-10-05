@@ -12,6 +12,7 @@ import {
   uniqueIndex,
   char,
   uuid,
+  numeric,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { relations } from "drizzle-orm";
@@ -725,6 +726,44 @@ export const moneyMap = pgTable("money_map", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Finance Transactions - Ledger-based transaction tracking
+export const financeTransactions = pgTable("finance_transactions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  date: timestamp("date").notNull(),
+  type: varchar("type").notNull(), // 'income' or 'expense'
+  category: varchar("category").notNull(),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  notes: text("notes"),
+  year: integer("year").notNull(),
+  month: integer("month").notNull(), // 1-12
+  isDeleted: boolean("is_deleted").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("finance_transactions_user_year_month_idx").on(table.userId, table.year, table.month),
+  index("finance_transactions_user_date_idx").on(table.userId, table.date),
+]);
+
+// Money Map Months - Month-level metadata for finance tracking
+export const moneyMapMonths = pgTable("money_map_months", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  year: integer("year").notNull(),
+  month: integer("month").notNull(), // 1-12
+  currency: varchar("currency").notNull().default('GBP'),
+  taxPercentage: numeric("tax_percentage", { precision: 5, scale: 2 }).notNull().default('25'),
+  customAllocations: jsonb("custom_allocations").notNull().default('[]'),
+  isClosed: boolean("is_closed").notNull().default(false),
+  closedAt: timestamp("closed_at"),
+  closedSnapshot: jsonb("closed_snapshot"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("money_map_months_user_year_month_idx").on(table.userId, table.year, table.month),
+]);
+
 // SOP Builder Tables
 export const sopBuilders = pgTable("sop_builders", {
   id: serial("id").primaryKey(),
@@ -837,6 +876,18 @@ export const insertMoneyMapSchema = createInsertSchema(moneyMap).omit({
   updatedAt: true,
 });
 
+export const insertFinanceTransactionSchema = createInsertSchema(financeTransactions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMoneyMapMonthSchema = createInsertSchema(moneyMapMonths).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertSopBuilderSchema = createInsertSchema(sopBuilders).omit({
   id: true,
   createdAt: true,
@@ -922,6 +973,10 @@ export type LaunchGrowthPlan = typeof launchGrowthPlans.$inferSelect;
 export type InsertLaunchGrowthPlan = z.infer<typeof insertLaunchGrowthPlanSchema>;
 export type MoneyMap = typeof moneyMap.$inferSelect;
 export type InsertMoneyMap = z.infer<typeof insertMoneyMapSchema>;
+export type FinanceTransaction = typeof financeTransactions.$inferSelect;
+export type InsertFinanceTransaction = z.infer<typeof insertFinanceTransactionSchema>;
+export type MoneyMapMonth = typeof moneyMapMonths.$inferSelect;
+export type InsertMoneyMapMonth = z.infer<typeof insertMoneyMapMonthSchema>;
 export type SopBuilder = typeof sopBuilders.$inferSelect;
 export type InsertSopBuilder = z.infer<typeof insertSopBuilderSchema>;
 export type AutomationToolkit = typeof automationToolkit.$inferSelect;
@@ -1146,7 +1201,6 @@ export type CheatSheetDoc = typeof cheatSheetDocs.$inferSelect;
 export type InsertCheatSheetDoc = z.infer<typeof insertCheatSheetDocSchema>;
 export type CheatSheetDocData = z.infer<typeof cheatSheetDocDataSchema>;
 export type CheatSheetRow = z.infer<typeof cheatSheetRowSchema>;
-export type CheatSheetRowFields = z.infer<typeof cheatSheetRowFieldsSchema>;
 export type CheatSheetDocPutBody = z.infer<typeof cheatSheetDocPutBodySchema>;
 
 export type AutomationPrompt = typeof automationPrompts.$inferSelect;
