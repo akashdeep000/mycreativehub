@@ -37,6 +37,8 @@ import {
   prelaunchTimelinePlanner,
   launchGrowthPlans,
   moneyMap,
+  financeTransactions,
+  moneyMapMonths,
   sopBuilders,
   automationToolkit,
   automationPrompts,
@@ -116,6 +118,10 @@ import {
   type InsertLaunchGrowthPlan,
   type MoneyMap,
   type InsertMoneyMap,
+  type FinanceTransaction,
+  type InsertFinanceTransaction,
+  type MoneyMapMonth,
+  type InsertMoneyMapMonth,
   type SopBuilder,
   type InsertSopBuilder,
   type AutomationToolkit,
@@ -308,6 +314,15 @@ export interface IStorage {
   // Financial Management System
   getMoneyMap(userId: string): Promise<MoneyMap | undefined>;
   upsertMoneyMap(data: InsertMoneyMap): Promise<MoneyMap>;
+  
+  // Finance Ledger (Money Map) Operations
+  getMoneyMapMonth(userId: string, year: number, month: number): Promise<MoneyMapMonth | undefined>;
+  upsertMoneyMapMonth(data: InsertMoneyMapMonth): Promise<MoneyMapMonth>;
+  getFinanceTransactions(userId: string, year: number, month: number): Promise<FinanceTransaction[]>;
+  getFinanceTransaction(id: number): Promise<FinanceTransaction | undefined>;
+  createFinanceTransaction(data: InsertFinanceTransaction): Promise<FinanceTransaction>;
+  updateFinanceTransaction(id: number, updates: Partial<InsertFinanceTransaction>): Promise<FinanceTransaction>;
+  deleteFinanceTransaction(id: number, userId: string): Promise<void>;
   
   // Streamline Your Workflow System
   getSopBuilder(userId: string): Promise<SopBuilder | undefined>;
@@ -1691,6 +1706,98 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return moneymap;
+  }
+
+  // Finance Ledger Operations
+  async getMoneyMapMonth(userId: string, year: number, month: number): Promise<MoneyMapMonth | undefined> {
+    const [result] = await db
+      .select()
+      .from(moneyMapMonths)
+      .where(
+        and(
+          eq(moneyMapMonths.userId, userId),
+          eq(moneyMapMonths.year, year),
+          eq(moneyMapMonths.month, month)
+        )
+      );
+    return result;
+  }
+
+  async upsertMoneyMapMonth(data: InsertMoneyMapMonth): Promise<MoneyMapMonth> {
+    const [result] = await db
+      .insert(moneyMapMonths)
+      .values(data)
+      .onConflictDoUpdate({
+        target: [moneyMapMonths.userId, moneyMapMonths.year, moneyMapMonths.month],
+        set: {
+          currency: data.currency,
+          taxPercentage: data.taxPercentage,
+          customAllocations: data.customAllocations,
+          isClosed: data.isClosed,
+          closedAt: data.closedAt,
+          closedSnapshot: data.closedSnapshot,
+          notes: data.notes,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return result;
+  }
+
+  async getFinanceTransactions(userId: string, year: number, month: number): Promise<FinanceTransaction[]> {
+    const results = await db
+      .select()
+      .from(financeTransactions)
+      .where(
+        and(
+          eq(financeTransactions.userId, userId),
+          eq(financeTransactions.year, year),
+          eq(financeTransactions.month, month),
+          eq(financeTransactions.isDeleted, false)
+        )
+      )
+      .orderBy(desc(financeTransactions.date), desc(financeTransactions.createdAt));
+    return results;
+  }
+
+  async getFinanceTransaction(id: number): Promise<FinanceTransaction | undefined> {
+    const [result] = await db
+      .select()
+      .from(financeTransactions)
+      .where(eq(financeTransactions.id, id));
+    return result;
+  }
+
+  async createFinanceTransaction(data: InsertFinanceTransaction): Promise<FinanceTransaction> {
+    const [result] = await db
+      .insert(financeTransactions)
+      .values(data)
+      .returning();
+    return result;
+  }
+
+  async updateFinanceTransaction(id: number, updates: Partial<InsertFinanceTransaction>): Promise<FinanceTransaction> {
+    const [result] = await db
+      .update(financeTransactions)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(financeTransactions.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteFinanceTransaction(id: number, userId: string): Promise<void> {
+    await db
+      .update(financeTransactions)
+      .set({ isDeleted: true, updatedAt: new Date() })
+      .where(
+        and(
+          eq(financeTransactions.id, id),
+          eq(financeTransactions.userId, userId)
+        )
+      );
   }
 
   // Streamline Your Workflow System
