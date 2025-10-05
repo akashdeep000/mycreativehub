@@ -83,7 +83,6 @@ export default function ToolkitCard({ module }: ToolkitCardProps) {
              module.name === "The Affiliate Link Hub" ? "1 System" :
              module.name === "Streamline Your Workflow" ? "4 Systems" :
              module.name === "Your Resource Library" ? "1 System" :
-             module.name === "Financial Management" ? "1 Template" :
              module.templateCount === 1 ? "1 template" :
              module.templateCount > 1 ? `${module.templateCount} Templates` : "New"}
           </Badge>
@@ -119,14 +118,6 @@ export default function ToolkitCard({ module }: ToolkitCardProps) {
               <li>• Pre-Launch Timeline Planner</li>
               <li>• Product Profit Calculator</li>
               <li>• Launch Growth Plan</li>
-            </ul>
-          </div>
-        )}
-        {module.name === "Financial Management" && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <h4 className="text-sm font-medium text-gray-800 mb-2">What's Inside:</h4>
-            <ul className="text-xs text-gray-600 space-y-1">
-              <li>• Your Money Map</li>
             </ul>
           </div>
         )}

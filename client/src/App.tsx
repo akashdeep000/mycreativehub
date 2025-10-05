@@ -20,8 +20,6 @@ import MonthlyContentPlanner from "@/pages/monthly-content-planner";
 import ContentBatchingPlanner from "@/pages/content-batching-planner";
 import MonthlyContentCalendar from "@/pages/monthly-content-calendar";
 import TimeBlocking from "@/pages/time-blocking";
-import FinanceTracker from "@/pages/finance-tracker";
-import YourMoneyMap from "@/pages/your-money-map";
 import AffiliateMarketing from "@/pages/affiliate-marketing";
 import InspirationHub from "@/pages/inspiration-hub";
 import StreamlineWorkflow from "@/pages/streamline-workflow";
@@ -119,8 +117,6 @@ function Router() {
 
         <Route path="/time-blocking-planner" component={TimeBlocking} />
         <Route path="/time-blocking" component={TimeBlocking} />
-        <Route path="/finance" component={FinanceTracker} />
-        <Route path="/your-money-map" component={YourMoneyMap} />
         <Route path="/affiliate-marketing" component={AffiliateMarketing} />
         <Route path="/daily-focus" component={DailyFocusPage} />
         <Route path="/automation-toolkit" component={AutomationToolkit} />
