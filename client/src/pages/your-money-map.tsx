@@ -5,57 +5,52 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
-import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   TrendingUp, 
   Download, 
   DollarSign, 
   PieChart, 
-  Calculator, 
   Target, 
   PiggyBank,
   Plus,
   Trash2,
-  CheckCircle,
-  AlertCircle,
-  TrendingDown,
-  BarChart3,
-  Calendar,
-  ChevronDown,
-  ChevronUp,
-  FileText,
-  Save,
-  Eye,
-  EyeOff,
-  Archive,
   ChevronLeft,
   ChevronRight,
-  Pencil,
-  ArrowLeft,
-  Loader2
+  Loader2,
+  Lock,
+  LockOpen,
+  Save,
+  Check
 } from "lucide-react";
-import { useDebounce } from "@/hooks/use-debounce";
 
-interface BudgetItem {
-  id: string;
-  category: string;
-  amount: number;
+interface Transaction {
+  id?: number;
+  date: string;
   type: 'income' | 'expense';
+  category: string;
+  amount: string;
+  notes?: string;
+  year: number;
+  month: number;
+  isNew?: boolean;
 }
 
-interface IncomeExpenseItem {
-  id: string;
-  category: string;
-  actualAmount: number;
-  type: 'income' | 'expense';
+interface MonthData {
+  year: number;
+  month: number;
+  currency: string;
+  taxPercentage: string;
+  customAllocations: CustomAllocation[];
+  isClosed: boolean;
+  closedAt?: string;
+  closedSnapshot?: any;
+  notes?: string;
 }
 
 interface CustomAllocation {
@@ -64,1261 +59,825 @@ interface CustomAllocation {
   percentage: number;
 }
 
-interface MonthlySnapshot {
-  id: string;
-  monthYear: string;
-  savedDate: string;
-  currency: string;
-  budgetItems: BudgetItem[];
-  incomeExpenseItems: IncomeExpenseItem[];
-  taxPercentage: number;
-  customAllocations: CustomAllocation[];
-  summary: {
-    totalIncome: number;
-    totalExpenses: number;
-    profit: number;
-    taxSetAside: number;
-    customAllocationsTotal: number;
-    availableAfterAllocations: number;
-    profitMargin: number;
-  };
-  notes: {
-    budget: string;
-    tracker: string;
-  };
-}
+const CURRENCIES = [
+  { value: 'GBP', symbol: '£', label: 'British Pound (£)' },
+  { value: 'USD', symbol: '$', label: 'US Dollar ($)' },
+  { value: 'EUR', symbol: '€', label: 'Euro (€)' },
+  { value: 'CAD', symbol: 'CA$', label: 'Canadian Dollar (CA$)' },
+  { value: 'AUD', symbol: 'A$', label: 'Australian Dollar (A$)' },
+];
 
-interface MoneyMapData {
-  currency: string;
-  period: string;
-  goalsData: any;
-  incomeExpensesData: any;
-  savingsData: any;
-  monthlySnapshots: MonthlySnapshot[];
-}
+const INCOME_CATEGORIES = [
+  'Client Income',
+  'Product Sales',
+  'Service Revenue',
+  'Affiliate Income',
+  'Course Sales',
+  'Consultation Fees',
+  'Other Income'
+];
+
+const EXPENSE_CATEGORIES = [
+  'Software/Tools',
+  'Marketing/Ads',
+  'Equipment',
+  'Contractors/Freelancers',
+  'Professional Services',
+  'Office Supplies',
+  'Education/Training',
+  'Travel',
+  'Other Expenses'
+];
 
 export default function YourMoneyMap() {
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const [, setLocation] = useLocation();
+  const { user, isAuthenticated } = useAuth();
   
-  const [selectedPeriod, setSelectedPeriod] = useState('monthly');
-  const [currency, setCurrency] = useState('GBP');
-  
-  // Period navigation state
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [drafts, setDrafts] = useState<{[key: string]: any}>({});
-
-  // Budget Planner State
-  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
-  const [budgetNotes, setBudgetNotes] = useState('');
-
-  // Income & Expense Tracker State
-  const [incomeExpenseItems, setIncomeExpenseItems] = useState<IncomeExpenseItem[]>([]);
-  const [taxPercentage, setTaxPercentage] = useState(25);
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
+  
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [currency, setCurrency] = useState('GBP');
+  const [taxPercentage, setTaxPercentage] = useState('25');
   const [customAllocations, setCustomAllocations] = useState<CustomAllocation[]>([]);
-  const [taxCategoryName, setTaxCategoryName] = useState('Tax Amount');
-  const [editingTax, setEditingTax] = useState(false);
-  const [trackerNotes, setTrackerNotes] = useState('');
-
-  // Monthly Snapshots State
-  const [monthlySnapshots, setMonthlySnapshots] = useState<MonthlySnapshot[]>([]);
-  const [showMonthlyRecords, setShowMonthlyRecords] = useState(false);
-  const [expandedSnapshots, setExpandedSnapshots] = useState<Set<string>>(new Set());
-
-  // Save status
+  const [monthNotes, setMonthNotes] = useState('');
+  const [isClosed, setIsClosed] = useState(false);
+  
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  const hasLoadedInitialData = useRef(false);
+  const pendingChanges = useRef<Set<number | 'new'>>(new Set());
+  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const isInitialLoad = useRef(true);
 
-  // Fetch money map data from database
-  const { data: moneyMapData, isLoading: dataLoading, error: dataError } = useQuery<MoneyMapData>({
-    queryKey: ['/api/persistent/money-map'],
+  const currencySymbol = CURRENCIES.find(c => c.value === currency)?.symbol || '£';
+
+  const { data: monthData, isLoading: monthLoading } = useQuery<MonthData>({
+    queryKey: ['/api/finance/month', currentYear, currentMonth],
     enabled: !!user,
     retry: 1,
-    staleTime: 0,
-    refetchOnMount: true,
   });
 
-  // Save mutation
-  const saveMutation = useMutation({
-    mutationFn: async (data: Partial<MoneyMapData>) => {
-      console.log('Saving money map to database:', data);
-      
-      try {
-        const response = await apiRequest('/api/persistent/money-map', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Save failed with status:', response.status, errorText);
-          throw new Error(`Save failed: ${response.status} - ${errorText}`);
-        }
-        
-        const savedData = await response.json();
-        console.log('Save response received:', savedData);
-        return savedData;
-      } catch (error) {
-        console.error('Network error during save:', error);
-        throw error;
-      }
+  const { data: transactionsData, isLoading: transactionsLoading } = useQuery<Transaction[]>({
+    queryKey: ['/api/finance/transactions', currentYear, currentMonth],
+    enabled: !!user,
+    retry: 1,
+  });
+
+  useEffect(() => {
+    if (monthData) {
+      setCurrency(monthData.currency || 'GBP');
+      setTaxPercentage(monthData.taxPercentage || '25');
+      setCustomAllocations(monthData.customAllocations || []);
+      setMonthNotes(monthData.notes || '');
+      setIsClosed(monthData.isClosed || false);
+    }
+  }, [monthData]);
+
+  useEffect(() => {
+    if (transactionsData) {
+      setTransactions(transactionsData.map(t => ({
+        ...t,
+        date: t.date.split('T')[0],
+        amount: t.amount.toString()
+      })));
+      isInitialLoad.current = false;
+    }
+  }, [transactionsData]);
+
+  const saveMonthMutation = useMutation({
+    mutationFn: async (data: Partial<MonthData>) => {
+      const response = await apiRequest('/api/finance/month', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          year: currentYear,
+          month: currentMonth,
+          currency,
+          taxPercentage,
+          customAllocations,
+          isClosed,
+          notes: monthNotes,
+          ...data
+        }),
+      });
+      return response.json();
     },
-    onSuccess: (savedData) => {
-      console.log('Money map saved successfully ✓', savedData);
-      
-      // Verify the saved data actually contains what we expect
-      if (!savedData || !savedData.id) {
-        console.error('Save succeeded but returned invalid data:', savedData);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/finance/month', currentYear, currentMonth] });
+    }
+  });
+
+  const createTransactionMutation = useMutation({
+    mutationFn: async (transaction: Transaction) => {
+      const response = await apiRequest('/api/finance/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: transaction.date,
+          type: transaction.type,
+          category: transaction.category,
+          amount: transaction.amount,
+          notes: transaction.notes || '',
+          year: currentYear,
+          month: currentMonth
+        }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/finance/transactions', currentYear, currentMonth] });
+    }
+  });
+
+  const updateTransactionMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: number; updates: Partial<Transaction> }) => {
+      const response = await apiRequest(`/api/finance/transactions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/finance/transactions', currentYear, currentMonth] });
+    }
+  });
+
+  const deleteTransactionMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest(`/api/finance/transactions/${id}`, {
+        method: 'DELETE',
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/finance/transactions', currentYear, currentMonth] });
+    }
+  });
+
+  const autoSave = () => {
+    if (isInitialLoad.current || isClosed) return;
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    setSaveStatus('saving');
+    
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const changesToSave = Array.from(pendingChanges.current);
+        
+        for (const change of changesToSave) {
+          const transaction = transactions.find(t => 
+            change === 'new' ? t.isNew : t.id === change
+          );
+          
+          if (!transaction) continue;
+
+          if (transaction.isNew) {
+            await createTransactionMutation.mutateAsync(transaction);
+          } else if (transaction.id) {
+            await updateTransactionMutation.mutateAsync({
+              id: transaction.id,
+              updates: {
+                date: transaction.date,
+                type: transaction.type,
+                category: transaction.category,
+                amount: transaction.amount,
+                notes: transaction.notes
+              }
+            });
+          }
+        }
+
+        pendingChanges.current.clear();
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+        setSaveStatus('idle');
         toast({
-          title: "Warning",
-          description: "Data was saved but the response looks unexpected. Please refresh and verify.",
+          title: "Auto-save failed",
+          description: "Your changes couldn't be saved. Please try again.",
           variant: "destructive",
         });
-        setSaveStatus('idle');
-        return;
       }
-      
-      queryClient.setQueryData(['/api/persistent/money-map'], savedData);
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-      
-      // Log snapshot count for debugging
-      if (savedData.monthlySnapshots && Array.isArray(savedData.monthlySnapshots)) {
-        console.log(`✓ ${savedData.monthlySnapshots.length} monthly snapshot(s) persisted`);
-      }
-    },
-    onError: (error: any) => {
-      console.error('Error saving money map:', error);
-      setSaveStatus('idle');
+    }, 1000);
+  };
+
+  const addTransaction = (type: 'income' | 'expense') => {
+    if (isClosed) {
       toast({
-        title: "Save Failed",
-        description: "Could not save your financial data. Please try again.",
+        title: "Month is closed",
+        description: "Reopen the month to add transactions.",
         variant: "destructive",
       });
-    },
-  });
-
-  // Load initial data from database
-  useEffect(() => {
-    if (dataLoading) return;
-    if (hasLoadedInitialData.current) return;
-    
-    // Allow initial load even if moneyMapData is null (first time user)
-    hasLoadedInitialData.current = true;
-    
-    if (!moneyMapData) {
-      console.log('No existing money map data - starting fresh');
       return;
     }
-    
-    console.log('Loading money map from database:', moneyMapData);
-    
-    // Load global settings
-    if (moneyMapData.currency) {
-      setCurrency(moneyMapData.currency);
-    }
-    if (moneyMapData.period) {
-      setSelectedPeriod(moneyMapData.period);
-    }
-    
-    // Load monthly snapshots
-    if (moneyMapData.monthlySnapshots && Array.isArray(moneyMapData.monthlySnapshots)) {
-      setMonthlySnapshots(moneyMapData.monthlySnapshots);
-    }
-    
-    // Load current period data from incomeExpensesData
-    if (moneyMapData.incomeExpensesData) {
-      const periodKey = getCurrentPeriodKey();
-      const periodData = moneyMapData.incomeExpensesData[periodKey];
+
+    const newTransaction: Transaction = {
+      date: new Date().toISOString().split('T')[0],
+      type,
+      category: type === 'income' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0],
+      amount: '0',
+      notes: '',
+      year: currentYear,
+      month: currentMonth,
+      isNew: true
+    };
+
+    setTransactions(prev => [newTransaction, ...prev]);
+    pendingChanges.current.add('new');
+    autoSave();
+  };
+
+  const updateTransaction = (index: number, field: keyof Transaction, value: string) => {
+    if (isClosed) return;
+
+    setTransactions(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
       
-      if (periodData) {
-        setBudgetItems(periodData.budgetItems || []);
-        setBudgetNotes(periodData.budgetNotes || '');
-        setIncomeExpenseItems(periodData.incomeExpenseItems || []);
-        setTaxPercentage(periodData.taxPercentage || 25);
-        setCustomAllocations(periodData.customAllocations || []);
-        setTrackerNotes(periodData.trackerNotes || '');
+      if (updated[index].id) {
+        pendingChanges.current.add(updated[index].id!);
+      } else {
+        pendingChanges.current.add('new');
       }
-    }
-  }, [moneyMapData, dataLoading]);
+      
+      return updated;
+    });
 
-  // Helper functions for period navigation
-  const getCurrentPeriodKey = () => {
-    if (selectedPeriod === 'monthly') {
-      return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-    } else {
-      const quarter = Math.floor(currentDate.getMonth() / 3) + 1;
-      return `${currentDate.getFullYear()}-Q${quarter}`;
-    }
+    autoSave();
   };
 
-  const getCurrentPeriodLabel = () => {
-    if (selectedPeriod === 'monthly') {
-      return currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    } else {
-      const quarter = Math.floor(currentDate.getMonth() / 3) + 1;
-      const quarterMonths = [
-        'Jan–Mar', 'Apr–Jun', 'Jul–Sep', 'Oct–Dec'
-      ];
-      return `Q${quarter}: ${quarterMonths[quarter - 1]} ${currentDate.getFullYear()}`;
-    }
-  };
+  const deleteTransaction = async (index: number) => {
+    if (isClosed) return;
 
-  const navigatePeriod = (direction: 'prev' | 'next') => {
-    // Save current period data before navigating
-    savePeriodData();
+    const transaction = transactions[index];
     
-    const newDate = new Date(currentDate);
-    if (selectedPeriod === 'monthly') {
+    if (transaction.id) {
+      await deleteTransactionMutation.mutateAsync(transaction.id);
+    }
+    
+    setTransactions(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateMonthSettings = (field: string, value: any) => {
+    if (isClosed) {
+      toast({
+        title: "Month is closed",
+        description: "Reopen the month to make changes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (field === 'currency') setCurrency(value);
+    else if (field === 'taxPercentage') setTaxPercentage(value);
+    else if (field === 'customAllocations') setCustomAllocations(value);
+    else if (field === 'notes') setMonthNotes(value);
+
+    saveMonthMutation.mutate({});
+  };
+
+  const toggleMonthClosed = async () => {
+    const newClosedState = !isClosed;
+    
+    if (newClosedState) {
+      const snapshot = {
+        transactions,
+        summary: calculateSummary(),
+        closedDate: new Date().toISOString()
+      };
+      
+      await saveMonthMutation.mutateAsync({
+        isClosed: true,
+        closedAt: new Date().toISOString(),
+        closedSnapshot: snapshot
+      });
+      
+      setIsClosed(true);
+      toast({
+        title: "Month closed",
+        description: "This month is now read-only.",
+      });
+    } else {
+      await saveMonthMutation.mutateAsync({
+        isClosed: false,
+        closedAt: undefined,
+        closedSnapshot: undefined
+      });
+      
+      setIsClosed(false);
+      toast({
+        title: "Month reopened",
+        description: "You can now edit this month.",
+      });
+    }
+  };
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
       if (direction === 'prev') {
         newDate.setMonth(newDate.getMonth() - 1);
       } else {
         newDate.setMonth(newDate.getMonth() + 1);
       }
-    } else {
-      if (direction === 'prev') {
-        newDate.setMonth(newDate.getMonth() - 3);
-      } else {
-        newDate.setMonth(newDate.getMonth() + 3);
-      }
-    }
-    setCurrentDate(newDate);
-  };
-
-  const savePeriodData = () => {
-    if (!hasLoadedInitialData.current) return;
-    
-    const periodKey = getCurrentPeriodKey();
-    const currentPeriodData = {
-      budgetItems,
-      budgetNotes,
-      incomeExpenseItems,
-      taxPercentage,
-      customAllocations,
-      trackerNotes,
-    };
-    
-    // Merge with existing income/expenses data
-    const updatedIncomeExpensesData = {
-      ...(moneyMapData?.incomeExpensesData || {}),
-      [periodKey]: currentPeriodData
-    };
-    
-    saveToDatabase({
-      currency,
-      period: selectedPeriod,
-      incomeExpensesData: updatedIncomeExpensesData,
-      monthlySnapshots,
+      return newDate;
     });
+    isInitialLoad.current = true;
   };
 
-  const saveToDatabase = (data: Partial<MoneyMapData>) => {
-    setSaveStatus('saving');
-    saveMutation.mutate(data);
-  };
-
-  // Load data for current period when period changes
-  useEffect(() => {
-    if (!hasLoadedInitialData.current || !moneyMapData) return;
+  const calculateSummary = () => {
+    const totalIncome = transactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + parseFloat(t.amount || '0'), 0);
     
-    const periodKey = getCurrentPeriodKey();
-    const periodData = moneyMapData.incomeExpensesData?.[periodKey];
+    const totalExpenses = transactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + parseFloat(t.amount || '0'), 0);
     
-    if (periodData) {
-      setBudgetItems(periodData.budgetItems || []);
-      setBudgetNotes(periodData.budgetNotes || '');
-      setIncomeExpenseItems(periodData.incomeExpenseItems || []);
-      setTaxPercentage(periodData.taxPercentage || 25);
-      setCustomAllocations(periodData.customAllocations || []);
-      setTrackerNotes(periodData.trackerNotes || '');
-    } else {
-      // Reset to empty state if no data exists for this period
-      setBudgetItems([]);
-      setBudgetNotes('');
-      setIncomeExpenseItems([]);
-      setTaxPercentage(25);
-      setCustomAllocations([]);
-      setTrackerNotes('');
-    }
-  }, [currentDate, selectedPeriod]);
-
-  // Auto-save with debounce
-  const { debounced: debouncedSave, flush: flushSave } = useDebounce(() => {
-    savePeriodData();
-  }, 1000);
-
-  // Trigger save when data changes
-  const lastSavedRef = useRef<string>('');
-  const combinedString = JSON.stringify({
-    budgetItems,
-    budgetNotes,
-    incomeExpenseItems,
-    taxPercentage,
-    customAllocations,
-    trackerNotes,
-    currency,
-    selectedPeriod,
-  });
-
-  useEffect(() => {
-    if (!hasLoadedInitialData.current) return;
-    if (combinedString === lastSavedRef.current) return;
+    const profit = totalIncome - totalExpenses;
+    const taxAmount = profit * (parseFloat(taxPercentage) / 100);
     
-    lastSavedRef.current = combinedString;
-    debouncedSave();
-  }, [combinedString, debouncedSave]);
-
-  // Save monthly snapshots when they change
-  useEffect(() => {
-    if (!hasLoadedInitialData.current) return;
-    
-    // Build current period data to prevent data loss when saving snapshots
-    const periodKey = getCurrentPeriodKey();
-    const currentPeriodData = {
-      budgetItems,
-      budgetNotes,
-      incomeExpenseItems,
-      taxPercentage,
-      customAllocations,
-      trackerNotes,
-    };
-    
-    // Merge current period data with existing data
-    const updatedIncomeExpensesData = {
-      ...(moneyMapData?.incomeExpensesData || {}),
-      [periodKey]: currentPeriodData
-    };
-    
-    saveToDatabase({
-      currency,
-      period: selectedPeriod,
-      incomeExpensesData: updatedIncomeExpensesData,
-      monthlySnapshots,
-    });
-  }, [monthlySnapshots]);
-
-  // Flush on unmount
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        flushSave();
-      }
-    };
-
-    const handleBeforeUnload = () => {
-      flushSave();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      flushSave();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [flushSave]);
-
-  // Authentication check
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, authLoading, toast]);
-
-  if (authLoading || !isAuthenticated) {
-    return null;
-  }
-
-  if (dataLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Sidebar />
-        <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 flex items-center justify-center h-screen">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-500" />
-            <p className="text-gray-600">Loading your financial data...</p>
-          </div>
-        </div>
-      </div>
+    const customAllocTotal = customAllocations.reduce((sum, alloc) => 
+      sum + (profit * (alloc.percentage / 100)), 0
     );
-  }
-
-  if (dataError) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Sidebar />
-        <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 flex items-center justify-center h-screen">
-          <Card className="max-w-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-600">
-                <AlertCircle className="w-5 h-5" />
-                Error Loading Data
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                We couldn't load your financial data. Please try refreshing the page.
-              </p>
-              <Button onClick={() => window.location.reload()}>
-                Refresh Page
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  const getCurrencySymbol = (currencyCode: string) => {
-    const symbols: { [key: string]: string } = {
-      USD: '$', EUR: '€', GBP: '£', JPY: '¥', CAD: 'C$', AUD: 'A$', CHF: 'Fr',
-      CNY: '¥', INR: '₹', BRL: 'R$', ZAR: 'R', NZD: 'NZ$', SEK: 'kr', NOK: 'kr',
-      DKK: 'kr', PLN: 'zł', CZK: 'Kč', HUF: 'Ft', RON: 'lei', BGN: 'лв',
-      HRK: 'kn', RUB: '₽', TRY: '₺', MXN: '$', ARS: '$', CLP: '$', COP: '$',
-      PEN: 'S/', UYU: '$', KRW: '₩', THB: '฿', VND: '₫', IDR: 'Rp', MYR: 'RM',
-      SGD: 'S$', PHP: '₱', ILS: '₪', EGP: '£', ZMW: 'ZK', GHS: '₵', NGN: '₦'
-    };
-    return symbols[currencyCode] || currencyCode;
-  };
-
-  const formatCurrency = (amount: number | undefined) => {
-    const validAmount = amount || 0;
-    return `${getCurrencySymbol(currency)}${validAmount.toLocaleString()}`;
-  };
-
-  // Budget Planner Functions
-  const addBudgetItem = (type: 'income' | 'expense') => {
-    const newItem: BudgetItem = {
-      id: Date.now().toString(),
-      category: '',
-      amount: 0,
-      type
-    };
-    setBudgetItems([...budgetItems, newItem]);
-  };
-
-  const updateBudgetItem = (id: string, field: string, value: any) => {
-    setBudgetItems(budgetItems.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ));
-  };
-
-  const deleteBudgetItem = (id: string) => {
-    setBudgetItems(budgetItems.filter(item => item.id !== id));
-  };
-
-  const getBudgetTotals = () => {
-    const income = budgetItems.filter(item => item.type === 'income').reduce((sum, item) => sum + item.amount, 0);
-    const expenses = budgetItems.filter(item => item.type === 'expense').reduce((sum, item) => sum + item.amount, 0);
-    return { income, expenses, profit: income - expenses };
-  };
-
-  // Income & Expense Tracker Functions
-  const addIncomeExpenseItem = (type: 'income' | 'expense') => {
-    const newItem: IncomeExpenseItem = {
-      id: Date.now().toString(),
-      category: '',
-      actualAmount: 0,
-      type
-    };
-    setIncomeExpenseItems([...incomeExpenseItems, newItem]);
-  };
-
-  const updateIncomeExpenseItem = (id: string, field: string, value: any) => {
-    setIncomeExpenseItems(incomeExpenseItems.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ));
-  };
-
-  const deleteIncomeExpenseItem = (id: string) => {
-    setIncomeExpenseItems(incomeExpenseItems.filter(item => item.id !== id));
-  };
-
-  const getTrackerTotals = () => {
-    const incomeItems = incomeExpenseItems.filter(item => item.type === 'income');
-    const expenseItems = incomeExpenseItems.filter(item => item.type === 'expense');
     
-    const actualIncome = incomeItems.reduce((sum, item) => sum + item.actualAmount, 0);
-    const actualExpenses = expenseItems.reduce((sum, item) => sum + item.actualAmount, 0);
-    
-    const actualProfit = actualIncome - actualExpenses;
-    const taxAmount = actualProfit * (taxPercentage / 100);
-    const afterTaxProfit = actualProfit - taxAmount;
-    
-    // Calculate custom allocations
-    const customAllocationsTotal = customAllocations.reduce((sum, allocation) => {
-      return sum + (afterTaxProfit * (allocation.percentage / 100));
-    }, 0);
-    
-    const availableAfterAllocations = afterTaxProfit - customAllocationsTotal;
-    const profitMargin = actualIncome > 0 ? (actualProfit / actualIncome) * 100 : 0;
-    
+    const availableAfterTax = profit - taxAmount;
+    const availableAfterAllocations = availableAfterTax - customAllocTotal;
+    const profitMargin = totalIncome > 0 ? (profit / totalIncome) * 100 : 0;
+
     return {
-      actualIncome,
-      actualExpenses,
-      actualProfit,
+      totalIncome,
+      totalExpenses,
+      profit,
       taxAmount,
-      customAllocationsTotal,
-      customAllocations: customAllocations.map(allocation => ({
-        ...allocation,
-        amount: afterTaxProfit * (allocation.percentage / 100)
-      })),
-      afterTaxProfit,
+      customAllocTotal,
+      availableAfterTax,
       availableAfterAllocations,
       profitMargin
     };
   };
 
-  // Custom Allocations Functions
+  const exportToCSV = () => {
+    const headers = ['Date', 'Type', 'Category', 'Amount', 'Notes'];
+    const rows = transactions.map(t => [
+      t.date,
+      t.type,
+      t.category,
+      t.amount,
+      t.notes || ''
+    ]);
+
+    const csv = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `money-map-${currentYear}-${String(currentMonth).padStart(2, '0')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const addCustomAllocation = () => {
+    if (isClosed) return;
+
     const newAllocation: CustomAllocation = {
       id: Date.now().toString(),
-      name: '',
-      percentage: 0
+      name: 'New Allocation',
+      percentage: 10
     };
-    setCustomAllocations([...customAllocations, newAllocation]);
+
+    const updated = [...customAllocations, newAllocation];
+    setCustomAllocations(updated);
+    updateMonthSettings('customAllocations', updated);
   };
 
-  const updateCustomAllocation = (id: string, field: string, value: any) => {
-    setCustomAllocations(customAllocations.map(allocation => 
-      allocation.id === id ? { ...allocation, [field]: value } : allocation
-    ));
+  const updateAllocation = (id: string, field: 'name' | 'percentage', value: string | number) => {
+    if (isClosed) return;
+
+    const updated = customAllocations.map(alloc =>
+      alloc.id === id ? { ...alloc, [field]: value } : alloc
+    );
+    setCustomAllocations(updated);
+    updateMonthSettings('customAllocations', updated);
   };
 
-  const deleteCustomAllocation = (id: string) => {
-    setCustomAllocations(customAllocations.filter(allocation => allocation.id !== id));
+  const deleteAllocation = (id: string) => {
+    if (isClosed) return;
+
+    const updated = customAllocations.filter(alloc => alloc.id !== id);
+    setCustomAllocations(updated);
+    updateMonthSettings('customAllocations', updated);
   };
 
-  // Export to CSV
-  const exportToCSV = () => {
-    const budgetTotals = getBudgetTotals();
-    const trackerTotals = getTrackerTotals();
-    
-    let csvContent = "Your Money Map - Financial Dashboard Export\n\n";
-    
-    // Budget Planner
-    csvContent += "BUDGET PLANNER\n";
-    csvContent += `Period: ${selectedPeriod}\n`;
-    csvContent += `Currency: ${currency}\n\n`;
-    csvContent += "Category,Type,Amount\n";
-    budgetItems.forEach(item => {
-      csvContent += `${item.category},${item.type},${item.amount}\n`;
-    });
-    csvContent += `\nBudget Summary:\n`;
-    csvContent += `Total Income,${budgetTotals.income}\n`;
-    csvContent += `Total Expenses,${budgetTotals.expenses}\n`;
-    csvContent += `Net Profit,${budgetTotals.profit}\n\n`;
-    
-    // Income & Expense Tracker
-    csvContent += "INCOME & EXPENSE TRACKER\n";
-    csvContent += "Category,Type,Actual Amount\n";
-    incomeExpenseItems.forEach(item => {
-      csvContent += `${item.category},${item.type},${item.actualAmount}\n`;
-    });
-    csvContent += `\nTracker Summary:\n`;
-    csvContent += `Actual Income,${trackerTotals.actualIncome}\n`;
-    csvContent += `Actual Expenses,${trackerTotals.actualExpenses}\n`;
-    csvContent += `Actual Profit,${trackerTotals.actualProfit}\n`;
-    csvContent += `Tax Amount (${taxPercentage}%),${trackerTotals.taxAmount}\n`;
-    trackerTotals.customAllocations.forEach(allocation => {
-      csvContent += `${allocation.name} (${allocation.percentage}%),${allocation.amount}\n`;
-    });
-    csvContent += `Profit Margin,${trackerTotals.profitMargin.toFixed(2)}%\n\n`;
-    
-    // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `your-money-map-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast({
-      title: "Export Successful",
-      description: "Your Money Map data has been exported to CSV",
-    });
-  };
+  const summary = calculateSummary();
+  const monthName = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-  // Monthly Snapshot Functions
-  const saveMonthlySnapshot = () => {
-    const now = new Date();
-    const periodLabel = selectedPeriod === 'monthly' 
-      ? currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-      : getCurrentPeriodLabel().replace('📘 ', '');
-    
-    const trackerTotals = getTrackerTotals();
-    
-    const snapshot: MonthlySnapshot = {
-      id: Date.now().toString(),
-      monthYear: periodLabel,
-      savedDate: now.toISOString(),
-      currency,
-      budgetItems: [...budgetItems],
-      incomeExpenseItems: [...incomeExpenseItems],
-      taxPercentage,
-      customAllocations: [...customAllocations],
-      summary: {
-        totalIncome: trackerTotals.actualIncome,
-        totalExpenses: trackerTotals.actualExpenses,
-        profit: trackerTotals.actualProfit,
-        taxSetAside: trackerTotals.taxAmount,
-        customAllocationsTotal: trackerTotals.customAllocationsTotal,
-        availableAfterAllocations: trackerTotals.availableAfterAllocations,
-        profitMargin: trackerTotals.profitMargin,
-      },
-      notes: {
-        budget: budgetNotes,
-        tracker: trackerNotes,
-      },
-    };
-    
-    const updatedSnapshots = [...monthlySnapshots, snapshot];
-    setMonthlySnapshots(updatedSnapshots);
-    
-    // Note: The actual save to database happens in the useEffect watching monthlySnapshots
-    // Toast shows immediately, but save status indicator will show the actual DB save progress
-    toast({
-      title: "Snapshot Created",
-      description: `${periodLabel} snapshot created. Saving to database...`,
-    });
-  };
-
-  const deleteMonthlySnapshot = (id: string) => {
-    const updatedSnapshots = monthlySnapshots.filter(snapshot => snapshot.id !== id);
-    setMonthlySnapshots(updatedSnapshots);
-    
-    toast({
-      title: "Snapshot Deleted",
-      description: "Monthly snapshot has been removed",
-    });
-  };
-
-  const toggleSnapshotExpansion = (id: string) => {
-    const newExpanded = new Set(expandedSnapshots);
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id);
-    } else {
-      newExpanded.add(id);
-    }
-    setExpandedSnapshots(newExpanded);
-  };
-
-  const exportSnapshotToCSV = (snapshot: MonthlySnapshot) => {
-    let csvContent = `MONTHLY SNAPSHOT - ${snapshot.monthYear}\n`;
-    csvContent += `Saved Date: ${new Date(snapshot.savedDate).toLocaleDateString()}\n`;
-    csvContent += `Currency: ${snapshot.currency}\n\n`;
-    
-    // Summary
-    csvContent += "FINANCIAL SUMMARY\n";
-    csvContent += "Metric,Amount\n";
-    csvContent += `Total Income,${snapshot.summary.totalIncome}\n`;
-    csvContent += `Total Expenses,${snapshot.summary.totalExpenses}\n`;
-    csvContent += `Profit,${snapshot.summary.profit}\n`;
-    csvContent += `Tax Set Aside,${snapshot.summary.taxSetAside}\n`;
-    csvContent += `Custom Allocations Total,${snapshot.summary.customAllocationsTotal}\n`;
-    csvContent += `Profit Margin,${snapshot.summary.profitMargin.toFixed(2)}%\n\n`;
-    
-    // Income & Expenses
-    csvContent += "INCOME & EXPENSES\n";
-    csvContent += "Category,Type,Amount\n";
-    snapshot.incomeExpenseItems.forEach(item => {
-      csvContent += `${item.category},${item.type},${item.actualAmount}\n`;
-    });
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `monthly-snapshot-${snapshot.monthYear.replace(' ', '-')}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast({
-      title: "Export Successful",
-      description: `${snapshot.monthYear} snapshot exported to CSV`,
-    });
-  };
-
-  const trackerTotals = getTrackerTotals();
+  if (!isAuthenticated || monthLoading || transactionsLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-500 dark:text-gray-400" data-testid="loader-loading" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar />
-      <MobileNav />
-      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 max-w-full overflow-x-hidden">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="mb-6">
-            {/* Mobile Navigation - Single Back Arrow */}
-            <div className="flex items-center gap-3 mb-4 lg:hidden mt-16">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setLocation('/finance')}
-                className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 h-4" />
-              </Button>
+    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-[#0a0a0a]">
+      <Sidebar currentPath="/your-money-map" />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <MobileNav currentPath="/your-money-map" />
+        
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white" data-testid="text-title">
+                  Your Money Map
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                  Auto-saving transaction ledger for {monthName}
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {saveStatus === 'saving' && (
+                  <span className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400" data-testid="text-saving">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </span>
+                )}
+                {saveStatus === 'saved' && (
+                  <span className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400" data-testid="text-saved">
+                    <Check className="h-4 w-4" />
+                    Saved
+                  </span>
+                )}
+              </div>
             </div>
-            
-            {/* Desktop Navigation - Full Buttons */}
-            <div className="hidden lg:flex gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation('/')}
-                className="text-gray-600 hover:text-gray-800"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Main Dashboard
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setLocation('/finance')}
-                className="flex items-center gap-2"
-              >
-                <BarChart3 className="w-4 h-4" />
-                Back to Financial Management
-              </Button>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-xl flex items-center justify-center">
-              <BarChart3 className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h1 className="text-3xl font-serif font-semibold text-gray-800">Your Money Map</h1>
-              <p className="text-gray-600">Complete financial dashboard for creative businesses</p>
-            </div>
-            {/* Save indicator */}
-            <div className="text-sm">
-              {saveStatus === 'saving' && (
-                <span className="text-gray-500 flex items-center gap-2">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  Saving...
-                </span>
-              )}
-              {saveStatus === 'saved' && (
-                <span className="text-green-600 flex items-center gap-2">
-                  <CheckCircle className="w-3 h-3" />
-                  Saved
-                </span>
-              )}
-            </div>
-          </div>
-          
-          {/* Period Navigation */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
+
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigatePeriod('prev')}
-                  className="h-8 px-2"
+                  onClick={() => navigateMonth('prev')}
+                  data-testid="button-prev-month"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <div className="text-lg font-semibold text-gray-800 min-w-[200px] text-center">
-                  {getCurrentPeriodLabel()}
-                </div>
+                <span className="text-lg font-semibold text-gray-900 dark:text-white px-4" data-testid="text-month">
+                  {monthName}
+                </span>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigatePeriod('next')}
-                  className="h-8 px-2"
+                  onClick={() => navigateMonth('next')}
+                  data-testid="button-next-month"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleMonthClosed}
+                  data-testid="button-toggle-close"
+                >
+                  {isClosed ? <LockOpen className="h-4 w-4 mr-2" /> : <Lock className="h-4 w-4 mr-2" />}
+                  {isClosed ? 'Reopen Month' : 'Close Month'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={exportToCSV}
+                  data-testid="button-export-csv"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
                 </Button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="w-24">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
-                  <SelectItem value="CAD">CAD</SelectItem>
-                  <SelectItem value="AUD">AUD</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="flex justify-between items-center">
-            <div className="flex gap-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-700">Click Save to add this entry to your Monthly Records</Badge>
-            </div>
-          </div>
-        </div>
 
+            {isClosed && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4" data-testid="alert-closed">
+                <div className="flex items-center gap-2">
+                  <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  <p className="text-amber-900 dark:text-amber-200 font-medium">
+                    This month is closed and read-only. Click "Reopen Month" to make changes.
+                  </p>
+                </div>
+              </div>
+            )}
 
-        {/* Income & Expenses Card */}
-        <Card className="shadow-lg border-0 mb-8">
-          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <TrendingUp className="w-6 h-6 text-green-600" />
-              Income & Expenses
-            </CardTitle>
-            <CardDescription>Track your income and expenses then save to your desktop.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Income */}
-              <Card className="shadow-md border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-green-500" />
-                    Income
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card data-testid="card-income">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Total Income
                   </CardTitle>
+                  <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {incomeExpenseItems.filter(item => item.type === 'income').map((item) => (
-                    <div key={item.id} className="flex gap-2">
-                      <Input
-                        placeholder="Income source"
-                        value={item.category}
-                        onChange={(e) => updateIncomeExpenseItem(item.id, 'category', e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                        className="flex-1"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        value={item.actualAmount || ''}
-                        onChange={(e) => updateIncomeExpenseItem(item.id, 'actualAmount', parseFloat(e.target.value) || 0)}
-                        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                        className="w-32"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteIncomeExpenseItem(item.id)}
-                        className="text-red-500 hover:text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => addIncomeExpenseItem('income')}
-                    className="w-full border-dashed border-green-300 text-green-600 hover:bg-green-50"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Income Source
-                  </Button>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-total-income">
+                    {currencySymbol}{summary.totalIncome.toFixed(2)}
+                  </div>
                 </CardContent>
               </Card>
 
-              {/* Expenses */}
-              <Card className="shadow-md border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingDown className="w-5 h-5 text-red-500" />
-                    Expenses
+              <Card data-testid="card-expenses">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Total Expenses
                   </CardTitle>
+                  <DollarSign className="h-4 w-4 text-red-600 dark:text-red-400" />
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {incomeExpenseItems.filter(item => item.type === 'expense').map((item) => (
-                    <div key={item.id} className="flex gap-2">
-                      <Input
-                        placeholder="Expense category"
-                        value={item.category}
-                        onChange={(e) => updateIncomeExpenseItem(item.id, 'category', e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                        className="flex-1"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        value={item.actualAmount || ''}
-                        onChange={(e) => updateIncomeExpenseItem(item.id, 'actualAmount', parseFloat(e.target.value) || 0)}
-                        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                        className="w-32"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteIncomeExpenseItem(item.id)}
-                        className="text-red-500 hover:text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => addIncomeExpenseItem('expense')}
-                    className="w-full border-dashed border-red-300 text-red-600 hover:bg-red-50"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Expense
-                  </Button>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-total-expenses">
+                    {currencySymbol}{summary.totalExpenses.toFixed(2)}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card data-testid="card-profit">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Profit
+                  </CardTitle>
+                  <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className={`text-2xl font-bold ${summary.profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} data-testid="text-profit">
+                    {currencySymbol}{summary.profit.toFixed(2)}
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    {summary.profitMargin.toFixed(1)}% margin
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card data-testid="card-after-tax">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    After Tax ({taxPercentage}%)
+                  </CardTitle>
+                  <PiggyBank className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-after-tax">
+                    {currencySymbol}{summary.availableAfterTax.toFixed(2)}
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    Tax: {currencySymbol}{summary.taxAmount.toFixed(2)}
+                  </p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Summary */}
-            <Card className="shadow-md border-0 bg-gradient-to-r from-blue-50 to-indigo-50">
-              <CardContent className="p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className="text-sm text-gray-600 mb-1">Total Income</div>
-                    <div className="text-xl font-bold text-green-600">
-                      {formatCurrency(trackerTotals.actualIncome)}
-                    </div>
+            <Card data-testid="card-settings">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChart className="h-5 w-5" />
+                  Month Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="currency">Currency</Label>
+                    <Select 
+                      value={currency} 
+                      onValueChange={(val) => updateMonthSettings('currency', val)}
+                      disabled={isClosed}
+                    >
+                      <SelectTrigger id="currency" data-testid="select-currency">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CURRENCIES.map(c => (
+                          <SelectItem key={c.value} value={c.value}>
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="text-center">
-                    <div className="text-sm text-gray-600 mb-1">Total Expenses</div>
-                    <div className="text-xl font-bold text-red-600">
-                      {formatCurrency(trackerTotals.actualExpenses)}
-                    </div>
+
+                  <div>
+                    <Label htmlFor="tax">Tax Percentage</Label>
+                    <Input
+                      id="tax"
+                      type="number"
+                      value={taxPercentage}
+                      onChange={(e) => updateMonthSettings('taxPercentage', e.target.value)}
+                      disabled={isClosed}
+                      data-testid="input-tax-percentage"
+                    />
                   </div>
-                  <div className="text-center">
-                    <div className="text-sm text-gray-600 mb-1">Profit</div>
-                    <div className={`text-xl font-bold ${trackerTotals.actualProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                      {formatCurrency(trackerTotals.actualProfit)}
-                    </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>Custom Allocations</Label>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={addCustomAllocation}
+                      disabled={isClosed}
+                      data-testid="button-add-allocation"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add
+                    </Button>
                   </div>
-                  <div className="text-center">
-                    <div className="text-sm text-gray-600 mb-1">Profit Margin</div>
-                    <div className="text-xl font-bold text-purple-600">
-                      {trackerTotals.profitMargin.toFixed(1)}%
-                    </div>
+                  <div className="space-y-2">
+                    {customAllocations.map(alloc => (
+                      <div key={alloc.id} className="flex gap-2" data-testid={`allocation-${alloc.id}`}>
+                        <Input
+                          placeholder="Name"
+                          value={alloc.name}
+                          onChange={(e) => updateAllocation(alloc.id, 'name', e.target.value)}
+                          disabled={isClosed}
+                          className="flex-1"
+                          data-testid={`input-allocation-name-${alloc.id}`}
+                        />
+                        <Input
+                          type="number"
+                          placeholder="%"
+                          value={alloc.percentage}
+                          onChange={(e) => updateAllocation(alloc.id, 'percentage', parseFloat(e.target.value))}
+                          disabled={isClosed}
+                          className="w-20"
+                          data-testid={`input-allocation-percentage-${alloc.id}`}
+                        />
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={() => deleteAllocation(alloc.id)}
+                          disabled={isClosed}
+                          data-testid={`button-delete-allocation-${alloc.id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="notes">Month Notes</Label>
+                  <Textarea
+                    id="notes"
+                    value={monthNotes}
+                    onChange={(e) => updateMonthSettings('notes', e.target.value)}
+                    placeholder="Add notes about this month..."
+                    disabled={isClosed}
+                    data-testid="textarea-notes"
+                  />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Tax and Allocations */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Tax */}
-              <Card className="shadow-md border-0">
-                <CardHeader>
-                  <CardTitle className="text-lg">Tax Set Aside</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Tax Percentage</Label>
-                    <div className="flex items-center gap-4">
-                      <Input
-                        type="number"
-                        value={taxPercentage}
-                        onChange={(e) => setTaxPercentage(parseFloat(e.target.value) || 0)}
-                        className="w-20"
-                      />
-                      <span className="text-sm text-gray-600">%</span>
-                    </div>
+            <Card data-testid="card-transactions">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Transactions</CardTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => addTransaction('income')}
+                      disabled={isClosed}
+                      data-testid="button-add-income"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Income
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addTransaction('expense')}
+                      disabled={isClosed}
+                      data-testid="button-add-expense"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Expense
+                    </Button>
                   </div>
-                  <div className="p-4 bg-orange-50 rounded-lg">
-                    <div className="text-sm text-gray-600 mb-1">Tax Amount ({taxPercentage}%)</div>
-                    <div className="text-2xl font-bold text-orange-600">
-                      {formatCurrency(trackerTotals.taxAmount)}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Custom Allocations */}
-              <Card className="shadow-md border-0">
-                <CardHeader>
-                  <CardTitle className="text-lg">Custom Allocations</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {customAllocations.map((allocation) => (
-                    <div key={allocation.id} className="flex gap-2">
-                      <Input
-                        placeholder="Name (e.g., Savings)"
-                        value={allocation.name}
-                        onChange={(e) => updateCustomAllocation(allocation.id, 'name', e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        value={allocation.percentage || ''}
-                        onChange={(e) => updateCustomAllocation(allocation.id, 'percentage', parseFloat(e.target.value) || 0)}
-                        className="w-20"
-                      />
-                      <span className="flex items-center text-sm text-gray-600">%</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteCustomAllocation(allocation.id)}
-                        className="text-red-500"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={addCustomAllocation}
-                    className="w-full border-dashed"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Allocation
-                  </Button>
-                  {customAllocations.length > 0 && (
-                    <div className="p-4 bg-indigo-50 rounded-lg">
-                      <div className="text-sm text-gray-600 mb-1">Total Allocations</div>
-                      <div className="text-2xl font-bold text-indigo-600">
-                        {formatCurrency(trackerTotals.customAllocationsTotal)}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Save Button */}
-            <div className="flex justify-end gap-3">
-              <Button
-                onClick={exportToCSV}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Export CSV
-              </Button>
-              <Button
-                onClick={saveMonthlySnapshot}
-                className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save to Monthly Records
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Monthly Records */}
-        <Card className="shadow-lg border-0">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xl">
-                <Calendar className="w-6 h-6 text-purple-600" />
-                Monthly Records
-              </div>
-              <div className="flex items-center gap-2">
-                {monthlySnapshots.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={exportToCSV}
-                    className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Export CSV
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowMonthlyRecords(!showMonthlyRecords)}
-                >
-                  {showMonthlyRecords ? (
-                    <ChevronUp className="w-4 h-4" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          
-          {showMonthlyRecords && (
-            <CardContent className="space-y-4">
-              {monthlySnapshots.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <p>No monthly snapshots saved yet</p>
-                  <p className="text-sm">Save your first monthly snapshot to get started!</p>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {monthlySnapshots.map((snapshot) => (
-                    <div key={snapshot.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h3 className="font-semibold text-lg">{snapshot.monthYear}</h3>
-                          <p className="text-sm text-gray-600">
-                            Saved on {new Date(snapshot.savedDate).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleSnapshotExpansion(snapshot.id)}
-                          >
-                            {expandedSnapshots.has(snapshot.id) ? (
-                              <>
-                                <EyeOff className="w-4 h-4 mr-2" />
-                                Hide Details
-                              </>
-                            ) : (
-                              <>
-                                <Eye className="w-4 h-4 mr-2" />
-                                View Details
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => exportSnapshotToCSV(snapshot)}
-                          >
-                            <Download className="w-4 h-4 mr-2" />
-                            Export CSV
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => deleteMonthlySnapshot(snapshot.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Summary Cards */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                        <div className="text-center p-3 bg-green-50 rounded-lg">
-                          <div className="text-lg font-bold text-green-600">
-                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.totalIncome.toLocaleString()}
-                          </div>
-                          <div className="text-xs text-gray-600">Total Income</div>
-                        </div>
-                        <div className="text-center p-3 bg-red-50 rounded-lg">
-                          <div className="text-lg font-bold text-red-600">
-                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.totalExpenses.toLocaleString()}
-                          </div>
-                          <div className="text-xs text-gray-600">Total Expenses</div>
-                        </div>
-                        <div className="text-center p-3 bg-blue-50 rounded-lg">
-                          <div className={`text-lg font-bold ${snapshot.summary.profit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.profit.toLocaleString()}
-                          </div>
-                          <div className="text-xs text-gray-600">Profit</div>
-                        </div>
-                        <div className="text-center p-3 bg-purple-50 rounded-lg">
-                          <div className="text-lg font-bold text-purple-600">
-                            {snapshot.summary.profitMargin.toFixed(1)}%
-                          </div>
-                          <div className="text-xs text-gray-600">Profit Margin</div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="text-center p-3 bg-orange-50 rounded-lg">
-                          <div className="text-sm font-bold text-orange-600">
-                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.taxSetAside.toLocaleString()}
-                          </div>
-                          <div className="text-xs text-gray-600">Tax Set Aside</div>
-                        </div>
-                        <div className="text-center p-3 bg-indigo-50 rounded-lg">
-                          <div className="text-sm font-bold text-indigo-600">
-                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.customAllocationsTotal.toLocaleString()}
-                          </div>
-                          <div className="text-xs text-gray-600">Custom Allocations</div>
-                        </div>
-                        <div className="text-center p-3 bg-teal-50 rounded-lg">
-                          <div className="text-sm font-bold text-teal-600">
-                            {getCurrencySymbol(snapshot.currency)}{snapshot.summary.availableAfterAllocations.toLocaleString()}
-                          </div>
-                          <div className="text-xs text-gray-600">Available After Allocations</div>
-                        </div>
-                      </div>
-
-                      {/* Detailed Breakdown */}
-                      {expandedSnapshots.has(snapshot.id) && (
-                        <div className="mt-6 pt-4 border-t">
-                          <h4 className="font-semibold mb-4">Detailed Breakdown</h4>
-                          
-                          {/* Income & Expenses Detail */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                              <h5 className="font-medium mb-3 text-green-600">Income Sources</h5>
-                              <div className="space-y-2">
-                                {snapshot.incomeExpenseItems.filter(item => item.type === 'income').map((item, index) => (
-                                  <div key={index} className="flex justify-between text-sm">
-                                    <span>{item.category}</span>
-                                    <span className="font-medium">
-                                      {getCurrencySymbol(snapshot.currency)}{item.actualAmount.toLocaleString()}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                            
-                            <div>
-                              <h5 className="font-medium mb-3 text-red-600">Expense Categories</h5>
-                              <div className="space-y-2">
-                                {snapshot.incomeExpenseItems.filter(item => item.type === 'expense').map((item, index) => (
-                                  <div key={index} className="flex justify-between text-sm">
-                                    <span>{item.category}</span>
-                                    <span className="font-medium">
-                                      {getCurrencySymbol(snapshot.currency)}{item.actualAmount.toLocaleString()}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Custom Allocations Detail */}
-                          {snapshot.customAllocations.length > 0 && (
-                            <div className="mt-6">
-                              <h5 className="font-medium mb-3 text-indigo-600">Custom Allocations Breakdown</h5>
-                              <div className="space-y-2">
-                                {snapshot.customAllocations.map((allocation, index) => {
-                                  const amount = (snapshot.summary.profit - snapshot.summary.taxSetAside) * (allocation.percentage / 100);
-                                  return (
-                                    <div key={index} className="flex justify-between text-sm">
-                                      <span>{allocation.name} ({allocation.percentage}%)</span>
-                                      <span className="font-medium">
-                                        {getCurrencySymbol(snapshot.currency)}{amount.toLocaleString()}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b dark:border-gray-700">
+                        <th className="text-left p-2 text-sm font-medium text-gray-600 dark:text-gray-400">Date</th>
+                        <th className="text-left p-2 text-sm font-medium text-gray-600 dark:text-gray-400">Type</th>
+                        <th className="text-left p-2 text-sm font-medium text-gray-600 dark:text-gray-400">Category</th>
+                        <th className="text-left p-2 text-sm font-medium text-gray-600 dark:text-gray-400">Amount</th>
+                        <th className="text-left p-2 text-sm font-medium text-gray-600 dark:text-gray-400">Notes</th>
+                        <th className="text-left p-2 text-sm font-medium text-gray-600 dark:text-gray-400"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transactions.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="text-center py-8 text-gray-500 dark:text-gray-400" data-testid="text-no-transactions">
+                            No transactions yet. Click "Add Income" or "Add Expense" to get started.
+                          </td>
+                        </tr>
+                      ) : (
+                        transactions.map((t, i) => (
+                          <tr key={t.id || i} className="border-b dark:border-gray-700" data-testid={`transaction-row-${i}`}>
+                            <td className="p-2">
+                              <Input
+                                type="date"
+                                value={t.date}
+                                onChange={(e) => updateTransaction(i, 'date', e.target.value)}
+                                disabled={isClosed}
+                                className="w-40"
+                                data-testid={`input-date-${i}`}
+                              />
+                            </td>
+                            <td className="p-2">
+                              <Select
+                                value={t.type}
+                                onValueChange={(val) => updateTransaction(i, 'type', val)}
+                                disabled={isClosed}
+                              >
+                                <SelectTrigger className="w-32" data-testid={`select-type-${i}`}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="income">Income</SelectItem>
+                                  <SelectItem value="expense">Expense</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td className="p-2">
+                              <Select
+                                value={t.category}
+                                onValueChange={(val) => updateTransaction(i, 'category', val)}
+                                disabled={isClosed}
+                              >
+                                <SelectTrigger className="w-48" data-testid={`select-category-${i}`}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {(t.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(cat => (
+                                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td className="p-2">
+                              <Input
+                                type="number"
+                                value={t.amount}
+                                onChange={(e) => updateTransaction(i, 'amount', e.target.value)}
+                                disabled={isClosed}
+                                className="w-32"
+                                data-testid={`input-amount-${i}`}
+                              />
+                            </td>
+                            <td className="p-2">
+                              <Input
+                                value={t.notes || ''}
+                                onChange={(e) => updateTransaction(i, 'notes', e.target.value)}
+                                placeholder="Optional notes"
+                                disabled={isClosed}
+                                data-testid={`input-notes-${i}`}
+                              />
+                            </td>
+                            <td className="p-2">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => deleteTransaction(i)}
+                                disabled={isClosed}
+                                data-testid={`button-delete-${i}`}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))
                       )}
-                    </div>
-                  ))}
+                    </tbody>
+                  </table>
                 </div>
-              )}
-            </CardContent>
-          )}
-        </Card>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
