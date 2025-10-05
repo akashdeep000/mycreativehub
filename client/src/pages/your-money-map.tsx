@@ -689,9 +689,11 @@ export default function YourMoneyMap() {
     const updatedSnapshots = [...monthlySnapshots, snapshot];
     setMonthlySnapshots(updatedSnapshots);
     
+    // Note: The actual save to database happens in the useEffect watching monthlySnapshots
+    // Toast shows immediately, but save status indicator will show the actual DB save progress
     toast({
-      title: "Snapshot Saved",
-      description: `${periodLabel} financial data has been saved successfully`,
+      title: "Snapshot Created",
+      description: `${periodLabel} snapshot created. Saving to database...`,
     });
   };
 
