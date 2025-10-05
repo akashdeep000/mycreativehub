@@ -197,9 +197,6 @@ export default function YourMoneyMap() {
         body: JSON.stringify(updates),
       });
       return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/finance/transactions', currentYear, currentMonth] });
     }
   });
 
