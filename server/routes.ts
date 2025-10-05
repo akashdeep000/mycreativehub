@@ -2378,6 +2378,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const { currency, period, goalsData, incomeExpensesData, savingsData, monthlySnapshots } = req.body;
+      
+      console.log('Money Map PUT - User:', userId);
+      console.log('Money Map PUT - Monthly Snapshots Count:', Array.isArray(monthlySnapshots) ? monthlySnapshots.length : 0);
+      console.log('Money Map PUT - Income/Expenses Periods:', incomeExpensesData ? Object.keys(incomeExpensesData) : []);
+      
       const moneyMap = await storage.upsertMoneyMap({
         userId,
         currency,
@@ -2387,9 +2392,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         savingsData,
         monthlySnapshots
       });
+      
+      console.log('Money Map PUT - Saved successfully, ID:', moneyMap.id);
       res.json(moneyMap);
     } catch (error) {
-      console.error('Error saving money map:', error);
+      console.error('Money Map PUT - Error saving:', error);
       res.status(500).json({ message: 'Failed to save money map data' });
     }
   });
