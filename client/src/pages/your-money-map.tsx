@@ -832,7 +832,8 @@ export default function YourMoneyMap() {
                             </td>
                             <td className="p-2">
                               <Input
-                                type="number"
+                                type="text"
+                                inputMode="decimal"
                                 value={t.amount}
                                 onChange={(e) => updateTransaction(i, 'amount', e.target.value)}
                                 disabled={isClosed}
