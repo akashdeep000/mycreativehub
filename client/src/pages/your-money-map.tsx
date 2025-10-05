@@ -490,13 +490,11 @@ export default function YourMoneyMap() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-[#0a0a0a]">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a]">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <MobileNav />
-        
-        <div className="flex-1 overflow-auto">
-          <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
+      <MobileNav />
+      <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8 pt-20 md:pt-4 max-w-full overflow-x-hidden">
+        <div className="max-w-7xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white" data-testid="text-title">
@@ -876,7 +874,6 @@ export default function YourMoneyMap() {
                 </div>
               </CardContent>
             </Card>
-          </div>
         </div>
       </div>
     </div>
