@@ -338,10 +338,27 @@ export default function YourMoneyMap() {
   useEffect(() => {
     if (!hasLoadedInitialData.current) return;
     
+    // Build current period data to prevent data loss when saving snapshots
+    const periodKey = getCurrentPeriodKey();
+    const currentPeriodData = {
+      budgetItems,
+      budgetNotes,
+      incomeExpenseItems,
+      taxPercentage,
+      customAllocations,
+      trackerNotes,
+    };
+    
+    // Merge current period data with existing data
+    const updatedIncomeExpensesData = {
+      ...(moneyMapData?.incomeExpensesData || {}),
+      [periodKey]: currentPeriodData
+    };
+    
     saveToDatabase({
       currency,
       period: selectedPeriod,
-      incomeExpensesData: moneyMapData?.incomeExpensesData || {},
+      incomeExpensesData: updatedIncomeExpensesData,
       monthlySnapshots,
     });
   }, [monthlySnapshots]);
