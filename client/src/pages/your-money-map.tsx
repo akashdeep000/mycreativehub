@@ -821,20 +821,14 @@ export default function YourMoneyMap() {
                               </Select>
                             </td>
                             <td className="p-2">
-                              <Select
+                              <Input
                                 value={t.category}
-                                onValueChange={(val) => updateTransaction(i, 'category', val)}
+                                onChange={(e) => updateTransaction(i, 'category', e.target.value)}
+                                placeholder="Category"
                                 disabled={isClosed}
-                              >
-                                <SelectTrigger className="w-48" data-testid={`select-category-${i}`}>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {(t.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(cat => (
-                                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                                className="w-48"
+                                data-testid={`input-category-${i}`}
+                              />
                             </td>
                             <td className="p-2">
                               <Input
