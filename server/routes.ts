@@ -2429,7 +2429,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         taxPercentage,
         customAllocations,
         isClosed,
-        closedAt,
+        closedAt: closedAt ? new Date(closedAt) : undefined,
         closedSnapshot,
         notes
       });
