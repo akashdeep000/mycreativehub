@@ -143,23 +143,51 @@ export default function YourMoneyMap() {
   const saveMutation = useMutation({
     mutationFn: async (data: Partial<MoneyMapData>) => {
       console.log('Saving money map to database:', data);
-      const response = await apiRequest('/api/persistent/money-map', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
       
-      if (!response.ok) {
-        throw new Error('Failed to save money map');
+      try {
+        const response = await apiRequest('/api/persistent/money-map', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Save failed with status:', response.status, errorText);
+          throw new Error(`Save failed: ${response.status} - ${errorText}`);
+        }
+        
+        const savedData = await response.json();
+        console.log('Save response received:', savedData);
+        return savedData;
+      } catch (error) {
+        console.error('Network error during save:', error);
+        throw error;
       }
-      
-      return response.json();
     },
     onSuccess: (savedData) => {
-      console.log('Money map saved successfully ✓');
+      console.log('Money map saved successfully ✓', savedData);
+      
+      // Verify the saved data actually contains what we expect
+      if (!savedData || !savedData.id) {
+        console.error('Save succeeded but returned invalid data:', savedData);
+        toast({
+          title: "Warning",
+          description: "Data was saved but the response looks unexpected. Please refresh and verify.",
+          variant: "destructive",
+        });
+        setSaveStatus('idle');
+        return;
+      }
+      
       queryClient.setQueryData(['/api/persistent/money-map'], savedData);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
+      
+      // Log snapshot count for debugging
+      if (savedData.monthlySnapshots && Array.isArray(savedData.monthlySnapshots)) {
+        console.log(`✓ ${savedData.monthlySnapshots.length} monthly snapshot(s) persisted`);
+      }
     },
     onError: (error: any) => {
       console.error('Error saving money map:', error);
