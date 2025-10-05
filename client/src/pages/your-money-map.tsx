@@ -202,9 +202,17 @@ export default function YourMoneyMap() {
 
   // Load initial data from database
   useEffect(() => {
-    if (dataLoading || !moneyMapData || hasLoadedInitialData.current) return;
+    if (dataLoading) return;
+    if (hasLoadedInitialData.current) return;
     
+    // Allow initial load even if moneyMapData is null (first time user)
     hasLoadedInitialData.current = true;
+    
+    if (!moneyMapData) {
+      console.log('No existing money map data - starting fresh');
+      return;
+    }
+    
     console.log('Loading money map from database:', moneyMapData);
     
     // Load global settings
