@@ -1,0 +1,65 @@
+I’m trying to fix data persistence on Financial Management → Your Money Map → Monthly Records.
+
+Problem: Monthly income/expense records appear to save, but after leaving the page and returning, the entries are gone. This started after I asked the Agent to remove the “Yearly/Quarterly” toggle. I need records to save immediately (no noticeable delay) and be persisted in the database (not localStorage/sessionStorage).
+
+Please do the following:
+
+Research deeply across the codebase
+
+Trace the full data path for Your Money Map Monthly Records: UI state → save handler(s) → API call(s) → storage layer → DB table(s).
+
+Identify the exact files and line numbers for:
+
+React component(s) and context/hooks used on the Money Map page.
+
+API routes (GET/PUT/POST/DELETE) used by Money Map.
+
+Storage functions and the database schema/table used for monthly records.
+
+Compare current implementation to whatever existed before removing the Yearly/Quarterly control. Look for:
+
+Missing/changed route params (e.g., period, year, month).
+
+Changed query keys / cache invalidation.
+
+Removed providers or context values that monthly saves relied upon.
+
+Assess root causes
+
+Is the app writing to localStorage instead of the DB?
+
+Are saves being cancelled on navigation/unmount?
+
+Are we calling the wrong API route or missing params?
+
+Any 404/409/401 errors or schema mismatches?
+
+Develop a plan to fix it
+
+Provide a Minimal, low-risk fix (keep current schema; correct routes/params; ensure DB write; add save-on-blur/beforeunload if needed; show “Saved ✓” UI).
+
+Provide a Robust fix (if needed) with optimistic versioning and conflict handling (similar to how the Conversation Flow Cheat Sheet was implemented).
+
+Include acceptance criteria and a manual test checklist.
+
+Deliverables
+
+Create a file at the repo root named Instructions-money-map-persistence.md containing:
+
+Root cause analysis with file paths & line numbers.
+
+Exact code changes required for the Minimal fix and the optional Robust fix.
+
+API contracts (request/response) for Money Map endpoints.
+
+Test plan (steps to reproduce, success checks).
+
+Rollback plan.
+
+Important constraints:
+
+Persist to the database only (no localStorage/sessionStorage fallbacks).
+
+No regressions to other financial features.
+
+Keep changes scoped to Money Map monthly records unless the root cause requires touching shared utilities.
