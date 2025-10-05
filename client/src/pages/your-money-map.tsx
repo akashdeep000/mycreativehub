@@ -212,7 +212,7 @@ export default function YourMoneyMap() {
     }
   });
 
-  const autoSave = () => {
+  const autoSave = async () => {
     if (isInitialLoad.current || isClosed) return;
     
     if (saveTimeoutRef.current) {
@@ -221,46 +221,44 @@ export default function YourMoneyMap() {
 
     setSaveStatus('saving');
     
-    saveTimeoutRef.current = setTimeout(async () => {
-      try {
-        const changesToSave = Array.from(pendingChanges.current);
+    try {
+      const changesToSave = Array.from(pendingChanges.current);
+      
+      for (const change of changesToSave) {
+        const transaction = transactions.find(t => 
+          change === 'new' ? t.isNew : t.id === change
+        );
         
-        for (const change of changesToSave) {
-          const transaction = transactions.find(t => 
-            change === 'new' ? t.isNew : t.id === change
-          );
-          
-          if (!transaction) continue;
+        if (!transaction) continue;
 
-          if (transaction.isNew) {
-            await createTransactionMutation.mutateAsync(transaction);
-          } else if (transaction.id) {
-            await updateTransactionMutation.mutateAsync({
-              id: transaction.id,
-              updates: {
-                date: transaction.date,
-                type: transaction.type,
-                category: transaction.category,
-                amount: transaction.amount,
-                notes: transaction.notes
-              }
-            });
-          }
+        if (transaction.isNew) {
+          await createTransactionMutation.mutateAsync(transaction);
+        } else if (transaction.id) {
+          await updateTransactionMutation.mutateAsync({
+            id: transaction.id,
+            updates: {
+              date: transaction.date,
+              type: transaction.type,
+              category: transaction.category,
+              amount: transaction.amount,
+              notes: transaction.notes
+            }
+          });
         }
-
-        pendingChanges.current.clear();
-        setSaveStatus('saved');
-        setTimeout(() => setSaveStatus('idle'), 2000);
-      } catch (error) {
-        console.error('Auto-save failed:', error);
-        setSaveStatus('idle');
-        toast({
-          title: "Auto-save failed",
-          description: "Your changes couldn't be saved. Please try again.",
-          variant: "destructive",
-        });
       }
-    }, 1000);
+
+      pendingChanges.current.clear();
+      setSaveStatus('saved');
+      saveTimeoutRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+      setSaveStatus('idle');
+      toast({
+        title: "Auto-save failed",
+        description: "Your changes couldn't be saved. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const addTransaction = (type: 'income' | 'expense') => {
