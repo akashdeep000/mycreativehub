@@ -724,7 +724,9 @@ export const moneyMap = pgTable("money_map", {
   monthlySnapshots: jsonb("monthly_snapshots").notNull().default('[]'), // Saved monthly snapshots
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  uniqueUserId: uniqueIndex("money_map_user_id_idx").on(table.userId),
+}));
 
 // Finance Transactions - Ledger-based transaction tracking
 export const financeTransactions = pgTable("finance_transactions", {
