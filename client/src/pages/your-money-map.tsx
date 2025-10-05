@@ -276,7 +276,7 @@ export default function YourMoneyMap() {
     const newTransaction: Transaction = {
       date: new Date().toISOString().split('T')[0],
       type,
-      category: type === 'income' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0],
+      category: '',
       amount: '0',
       notes: '',
       year: currentYear,
@@ -821,7 +821,7 @@ export default function YourMoneyMap() {
                               <Input
                                 value={t.category}
                                 onChange={(e) => updateTransaction(i, 'category', e.target.value)}
-                                placeholder="Category"
+                                placeholder="description"
                                 disabled={isClosed}
                                 className="w-48"
                                 data-testid={`input-category-${i}`}
