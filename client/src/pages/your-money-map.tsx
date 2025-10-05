@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
@@ -212,7 +213,7 @@ export default function YourMoneyMap() {
     }
   });
 
-  const autoSave = async () => {
+  const performAutoSave = async () => {
     if (isInitialLoad.current || isClosed) return;
     
     if (saveTimeoutRef.current) {
@@ -260,6 +261,16 @@ export default function YourMoneyMap() {
       });
     }
   };
+
+  // Debounced save with 50ms delay to prevent loss of characters while typing
+  const { debounced: autoSave, flush: flushAutoSave } = useDebounce(performAutoSave, 50);
+
+  // Ensure pending saves are flushed on unmount or navigation
+  useEffect(() => {
+    return () => {
+      flushAutoSave();
+    };
+  }, [flushAutoSave]);
 
   const addTransaction = (type: 'income' | 'expense') => {
     if (isClosed) {
