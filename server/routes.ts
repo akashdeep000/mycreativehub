@@ -2401,6 +2401,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Finance Ledger - Money Map Month Metadata
+  app.get('/api/finance/month/:year/:month', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      const monthData = await storage.getMoneyMapMonth(userId, year, month);
+      res.json(monthData || null);
+    } catch (error) {
+      console.error('Error fetching money map month:', error);
+      res.status(500).json({ message: 'Failed to fetch month data' });
+    }
+  });
+
+  app.put('/api/finance/month', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { year, month, currency, taxPercentage, customAllocations, isClosed, closedAt, closedSnapshot, notes } = req.body;
+      
+      const monthData = await storage.upsertMoneyMapMonth({
+        userId,
+        year,
+        month,
+        currency,
+        taxPercentage,
+        customAllocations,
+        isClosed,
+        closedAt,
+        closedSnapshot,
+        notes
+      });
+      
+      res.json(monthData);
+    } catch (error) {
+      console.error('Error saving money map month:', error);
+      res.status(500).json({ message: 'Failed to save month data' });
+    }
+  });
+
+  // Finance Ledger - Transactions
+  app.get('/api/finance/transactions/:year/:month', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      const transactions = await storage.getFinanceTransactions(userId, year, month);
+      res.json(transactions);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      res.status(500).json({ message: 'Failed to fetch transactions' });
+    }
+  });
+
+  app.post('/api/finance/transactions', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { date, type, category, amount, notes, year, month } = req.body;
+      
+      const transaction = await storage.createFinanceTransaction({
+        userId,
+        date: new Date(date),
+        type,
+        category,
+        amount,
+        notes,
+        year,
+        month,
+        isDeleted: false
+      });
+      
+      res.json(transaction);
+    } catch (error) {
+      console.error('Error creating transaction:', error);
+      res.status(500).json({ message: 'Failed to create transaction' });
+    }
+  });
+
+  app.patch('/api/finance/transactions/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      
+      if (updates.date) {
+        updates.date = new Date(updates.date);
+      }
+      
+      const transaction = await storage.updateFinanceTransaction(id, updates);
+      res.json(transaction);
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      res.status(500).json({ message: 'Failed to update transaction' });
+    }
+  });
+
+  app.delete('/api/finance/transactions/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const id = parseInt(req.params.id);
+      
+      await storage.deleteFinanceTransaction(id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      res.status(500).json({ message: 'Failed to delete transaction' });
+    }
+  });
+
   // Streamline Your Workflow System - SOP Builder
   app.get('/api/persistent/sop-builder', jwtAuth, async (req: any, res) => {
     try {
