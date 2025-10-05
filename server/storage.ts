@@ -461,6 +461,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(toolkitModules);
   }
 
+  async deleteToolkitModule(moduleId: number): Promise<void> {
+    await db.delete(toolkitModules).where(eq(toolkitModules.id, moduleId));
+  }
+
   async getUserToolkitData(userId: string, moduleId: number): Promise<UserToolkitData | undefined> {
     const [data] = await db
       .select()

@@ -672,6 +672,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete a specific toolkit module
+  app.delete('/api/toolkit/modules/:id', jwtAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteToolkitModule(parseInt(id));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting toolkit module:", error);
+      res.status(500).json({ message: "Failed to delete toolkit module" });
+    }
+  });
+
   // Daily focus tasks
   app.get('/api/daily-focus', jwtAuth, async (req: any, res) => {
     try {
