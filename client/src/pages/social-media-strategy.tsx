@@ -125,10 +125,6 @@ export default function SocialMediaStrategy() {
       
       console.log('Saved social media strategy ✓, new version:', savedStrategy.version, 'saveId:', thisSaveId);
       
-      // Decrement pending save counter BEFORE any early return
-      // This prevents counter from getting stuck if we ignore stale responses
-      pendingSaveCountRef.current = Math.max(0, pendingSaveCountRef.current - 1);
-      
       // Only process this response if it's the most recent save request
       // This prevents stale responses from overwriting newer user edits
       if (thisSaveId && thisSaveId < saveRequestIdRef.current) {
@@ -136,6 +132,8 @@ export default function SocialMediaStrategy() {
           thisSaveId,
           latestSaveId: saveRequestIdRef.current
         });
+        // Decrement counter even for stale responses to prevent leaks
+        pendingSaveCountRef.current = Math.max(0, pendingSaveCountRef.current - 1);
         return;
       }
       
@@ -147,16 +145,23 @@ export default function SocialMediaStrategy() {
       // Update server state (but NOT draft if user is editing)
       setServerStrategy(savedStrategy);
       
-      // Only update draft if NOT currently editing AND no saves are pending
+      // Check if this is the ONLY pending save (counter === 1) before updating drafts
+      // If counter > 1, there are more saves queued, so don't overwrite user's draft
+      const isLastPendingSave = pendingSaveCountRef.current === 1;
+      
+      // Only update draft if NOT currently editing AND this is the last pending save
       // This prevents overwriting user's in-progress typing
-      if (!isEditingGoals && pendingSaveCountRef.current === 0) {
+      if (!isEditingGoals && isLastPendingSave) {
         setDraftContentGoals(savedStrategy.contentGoals);
       }
       
-      // Update pillars if not editing any pillar field AND no saves are pending
-      if (!editingPillarField && pendingSaveCountRef.current === 0) {
+      // Update pillars if not editing any pillar field AND this is the last pending save
+      if (!editingPillarField && isLastPendingSave) {
         setDraftPillars(savedStrategy.pillars);
       }
+      
+      // Decrement pending save counter AFTER checking and updating drafts
+      pendingSaveCountRef.current = Math.max(0, pendingSaveCountRef.current - 1);
       
       setConflictData(null);
       
@@ -214,11 +219,14 @@ export default function SocialMediaStrategy() {
             // Update server state
             setServerStrategy(freshStrategy);
             
-            // Only update drafts if NOT currently editing AND no saves are pending
-            if (!isEditingGoals && pendingSaveCountRef.current === 0) {
+            // Check if this was the only pending save before updating drafts
+            const wasLastPendingSave = pendingSaveCountRef.current === 0;
+            
+            // Only update drafts if NOT currently editing AND this was the last pending save
+            if (!isEditingGoals && wasLastPendingSave) {
               setDraftContentGoals(freshStrategy.contentGoals);
             }
-            if (!editingPillarField && pendingSaveCountRef.current === 0) {
+            if (!editingPillarField && wasLastPendingSave) {
               setDraftPillars(freshStrategy.pillars);
             }
             
