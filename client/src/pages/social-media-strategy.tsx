@@ -467,8 +467,12 @@ export default function SocialMediaStrategy() {
   const removePillar = (id: string) => {
     const newPillars = draftPillars.filter(pillar => pillar.id !== id);
     setDraftPillars(newPillars);
+    // Set editing state to prevent server overwrites during conflict resolution
+    setEditingPillarField(`deleting-${id}`);
     // Immediately flush the save with the removed pillar
     flushSave(draftContentGoals, newPillars, serverStrategy.version);
+    // Clear editing state after a brief delay
+    setTimeout(() => setEditingPillarField(null), 100);
   };
 
   if (isLoading) {
