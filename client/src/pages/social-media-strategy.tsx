@@ -142,26 +142,25 @@ export default function SocialMediaStrategy() {
         latestCompletedSaveIdRef.current = thisSaveId;
       }
       
-      // Update server state (but NOT draft if user is editing)
+      // Update server state (source of truth)
       setServerStrategy(savedStrategy);
       
-      // Check if this is the ONLY pending save (counter === 1) before updating drafts
-      // If counter > 1, there are more saves queued, so don't overwrite user's draft
-      const isLastPendingSave = pendingSaveCountRef.current === 1;
+      // Decrement pending save counter
+      pendingSaveCountRef.current = Math.max(0, pendingSaveCountRef.current - 1);
       
-      // Only update draft if NOT currently editing AND this is the last pending save
-      // This prevents overwriting user's in-progress typing
-      if (!isEditingGoals && isLastPendingSave) {
+      // Check if there are no more pending saves after decrementing
+      const noMorePendingSaves = pendingSaveCountRef.current === 0;
+      
+      // Update draft with server response if NOT actively editing that field
+      // This ensures the UI reflects the saved state once editing stops
+      if (!isEditingGoals && noMorePendingSaves) {
         setDraftContentGoals(savedStrategy.contentGoals);
       }
       
-      // Update pillars if not editing any pillar field AND this is the last pending save
-      if (!editingPillarField && isLastPendingSave) {
+      // Update pillars if not editing any pillar field and no more saves pending
+      if (!editingPillarField && noMorePendingSaves) {
         setDraftPillars(savedStrategy.pillars);
       }
-      
-      // Decrement pending save counter AFTER checking and updating drafts
-      pendingSaveCountRef.current = Math.max(0, pendingSaveCountRef.current - 1);
       
       setConflictData(null);
       
@@ -216,17 +215,20 @@ export default function SocialMediaStrategy() {
           if (freshStrategy) {
             console.log('Got fresh strategy from server, version:', freshStrategy.version);
             
-            // Update server state
+            // Update server state with fresh data
             setServerStrategy(freshStrategy);
             
-            // Check if this was the only pending save before updating drafts
-            const wasLastPendingSave = pendingSaveCountRef.current === 0;
+            // Update cache with fresh data
+            queryClient.setQueryData(['/api/social-media-strategy'], freshStrategy);
             
-            // Only update drafts if NOT currently editing AND this was the last pending save
-            if (!isEditingGoals && wasLastPendingSave) {
+            // Check if there are no more pending saves
+            const noMorePendingSaves = pendingSaveCountRef.current === 0;
+            
+            // Update drafts with server data if NOT currently editing AND no pending saves
+            if (!isEditingGoals && noMorePendingSaves) {
               setDraftContentGoals(freshStrategy.contentGoals);
             }
-            if (!editingPillarField && wasLastPendingSave) {
+            if (!editingPillarField && noMorePendingSaves) {
               setDraftPillars(freshStrategy.pillars);
             }
             
