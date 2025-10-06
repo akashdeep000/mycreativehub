@@ -429,12 +429,21 @@ export default function SocialMediaStrategy() {
     setEditingPillarField(`${pillarId}-${field}`);
   };
 
-  const handlePillarBlur = () => {
+  const handlePillarBlur = (e: React.FocusEvent) => {
     console.log('Blur event (pillar) - flushing pending save with current state');
     // Flush with current state to ensure latest value is saved
     flushSave(draftContentGoals, draftPillars, serverStrategy.version);
-    // Clear editing state after a brief delay to allow save to complete
-    setTimeout(() => setEditingPillarField(null), 50);
+    
+    // Only clear editing state if not moving to another pillar input
+    // Check if the new focused element is also a pillar input
+    setTimeout(() => {
+      const activeElement = document.activeElement;
+      const isStillEditingPillar = activeElement?.id?.includes('pillar-');
+      
+      if (!isStillEditingPillar) {
+        setEditingPillarField(null);
+      }
+    }, 0);
   };
 
   const addPillar = () => {
