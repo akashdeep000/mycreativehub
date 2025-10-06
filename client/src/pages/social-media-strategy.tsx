@@ -439,11 +439,19 @@ export default function SocialMediaStrategy() {
 
   const addPillar = () => {
     const newId = Date.now().toString();
+    // Set editing state to prevent server response from overwriting new pillar
+    setEditingPillarField(`${newId}-adding`);
     setDraftPillars(prev => [...prev, { id: newId, title: "", cta: "" }]);
+    // Clear editing state after save completes
+    setTimeout(() => setEditingPillarField(null), 1000);
   };
 
   const removePillar = (id: string) => {
+    // Set editing state to prevent server response from overwriting during removal
+    setEditingPillarField(`removing-${id}`);
     setDraftPillars(prev => prev.filter(pillar => pillar.id !== id));
+    // Clear editing state after save completes
+    setTimeout(() => setEditingPillarField(null), 1000);
   };
 
   if (isLoading) {
