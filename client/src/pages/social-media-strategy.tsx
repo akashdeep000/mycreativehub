@@ -167,6 +167,9 @@ export default function SocialMediaStrategy() {
       // Update cache directly with server response
       queryClient.setQueryData(['/api/social-media-strategy'], savedStrategy);
       
+      // Invalidate cache to ensure fresh data on next fetch
+      queryClient.invalidateQueries({ queryKey: ['/api/social-media-strategy'] });
+      
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
       
