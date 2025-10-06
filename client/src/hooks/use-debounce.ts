@@ -5,7 +5,7 @@ export function useDebounce<T extends (...args: any[]) => any>(
   delay: number
 ): {
   debounced: (...args: Parameters<T>) => void;
-  flush: () => void;
+  flush: (...overrideArgs: Parameters<T> | []) => void;
   cancel: () => void;
 } {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -19,13 +19,15 @@ export function useDebounce<T extends (...args: any[]) => any>(
     argsRef.current = null;
   }, []);
 
-  const flush = useCallback(() => {
+  const flush = useCallback((...overrideArgs: Parameters<T> | []) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    if (argsRef.current) {
-      callback(...argsRef.current);
+    // Use override args if provided, otherwise use stored args
+    const argsToUse = overrideArgs.length > 0 ? overrideArgs : argsRef.current;
+    if (argsToUse) {
+      callback(...(argsToUse as Parameters<T>));
       argsRef.current = null;
     }
   }, [callback]);

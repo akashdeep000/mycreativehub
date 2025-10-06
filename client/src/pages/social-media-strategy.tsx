@@ -71,6 +71,12 @@ export default function SocialMediaStrategy() {
   const [isEditingGoals, setIsEditingGoals] = useState(false);
   const [editingPillarField, setEditingPillarField] = useState<string | null>(null);
   
+  // Track save request ID to prevent race conditions from out-of-order responses
+  const saveRequestIdRef = useRef(0);
+  const latestCompletedSaveIdRef = useRef(0);
+  const pendingSaveCountRef = useRef(0);
+  const queuedSaveRef = useRef<{ goals: string; pillars: ContentPillar[]; version: number } | null>(null);
+  
   const [conflictData, setConflictData] = useState<SocialMediaStrategy | null>(null);
 
   // Fetch existing strategy - disable refetchOnWindowFocus to prevent overwrites while editing
@@ -113,19 +119,42 @@ export default function SocialMediaStrategy() {
       
       return response.json();
     },
-    onSuccess: (savedStrategy: SocialMediaStrategy) => {
-      console.log('Saved social media strategy ✓, new version:', savedStrategy.version);
+    onSuccess: (savedStrategy: SocialMediaStrategy, variables: any) => {
+      // Extract save ID from mutation variables (not from server response)
+      const thisSaveId = variables._saveId;
+      
+      console.log('Saved social media strategy ✓, new version:', savedStrategy.version, 'saveId:', thisSaveId);
+      
+      // Decrement pending save counter BEFORE any early return
+      // This prevents counter from getting stuck if we ignore stale responses
+      pendingSaveCountRef.current = Math.max(0, pendingSaveCountRef.current - 1);
+      
+      // Only process this response if it's the most recent save request
+      // This prevents stale responses from overwriting newer user edits
+      if (thisSaveId && thisSaveId < saveRequestIdRef.current) {
+        console.log('Ignoring stale save response (newer save pending)', {
+          thisSaveId,
+          latestSaveId: saveRequestIdRef.current
+        });
+        return;
+      }
+      
+      // Track this as the latest completed save
+      if (thisSaveId) {
+        latestCompletedSaveIdRef.current = thisSaveId;
+      }
       
       // Update server state (but NOT draft if user is editing)
       setServerStrategy(savedStrategy);
       
-      // Only update draft if NOT currently editing
-      if (!isEditingGoals) {
+      // Only update draft if NOT currently editing AND no saves are pending
+      // This prevents overwriting user's in-progress typing
+      if (!isEditingGoals && pendingSaveCountRef.current === 0) {
         setDraftContentGoals(savedStrategy.contentGoals);
       }
       
-      // Update pillars if not editing any pillar field
-      if (!editingPillarField) {
+      // Update pillars if not editing any pillar field AND no saves are pending
+      if (!editingPillarField && pendingSaveCountRef.current === 0) {
         setDraftPillars(savedStrategy.pillars);
       }
       
@@ -136,8 +165,23 @@ export default function SocialMediaStrategy() {
       
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
+      
+      // Process queued save if one exists
+      if (queuedSaveRef.current) {
+        console.log('Processing queued save');
+        const queued = queuedSaveRef.current;
+        queuedSaveRef.current = null;
+        
+        // Use server's version for the queued save
+        setTimeout(() => {
+          debouncedSave(queued.goals, queued.pillars, savedStrategy.version);
+        }, 0);
+      }
     },
     onError: async (error: any) => {
+      // Decrement pending save counter
+      pendingSaveCountRef.current = Math.max(0, pendingSaveCountRef.current - 1);
+      
       setSaveStatus('idle');
       
       if (isUnauthorizedError(error)) {
@@ -170,11 +214,11 @@ export default function SocialMediaStrategy() {
             // Update server state
             setServerStrategy(freshStrategy);
             
-            // Only update drafts if NOT currently editing
-            if (!isEditingGoals) {
+            // Only update drafts if NOT currently editing AND no saves are pending
+            if (!isEditingGoals && pendingSaveCountRef.current === 0) {
               setDraftContentGoals(freshStrategy.contentGoals);
             }
-            if (!editingPillarField) {
+            if (!editingPillarField && pendingSaveCountRef.current === 0) {
               setDraftPillars(freshStrategy.pillars);
             }
             
@@ -199,6 +243,18 @@ export default function SocialMediaStrategy() {
         description: "Failed to save strategy. Please try again.",
         variant: "destructive",
       });
+      
+      // Process queued save if one exists (even after error)
+      if (queuedSaveRef.current) {
+        console.log('Processing queued save after error');
+        const queued = queuedSaveRef.current;
+        queuedSaveRef.current = null;
+        
+        // Retry with queued data
+        setTimeout(() => {
+          debouncedSave(queued.goals, queued.pillars, queued.version);
+        }, 0);
+      }
     },
   });
 
@@ -234,8 +290,12 @@ export default function SocialMediaStrategy() {
     }
   }, [existingStrategy, isLoading]);
 
-  // Debounced auto-save - shorter delay (500ms) for better responsiveness
-  const { debounced: debouncedSave, flush: flushSave } = useDebounce(() => {
+  // Debounced auto-save - accepts current state as arguments to avoid stale closures
+  const { debounced: debouncedSave, flush: flushSave } = useDebounce((
+    goals: string, 
+    pillars: ContentPillar[], 
+    version: number
+  ) => {
     if (!user) return;
 
     if (!hasLoadedInitialData.current) return;
@@ -244,44 +304,76 @@ export default function SocialMediaStrategy() {
       console.log('Skipping save due to unresolved conflict');
       return;
     }
+    
+    // If a save is already in flight, queue this save for later
+    if (pendingSaveCountRef.current > 0) {
+      console.log('Save already pending - queueing this save');
+      queuedSaveRef.current = { goals, pillars, version };
+      return;
+    }
 
-    // Use draft state for saving
-    const hasContent = draftContentGoals.trim() || 
-                      draftPillars.some(p => p.title.trim() || p.cta.trim());
+    // Use passed arguments (latest state) for saving
+    const hasContent = goals.trim() || 
+                      pillars.some(p => p.title.trim() || p.cta.trim());
     
     if (hasContent) {
-      console.log('Saving goals...');
+      console.log('Saving strategy with goals:', goals.substring(0, 50), 'pillars:', pillars.length);
+      
+      // Increment and capture save request ID
+      saveRequestIdRef.current += 1;
+      const thisSaveId = saveRequestIdRef.current;
+      
+      // Increment pending save counter
+      pendingSaveCountRef.current += 1;
+      
       setSaveStatus('saving');
       
       saveMutation.mutate({
-        version: serverStrategy.version,
-        contentGoals: draftContentGoals,
-        pillars: draftPillars
-      });
+        version: version,
+        contentGoals: goals,
+        pillars: pillars,
+        _saveId: thisSaveId // Pass save ID through mutation context
+      } as any);
     }
-  }, 500); // Reduced from 1000ms to 500ms
+  }, 500);
+
+  // Refs to hold latest state for stable event listeners
+  const draftContentGoalsRef = useRef(draftContentGoals);
+  const draftPillarsRef = useRef(draftPillars);
+  const serverStrategyVersionRef = useRef(serverStrategy.version);
+  
+  // Keep refs up to date
+  useEffect(() => {
+    draftContentGoalsRef.current = draftContentGoals;
+    draftPillarsRef.current = draftPillars;
+    serverStrategyVersionRef.current = serverStrategy.version;
+  });
 
   // Flush pending saves on unmount or visibility change
+  // Use stable listeners with refs to avoid re-running on every draft change
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
-        flushSave();
+        // Use refs to get current state
+        flushSave(draftContentGoalsRef.current, draftPillarsRef.current, serverStrategyVersionRef.current);
       }
     };
 
     const handleBeforeUnload = () => {
-      flushSave();
+      // Use refs to get current state
+      flushSave(draftContentGoalsRef.current, draftPillarsRef.current, serverStrategyVersionRef.current);
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      flushSave();
+      // Flush on unmount using latest refs
+      flushSave(draftContentGoalsRef.current, draftPillarsRef.current, serverStrategyVersionRef.current);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [flushSave]);
+  }, [flushSave]); // Only re-run if flushSave changes
 
   // Track changes and trigger debounced save
   const lastSavedRef = useRef<string>('');
@@ -295,8 +387,9 @@ export default function SocialMediaStrategy() {
     if (combinedString === lastSavedRef.current) return;
 
     lastSavedRef.current = combinedString;
-    debouncedSave();
-  }, [combinedString, debouncedSave]);
+    // Pass current state as arguments to avoid stale closure
+    debouncedSave(draftContentGoals, draftPillars, serverStrategy.version);
+  }, [combinedString, debouncedSave, draftContentGoals, draftPillars, serverStrategy.version]);
 
   // Content Goals handlers
   const updateContentGoals = (goals: string) => {
@@ -308,9 +401,11 @@ export default function SocialMediaStrategy() {
   };
 
   const handleGoalsBlur = () => {
-    setIsEditingGoals(false);
-    console.log('Blur event (goals) - flushing pending save');
-    flushSave();
+    console.log('Blur event (goals) - flushing pending save with current state');
+    // Flush with current state to ensure latest value is saved
+    flushSave(draftContentGoals, draftPillars, serverStrategy.version);
+    // Clear editing state after a brief delay to allow save to complete
+    setTimeout(() => setIsEditingGoals(false), 50);
   };
 
   // Pillar handlers
@@ -327,9 +422,11 @@ export default function SocialMediaStrategy() {
   };
 
   const handlePillarBlur = () => {
-    setEditingPillarField(null);
-    console.log('Blur event (pillar) - flushing pending save');
-    flushSave();
+    console.log('Blur event (pillar) - flushing pending save with current state');
+    // Flush with current state to ensure latest value is saved
+    flushSave(draftContentGoals, draftPillars, serverStrategy.version);
+    // Clear editing state after a brief delay to allow save to complete
+    setTimeout(() => setEditingPillarField(null), 50);
   };
 
   const addPillar = () => {
