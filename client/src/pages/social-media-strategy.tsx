@@ -439,19 +439,17 @@ export default function SocialMediaStrategy() {
 
   const addPillar = () => {
     const newId = Date.now().toString();
-    // Set editing state to prevent server response from overwriting new pillar
-    setEditingPillarField(`${newId}-adding`);
-    setDraftPillars(prev => [...prev, { id: newId, title: "", cta: "" }]);
-    // Clear editing state after save completes
-    setTimeout(() => setEditingPillarField(null), 1000);
+    const newPillars = [...draftPillars, { id: newId, title: "", cta: "" }];
+    setDraftPillars(newPillars);
+    // Immediately flush the save with the new pillar
+    flushSave(draftContentGoals, newPillars, serverStrategy.version);
   };
 
   const removePillar = (id: string) => {
-    // Set editing state to prevent server response from overwriting during removal
-    setEditingPillarField(`removing-${id}`);
-    setDraftPillars(prev => prev.filter(pillar => pillar.id !== id));
-    // Clear editing state after save completes
-    setTimeout(() => setEditingPillarField(null), 1000);
+    const newPillars = draftPillars.filter(pillar => pillar.id !== id);
+    setDraftPillars(newPillars);
+    // Immediately flush the save with the removed pillar
+    flushSave(draftContentGoals, newPillars, serverStrategy.version);
   };
 
   if (isLoading) {
