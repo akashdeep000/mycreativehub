@@ -402,8 +402,9 @@ export default function SocialMediaStrategy() {
 
     lastSavedRef.current = combinedString;
     // Pass current state as arguments to avoid stale closure
-    debouncedSave(draftContentGoals, draftPillars, serverStrategy.version);
-  }, [combinedString, debouncedSave, draftContentGoals, draftPillars, serverStrategy.version]);
+    // Use ref for version to avoid triggering saves when version updates
+    debouncedSave(draftContentGoals, draftPillars, serverStrategyVersionRef.current);
+  }, [combinedString, debouncedSave, draftContentGoals, draftPillars]);
 
   // Content Goals handlers
   const updateContentGoals = (goals: string) => {
@@ -417,7 +418,7 @@ export default function SocialMediaStrategy() {
   const handleGoalsBlur = () => {
     console.log('Blur event (goals) - flushing pending save with current state');
     // Flush with current state to ensure latest value is saved
-    flushSave(draftContentGoals, draftPillars, serverStrategy.version);
+    flushSave(draftContentGoals, draftPillars, serverStrategyVersionRef.current);
     // Clear editing state after a brief delay to allow save to complete
     setTimeout(() => setIsEditingGoals(false), 50);
   };
@@ -438,7 +439,7 @@ export default function SocialMediaStrategy() {
   const handlePillarBlur = (e: React.FocusEvent) => {
     console.log('Blur event (pillar) - flushing pending save with current state');
     // Flush with current state to ensure latest value is saved
-    flushSave(draftContentGoals, draftPillars, serverStrategy.version);
+    flushSave(draftContentGoals, draftPillars, serverStrategyVersionRef.current);
     
     // Only clear editing state if not moving to another pillar input
     // Check if the new focused element is also a pillar input
@@ -458,8 +459,8 @@ export default function SocialMediaStrategy() {
     setDraftPillars(newPillars);
     // Set editing state to prevent server overwrites during conflict resolution
     setEditingPillarField(`${newId}-title`);
-    // Immediately flush the save with the new pillar
-    flushSave(draftContentGoals, newPillars, serverStrategy.version);
+    // Immediately flush the save with the new pillar using latest version
+    flushSave(draftContentGoals, newPillars, serverStrategyVersionRef.current);
     // Clear editing state after a brief delay
     setTimeout(() => setEditingPillarField(null), 100);
   };
@@ -469,8 +470,8 @@ export default function SocialMediaStrategy() {
     setDraftPillars(newPillars);
     // Set editing state to prevent server overwrites during conflict resolution
     setEditingPillarField(`deleting-${id}`);
-    // Immediately flush the save with the removed pillar
-    flushSave(draftContentGoals, newPillars, serverStrategy.version);
+    // Immediately flush the save with the removed pillar using latest version
+    flushSave(draftContentGoals, newPillars, serverStrategyVersionRef.current);
     // Clear editing state after a brief delay
     setTimeout(() => setEditingPillarField(null), 100);
   };
