@@ -79,13 +79,13 @@ export default function SocialMediaStrategy() {
   
   const [conflictData, setConflictData] = useState<SocialMediaStrategy | null>(null);
 
-  // Fetch existing strategy - disable refetchOnWindowFocus to prevent overwrites while editing
+  // Fetch existing strategy - always fetch fresh data on mount
   const { data: existingStrategy, isLoading } = useQuery<SocialMediaStrategy>({
     queryKey: ['/api/social-media-strategy'],
     enabled: !!user,
     retry: false,
     staleTime: 0,
-    refetchOnMount: true,
+    refetchOnMount: 'always', // Always fetch fresh data when component mounts
     refetchOnWindowFocus: false, // Don't refetch when user focuses window while editing
   });
 
