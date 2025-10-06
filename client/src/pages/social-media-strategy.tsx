@@ -275,27 +275,28 @@ export default function SocialMediaStrategy() {
   useEffect(() => {
     if (isLoading) return;
     
-    if (!hasLoadedInitialData.current) {
-      hasLoadedInitialData.current = true;
+    if (existingStrategy) {
+      console.log('Loading existing strategy from DB, version:', existingStrategy.version);
       
-      if (existingStrategy) {
-        console.log('Loading existing strategy from DB, version:', existingStrategy.version);
-        
-        const loadedStrategy = {
-          version: existingStrategy.version || 1,
-          contentGoals: existingStrategy.contentGoals || "",
-          pillars: existingStrategy.pillars || [
-            { id: "1", title: "", cta: "" },
-            { id: "2", title: "", cta: "" },
-            { id: "3", title: "", cta: "" }
-          ],
-          id: existingStrategy.id,
-          userId: existingStrategy.userId,
-          updatedAt: existingStrategy.updatedAt
-        };
-        
-        // Initialize both server and draft state
-        setServerStrategy(loadedStrategy);
+      const loadedStrategy = {
+        version: existingStrategy.version || 1,
+        contentGoals: existingStrategy.contentGoals || "",
+        pillars: existingStrategy.pillars || [
+          { id: "1", title: "", cta: "" },
+          { id: "2", title: "", cta: "" },
+          { id: "3", title: "", cta: "" }
+        ],
+        id: existingStrategy.id,
+        userId: existingStrategy.userId,
+        updatedAt: existingStrategy.updatedAt
+      };
+      
+      // Always update server strategy when fresh data arrives from query
+      setServerStrategy(loadedStrategy);
+      
+      // Only initialize draft state on first load (not on subsequent refetches)
+      if (!hasLoadedInitialData.current) {
+        hasLoadedInitialData.current = true;
         setDraftContentGoals(loadedStrategy.contentGoals);
         setDraftPillars(loadedStrategy.pillars);
         setConflictData(null);
