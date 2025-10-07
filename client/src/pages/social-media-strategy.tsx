@@ -175,13 +175,33 @@ export default function SocialMediaStrategy() {
       
       // Process queued save if one exists
       if (queuedSaveRef.current) {
-        console.log('Processing queued save');
+        console.log('Processing queued save with server version:', savedStrategy.version);
         const queued = queuedSaveRef.current;
         queuedSaveRef.current = null;
         
-        // Use server's version for the queued save
+        // Save immediately with server's latest version (don't debounce)
         setTimeout(() => {
-          debouncedSave(queued.goals, queued.pillars, savedStrategy.version);
+          // Check if there's content to save
+          const hasContent = queued.goals.trim() || 
+                            queued.pillars.some(p => p.title.trim() || p.cta.trim());
+          
+          if (hasContent) {
+            // Increment and capture save request ID
+            saveRequestIdRef.current += 1;
+            const thisSaveId = saveRequestIdRef.current;
+            
+            // Increment pending save counter
+            pendingSaveCountRef.current += 1;
+            
+            setSaveStatus('saving');
+            
+            saveMutation.mutate({
+              version: savedStrategy.version,
+              contentGoals: queued.goals,
+              pillars: queued.pillars,
+              _saveId: thisSaveId
+            } as any);
+          }
         }, 0);
       }
     },
@@ -466,14 +486,20 @@ export default function SocialMediaStrategy() {
   };
 
   const removePillar = (id: string) => {
+    // Prevent delete if already processing a deletion
+    if (editingPillarField?.startsWith('deleting-')) {
+      console.log('Delete already in progress, ignoring');
+      return;
+    }
+    
     const newPillars = draftPillars.filter(pillar => pillar.id !== id);
     setDraftPillars(newPillars);
     // Set editing state to prevent server overwrites during conflict resolution
     setEditingPillarField(`deleting-${id}`);
     // Immediately flush the save with the removed pillar using latest version
     flushSave(draftContentGoals, newPillars, serverStrategyVersionRef.current);
-    // Clear editing state after a brief delay
-    setTimeout(() => setEditingPillarField(null), 100);
+    // Keep editing state longer to ensure save completes
+    setTimeout(() => setEditingPillarField(null), 500);
   };
 
   if (isLoading) {
