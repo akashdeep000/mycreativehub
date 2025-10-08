@@ -1882,13 +1882,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Transform old "title" format to new "name" format for backward compatibility
       if (strategy && Array.isArray(strategy.pillars)) {
-        strategy.pillars = strategy.pillars.map((pillar: any, index: number) => ({
-          id: pillar.id || pillar.title || `legacy-${Date.now()}-${index}`,
-          name: pillar.name || pillar.title || '',
-          description: pillar.description || '',
-          goals: pillar.goals || '',
-          cta: pillar.cta || ''
-        }));
+        strategy.pillars = strategy.pillars.map((pillar: any, index: number) => {
+          // Generate a stable ID if one doesn't exist
+          // Use index-based ID to ensure stability across requests
+          const stableId = pillar.id || `pillar-${index + 1}`;
+          
+          return {
+            id: stableId,
+            name: pillar.name || pillar.title || '',
+            description: pillar.description || '',
+            goals: pillar.goals || '',
+            cta: pillar.cta || ''
+          };
+        });
       } else if (strategy) {
         strategy.pillars = [];
       }
