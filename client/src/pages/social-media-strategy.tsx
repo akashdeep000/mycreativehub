@@ -73,6 +73,8 @@ export default function SocialMediaStrategy() {
   const latestCompletedSaveIdRef = useRef(0);
   const pendingSaveCountRef = useRef(0);
   const queuedSaveRef = useRef<{ goals: string; pillars: ContentPillar[]; version: number } | null>(null);
+  const retryCountRef = useRef(0);
+  const MAX_RETRIES = 3;
   
   const [conflictData, setConflictData] = useState<SocialMediaStrategy | null>(null);
   
@@ -124,6 +126,9 @@ export default function SocialMediaStrategy() {
       const thisSaveId = variables._saveId;
       
       console.log('Saved social media strategy ✓, new version:', savedStrategy.version, 'saveId:', thisSaveId);
+      
+      // Reset retry counter on successful save
+      retryCountRef.current = 0;
       
       // Only process this response if it's the most recent save request
       // This prevents stale responses from overwriting newer user edits
@@ -248,6 +253,9 @@ export default function SocialMediaStrategy() {
             // CRITICAL FIX: Update version ref to prevent retry loop
             serverStrategyVersionRef.current = freshStrategy.version;
             
+            // Reset retry counter on version conflict (it's a conflict, not a retry failure)
+            retryCountRef.current = 0;
+            
             // Update cache with fresh data
             queryClient.setQueryData(['/api/social-media-strategy'], freshStrategy);
             
@@ -281,16 +289,32 @@ export default function SocialMediaStrategy() {
         // Not a JSON error, fall through to generic error
       }
       
+      // Increment retry counter
+      retryCountRef.current += 1;
+      
+      // Check if we've exceeded max retries
+      if (retryCountRef.current >= MAX_RETRIES) {
+        console.log('Max retries exceeded, clearing queued save');
+        queuedSaveRef.current = null;
+        retryCountRef.current = 0;
+        toast({
+          title: "Save Failed",
+          description: "Unable to save after multiple attempts. Please refresh and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to save strategy. Please try again.",
+        description: "Failed to save strategy. Retrying...",
         variant: "destructive",
       });
       
       // Process queued save if one exists (even after error)
       // Use the latest version from ref, not the stale queued version
       if (queuedSaveRef.current) {
-        console.log('Processing queued save after error with latest version:', serverStrategyVersionRef.current);
+        console.log('Processing queued save after error (attempt', retryCountRef.current, 'of', MAX_RETRIES, ') with latest version:', serverStrategyVersionRef.current);
         const queued = queuedSaveRef.current;
         queuedSaveRef.current = null;
         
