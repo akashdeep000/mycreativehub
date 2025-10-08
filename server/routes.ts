@@ -1879,6 +1879,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const strategy = await storage.getSocialMediaStrategy(userId);
+      
+      // Transform old "title" format to new "name" format for backward compatibility
+      if (strategy && Array.isArray(strategy.pillars)) {
+        strategy.pillars = strategy.pillars.map((pillar: any, index: number) => ({
+          id: pillar.id || pillar.title || `legacy-${Date.now()}-${index}`,
+          name: pillar.name || pillar.title || '',
+          description: pillar.description || '',
+          goals: pillar.goals || '',
+          cta: pillar.cta || ''
+        }));
+      } else if (strategy) {
+        strategy.pillars = [];
+      }
+      
       res.json(strategy);
     } catch (error) {
       console.error("Error fetching social media strategy:", error);
