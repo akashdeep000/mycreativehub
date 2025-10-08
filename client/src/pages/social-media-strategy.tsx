@@ -72,6 +72,7 @@ export default function SocialMediaStrategy() {
       setSaveStatus('saving');
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/social-media-strategy'] });
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 1500);
     },
