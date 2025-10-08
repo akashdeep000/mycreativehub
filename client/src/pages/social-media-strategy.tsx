@@ -27,7 +27,7 @@ import {
 
 interface ContentPillar {
   id: string;
-  theme: string;
+  title: string;
   description: string;
   goals: string;
   cta: string;
@@ -48,7 +48,7 @@ export default function SocialMediaStrategy() {
   const [pillars, setPillars] = useState<ContentPillar[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
-    theme: "",
+    title: "",
     description: "",
     goals: "",
     cta: ""
@@ -122,7 +122,7 @@ export default function SocialMediaStrategy() {
 
   const handleOpenDialog = () => {
     setFormData({
-      theme: "",
+      title: "",
       description: "",
       goals: "",
       cta: ""
@@ -131,10 +131,10 @@ export default function SocialMediaStrategy() {
   };
 
   const handleSave = () => {
-    if (!formData.theme.trim()) {
+    if (!formData.title.trim()) {
       toast({
         title: "Validation Error",
-        description: "Please enter a content pillar theme",
+        description: "Please enter a content pillar title",
         variant: "destructive",
       });
       return;
@@ -142,7 +142,7 @@ export default function SocialMediaStrategy() {
 
     const newPillar: ContentPillar = {
       id: Date.now().toString(),
-      theme: formData.theme,
+      title: formData.title,
       description: formData.description,
       goals: formData.goals,
       cta: formData.cta
@@ -243,7 +243,7 @@ export default function SocialMediaStrategy() {
                         Content Pillar Theme
                       </p>
                       <p className="text-gray-900 dark:text-white font-medium">
-                        {pillar.theme}
+                        {pillar.title}
                       </p>
                     </div>
 
@@ -297,15 +297,15 @@ export default function SocialMediaStrategy() {
             
             <div className="space-y-4 py-4">
               <div>
-                <Label htmlFor="pillar-theme" className="text-gray-700 dark:text-gray-300">
+                <Label htmlFor="pillar-title" className="text-gray-700 dark:text-gray-300">
                   Content Pillar Theme
                 </Label>
                 <Input
-                  id="pillar-theme"
-                  data-testid="input-pillar-theme"
+                  id="pillar-title"
+                  data-testid="input-pillar-title"
                   placeholder="e.g., Education, Inspiration, Behind the Scenes"
-                  value={formData.theme}
-                  onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="mt-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                 />
               </div>
