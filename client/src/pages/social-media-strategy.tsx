@@ -245,6 +245,9 @@ export default function SocialMediaStrategy() {
             // Update server state with fresh data
             setServerStrategy(freshStrategy);
             
+            // CRITICAL FIX: Update version ref to prevent retry loop
+            serverStrategyVersionRef.current = freshStrategy.version;
+            
             // Update cache with fresh data
             queryClient.setQueryData(['/api/social-media-strategy'], freshStrategy);
             
@@ -267,6 +270,9 @@ export default function SocialMediaStrategy() {
               variant: "destructive",
               duration: 5000
             });
+            
+            // Clear queued save to prevent retry with stale version
+            queuedSaveRef.current = null;
           }
           
           return;
@@ -282,14 +288,15 @@ export default function SocialMediaStrategy() {
       });
       
       // Process queued save if one exists (even after error)
+      // Use the latest version from ref, not the stale queued version
       if (queuedSaveRef.current) {
-        console.log('Processing queued save after error');
+        console.log('Processing queued save after error with latest version:', serverStrategyVersionRef.current);
         const queued = queuedSaveRef.current;
         queuedSaveRef.current = null;
         
-        // Retry with queued data
+        // Retry with queued data but LATEST version from ref
         setTimeout(() => {
-          debouncedSave(queued.goals, queued.pillars, queued.version);
+          debouncedSave(queued.goals, queued.pillars, serverStrategyVersionRef.current);
         }, 0);
       }
     },
