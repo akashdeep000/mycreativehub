@@ -56,22 +56,13 @@ export default function SocialMediaStrategy() {
 
   const saveMutation = useMutation({
     mutationFn: async (strategyData: SocialMediaStrategy) => {
-      const response = await fetch('/api/social-media-strategy', {
+      return await apiRequest('/api/social-media-strategy', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify(strategyData),
-        credentials: 'include',
       });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to save: ${response.status} ${errorText}`);
-      }
-      
-      return response.json();
     },
     onMutate: () => {
       setSaveStatus('saving');
