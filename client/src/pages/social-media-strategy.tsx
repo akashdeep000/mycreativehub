@@ -488,7 +488,7 @@ export default function SocialMediaStrategy() {
     // Set editing state to prevent server response from causing flash
     setEditingPillarField(`${newId}-title`);
     // Immediately flush the save with the new pillar using latest version
-    flushSave(draftContentGoals, newPillars, serverStrategyVersionRef.current);
+    flushSave(draftContentGoalsRef.current, newPillars, serverStrategyVersionRef.current);
     // Auto-focus the new input after a brief delay (so it's rendered first)
     setTimeout(() => {
       const input = document.getElementById(`pillar-${newId}-title`);
@@ -508,7 +508,7 @@ export default function SocialMediaStrategy() {
     setDraftPillars(prevPillars => {
       const newPillars = prevPillars.filter(pillar => pillar.id !== id);
       setEditingPillarField(`deleting-${id}`);
-      flushSave(draftContentGoals, newPillars, serverStrategyVersionRef.current);
+      flushSave(draftContentGoalsRef.current, newPillars, serverStrategyVersionRef.current);
       setTimeout(() => setEditingPillarField(null), 1000);
       return newPillars;
     });
