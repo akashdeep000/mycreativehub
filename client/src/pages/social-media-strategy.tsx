@@ -107,7 +107,7 @@ export default function SocialMediaStrategy() {
   });
 
   useEffect(() => {
-    if (existingStrategy?.pillars) {
+    if (existingStrategy?.pillars !== undefined) {
       setPillars(existingStrategy.pillars);
     }
   }, [existingStrategy]);
