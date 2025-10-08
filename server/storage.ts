@@ -147,7 +147,6 @@ import {
   type InsertCheatSheetDoc,
   type CheatSheetDocData,
   type CheatSheetRow,
-  type CheatSheetRowFields,
   type CheatSheetDocPutBody,
 } from "@shared/schema";
 import { db } from "./db";
