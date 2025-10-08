@@ -237,42 +237,49 @@ export default function SocialMediaStrategy() {
                   data-testid={`card-pillar-${pillar.id}`}
                   className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-6"
                 >
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                    {pillar.theme}
-                  </h3>
-
-                  {pillar.description && (
-                    <div className="mb-4">
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                        Description
-                      </p>
-                      <p className="text-gray-700 dark:text-gray-300">
-                        {pillar.description}
-                      </p>
-                    </div>
-                  )}
-
-                  {pillar.goals && (
-                    <div className="mb-4">
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                        Content Pillar Goals
-                      </p>
-                      <p className="text-gray-700 dark:text-gray-300">
-                        {pillar.goals}
-                      </p>
-                    </div>
-                  )}
-
-                  {pillar.cta && (
+                  <div className="space-y-3">
                     <div>
                       <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                        Call-to-Action
+                        Content Pillar Theme
                       </p>
-                      <p className="text-gray-700 dark:text-gray-300">
-                        {pillar.cta}
+                      <p className="text-gray-900 dark:text-white font-medium">
+                        {pillar.theme}
                       </p>
                     </div>
-                  )}
+
+                    {pillar.description && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                          Description
+                        </p>
+                        <p className="text-gray-700 dark:text-gray-300">
+                          {pillar.description}
+                        </p>
+                      </div>
+                    )}
+
+                    {pillar.goals && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                          Content Pillar Goals
+                        </p>
+                        <p className="text-gray-700 dark:text-gray-300">
+                          {pillar.goals}
+                        </p>
+                      </div>
+                    )}
+
+                    {pillar.cta && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                          Call-to-Action
+                        </p>
+                        <p className="text-gray-700 dark:text-gray-300">
+                          {pillar.cta}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </Card>
               ))}
             </div>
