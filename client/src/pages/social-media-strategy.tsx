@@ -56,11 +56,15 @@ export default function SocialMediaStrategy() {
 
   const saveMutation = useMutation({
     mutationFn: async (strategyData: SocialMediaStrategy) => {
+      console.log("🔵 MUTATION FUNCTION CALLED with data:", strategyData);
+      
       const response = await apiRequest('/api/social-media-strategy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(strategyData),
       });
+      
+      console.log("🟢 MUTATION RESPONSE received:", response.status);
       
       if (!response.ok) {
         throw new Error('Failed to save strategy');
@@ -68,15 +72,18 @@ export default function SocialMediaStrategy() {
       
       return response.json();
     },
-    onMutate: () => {
+    onMutate: (data) => {
+      console.log("🟡 onMutate triggered with:", data);
       setSaveStatus('saving');
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("🟢 onSuccess triggered with:", data);
       queryClient.invalidateQueries({ queryKey: ['/api/social-media-strategy'] });
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 1500);
     },
     onError: (error: any) => {
+      console.log("🔴 onError triggered:", error);
       setSaveStatus('idle');
       
       if (isUnauthorizedError(error)) {
@@ -112,8 +119,13 @@ export default function SocialMediaStrategy() {
   }, [existingStrategy, hasLoadedInitialData]);
 
   const saveStrategy = (newGoals: string, newPillars: ContentPillar[]) => {
-    if (!user) return;
+    console.log("💾 saveStrategy called with:", { newGoals, newPillars, userExists: !!user });
+    if (!user) {
+      console.log("❌ No user, not saving");
+      return;
+    }
     
+    console.log("✅ Calling saveMutation.mutate()");
     saveMutation.mutate({
       contentGoals: newGoals,
       pillars: newPillars
