@@ -74,6 +74,7 @@ export default function SocialMediaStrategy() {
   const pendingSaveCountRef = useRef(0);
   const queuedSaveRef = useRef<{ goals: string; pillars: ContentPillar[]; version: number } | null>(null);
   const retryCountRef = useRef(0);
+  const lastAttemptedPayloadRef = useRef<{ goals: string; pillars: ContentPillar[]; version: number } | null>(null);
   const MAX_RETRIES = 3;
   
   const [conflictData, setConflictData] = useState<SocialMediaStrategy | null>(null);
@@ -129,6 +130,9 @@ export default function SocialMediaStrategy() {
       
       // Reset retry counter on successful save
       retryCountRef.current = 0;
+      
+      // Clear stored payload on successful save
+      lastAttemptedPayloadRef.current = null;
       
       // Only process this response if it's the most recent save request
       // This prevents stale responses from overwriting newer user edits
@@ -294,8 +298,9 @@ export default function SocialMediaStrategy() {
       
       // Check if we've exceeded max retries
       if (retryCountRef.current >= MAX_RETRIES) {
-        console.log('Max retries exceeded, clearing queued save');
+        console.log('Max retries exceeded, clearing all pending saves');
         queuedSaveRef.current = null;
+        lastAttemptedPayloadRef.current = null;
         retryCountRef.current = 0;
         toast({
           title: "Save Failed",
@@ -311,9 +316,17 @@ export default function SocialMediaStrategy() {
         variant: "destructive",
       });
       
-      // Process queued save if one exists (even after error)
-      // Use the latest version from ref, not the stale queued version
-      if (queuedSaveRef.current) {
+      // Retry the last attempted payload if it exists
+      if (lastAttemptedPayloadRef.current) {
+        console.log('Retrying failed save (attempt', retryCountRef.current, 'of', MAX_RETRIES, ') with latest version:', serverStrategyVersionRef.current);
+        const payload = lastAttemptedPayloadRef.current;
+        
+        // Retry with stored payload but LATEST version from ref
+        setTimeout(() => {
+          debouncedSave(payload.goals, payload.pillars, serverStrategyVersionRef.current);
+        }, 500); // Add small delay for retry
+      } else if (queuedSaveRef.current) {
+        // Fallback to queued save if no last attempted payload
         console.log('Processing queued save after error (attempt', retryCountRef.current, 'of', MAX_RETRIES, ') with latest version:', serverStrategyVersionRef.current);
         const queued = queuedSaveRef.current;
         queuedSaveRef.current = null;
@@ -321,7 +334,7 @@ export default function SocialMediaStrategy() {
         // Retry with queued data but LATEST version from ref
         setTimeout(() => {
           debouncedSave(queued.goals, queued.pillars, serverStrategyVersionRef.current);
-        }, 0);
+        }, 500);
       }
     },
   });
@@ -387,6 +400,9 @@ export default function SocialMediaStrategy() {
     
     if (hasContent) {
       console.log('Saving strategy with goals:', goals.substring(0, 50), 'pillars:', pillars.length);
+      
+      // Store payload for retry on error
+      lastAttemptedPayloadRef.current = { goals, pillars, version };
       
       // Increment and capture save request ID
       saveRequestIdRef.current += 1;
