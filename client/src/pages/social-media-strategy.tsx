@@ -41,9 +41,7 @@ export default function SocialMediaStrategy() {
   
   const [contentGoals, setContentGoals] = useState("");
   const [pillars, setPillars] = useState<ContentPillar[]>([
-    { id: "1", name: "", description: "", goals: "", cta: "" },
-    { id: "2", name: "", description: "", goals: "", cta: "" },
-    { id: "3", name: "", description: "", goals: "", cta: "" }
+    { id: "1", name: "", description: "", goals: "", cta: "" }
   ]);
   
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -99,9 +97,7 @@ export default function SocialMediaStrategy() {
     if (existingStrategy && !hasLoadedInitialData) {
       setContentGoals(existingStrategy.contentGoals || "");
       setPillars(existingStrategy.pillars || [
-        { id: "1", name: "", description: "", goals: "", cta: "" },
-        { id: "2", name: "", description: "", goals: "", cta: "" },
-        { id: "3", name: "", description: "", goals: "", cta: "" }
+        { id: "1", name: "", description: "", goals: "", cta: "" }
       ]);
       setHasLoadedInitialData(true);
     }
