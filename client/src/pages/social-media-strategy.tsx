@@ -446,7 +446,7 @@ export default function SocialMediaStrategy() {
   const handleGoalsBlur = () => {
     console.log('Blur event (goals) - flushing pending save with current state');
     // Flush with current state to ensure latest value is saved
-    flushSave(draftContentGoals, draftPillars, serverStrategyVersionRef.current);
+    flushSave(draftContentGoalsRef.current, draftPillarsRef.current, serverStrategyVersionRef.current);
     // Clear editing state after a brief delay to allow save to complete
     setTimeout(() => setIsEditingGoals(false), 50);
   };
@@ -467,7 +467,7 @@ export default function SocialMediaStrategy() {
   const handlePillarBlur = (e: React.FocusEvent) => {
     console.log('Blur event (pillar) - flushing pending save with current state');
     // Flush with current state to ensure latest value is saved
-    flushSave(draftContentGoals, draftPillars, serverStrategyVersionRef.current);
+    flushSave(draftContentGoalsRef.current, draftPillarsRef.current, serverStrategyVersionRef.current);
     
     // Only clear editing state if not moving to another pillar input
     // Check if the new focused element is also a pillar input
