@@ -56,37 +56,35 @@ export default function SocialMediaStrategy() {
 
   const saveMutation = useMutation({
     mutationFn: async (strategyData: SocialMediaStrategy) => {
-      console.log("🔵 MUTATION FUNCTION CALLED with data:", strategyData);
-      
-      const response = await apiRequest('/api/social-media-strategy', {
+      const response = await fetch('/api/social-media-strategy', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify(strategyData),
+        credentials: 'include',
       });
       
-      console.log("🟢 MUTATION RESPONSE received:", response.status);
-      
       if (!response.ok) {
-        throw new Error('Failed to save strategy');
+        const errorText = await response.text();
+        throw new Error(`Failed to save: ${response.status} ${errorText}`);
       }
       
       return response.json();
     },
-    onMutate: (data) => {
-      console.log("🟡 onMutate triggered with:", data);
+    onMutate: () => {
       setSaveStatus('saving');
     },
-    onSuccess: (data) => {
-      console.log("🟢 onSuccess triggered with:", data);
-      queryClient.invalidateQueries({ queryKey: ['/api/social-media-strategy'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['/api/social-media-strategy'] });
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 1500);
     },
     onError: (error: any) => {
-      console.log("🔴 onError triggered:", error);
       setSaveStatus('idle');
       
-      if (isUnauthorizedError(error)) {
+      if (error.message?.includes('401') || error.message?.includes('403')) {
         toast({
           title: "Session expired",
           description: "Please log in again",
