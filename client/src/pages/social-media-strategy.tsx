@@ -1,8 +1,19 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Target,
   ArrowLeft,
@@ -13,6 +24,13 @@ import {
 export default function SocialMediaStrategy() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    theme: "",
+    description: "",
+    goals: "",
+    cta: ""
+  });
 
   if (!user) {
     return (
@@ -26,6 +44,22 @@ export default function SocialMediaStrategy() {
       </div>
     );
   }
+
+  const handleOpenDialog = () => {
+    setFormData({
+      theme: "",
+      description: "",
+      goals: "",
+      cta: ""
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleSave = () => {
+    // TODO: Save functionality will be added next
+    console.log("Form data:", formData);
+    setIsDialogOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -80,12 +114,102 @@ export default function SocialMediaStrategy() {
           </div>
           <Button
             data-testid="button-add-new-pillar"
+            onClick={handleOpenDialog}
             className="bg-pink-500 hover:bg-pink-600 text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add New Content Pillar
           </Button>
         </div>
+
+        {/* Add Content Pillar Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-[500px] bg-white dark:bg-gray-800">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900 dark:text-white">
+                Add New Content Pillar
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="pillar-theme" className="text-gray-700 dark:text-gray-300">
+                  Content Pillar Theme
+                </Label>
+                <Input
+                  id="pillar-theme"
+                  data-testid="input-pillar-theme"
+                  placeholder="e.g., Education, Inspiration, Behind the Scenes"
+                  value={formData.theme}
+                  onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
+                  className="mt-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="pillar-description" className="text-gray-700 dark:text-gray-300">
+                  Description
+                </Label>
+                <Textarea
+                  id="pillar-description"
+                  data-testid="textarea-pillar-description"
+                  placeholder="What is this pillar about?"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                  className="mt-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="pillar-goals" className="text-gray-700 dark:text-gray-300">
+                  Content Pillar Goals
+                </Label>
+                <Textarea
+                  id="pillar-goals"
+                  data-testid="textarea-pillar-goals"
+                  placeholder="What do you want to achieve with this pillar?"
+                  value={formData.goals}
+                  onChange={(e) => setFormData({ ...formData, goals: e.target.value })}
+                  rows={3}
+                  className="mt-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="pillar-cta" className="text-gray-700 dark:text-gray-300">
+                  Call-to-Action
+                </Label>
+                <Input
+                  id="pillar-cta"
+                  data-testid="input-pillar-cta"
+                  placeholder="What action do you want people to take?"
+                  value={formData.cta}
+                  onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
+                  className="mt-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                data-testid="button-cancel"
+                onClick={() => setIsDialogOpen(false)}
+                variant="outline"
+                className="border-gray-300 dark:border-gray-600"
+              >
+                Cancel
+              </Button>
+              <Button
+                data-testid="button-save"
+                onClick={handleSave}
+                className="bg-pink-500 hover:bg-pink-600 text-white"
+              >
+                Save Pillar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
