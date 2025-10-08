@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
@@ -30,8 +33,17 @@ interface ContentPillar {
   cta: string;
 }
 
+interface SocialMediaStrategy {
+  id?: number;
+  userId?: string;
+  contentGoals?: string;
+  pillars: ContentPillar[];
+  updatedAt?: string;
+}
+
 export default function SocialMediaStrategy() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [pillars, setPillars] = useState<ContentPillar[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -42,6 +54,46 @@ export default function SocialMediaStrategy() {
     cta: ""
   });
 
+  const { data: existingStrategy, isLoading } = useQuery<SocialMediaStrategy>({
+    queryKey: ['/api/social-media-strategy'],
+    enabled: !!user,
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (newPillars: ContentPillar[]) => {
+      return await apiRequest('/api/social-media-strategy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contentGoals: existingStrategy?.contentGoals || "",
+          pillars: newPillars
+        }),
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['/api/social-media-strategy'] });
+      toast({
+        title: "Saved",
+        description: "Your content pillar has been saved successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Save failed",
+        description: "Unable to save your changes. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (existingStrategy?.pillars !== undefined) {
+      setPillars(existingStrategy.pillars);
+    }
+  }, [existingStrategy]);
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -49,6 +101,19 @@ export default function SocialMediaStrategy() {
         <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8">
           <div className="flex items-center justify-center h-64">
             <div className="text-gray-500 dark:text-gray-400">Please log in to view your strategy.</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Sidebar />
+        <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-gray-500 dark:text-gray-400">Loading your strategy...</div>
           </div>
         </div>
       </div>
@@ -67,6 +132,11 @@ export default function SocialMediaStrategy() {
 
   const handleSave = () => {
     if (!formData.theme.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a content pillar theme",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -78,7 +148,9 @@ export default function SocialMediaStrategy() {
       cta: formData.cta
     };
 
-    setPillars([...pillars, newPillar]);
+    const newPillars = [...pillars, newPillar];
+    setPillars(newPillars);
+    saveMutation.mutate(newPillars);
     setIsDialogOpen(false);
   };
 
@@ -288,9 +360,10 @@ export default function SocialMediaStrategy() {
               <Button
                 data-testid="button-save"
                 onClick={handleSave}
+                disabled={saveMutation.isPending}
                 className="bg-pink-500 hover:bg-pink-600 text-white"
               >
-                Save Pillar
+                {saveMutation.isPending ? "Saving..." : "Save Pillar"}
               </Button>
             </DialogFooter>
           </DialogContent>
