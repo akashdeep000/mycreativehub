@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -21,9 +22,18 @@ import {
   Plus
 } from "lucide-react";
 
+interface ContentPillar {
+  id: string;
+  theme: string;
+  description: string;
+  goals: string;
+  cta: string;
+}
+
 export default function SocialMediaStrategy() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const [pillars, setPillars] = useState<ContentPillar[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     theme: "",
@@ -56,8 +66,19 @@ export default function SocialMediaStrategy() {
   };
 
   const handleSave = () => {
-    // TODO: Save functionality will be added next
-    console.log("Form data:", formData);
+    if (!formData.theme.trim()) {
+      return;
+    }
+
+    const newPillar: ContentPillar = {
+      id: Date.now().toString(),
+      theme: formData.theme,
+      description: formData.description,
+      goals: formData.goals,
+      cta: formData.cta
+    };
+
+    setPillars([...pillars, newPillar]);
     setIsDialogOpen(false);
   };
 
@@ -101,26 +122,90 @@ export default function SocialMediaStrategy() {
           </p>
         </div>
 
-        {/* Add New Content Pillar Button */}
-        <div className="flex flex-col items-center justify-center py-16">
-          <div className="text-center mb-6">
-            <Target className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No Content Pillars Yet
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400">
-              Get started by adding your first content pillar
-            </p>
+        {/* Content Area */}
+        {pillars.length === 0 ? (
+          // Empty State
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="text-center mb-6">
+              <Target className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                No Content Pillars Yet
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400">
+                Get started by adding your first content pillar
+              </p>
+            </div>
+            <Button
+              data-testid="button-add-new-pillar"
+              onClick={handleOpenDialog}
+              className="bg-pink-500 hover:bg-pink-600 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add New Content Pillar
+            </Button>
           </div>
-          <Button
-            data-testid="button-add-new-pillar"
-            onClick={handleOpenDialog}
-            className="bg-pink-500 hover:bg-pink-600 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add New Content Pillar
-          </Button>
-        </div>
+        ) : (
+          // Pillars Display
+          <>
+            <div className="flex justify-end mb-6">
+              <Button
+                data-testid="button-add-pillar"
+                onClick={handleOpenDialog}
+                className="bg-pink-500 hover:bg-pink-600 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add New Content Pillar
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6">
+              {pillars.map((pillar) => (
+                <Card 
+                  key={pillar.id}
+                  data-testid={`card-pillar-${pillar.id}`}
+                  className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-6"
+                >
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                    {pillar.theme}
+                  </h3>
+
+                  {pillar.description && (
+                    <div className="mb-4">
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        Description
+                      </p>
+                      <p className="text-gray-700 dark:text-gray-300">
+                        {pillar.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {pillar.goals && (
+                    <div className="mb-4">
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        Content Pillar Goals
+                      </p>
+                      <p className="text-gray-700 dark:text-gray-300">
+                        {pillar.goals}
+                      </p>
+                    </div>
+                  )}
+
+                  {pillar.cta && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        Call-to-Action
+                      </p>
+                      <p className="text-gray-700 dark:text-gray-300">
+                        {pillar.cta}
+                      </p>
+                    </div>
+                  )}
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Add Content Pillar Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
