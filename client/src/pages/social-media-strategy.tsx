@@ -480,17 +480,11 @@ export default function SocialMediaStrategy() {
       return;
     }
     
-    // Use functional setState to get current pillars, then update state separately
     setDraftPillars(prevPillars => {
       const newPillars = prevPillars.filter(pillar => pillar.id !== id);
-      
-      // Schedule state updates and save outside of this setState
-      setTimeout(() => {
-        setEditingPillarField(`deleting-${id}`);
-        flushSave(draftContentGoals, newPillars, serverStrategyVersionRef.current);
-        setTimeout(() => setEditingPillarField(null), 1000);
-      }, 0);
-      
+      setEditingPillarField(`deleting-${id}`);
+      flushSave(draftContentGoals, newPillars, serverStrategyVersionRef.current);
+      setTimeout(() => setEditingPillarField(null), 1000);
       return newPillars;
     });
   };
