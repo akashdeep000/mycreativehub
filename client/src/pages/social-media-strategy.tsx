@@ -47,6 +47,7 @@ export default function SocialMediaStrategy() {
   ]);
   
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
 
   const { data: existingStrategy, isLoading } = useQuery<SocialMediaStrategy>({
     queryKey: ['/api/social-media-strategy'],
@@ -70,8 +71,7 @@ export default function SocialMediaStrategy() {
     onMutate: () => {
       setSaveStatus('saving');
     },
-    onSuccess: (savedStrategy: SocialMediaStrategy) => {
-      queryClient.setQueryData(['/api/social-media-strategy'], savedStrategy);
+    onSuccess: () => {
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 1500);
     },
@@ -99,15 +99,16 @@ export default function SocialMediaStrategy() {
   });
 
   useEffect(() => {
-    if (existingStrategy) {
+    if (existingStrategy && !hasLoadedInitialData) {
       setContentGoals(existingStrategy.contentGoals || "");
       setPillars(existingStrategy.pillars || [
         { id: "1", name: "", description: "", goals: "", cta: "" },
         { id: "2", name: "", description: "", goals: "", cta: "" },
         { id: "3", name: "", description: "", goals: "", cta: "" }
       ]);
+      setHasLoadedInitialData(true);
     }
-  }, [existingStrategy]);
+  }, [existingStrategy, hasLoadedInitialData]);
 
   const saveStrategy = (newGoals: string, newPillars: ContentPillar[]) => {
     if (!user) return;
