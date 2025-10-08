@@ -42,9 +42,6 @@ export default function SocialMediaStrategy() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   
-  // Save status for user feedback
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  
   // Track if we've loaded initial data
   const hasLoadedInitialData = useRef(false);
   
@@ -170,9 +167,6 @@ export default function SocialMediaStrategy() {
       // Invalidate cache to ensure fresh data on next fetch
       queryClient.invalidateQueries({ queryKey: ['/api/social-media-strategy'] });
       
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-      
       // Process queued save if one exists
       if (queuedSaveRef.current) {
         console.log('Processing queued save with server version:', savedStrategy.version);
@@ -193,8 +187,6 @@ export default function SocialMediaStrategy() {
             // Increment pending save counter
             pendingSaveCountRef.current += 1;
             
-            setSaveStatus('saving');
-            
             saveMutation.mutate({
               version: savedStrategy.version,
               contentGoals: queued.goals,
@@ -208,8 +200,6 @@ export default function SocialMediaStrategy() {
     onError: async (error: any) => {
       // Decrement pending save counter
       pendingSaveCountRef.current = Math.max(0, pendingSaveCountRef.current - 1);
-      
-      setSaveStatus('idle');
       
       if (isUnauthorizedError(error)) {
         toast({
@@ -359,8 +349,6 @@ export default function SocialMediaStrategy() {
       
       // Increment pending save counter
       pendingSaveCountRef.current += 1;
-      
-      setSaveStatus('saving');
       
       saveMutation.mutate({
         version: version,
@@ -575,20 +563,9 @@ export default function SocialMediaStrategy() {
           {/* Content Goals Section */}
           <Card className="shadow-md border-0 bg-white">
             <CardHeader>
-              <CardTitle className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Smartphone className="w-5 h-5 text-orange-500" />
-                  Content Goals
-                </div>
-                {/* Save indicator next to title */}
-                <div className="text-sm">
-                  {saveStatus === 'saving' && (
-                    <span className="text-gray-500">Saving...</span>
-                  )}
-                  {saveStatus === 'saved' && (
-                    <span className="text-green-600">✓ Saved</span>
-                  )}
-                </div>
+              <CardTitle className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-orange-500" />
+                Content Goals
               </CardTitle>
             </CardHeader>
             <CardContent>
