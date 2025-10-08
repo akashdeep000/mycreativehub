@@ -22,7 +22,9 @@ import {
   Target,
   ArrowLeft,
   Home,
-  Plus
+  Plus,
+  Pencil,
+  Trash2
 } from "lucide-react";
 
 interface ContentPillar {
@@ -237,48 +239,55 @@ export default function SocialMediaStrategy() {
                   data-testid={`card-pillar-${pillar.id}`}
                   className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-6"
                 >
+                  {/* Title with action icons */}
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {pillar.title}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <button
+                        data-testid={`button-edit-${pillar.id}`}
+                        className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        data-testid={`button-delete-${pillar.id}`}
+                        className="p-1.5 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Compact field display */}
                   <div className="space-y-3">
                     <div>
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                        Content Pillar Theme
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Description
                       </p>
-                      <p className="text-gray-900 dark:text-white font-medium">
-                        {pillar.title}
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {pillar.description || 'No description recorded'}
                       </p>
                     </div>
 
-                    {pillar.description && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                          Description
-                        </p>
-                        <p className="text-gray-700 dark:text-gray-300">
-                          {pillar.description}
-                        </p>
-                      </div>
-                    )}
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Content Pillar Goals
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {pillar.goals || 'No goals recorded'}
+                      </p>
+                    </div>
 
-                    {pillar.goals && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                          Content Pillar Goals
-                        </p>
-                        <p className="text-gray-700 dark:text-gray-300">
-                          {pillar.goals}
-                        </p>
-                      </div>
-                    )}
-
-                    {pillar.cta && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                          Call-to-Action
-                        </p>
-                        <p className="text-gray-700 dark:text-gray-300">
-                          {pillar.cta}
-                        </p>
-                      </div>
-                    )}
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Call-to-Action
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {pillar.cta || 'No call-to-action recorded'}
+                      </p>
+                    </div>
                   </div>
                 </Card>
               ))}
