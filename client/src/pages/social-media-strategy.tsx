@@ -142,6 +142,10 @@ export default function SocialMediaStrategy() {
       // Update server state (source of truth)
       setServerStrategy(savedStrategy);
       
+      // IMPORTANT: Update version ref directly from save response
+      // This ensures queued saves use the correct version
+      serverStrategyVersionRef.current = savedStrategy.version;
+      
       // Decrement pending save counter
       pendingSaveCountRef.current = Math.max(0, pendingSaveCountRef.current - 1);
       
@@ -368,7 +372,11 @@ export default function SocialMediaStrategy() {
   useEffect(() => {
     draftContentGoalsRef.current = draftContentGoals;
     draftPillarsRef.current = draftPillars;
-    serverStrategyVersionRef.current = serverStrategy.version;
+    // Only update version ref from query data when NO saves are pending
+    // This prevents version conflicts during rapid edits
+    if (pendingSaveCountRef.current === 0) {
+      serverStrategyVersionRef.current = serverStrategy.version;
+    }
   });
 
   // Flush pending saves on unmount or visibility change
