@@ -481,8 +481,8 @@ export default function SocialMediaStrategy() {
     setEditingPillarField(`${newId}-title`);
     // Immediately flush the save with the new pillar using latest version
     flushSave(draftContentGoals, newPillars, serverStrategyVersionRef.current);
-    // Clear editing state after a brief delay
-    setTimeout(() => setEditingPillarField(null), 100);
+    // Keep editing state long enough for save to complete (1 second)
+    setTimeout(() => setEditingPillarField(null), 1000);
   };
 
   const removePillar = (id: string) => {
@@ -498,8 +498,8 @@ export default function SocialMediaStrategy() {
     setEditingPillarField(`deleting-${id}`);
     // Immediately flush the save with the removed pillar using latest version
     flushSave(draftContentGoals, newPillars, serverStrategyVersionRef.current);
-    // Keep editing state longer to ensure save completes
-    setTimeout(() => setEditingPillarField(null), 500);
+    // Keep editing state long enough for save to complete (1 second)
+    setTimeout(() => setEditingPillarField(null), 1000);
   };
 
   if (isLoading) {

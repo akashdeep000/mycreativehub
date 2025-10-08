@@ -1156,18 +1156,18 @@ export class DatabaseStorage implements IStorage {
   async upsertSocialMediaStrategy(strategyData: InsertSocialMediaStrategy & { version?: number }): Promise<SocialMediaStrategy> {
     const { version: clientVersion, ...dataWithoutVersion} = strategyData;
     
+    // Fetch existing data once to avoid race conditions
+    const existing = await this.getSocialMediaStrategy(strategyData.userId!);
+    
     // If version is provided, check for conflicts
     if (clientVersion !== undefined) {
-      const existing = await this.getSocialMediaStrategy(strategyData.userId!);
-      
       if (existing && existing.version !== clientVersion) {
         // Version conflict - throw special error
         throw new Error(`VERSION_CONFLICT:${existing.version}`);
       }
     }
     
-    // Calculate new version
-    const existing = await this.getSocialMediaStrategy(strategyData.userId!);
+    // Calculate new version using the same fetch result
     const newVersion = existing ? existing.version + 1 : 1;
     
     // Use atomic upsert with version increment
