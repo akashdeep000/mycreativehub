@@ -291,7 +291,7 @@ export const socialMediaStrategies = pgTable("social_media_strategies", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
   contentGoals: text("content_goals"),
-  pillars: jsonb("pillars").notNull(), // Array of { id: string, title: string, description: string, goals: string, cta: string }
+  pillars: jsonb("pillars").notNull(), // Array of { id: string, name: string, description: string, goals: string, cta: string }
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
