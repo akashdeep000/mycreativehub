@@ -78,7 +78,7 @@ export default function SocialMediaStrategy() {
     },
     onSuccess: async (response) => {
       const updatedStrategy = await response.json();
-      queryClient.setQueryData(['/api/social-media-strategy'], updatedStrategy);
+      await queryClient.invalidateQueries({ queryKey: ['/api/social-media-strategy'] });
       toast({
         title: "Saved",
         description: "Your content pillar has been saved successfully.",
