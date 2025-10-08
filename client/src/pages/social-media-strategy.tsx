@@ -485,8 +485,17 @@ export default function SocialMediaStrategy() {
     const newId = Date.now().toString();
     const newPillars = [...draftPillars, { id: newId, title: "", cta: "" }];
     setDraftPillars(newPillars);
+    // Set editing state to prevent server response from causing flash
+    setEditingPillarField(`${newId}-title`);
     // Immediately flush the save with the new pillar using latest version
     flushSave(draftContentGoals, newPillars, serverStrategyVersionRef.current);
+    // Auto-focus the new input after a brief delay (so it's rendered first)
+    setTimeout(() => {
+      const input = document.getElementById(`pillar-${newId}-title`);
+      if (input) {
+        input.focus();
+      }
+    }, 100);
   };
 
   const removePillar = (id: string) => {
