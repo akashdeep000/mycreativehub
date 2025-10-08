@@ -480,14 +480,17 @@ export default function SocialMediaStrategy() {
       return;
     }
     
-    const newPillars = draftPillars.filter(pillar => pillar.id !== id);
-    setDraftPillars(newPillars);
-    // Set editing state to prevent server overwrites during conflict resolution
-    setEditingPillarField(`deleting-${id}`);
-    // Immediately flush the save with the removed pillar using latest version
-    flushSave(draftContentGoals, newPillars, serverStrategyVersionRef.current);
-    // Keep editing state long enough for save to complete (1 second)
-    setTimeout(() => setEditingPillarField(null), 1000);
+    // Use functional setState to ensure we're working with current state
+    setDraftPillars(prevPillars => {
+      const newPillars = prevPillars.filter(pillar => pillar.id !== id);
+      // Set editing state to prevent server overwrites during conflict resolution
+      setEditingPillarField(`deleting-${id}`);
+      // Immediately flush the save with the removed pillar using latest version
+      flushSave(draftContentGoals, newPillars, serverStrategyVersionRef.current);
+      // Keep editing state long enough for save to complete (1 second)
+      setTimeout(() => setEditingPillarField(null), 1000);
+      return newPillars;
+    });
   };
 
   if (isLoading) {
