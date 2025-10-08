@@ -480,15 +480,17 @@ export default function SocialMediaStrategy() {
       return;
     }
     
-    // Use functional setState to ensure we're working with current state
+    // Use functional setState to get current pillars, then update state separately
     setDraftPillars(prevPillars => {
       const newPillars = prevPillars.filter(pillar => pillar.id !== id);
-      // Set editing state to prevent server overwrites during conflict resolution
-      setEditingPillarField(`deleting-${id}`);
-      // Immediately flush the save with the removed pillar using latest version
-      flushSave(draftContentGoals, newPillars, serverStrategyVersionRef.current);
-      // Keep editing state long enough for save to complete (1 second)
-      setTimeout(() => setEditingPillarField(null), 1000);
+      
+      // Schedule state updates and save outside of this setState
+      setTimeout(() => {
+        setEditingPillarField(`deleting-${id}`);
+        flushSave(draftContentGoals, newPillars, serverStrategyVersionRef.current);
+        setTimeout(() => setEditingPillarField(null), 1000);
+      }, 0);
+      
       return newPillars;
     });
   };
