@@ -178,7 +178,7 @@ export default function SocialMediaStrategy() {
         <div className="flex items-center gap-3 mb-6">
           <Button
             data-testid="button-back"
-            onClick={() => window.history.back()}
+            onClick={() => setLocation('/content')}
             variant="outline"
             size="sm"
             className="border-gray-300 dark:border-gray-600"
@@ -188,7 +188,7 @@ export default function SocialMediaStrategy() {
           </Button>
           <Button
             data-testid="button-dashboard"
-            onClick={() => setLocation('/dashboard')}
+            onClick={() => setLocation('/')}
             variant="outline"
             size="sm"
             className="border-gray-300 dark:border-gray-600"
