@@ -156,6 +156,16 @@ export default function SocialMediaStrategy() {
     setIsDialogOpen(false);
   };
 
+  const handleDelete = (pillarId: string) => {
+    const updatedPillars = pillars.filter(p => p.id !== pillarId);
+    setPillars(updatedPillars);
+    saveMutation.mutate(updatedPillars);
+    toast({
+      title: "Deleted",
+      description: "Content pillar has been deleted.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
@@ -253,6 +263,7 @@ export default function SocialMediaStrategy() {
                       </button>
                       <button
                         data-testid={`button-delete-${pillar.id}`}
+                        onClick={() => handleDelete(pillar.id)}
                         className="p-1.5 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
                       >
                         <Trash2 className="w-4 h-4" />
