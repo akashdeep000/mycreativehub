@@ -217,10 +217,10 @@ export default function SocialMediaStrategy() {
         return;
       }
       
-      // Check for version conflict
+      // Check for version conflict (409 response)
       try {
         const errorData = JSON.parse(error.message);
-        if (errorData.type === 'conflict') {
+        if (errorData.message && errorData.message.includes('Version conflict')) {
           console.log('Version conflict detected, refetching latest data...');
           
           // Refetch the latest data from server
@@ -234,6 +234,10 @@ export default function SocialMediaStrategy() {
             
             // Update server state with fresh data
             setServerStrategy(freshStrategy);
+            
+            // CRITICAL: Update version ref on conflict resolution
+            // This must happen even if saves are pending to break the conflict loop
+            serverStrategyVersionRef.current = freshStrategy.version;
             
             // Update cache with fresh data
             queryClient.setQueryData(['/api/social-media-strategy'], freshStrategy);
