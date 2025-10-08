@@ -1910,12 +1910,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const userId = req.user.id;
     const { contentGoals, pillars } = req.body;
     
+    console.log("=== SAVING SOCIAL MEDIA STRATEGY ===");
+    console.log("UserId:", userId);
+    console.log("Content Goals:", contentGoals);
+    console.log("Pillars received:", JSON.stringify(pillars, null, 2));
+    
     try {
       const strategy = await storage.upsertSocialMediaStrategy({
         userId,
         contentGoals,
         pillars
       });
+      
+      console.log("Strategy saved successfully");
+      console.log("Saved pillars:", JSON.stringify(strategy.pillars, null, 2));
       
       res.json(strategy);
     } catch (error: any) {
