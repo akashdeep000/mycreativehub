@@ -75,6 +75,9 @@ export default function SocialMediaStrategy() {
   const queuedSaveRef = useRef<{ goals: string; pillars: ContentPillar[]; version: number } | null>(null);
   
   const [conflictData, setConflictData] = useState<SocialMediaStrategy | null>(null);
+  
+  // Save status for user feedback
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   // Fetch existing strategy - always fetch fresh data on mount
   const { data: existingStrategy, isLoading } = useQuery<SocialMediaStrategy>({
@@ -89,6 +92,7 @@ export default function SocialMediaStrategy() {
   // Save strategy mutation with conflict handling
   const saveMutation = useMutation({
     mutationFn: async (strategyData: SocialMediaStrategy): Promise<SocialMediaStrategy> => {
+      setSaveStatus('saving');
       console.log('Saving social media strategy:', {
         version: strategyData.version,
         hasContentGoals: !!strategyData.contentGoals,
@@ -200,8 +204,15 @@ export default function SocialMediaStrategy() {
           }
         }, 0);
       }
+      
+      // Update save status to show "Saved ✓"
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
     },
     onError: async (error: any) => {
+      // Reset save status on error
+      setSaveStatus('idle');
+      
       // Decrement pending save counter
       pendingSaveCountRef.current = Math.max(0, pendingSaveCountRef.current - 1);
       
@@ -361,7 +372,7 @@ export default function SocialMediaStrategy() {
         _saveId: thisSaveId // Pass save ID through mutation context
       } as any);
     }
-  }, 500);
+  }, 1000); // Increased from 500ms to match Calendar/Cheat Sheet pattern
 
   // Refs to hold latest state for stable event listeners
   const draftContentGoalsRef = useRef(draftContentGoals);
@@ -590,6 +601,28 @@ export default function SocialMediaStrategy() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Save Status Indicator */}
+        {saveStatus !== 'idle' && (
+          <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg px-4 py-2 border border-gray-200 flex items-center gap-2 z-50">
+            {saveStatus === 'saving' && (
+              <>
+                <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm text-gray-600">Saving...</span>
+              </>
+            )}
+            {saveStatus === 'saved' && (
+              <>
+                <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span className="text-sm text-green-600">Saved ✓</span>
+              </>
+            )}
+          </div>
+        )}
 
         <div className="max-w-4xl space-y-8">
           {/* Content Goals Section */}
