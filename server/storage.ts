@@ -1153,15 +1153,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertSocialMediaStrategy(strategyData: InsertSocialMediaStrategy): Promise<SocialMediaStrategy> {
-    // Simple upsert - no version checking, no conflicts
     const [strategy] = await db
       .insert(socialMediaStrategies)
-      .values(strategyData)
+      .values({
+        ...strategyData,
+        pillars: sql`${JSON.stringify(strategyData.pillars)}::jsonb`,
+      })
       .onConflictDoUpdate({
         target: socialMediaStrategies.userId,
         set: {
           contentGoals: strategyData.contentGoals,
-          pillars: strategyData.pillars,
+          pillars: sql`${JSON.stringify(strategyData.pillars)}::jsonb`,
           updatedAt: new Date(),
         },
       })
