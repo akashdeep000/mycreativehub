@@ -382,8 +382,28 @@ export default function SocialMediaStrategy() {
     };
 
     const handleBeforeUnload = () => {
-      // Use refs to get current state
-      flushSave(draftContentGoalsRef.current, draftPillarsRef.current, serverStrategyVersionRef.current);
+      // Use keepalive fetch to ensure save completes even after page unloads
+      const token = localStorage.getItem('token');
+      if (token && user) {
+        const strategyData = {
+          version: serverStrategyVersionRef.current,
+          contentGoals: draftContentGoalsRef.current,
+          pillars: draftPillarsRef.current,
+        };
+        
+        // Use fetch with keepalive to ensure request completes after page unload
+        fetch('/api/social-media-strategy', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(strategyData),
+          keepalive: true, // Critical: allows request to complete after page unloads
+        }).catch(() => {
+          // Ignore errors on unload
+        });
+      }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -395,7 +415,7 @@ export default function SocialMediaStrategy() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [flushSave]); // Only re-run if flushSave changes
+  }, [flushSave, user]); // Only re-run if flushSave changes
 
   // Track changes and trigger debounced save
   const lastSavedRef = useRef<string>('');
