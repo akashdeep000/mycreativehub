@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -107,23 +107,33 @@ export default function SocialMediaStrategy() {
     }
   }, [existingStrategy, hasLoadedInitialData]);
 
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const saveStrategy = (newGoals: string, newPillars: ContentPillar[]) => {
-    console.log("💾 saveStrategy called with:", { newGoals, newPillars, userExists: !!user });
-    if (!user) {
-      console.log("❌ No user, not saving");
-      return;
-    }
+    if (!user) return;
     
-    console.log("✅ Calling saveMutation.mutate()");
+    setSaveStatus('saving');
     saveMutation.mutate({
       contentGoals: newGoals,
       pillars: newPillars
     });
   };
 
+  const debouncedSave = (newGoals: string, newPillars: ContentPillar[]) => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+    
+    setSaveStatus('saving');
+    
+    saveTimerRef.current = setTimeout(() => {
+      saveStrategy(newGoals, newPillars);
+    }, 50);
+  };
+
   const updateContentGoals = (goals: string) => {
     setContentGoals(goals);
-    saveStrategy(goals, pillars);
+    debouncedSave(goals, pillars);
   };
 
   const updatePillar = (id: string, field: keyof ContentPillar, value: string) => {
@@ -131,10 +141,15 @@ export default function SocialMediaStrategy() {
       pillar.id === id ? { ...pillar, [field]: value } : pillar
     );
     setPillars(newPillars);
-    saveStrategy(contentGoals, newPillars);
+    debouncedSave(contentGoals, newPillars);
   };
 
   const addPillar = () => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    
     const newId = Date.now().toString();
     const newPillars = [...pillars, { id: newId, name: "", description: "", goals: "", cta: "" }];
     setPillars(newPillars);
@@ -149,6 +164,11 @@ export default function SocialMediaStrategy() {
         variant: "destructive",
       });
       return;
+    }
+    
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
     }
     
     const newPillars = pillars.filter(pillar => pillar.id !== id);
@@ -223,7 +243,21 @@ export default function SocialMediaStrategy() {
         {/* Content Pillars Section */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Content Pillars</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Content Pillars</h2>
+              {saveStatus === 'saving' && (
+                <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1" data-testid="text-pillars-saving">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Saving...
+                </span>
+              )}
+              {saveStatus === 'saved' && (
+                <span className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1" data-testid="text-pillars-saved">
+                  <Check className="w-3 h-3" />
+                  Saved
+                </span>
+              )}
+            </div>
             <Button
               data-testid="button-add-pillar"
               onClick={addPillar}
