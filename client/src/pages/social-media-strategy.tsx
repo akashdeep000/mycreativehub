@@ -236,11 +236,14 @@ export default function SocialMediaStrategy() {
         return;
       }
       
-      // Check for version conflict
+      // Check for version conflict (error format: "409: {json}")
       try {
-        const errorData = JSON.parse(error.message);
-        if (errorData.type === 'conflict') {
-          console.log('Version conflict detected, refetching latest data...');
+        // Extract JSON from error message (format: "409: {json}")
+        const jsonMatch = error.message.match(/^\d+:\s*(.+)$/);
+        if (jsonMatch) {
+          const errorData = JSON.parse(jsonMatch[1]);
+          if (errorData.message === 'Version conflict' && errorData.conflict) {
+            console.log('Version conflict detected, refetching latest data...');
           
           // Refetch the latest data from server
           const freshStrategy = await queryClient.fetchQuery({
@@ -283,11 +286,13 @@ export default function SocialMediaStrategy() {
               duration: 5000
             });
             
-            // Clear queued save to prevent retry with stale version
+            // Clear queued save AND last attempted payload to prevent retry with stale version
             queuedSaveRef.current = null;
+            lastAttemptedPayloadRef.current = null;
           }
           
           return;
+          }
         }
       } catch (parseError) {
         // Not a JSON error, fall through to generic error
