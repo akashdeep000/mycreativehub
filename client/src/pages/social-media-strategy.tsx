@@ -56,22 +56,35 @@ export default function SocialMediaStrategy() {
 
   const saveMutation = useMutation({
     mutationFn: async (strategyData: SocialMediaStrategy) => {
-      const response = await fetch('/api/social-media-strategy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(strategyData),
-        credentials: 'include',
-      });
+      console.log("🔵 Starting POST request to /api/social-media-strategy");
+      console.log("📦 Data being sent:", strategyData);
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to save: ${response.status} ${errorText}`);
+      try {
+        const response = await fetch('/api/social-media-strategy', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(strategyData),
+          credentials: 'include',
+        });
+        
+        console.log("📡 Response received:", response.status, response.statusText);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("❌ Error response body:", errorText);
+          throw new Error(`Failed to save: ${response.status} ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log("✅ Save successful, data:", data);
+        return data;
+      } catch (error) {
+        console.error("💥 Fetch error:", error);
+        throw error;
       }
-      
-      return response.json();
     },
     onMutate: () => {
       setSaveStatus('saving');
