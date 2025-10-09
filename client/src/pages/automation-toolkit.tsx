@@ -450,14 +450,14 @@ export default function AutomationToolkit() {
           </div>
 
           <div className="flex items-center gap-4 mb-6">
-            <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
+            <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex-shrink-0">
               <MessageSquare className="h-6 w-6 text-white" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-serif font-semibold text-gray-900 dark:text-gray-100">
                 Automation System
               </h1>
-              <p className="text-sm lg:text-base text-gray-600 dark:text-gray-400 leading-relaxed">
+              <p className="text-sm lg:text-base text-gray-600 dark:text-gray-400 leading-relaxed break-words">
                 Build automated conversation flows for social media engagement
               </p>
             </div>
