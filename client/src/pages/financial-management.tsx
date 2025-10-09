@@ -160,10 +160,10 @@ export default function FinancialManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          amount: parseFloat(formData.amount),
+          amount: formData.amount,
           year: currentYear,
           month: currentMonth,
-          date: new Date(formData.date)
+          date: new Date(formData.date).toISOString()
         })
       });
 
@@ -200,8 +200,8 @@ export default function FinancialManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          amount: parseFloat(formData.amount),
-          date: new Date(formData.date)
+          amount: formData.amount,
+          date: new Date(formData.date).toISOString()
         })
       });
 
