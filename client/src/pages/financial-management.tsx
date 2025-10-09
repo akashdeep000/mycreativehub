@@ -500,160 +500,209 @@ export default function FinancialManagement() {
               </Card>
             </div>
 
-            {/* Transactions Table */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Transactions</CardTitle>
-                  <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button 
-                        size="sm" 
-                        className="gap-2"
-                        disabled={monthSettings.isClosed}
-                        data-testid="button-add-transaction"
+            {/* Add Transaction Button */}
+            <div className="flex justify-end">
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    size="sm" 
+                    className="gap-2"
+                    disabled={monthSettings.isClosed}
+                    data-testid="button-add-transaction"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Transaction
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Transaction</DialogTitle>
+                    <DialogDescription>Add a new income or expense transaction</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label>Type</Label>
+                      <Select
+                        value={formData.type}
+                        onValueChange={(val: 'income' | 'expense') => setFormData({ ...formData, type: val, category: '' })}
                       >
-                        <Plus className="w-4 h-4" />
-                        Add Transaction
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add Transaction</DialogTitle>
-                        <DialogDescription>Add a new income or expense transaction</DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label>Type</Label>
-                          <Select
-                            value={formData.type}
-                            onValueChange={(val: 'income' | 'expense') => setFormData({ ...formData, type: val, category: '' })}
-                          >
-                            <SelectTrigger data-testid="select-type">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="income">Income</SelectItem>
-                              <SelectItem value="expense">Expense</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Category</Label>
-                          <Select
-                            value={formData.category}
-                            onValueChange={(val) => setFormData({ ...formData, category: val })}
-                          >
-                            <SelectTrigger data-testid="select-category">
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {(formData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((cat) => (
-                                <SelectItem key={cat} value={cat}>
-                                  {cat}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Amount ({currencySymbol})</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={formData.amount}
-                            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                            data-testid="input-amount"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Date</Label>
-                          <Input
-                            type="date"
-                            value={formData.date}
-                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                            data-testid="input-date"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Notes (Optional)</Label>
-                          <Textarea
-                            value={formData.notes}
-                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                            placeholder="Add notes..."
-                            data-testid="textarea-transaction-notes"
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button onClick={handleAddTransaction} data-testid="button-save-transaction">Add Transaction</Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <p className="text-center py-8 text-gray-500">Loading...</p>
-                ) : transactions.length === 0 ? (
-                  <p className="text-center py-8 text-gray-500">No transactions for this month</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead className="text-right">Amount</TableHead>
-                          <TableHead>Notes</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {transactions.map((transaction) => (
-                          <TableRow key={transaction.id}>
-                            <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                            <TableCell>
-                              <Badge variant={transaction.type === 'income' ? 'default' : 'secondary'}>
-                                {transaction.type}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{transaction.category}</TableCell>
-                            <TableCell className={`text-right font-medium ${transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                              {formatCurrency(parseFloat(transaction.amount))}
-                            </TableCell>
-                            <TableCell className="max-w-xs truncate">{transaction.notes || '-'}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openEditDialog(transaction)}
-                                  disabled={monthSettings.isClosed}
-                                  data-testid={`button-edit-${transaction.id}`}
-                                >
-                                  <Edit2 className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteTransaction(transaction.id)}
-                                  disabled={monthSettings.isClosed}
-                                  data-testid={`button-delete-${transaction.id}`}
-                                >
-                                  <Trash2 className="w-4 h-4 text-red-500" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        <SelectTrigger data-testid="select-type">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="income">Income</SelectItem>
+                          <SelectItem value="expense">Expense</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Category</Label>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(val) => setFormData({ ...formData, category: val })}
+                      >
+                        <SelectTrigger data-testid="select-category">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(formData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Amount ({currencySymbol})</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={formData.amount}
+                        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                        data-testid="input-amount"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Date</Label>
+                      <Input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        data-testid="input-date"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Notes (Optional)</Label>
+                      <Textarea
+                        value={formData.notes}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        placeholder="Add notes..."
+                        data-testid="textarea-transaction-notes"
+                      />
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  <DialogFooter>
+                    <Button onClick={handleAddTransaction} data-testid="button-save-transaction">Add Transaction</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {/* Transactions - Income and Expenses Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Income Transactions */}
+              <Card className="border-green-200 dark:border-green-800">
+                <CardHeader>
+                  <CardTitle className="text-green-700 dark:text-green-400 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Income
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? (
+                    <p className="text-center py-8 text-gray-500">Loading...</p>
+                  ) : transactions.filter(t => t.type === 'income').length === 0 ? (
+                    <p className="text-center py-8 text-gray-500">No income for this month</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {transactions.filter(t => t.type === 'income').map((transaction) => (
+                        <div key={transaction.id} className="border rounded-lg p-3 space-y-2">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <p className="font-medium">{transaction.category}</p>
+                              <p className="text-sm text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
+                            </div>
+                            <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                              {formatCurrency(parseFloat(transaction.amount))}
+                            </p>
+                          </div>
+                          {transaction.notes && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{transaction.notes}</p>
+                          )}
+                          <div className="flex justify-end gap-2 pt-2 border-t">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openEditDialog(transaction)}
+                              disabled={monthSettings.isClosed}
+                              data-testid={`button-edit-${transaction.id}`}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteTransaction(transaction.id)}
+                              disabled={monthSettings.isClosed}
+                              data-testid={`button-delete-${transaction.id}`}
+                            >
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Expense Transactions */}
+              <Card className="border-red-200 dark:border-red-800">
+                <CardHeader>
+                  <CardTitle className="text-red-700 dark:text-red-400 flex items-center gap-2">
+                    <TrendingDown className="w-5 h-5" />
+                    Expenses
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? (
+                    <p className="text-center py-8 text-gray-500">Loading...</p>
+                  ) : transactions.filter(t => t.type === 'expense').length === 0 ? (
+                    <p className="text-center py-8 text-gray-500">No expenses for this month</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {transactions.filter(t => t.type === 'expense').map((transaction) => (
+                        <div key={transaction.id} className="border rounded-lg p-3 space-y-2">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <p className="font-medium">{transaction.category}</p>
+                              <p className="text-sm text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
+                            </div>
+                            <p className="text-lg font-bold text-red-600 dark:text-red-400">
+                              {formatCurrency(parseFloat(transaction.amount))}
+                            </p>
+                          </div>
+                          {transaction.notes && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{transaction.notes}</p>
+                          )}
+                          <div className="flex justify-end gap-2 pt-2 border-t">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openEditDialog(transaction)}
+                              disabled={monthSettings.isClosed}
+                              data-testid={`button-edit-${transaction.id}`}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteTransaction(transaction.id)}
+                              disabled={monthSettings.isClosed}
+                              data-testid={`button-delete-${transaction.id}`}
+                            >
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Edit Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
