@@ -8,6 +8,7 @@ import {
   Link,
   FolderOpen,
   Camera,
+  DollarSign,
   LucideIcon 
 } from "lucide-react";
 
@@ -24,6 +25,7 @@ export const navigationItems: NavigationItem[] = [
   { href: "/streamline-workflow", icon: Workflow, label: "Streamline Workflow", moduleKey: "Streamline Your Workflow" },
   { href: "/content", icon: Camera, label: "Content System", moduleKey: "Content Creation System" },
   { href: "/launch", icon: Rocket, label: "Product Launch", moduleKey: "Product Launch System" },
+  { href: "/profit-calculator", icon: DollarSign, label: "Financial System", moduleKey: "Financial Management System" },
   { href: "/affiliate-marketing", icon: Link, label: "Affiliate Hub", moduleKey: "The Affiliate Link Hub" },
   { href: "/resource-library", icon: FolderOpen, label: "Resource Library", moduleKey: "Your Resource Library" },
 ];
