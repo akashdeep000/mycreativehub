@@ -196,7 +196,7 @@ export default function TimeBlocking() {
                 </Button>
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+            <h1 className="text-3xl font-serif font-semibold text-gray-900 mb-2 flex items-center gap-3">
               <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500 to-teal-500">
                 <CalendarDays className="h-6 w-6 text-white" />
               </div>
