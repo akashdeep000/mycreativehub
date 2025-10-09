@@ -3389,15 +3389,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const netIncome = totalIncome - totalExpenses;
       
-      // Create CSV content
-      const csvHeader = 'Date,Type,Category,Amount,Notes\n';
+      // Create CSV content with new format
+      const csvHeader = 'Date,Income,Expenses,Notes,Net Income\n';
       const csvRows = transactions.map(t => {
         const date = new Date(t.date).toLocaleDateString();
-        return `${date},${t.type},${t.category},${t.amount},"${(t.notes || '').replace(/"/g, '""')}"`;
+        const income = t.type === 'income' ? t.amount : '';
+        const expense = t.type === 'expense' ? t.amount : '';
+        const notes = (t.notes || '').replace(/"/g, '""');
+        return `${date},${income},${expense},"${notes}",`;
       }).join('\n');
       
       // Add summary rows
-      const summaryRows = `\n\n,,,Total Income,${totalIncome.toFixed(2)}\n,,,Total Expenses,${totalExpenses.toFixed(2)}\n,,,Net Income,${netIncome.toFixed(2)}`;
+      const summaryRows = `\n,,,Total Income:,${totalIncome.toFixed(2)}\n,,,Total Expenses:,${totalExpenses.toFixed(2)}\n,,,Net Income:,${netIncome.toFixed(2)}`;
       
       const csv = csvHeader + csvRows + summaryRows;
       
