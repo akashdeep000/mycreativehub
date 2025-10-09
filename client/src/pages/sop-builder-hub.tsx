@@ -247,13 +247,39 @@ export default function SOPBuilderHub() {
         <div className="p-6 pt-20 md:pt-6 pb-24 lg:pb-6">
           {/* Header */}
           <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4 mt-8 lg:mt-0">
+            {/* Mobile Navigation - Simple Arrow */}
+            <div className="flex items-center gap-4 mb-4 mt-8 lg:hidden">
               <Link 
                 href="/streamline-workflow" 
                 className="inline-flex items-center p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                 data-testid="link-back-streamline"
               >
                 <ArrowLeft className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {/* Desktop Navigation - Full Buttons */}
+            <div className="hidden lg:flex items-center gap-3 mb-4">
+              <Link href="/">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Main Dashboard
+                </Button>
+              </Link>
+              <Link href="/streamline-workflow">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                  data-testid="link-back-streamline"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Streamline Your Workflow
+                </Button>
               </Link>
             </div>
             <div className="flex items-center gap-3 mb-2">
