@@ -118,9 +118,6 @@ export default function ProductLaunch() {
         <Card className="border-0 shadow-md bg-white">
           <CardContent className="p-6">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-400 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Lightbulb className="w-5 h-5 text-white" />
-              </div>
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2">Quick Tips</h3>
                 <ul className="text-sm text-gray-700 space-y-1">
