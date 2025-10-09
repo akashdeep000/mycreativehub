@@ -97,6 +97,17 @@ export default function FinancialManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   
+  // Transaction currency preference (persisted in localStorage)
+  const [transactionCurrency, setTransactionCurrency] = useState(() => {
+    const saved = localStorage.getItem('transactionCurrency');
+    return saved || 'GBP';
+  });
+
+  // Update localStorage when currency changes
+  useEffect(() => {
+    localStorage.setItem('transactionCurrency', transactionCurrency);
+  }, [transactionCurrency]);
+
   // Form state
   const [formData, setFormData] = useState({
     type: 'income' as 'income' | 'expense',
@@ -334,6 +345,10 @@ export default function FinancialManagement() {
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
 
+  // Transaction currency for dialogs
+  const transactionCurrencyObj = CURRENCIES.find(c => c.code === transactionCurrency);
+  const transactionCurrencySymbol = transactionCurrencyObj?.symbol || '£';
+
   const openEditDialog = (transaction: Transaction) => {
     setEditingTransaction(transaction);
     setFormData({
@@ -546,14 +561,33 @@ export default function FinancialManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Amount ({currencySymbol})</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={formData.amount}
-                        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                        data-testid="input-amount"
-                      />
+                      <Label>Amount</Label>
+                      <div className="flex gap-2">
+                        <Select
+                          value={transactionCurrency}
+                          onValueChange={setTransactionCurrency}
+                        >
+                          <SelectTrigger className="w-[120px]" data-testid="select-currency">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CURRENCIES.map(curr => (
+                              <SelectItem key={curr.code} value={curr.code}>
+                                {curr.symbol} {curr.code}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={formData.amount}
+                          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                          placeholder="0.00"
+                          className="flex-1"
+                          data-testid="input-amount"
+                        />
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label>Date</Label>
