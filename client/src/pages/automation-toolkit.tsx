@@ -433,8 +433,8 @@ export default function AutomationToolkit() {
               <MessageSquare className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                Conversation Flow Cheat Sheet
+              <h1 className="text-2xl font-serif font-semibold text-gray-900 dark:text-gray-100">
+                Automation System
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
                 Build automated conversation flows for social media engagement
