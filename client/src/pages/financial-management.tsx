@@ -514,7 +514,7 @@ export default function FinancialManagement() {
                     Add Transaction
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Add Transaction</DialogTitle>
                     <DialogDescription>Add a new income or expense transaction</DialogDescription>
@@ -536,22 +536,14 @@ export default function FinancialManagement() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Category</Label>
-                      <Select
+                      <Label>Description</Label>
+                      <Input
+                        type="text"
                         value={formData.category}
-                        onValueChange={(val) => setFormData({ ...formData, category: val })}
-                      >
-                        <SelectTrigger data-testid="select-category">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(formData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((cat) => (
-                            <SelectItem key={cat} value={cat}>
-                              {cat}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        placeholder="e.g., Client payment, Grocery shopping"
+                        data-testid="input-description"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Amount ({currencySymbol})</Label>
@@ -706,7 +698,7 @@ export default function FinancialManagement() {
 
             {/* Edit Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-              <DialogContent>
+              <DialogContent className="max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Edit Transaction</DialogTitle>
                   <DialogDescription>Update transaction details</DialogDescription>
@@ -728,22 +720,14 @@ export default function FinancialManagement() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select
+                    <Label>Description</Label>
+                    <Input
+                      type="text"
                       value={formData.category}
-                      onValueChange={(val) => setFormData({ ...formData, category: val })}
-                    >
-                      <SelectTrigger data-testid="select-edit-category">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(formData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      placeholder="e.g., Client payment, Grocery shopping"
+                      data-testid="input-edit-description"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Amount ({currencySymbol})</Label>
