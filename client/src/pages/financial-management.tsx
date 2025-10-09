@@ -541,7 +541,7 @@ export default function FinancialManagement() {
                         type="text"
                         value={formData.category}
                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        placeholder="e.g., Client payment, Grocery shopping"
+                        placeholder="e.g., Affiliate Payment, Sales"
                         data-testid="input-description"
                       />
                     </div>
@@ -725,7 +725,7 @@ export default function FinancialManagement() {
                       type="text"
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      placeholder="e.g., Client payment, Grocery shopping"
+                      placeholder="e.g., Affiliate Payment, Sales"
                       data-testid="input-edit-description"
                     />
                   </div>
