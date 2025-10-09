@@ -177,6 +177,16 @@ export default function SocialMediaStrategy() {
         {/* Navigation Buttons */}
         <div className="flex items-center gap-3 mb-6">
           <Button
+            data-testid="button-dashboard"
+            onClick={() => setLocation('/')}
+            variant="outline"
+            size="sm"
+            className="border-gray-300 dark:border-gray-600"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Main Dashboard
+          </Button>
+          <Button
             data-testid="button-back"
             onClick={() => setLocation('/content')}
             variant="outline"
@@ -184,17 +194,7 @@ export default function SocialMediaStrategy() {
             className="border-gray-300 dark:border-gray-600"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <Button
-            data-testid="button-dashboard"
-            onClick={() => setLocation('/')}
-            variant="outline"
-            size="sm"
-            className="border-gray-300 dark:border-gray-600"
-          >
-            <Home className="w-4 h-4 mr-2" />
-            Main Dashboard
+            Back to Content Creation
           </Button>
         </div>
 
