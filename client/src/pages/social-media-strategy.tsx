@@ -200,7 +200,7 @@ export default function SocialMediaStrategy() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+          <h1 className="text-2xl lg:text-3xl font-serif font-semibold text-gray-900 dark:text-white flex items-center gap-3">
             <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center">
               <Smartphone className="w-6 h-6 text-white" />
             </div>
