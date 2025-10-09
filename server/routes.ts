@@ -3378,6 +3378,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const transactions = await storage.getFinanceTransactions(userId, year, month);
       
+      // Calculate totals
+      const totalIncome = transactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      
+      const totalExpenses = transactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      
+      const netIncome = totalIncome - totalExpenses;
+      
       // Create CSV content
       const csvHeader = 'Date,Type,Category,Amount,Notes\n';
       const csvRows = transactions.map(t => {
@@ -3385,10 +3396,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return `${date},${t.type},${t.category},${t.amount},"${(t.notes || '').replace(/"/g, '""')}"`;
       }).join('\n');
       
-      const csv = csvHeader + csvRows;
+      // Add summary rows
+      const summaryRows = `\n\n,,,Total Income,${totalIncome.toFixed(2)}\n,,,Total Expenses,${totalExpenses.toFixed(2)}\n,,,Net Income,${netIncome.toFixed(2)}`;
+      
+      const csv = csvHeader + csvRows + summaryRows;
+      
+      // Create month name for filename
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const monthName = monthNames[month - 1];
+      const filename = `${monthName} ${year}.csv`;
       
       res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename="transactions-${year}-${month}.csv"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.send(csv);
     } catch (error) {
       console.error('Error exporting transactions:', error);
