@@ -371,7 +371,7 @@ export default function FinancialManagement() {
         {/* Mobile Header Banner */}
         <div className="lg:hidden bg-gradient-to-br from-purple-600 to-purple-800 text-white p-4 flex items-center gap-3 shadow-md">
           <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-            <DollarSign className="w-5 h-5" />
+            <TrendingUp className="w-5 h-5" />
           </div>
           <div>
             <h1 className="font-semibold text-base">Financial Management</h1>
@@ -406,7 +406,10 @@ export default function FinancialManagement() {
             </div>
 
             <div className="hidden lg:block">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Financial Management</h1>
+              <div className="flex items-center gap-3">
+                <TrendingUp className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Financial Management</h1>
+              </div>
               <p className="text-gray-600 dark:text-gray-400 mt-2">Track and manage your business income and expenses</p>
             </div>
 
