@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Trash2, GripVertical, FileText, Link, Download, Edit2, X, Check, ExternalLink, BookOpen, Loader2 } from 'lucide-react';
+import { Trash2, GripVertical, FileText, Link, Download, Edit2, X, Check, ExternalLink, BookOpen, Loader2, Users } from 'lucide-react';
 import BackToDashboard from '@/components/BackToDashboard';
 import Sidebar from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
@@ -13,11 +13,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/useAuth';
 import type { ResourceLibraryItem } from '@shared/schema';
 
 export default function ResourceLibrary() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ResourceLibraryItem | null>(null);
   const [draggedItem, setDraggedItem] = useState<ResourceLibraryItem | null>(null);
@@ -451,6 +453,7 @@ export default function ResourceLibrary() {
               <ResourceCard
                 key={item.id}
                 item={item}
+                currentUserId={user?.id}
                 onEdit={setEditingItem}
                 onDelete={(id) => deleteItemMutation.mutate(id)}
                 onUpdate={(id, data) => updateItemMutation.mutate({ id, data })}
@@ -490,6 +493,7 @@ export default function ResourceLibrary() {
               <ResourceCard
                 key={item.id}
                 item={item}
+                currentUserId={user?.id}
                 onEdit={setEditingItem}
                 onDelete={(id) => deleteItemMutation.mutate(id)}
                 onUpdate={(id, data) => updateItemMutation.mutate({ id, data })}
@@ -513,6 +517,7 @@ export default function ResourceLibrary() {
 
 function ResourceCard({ 
   item, 
+  currentUserId,
   onEdit, 
   onDelete, 
   onUpdate, 
@@ -524,6 +529,7 @@ function ResourceCard({
   onCancelEdit 
 }: {
   item: ResourceLibraryItem;
+  currentUserId?: string;
   onEdit: (item: ResourceLibraryItem) => void;
   onDelete: (id: number) => void;
   onUpdate: (id: number, data: any) => void;
@@ -537,6 +543,8 @@ function ResourceCard({
   const isFile = item.type === 'file';
   const isLink = item.type === 'link';
   const isEditing = editingItem?.id === item.id;
+  const isOwner = currentUserId === item.userId;
+  const isShared = item.isShared;
 
   const handleOpenFile = () => {
     if (item.fileData) {
@@ -569,25 +577,37 @@ function ResourceCard({
             {isFile ? <FileText className="w-6 h-6" /> : <Link className="w-6 h-6" />}
           </div>
           <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onEdit(item)}
-              className="text-white hover:bg-white/20 w-8 h-8 p-0"
-            >
-              <Edit2 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(item.id)}
-              className="text-white hover:bg-white/20 w-8 h-8 p-0"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            {isOwner && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onEdit(item)}
+                  className="text-white hover:bg-white/20 w-8 h-8 p-0"
+                  data-testid={`button-edit-${item.id}`}
+                >
+                  <Edit2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDelete(item.id)}
+                  className="text-white hover:bg-white/20 w-8 h-8 p-0"
+                  data-testid={`button-delete-${item.id}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
         <GripVertical className="w-4 h-4 absolute top-2 left-2 text-white/60" />
+        {isShared && (
+          <Badge className="absolute top-2 right-2 bg-white/20 text-white border-white/30" data-testid={`badge-shared-${item.id}`}>
+            <Users className="w-3 h-3 mr-1" />
+            Shared
+          </Badge>
+        )}
       </CardHeader>
       
       <CardContent className="p-4 flex-1 flex flex-col">
@@ -606,12 +626,26 @@ function ResourceCard({
               )}
             </div>
             
-            <div className="mt-auto">
+            <div className="mt-auto space-y-2">
+              {isOwner && (
+                <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={isShared || false}
+                    onChange={(e) => onUpdate(item.id, { isShared: e.target.checked })}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    data-testid={`checkbox-share-${item.id}`}
+                  />
+                  <Users className="w-3 h-3" />
+                  Share with all users
+                </label>
+              )}
               {isFile ? (
                 <Button
                   onClick={handleOpenFile}
                   className="w-full bg-pink-500 hover:bg-pink-600 text-white"
                   size="sm"
+                  data-testid={`button-open-${item.id}`}
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Open PDF
@@ -625,6 +659,7 @@ function ResourceCard({
                     onClick={handleOpenLink}
                     className="w-full bg-blue-500 hover:bg-blue-600 text-white"
                     size="sm"
+                    data-testid={`button-visit-${item.id}`}
                   >
                     <ExternalLink className="w-4 h-4 mr-2" />
                     Visit Website
