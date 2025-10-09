@@ -764,14 +764,33 @@ export default function FinancialManagement() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Amount ({currencySymbol})</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.amount}
-                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      data-testid="input-edit-amount"
-                    />
+                    <Label>Amount</Label>
+                    <div className="flex gap-2">
+                      <Select
+                        value={transactionCurrency}
+                        onValueChange={setTransactionCurrency}
+                      >
+                        <SelectTrigger className="w-[120px]" data-testid="select-edit-currency">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CURRENCIES.map(curr => (
+                            <SelectItem key={curr.code} value={curr.code}>
+                              {curr.symbol} {curr.code}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={formData.amount}
+                        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                        placeholder="0.00"
+                        className="flex-1"
+                        data-testid="input-edit-amount"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Date</Label>
