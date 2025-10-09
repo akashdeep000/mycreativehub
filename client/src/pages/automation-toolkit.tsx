@@ -415,8 +415,20 @@ export default function AutomationToolkit() {
         <MobileNav />
         
         <main className="p-6">
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
+          {/* Mobile Back Arrow - visible only on mobile, positioned below banner */}
+          <div className="lg:hidden mb-4">
+            <Button
+              variant="ghost"
+              onClick={() => setLocation('/streamline-workflow')}
+              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 p-2"
+              data-testid="button-back-mobile"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Desktop Navigation - hidden on mobile */}
+          <div className="hidden lg:flex items-center gap-3 mb-6">
             <Button
               variant="ghost"
               onClick={() => setLocation('/')}
