@@ -216,7 +216,7 @@ export default function SocialMediaStrategy() {
           // Empty State
           <div className="flex flex-col items-center justify-center py-16">
             <div className="text-center mb-6">
-              <Target className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <Smartphone className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 No Content Pillars Yet
               </h3>
