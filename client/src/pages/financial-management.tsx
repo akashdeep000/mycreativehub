@@ -444,30 +444,6 @@ export default function FinancialManagement() {
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap">
-                    {monthSettings.isClosed ? (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={handleReopenMonth}
-                        className="gap-2"
-                        data-testid="button-reopen"
-                      >
-                        <Unlock className="w-4 h-4" />
-                        Reopen
-                      </Button>
-                    ) : (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={handleCloseMonth}
-                        className="gap-2"
-                        data-testid="button-close"
-                      >
-                        <Lock className="w-4 h-4" />
-                        Close Month
-                      </Button>
-                    )}
-
                     <Button 
                       variant="outline" 
                       size="sm" 
