@@ -19,7 +19,6 @@ import {
   Download,
   Lock,
   Unlock,
-  Settings,
   TrendingUp,
   TrendingDown,
   DollarSign
@@ -96,7 +95,6 @@ export default function FinancialManagement() {
   // Dialogs
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   
   // Form state
@@ -242,31 +240,6 @@ export default function FinancialManagement() {
       toast({
         title: 'Error',
         description: 'Failed to delete transaction',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const handleSaveSettings = async () => {
-    try {
-      const response = await apiRequest(`/api/finance/months/${currentYear}/${currentMonth}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(monthSettings)
-      });
-
-      if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Settings saved successfully'
-        });
-        setIsSettingsDialogOpen(false);
-        loadData();
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to save settings',
         variant: 'destructive'
       });
     }
@@ -471,62 +444,6 @@ export default function FinancialManagement() {
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Dialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="gap-2" data-testid="button-settings">
-                          <Settings className="w-4 h-4" />
-                          Settings
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Month Settings</DialogTitle>
-                          <DialogDescription>Configure settings for {monthNames[currentMonth - 1]} {currentYear}</DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <div className="space-y-2">
-                            <Label>Currency</Label>
-                            <Select
-                              value={monthSettings.currency}
-                              onValueChange={(val) => setMonthSettings({ ...monthSettings, currency: val })}
-                            >
-                              <SelectTrigger data-testid="select-currency">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {CURRENCIES.map((curr) => (
-                                  <SelectItem key={curr.code} value={curr.code}>
-                                    {curr.symbol} {curr.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Tax Percentage (%)</Label>
-                            <Input
-                              type="number"
-                              value={monthSettings.taxPercentage}
-                              onChange={(e) => setMonthSettings({ ...monthSettings, taxPercentage: e.target.value })}
-                              data-testid="input-tax"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Notes</Label>
-                            <Textarea
-                              value={monthSettings.notes}
-                              onChange={(e) => setMonthSettings({ ...monthSettings, notes: e.target.value })}
-                              placeholder="Monthly notes..."
-                              data-testid="textarea-notes"
-                            />
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button onClick={handleSaveSettings} data-testid="button-save-settings">Save Settings</Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-
                     {monthSettings.isClosed ? (
                       <Button 
                         variant="outline" 
