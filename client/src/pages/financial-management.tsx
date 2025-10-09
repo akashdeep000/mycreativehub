@@ -389,7 +389,7 @@ export default function FinancialManagement() {
                 data-testid="button-back"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Back to Dashboard
+                Back to Main Dashboard
               </Button>
             </div>
 
