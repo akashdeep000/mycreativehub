@@ -320,7 +320,7 @@ export interface IStorage {
   getFinanceTransactions(userId: string, year: number, month: number): Promise<FinanceTransaction[]>;
   getFinanceTransaction(id: number): Promise<FinanceTransaction | undefined>;
   createFinanceTransaction(data: InsertFinanceTransaction): Promise<FinanceTransaction>;
-  updateFinanceTransaction(id: number, updates: Partial<InsertFinanceTransaction>): Promise<FinanceTransaction>;
+  updateFinanceTransaction(id: number, userId: string, updates: Partial<InsertFinanceTransaction>): Promise<FinanceTransaction>;
   deleteFinanceTransaction(id: number, userId: string): Promise<void>;
   
   // Streamline Your Workflow System
@@ -1764,14 +1764,19 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async updateFinanceTransaction(id: number, updates: Partial<InsertFinanceTransaction>): Promise<FinanceTransaction> {
+  async updateFinanceTransaction(id: number, userId: string, updates: Partial<InsertFinanceTransaction>): Promise<FinanceTransaction> {
     const [result] = await db
       .update(financeTransactions)
       .set({
         ...updates,
         updatedAt: new Date(),
       })
-      .where(eq(financeTransactions.id, id))
+      .where(
+        and(
+          eq(financeTransactions.id, id),
+          eq(financeTransactions.userId, userId)
+        )
+      )
       .returning();
     return result;
   }

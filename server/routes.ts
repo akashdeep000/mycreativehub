@@ -6,7 +6,8 @@ import { generateToken, jwtAuth, hashPassword, comparePassword } from "./jwtAuth
 import { nanoid } from "nanoid";
 import crypto from "crypto";
 import { Resend } from "resend";
-import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplateInstanceSchema, cheatSheetDocPutBodySchema } from "@shared/schema";
+import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplateInstanceSchema, cheatSheetDocPutBodySchema, insertFinanceTransactionSchema, insertMoneyMapMonthSchema } from "@shared/schema";
+import { ZodError } from "zod";
 import { db } from "./db";
 import { inspirationBoards } from "@shared/schema";
 
@@ -3137,6 +3138,251 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const errorResponse = { error: 'Internal server error' };
       console.log('Sending error response:', errorResponse);
       res.status(500).json(errorResponse);
+    }
+  });
+
+  // Financial Management System Routes
+  
+  // Get transactions for a specific month/year
+  app.get('/api/finance/transactions/:year/:month', jwtAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      if (isNaN(year) || isNaN(month)) {
+        res.status(400).json({ error: 'Invalid year or month' });
+        return;
+      }
+      
+      const transactions = await storage.getFinanceTransactions(userId, year, month);
+      res.json(transactions);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      res.status(500).json({ error: 'Failed to fetch transactions' });
+    }
+  });
+
+  // Add a new transaction
+  app.post('/api/finance/transactions', jwtAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Validate request body
+      const validatedData = insertFinanceTransactionSchema.omit({ userId: true }).parse(req.body);
+      
+      const transaction = await storage.createFinanceTransaction({
+        userId,
+        ...validatedData
+      });
+      res.json(transaction);
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      if (error instanceof ZodError) {
+        res.status(400).json({ error: 'Invalid transaction data' });
+      } else {
+        res.status(500).json({ error: 'Failed to add transaction' });
+      }
+    }
+  });
+
+  // Update a transaction
+  app.put('/api/finance/transactions/:id', jwtAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        res.status(400).json({ error: 'Invalid transaction ID' });
+        return;
+      }
+      
+      // Validate request body (partial update)
+      const validatedData = insertFinanceTransactionSchema.omit({ userId: true }).partial().parse(req.body);
+      
+      const transaction = await storage.updateFinanceTransaction(id, userId, validatedData);
+      res.json(transaction);
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      if (error instanceof ZodError) {
+        res.status(400).json({ error: 'Invalid transaction data' });
+      } else {
+        res.status(500).json({ error: 'Failed to update transaction' });
+      }
+    }
+  });
+
+  // Delete a transaction
+  app.delete('/api/finance/transactions/:id', jwtAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        res.status(400).json({ error: 'Invalid transaction ID' });
+        return;
+      }
+      
+      await storage.deleteFinanceTransaction(id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      res.status(500).json({ error: 'Failed to delete transaction' });
+    }
+  });
+
+  // Get month settings
+  app.get('/api/finance/months/:year/:month', jwtAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      if (isNaN(year) || isNaN(month)) {
+        res.status(400).json({ error: 'Invalid year or month' });
+        return;
+      }
+      
+      const settings = await storage.getMoneyMapMonth(userId, year, month);
+      res.json(settings);
+    } catch (error) {
+      console.error('Error fetching month settings:', error);
+      res.status(500).json({ error: 'Failed to fetch month settings' });
+    }
+  });
+
+  // Update month settings
+  app.put('/api/finance/months/:year/:month', jwtAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      if (isNaN(year) || isNaN(month)) {
+        res.status(400).json({ error: 'Invalid year or month' });
+        return;
+      }
+      
+      // Validate request body (partial update for month settings)
+      const validatedData = insertMoneyMapMonthSchema.omit({ userId: true, year: true, month: true }).partial().parse(req.body);
+      
+      const settings = await storage.upsertMoneyMapMonth({
+        userId,
+        year,
+        month,
+        ...validatedData
+      });
+      res.json(settings);
+    } catch (error) {
+      console.error('Error updating month settings:', error);
+      if (error instanceof ZodError) {
+        res.status(400).json({ error: 'Invalid month settings data' });
+      } else {
+        res.status(500).json({ error: 'Failed to update month settings' });
+      }
+    }
+  });
+
+  // Close month
+  app.post('/api/finance/months/:year/:month/close', jwtAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      if (isNaN(year) || isNaN(month)) {
+        res.status(400).json({ error: 'Invalid year or month' });
+        return;
+      }
+      
+      // Get current month data and update with closed status
+      const currentMonth = await storage.getMoneyMapMonth(userId, year, month);
+      const transactions = await storage.getFinanceTransactions(userId, year, month);
+      
+      const settings = await storage.upsertMoneyMapMonth({
+        userId,
+        year,
+        month,
+        notes: currentMonth?.notes || null,
+        currency: currentMonth?.currency,
+        taxPercentage: currentMonth?.taxPercentage,
+        customAllocations: currentMonth?.customAllocations as any,
+        isClosed: true,
+        closedAt: new Date(),
+        closedSnapshot: { transactions } as any
+      });
+      
+      res.json(settings);
+    } catch (error) {
+      console.error('Error closing month:', error);
+      res.status(500).json({ error: 'Failed to close month' });
+    }
+  });
+
+  // Reopen month
+  app.post('/api/finance/months/:year/:month/reopen', jwtAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      if (isNaN(year) || isNaN(month)) {
+        res.status(400).json({ error: 'Invalid year or month' });
+        return;
+      }
+      
+      // Get current month data and update with reopened status
+      const currentMonth = await storage.getMoneyMapMonth(userId, year, month);
+      
+      const settings = await storage.upsertMoneyMapMonth({
+        userId,
+        year,
+        month,
+        notes: currentMonth?.notes || null,
+        currency: currentMonth?.currency,
+        taxPercentage: currentMonth?.taxPercentage,
+        customAllocations: currentMonth?.customAllocations as any,
+        isClosed: false,
+        closedAt: null,
+        closedSnapshot: null
+      });
+      
+      res.json(settings);
+    } catch (error) {
+      console.error('Error reopening month:', error);
+      res.status(500).json({ error: 'Failed to reopen month' });
+    }
+  });
+
+  // Export transactions as CSV
+  app.get('/api/finance/months/:year/:month/export', jwtAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      if (isNaN(year) || isNaN(month)) {
+        res.status(400).json({ error: 'Invalid year or month' });
+        return;
+      }
+      
+      const transactions = await storage.getFinanceTransactions(userId, year, month);
+      
+      // Create CSV content
+      const csvHeader = 'Date,Type,Category,Amount,Notes\n';
+      const csvRows = transactions.map(t => {
+        const date = new Date(t.date).toLocaleDateString();
+        return `${date},${t.type},${t.category},${t.amount},"${(t.notes || '').replace(/"/g, '""')}"`;
+      }).join('\n');
+      
+      const csv = csvHeader + csvRows;
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="transactions-${year}-${month}.csv"`);
+      res.send(csv);
+    } catch (error) {
+      console.error('Error exporting transactions:', error);
+      res.status(500).json({ error: 'Failed to export transactions' });
     }
   });
 
