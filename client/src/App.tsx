@@ -46,6 +46,7 @@ import MonthlyContentCalendarV2 from "@/pages/monthly-content-calendar-v2";
 import MonthlyContentCalendarV3 from "@/pages/monthly-content-calendar-v3";
 import Help from "@/pages/help";
 import MobileFixedHeader from "@/components/layout/mobile-fixed-header";
+import FinancialManagement from "@/pages/financial-management";
 
 
 function TimerWrapper() {
@@ -135,6 +136,7 @@ function Router() {
         <Route path="/seasonality/:quarter" component={QuarterDetail} />
         <Route path="/product-component-checklist" component={ProductComponentChecklist} />
         <Route path="/profit-calculator" component={ProfitCalculator} />
+        <Route path="/financial-management" component={FinancialManagement} />
         <Route path="/pre-launch-timeline-planner" component={PreLaunchTimelinePlanner} />
         <Route path="/launch-growth-plan" component={LaunchGrowthPlan} />
         <Route path="/help" component={Help} />
