@@ -547,7 +547,7 @@ export default function AutomationToolkit() {
           {/* Conversation Flow Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Conversation Flow Mapping</CardTitle>
+              <CardTitle>ManyChat Conversation Flow (copy & paste)</CardTitle>
               <CardDescription>
                 Plan your automated conversation sequences with precise trigger points and responses
               </CardDescription>
