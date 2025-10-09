@@ -9,6 +9,7 @@ import { ArrowLeft, Plus, Edit3, Trash2, Download, TrendingUp, Calendar, CheckCi
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/layout/sidebar';
+import MobileNav from '@/components/layout/mobile-nav';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -509,6 +510,7 @@ export default function LaunchGrowthPlan() {
           </Card>
         </div>
       </div>
+      <MobileNav />
     </div>
   );
 }
