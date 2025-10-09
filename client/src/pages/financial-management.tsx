@@ -230,7 +230,7 @@ export default function FinancialManagement() {
       });
 
       if (response.ok) {
-        setTransactions(transactions.filter(t => t.id !== id));
+        setTransactions(prevTransactions => prevTransactions.filter(t => t.id !== id));
         toast({
           title: 'Success',
           description: 'Transaction deleted successfully'
