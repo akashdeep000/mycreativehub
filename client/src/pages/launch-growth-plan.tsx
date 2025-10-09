@@ -196,7 +196,6 @@ export default function LaunchGrowthPlan() {
         pdf.setFont('helvetica', 'normal');
         
         const fields = [
-          { label: 'Key Insights:', content: plan.keyInsights },
           { label: 'What Went Well:', content: plan.whatWentWell },
           { label: 'What Needs Improvement:', content: plan.whatNeedsImprovement },
           { label: 'New Ideas to Try:', content: plan.newIdeas },
@@ -354,11 +353,6 @@ export default function LaunchGrowthPlan() {
                   
                   <CardContent className="space-y-4">
                     <div className="space-y-3">
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-1">Key Insights</h4>
-                        <p className="text-sm text-gray-600 line-clamp-2">{plan.keyInsights || 'No insights recorded'}</p>
-                      </div>
-                      
                       <div>
                         <h4 className="font-medium text-gray-900 mb-1">What Went Well</h4>
                         <p className="text-sm text-gray-600 line-clamp-2">{plan.whatWentWell || 'No notes recorded'}</p>
