@@ -416,7 +416,7 @@ export default function AutomationToolkit() {
         
         <main className="p-6">
           {/* Mobile Back Arrow - visible only on mobile, positioned below banner */}
-          <div className="lg:hidden mb-4">
+          <div className="lg:hidden pt-12 mb-4">
             <Button
               variant="ghost"
               onClick={() => setLocation('/streamline-workflow')}
