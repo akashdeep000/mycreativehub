@@ -523,6 +523,7 @@ export const resourceLibrary = pgTable("resource_library", {
   fileName: varchar("file_name"), // Original filename for PDFs
   fileSize: integer("file_size"), // File size in bytes
   displayOrder: integer("display_order").default(0),
+  isShared: boolean("is_shared").default(false).notNull(), // Allow all users to access this resource
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
