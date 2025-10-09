@@ -382,7 +382,7 @@ export default function FinancialManagement() {
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
       <Sidebar />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden lg:ml-64">
         {/* Mobile Header Banner */}
         <div className="lg:hidden bg-gradient-to-br from-purple-600 to-purple-800 text-white p-4 flex items-center gap-3 shadow-md">
           <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
