@@ -3168,6 +3168,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       
+      // Convert date string to Date object (JSON serialization converts Date to string)
+      if (req.body.date && typeof req.body.date === 'string') {
+        req.body.date = new Date(req.body.date);
+      }
+      
       // Validate request body
       const validatedData = insertFinanceTransactionSchema.omit({ userId: true }).parse(req.body);
       
