@@ -80,10 +80,10 @@ export default function ReelCarouselTemplates() {
                 Back to Main Dashboard
               </Button>
             </Link>
-            <Link href="/content-planning">
+            <Link href="/content">
               <Button variant="outline" size="sm">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Content Planning
+                Back to Content Creation
               </Button>
             </Link>
           </div>
