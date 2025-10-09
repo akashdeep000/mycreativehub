@@ -338,16 +338,13 @@ export default function FinancialManagement() {
 
   const netIncome = totalIncome - totalExpenses;
 
-  const currency = CURRENCIES.find(c => c.code === monthSettings.currency);
+  // Use transaction currency for all displays
+  const currency = CURRENCIES.find(c => c.code === transactionCurrency);
   const currencySymbol = currency?.symbol || '£';
 
   const formatCurrency = (amount: number) => {
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
-
-  // Transaction currency for dialogs
-  const transactionCurrencyObj = CURRENCIES.find(c => c.code === transactionCurrency);
-  const transactionCurrencySymbol = transactionCurrencyObj?.symbol || '£';
 
   const openEditDialog = (transaction: Transaction) => {
     setEditingTransaction(transaction);
