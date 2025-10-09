@@ -416,7 +416,16 @@ export default function AutomationToolkit() {
         
         <main className="p-6">
           {/* Header */}
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Button
+              variant="ghost"
+              onClick={() => setLocation('/')}
+              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+              data-testid="button-back-dashboard"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Main Dashboard
+            </Button>
             <Button
               variant="ghost"
               onClick={() => setLocation('/streamline-workflow')}
