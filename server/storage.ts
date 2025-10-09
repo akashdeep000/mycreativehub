@@ -150,7 +150,7 @@ import {
   type CheatSheetDocPutBody,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, gte, lte, sql, inArray, isNull, gt, ne } from "drizzle-orm";
+import { eq, and, or, desc, asc, gte, lte, sql, inArray, isNull, gt, ne } from "drizzle-orm";
 import crypto from "crypto";
 import { nanoid } from "nanoid";
 
@@ -1176,7 +1176,10 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(resourceLibrary)
-      .where(eq(resourceLibrary.userId, userId))
+      .where(or(
+        eq(resourceLibrary.userId, userId),
+        eq(resourceLibrary.isShared, true)
+      ))
       .orderBy(asc(resourceLibrary.displayOrder));
   }
 
