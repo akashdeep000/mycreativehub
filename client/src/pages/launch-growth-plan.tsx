@@ -285,7 +285,7 @@ export default function LaunchGrowthPlan() {
                   <TrendingUp className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Launch Reflection</h1>
+                  <h1 className="text-3xl font-serif font-semibold text-gray-900">Launch Reflection</h1>
                   <p className="text-gray-600 mt-2">
                     Capture key insights and plan improvements for your next launch
                   </p>
