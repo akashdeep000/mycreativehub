@@ -545,16 +545,15 @@ export default function AutomationToolkit() {
           )}
 
           {/* ManyChat Button */}
-          <div className="mb-6">
+          <div className="mb-6 flex justify-center">
             <a
               href="https://manychat.partnerlinks.io/n6ui2n91rh1n"
               target="_blank"
               rel="noopener noreferrer"
-              className="block"
             >
               <Button
                 size="lg"
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-lg py-6 rounded-xl"
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-6 rounded-xl"
               >
                 Automate with ManyChat
               </Button>
