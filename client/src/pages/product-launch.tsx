@@ -90,29 +90,8 @@ export default function ProductLaunch() {
         <p className="text-gray-600 leading-relaxed">Strategic tools to plan, execute, and optimise your product launches throughout the year.</p>
       </div>
 
-      {/* Tips Panel */}
-      <div className="mb-8">
-        <Card className="border-0 shadow-md bg-white">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-400 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Lightbulb className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Quick Tips</h3>
-                <ul className="text-sm text-gray-700 space-y-1">
-                  <li>• Start with your natural energy cycles and seasonal trends</li>
-                  <li>• Plan launches around key holidays and industry events</li>
-                  <li>• Build in buffer time for unexpected opportunities</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Templates Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {templates.map((template) => (
           <Card 
             key={template.id}
@@ -132,6 +111,27 @@ export default function ProductLaunch() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Tips Panel */}
+      <div className="mb-8">
+        <Card className="border-0 shadow-md bg-white">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-400 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Lightbulb className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">Quick Tips</h3>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  <li>• Start with your natural energy cycles and seasonal trends</li>
+                  <li>• Plan launches around key holidays and industry events</li>
+                  <li>• Build in buffer time for unexpected opportunities</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       </div>
     </div>
