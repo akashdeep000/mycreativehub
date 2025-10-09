@@ -174,8 +174,20 @@ export default function SocialMediaStrategy() {
       <Sidebar />
       <MobileNav />
       <div className="lg:ml-64 p-4 lg:p-8 pb-20 lg:pb-8">
-        {/* Navigation Buttons */}
-        <div className="flex items-center gap-3 mb-6">
+        {/* Mobile Back Arrow - visible only on mobile, positioned below banner */}
+        <div className="lg:hidden pt-12 mb-4">
+          <Button
+            variant="ghost"
+            onClick={() => setLocation('/content')}
+            className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 p-2"
+            data-testid="button-back-mobile"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Desktop Navigation - hidden on mobile */}
+        <div className="hidden lg:flex items-center gap-3 mb-6">
           <Button
             data-testid="button-dashboard"
             onClick={() => setLocation('/')}
