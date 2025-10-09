@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trash2, GripVertical, FileText, Link, Download, Edit2, X, Check, ExternalLink, BookOpen, Loader2, Users } from 'lucide-react';
 import BackToDashboard from '@/components/BackToDashboard';
 import Sidebar from '@/components/layout/sidebar';
+import MobileNav from '@/components/layout/mobile-nav';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -511,6 +512,7 @@ export default function ResourceLibrary() {
 
       
       </div>
+      <MobileNav />
     </div>
   );
 }
