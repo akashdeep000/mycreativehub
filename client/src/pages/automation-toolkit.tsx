@@ -457,7 +457,7 @@ export default function AutomationToolkit() {
               <h1 className="text-2xl font-serif font-semibold text-gray-900 dark:text-gray-100">
                 Automation System
               </h1>
-              <p className="text-sm lg:text-base text-gray-600 dark:text-gray-400 leading-relaxed break-words">
+              <p className="text-sm lg:text-base text-gray-600 dark:text-gray-400 leading-relaxed break-words whitespace-normal max-w-full">
                 Build automated conversation flows for social media engagement
               </p>
             </div>
