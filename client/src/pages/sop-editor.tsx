@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams, useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,9 @@ import {
 
 import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
+import { WorkflowTemplateInstance } from '@shared/schema';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 interface SOPStep {
   id: string;
@@ -41,19 +44,45 @@ export default function SOPEditor() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
+  // Fetch templates
+  const { data: templates, isLoading: isTemplatesLoading } = useQuery({
+    queryKey: ["/api/workflow-templates"],
+    queryFn: async () => {
+      const res = await fetch(`/api/workflow-templates?templateType=sop-builder`);
+      if (!res.ok) throw new Error("Failed to fetch templates");
+      return res.json() as Promise<WorkflowTemplateInstance[]>;
+    },
+  });
+
+  // Get the templateId for "sop-builder"
+  const templateId = templates?.find((t) => t.templateType === "sop-builder")?.id;
+
+  // Fetch template data (SOPs)
+  const { data: tempateData, isLoading: isTempateDataLoading } = useQuery({
+    queryKey: [`/api/workflow-templates/${templateId}`],
+    queryFn: async () => {
+      if (!templateId) return null;
+      const res = await fetch(`/api/workflow-templates/${templateId}`);
+      if (!res.ok) throw new Error('Failed to fetch SOP');
+      const data = await res.json();
+      return data;
+    },
+    enabled: !!templateId,
+  });
+
+  const sopsData = tempateData?.data.sops as SOP[];
+  const isSopLoading = isTempateDataLoading || !sopsData;
+
+  // Set SOP in local state - only on initial load, don't update from server while editing
   useEffect(() => {
-    if (sopId) {
-      const savedSOPs = localStorage.getItem('creative-toolkit-sops');
-      if (savedSOPs) {
-        const sops: SOP[] = JSON.parse(savedSOPs);
-        const foundSOP = sops.find(s => s.id === sopId);
-        if (foundSOP) {
-          setSop(foundSOP);
-        }
-      }
+    if (sopsData && sopId && !sop) {
+      const foundSOP = sopsData.find(s => s.id === sopId) || null;
+      setSop(foundSOP);
+      setIsLoading(false);
+    } else if (sopsData && !sopId && !sop) {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }, [sopId]);
+  }, [sopsData, sopId]);
 
   // Auto-resize textareas on component mount and when SOP changes
   useEffect(() => {
@@ -62,42 +91,123 @@ export default function SOPEditor() {
         const textareas = document.querySelectorAll('.auto-resize-textarea');
         textareas.forEach((textarea) => {
           const element = textarea as HTMLTextAreaElement;
-          if (element.value) { // Only resize if there's content
+          if (element.value) {
             element.style.height = 'auto';
             element.style.height = element.scrollHeight + 'px';
           }
         });
       };
-      
-      // Initial resize - run multiple times to ensure all content is loaded
+
       setTimeout(resizeTextareas, 50);
       setTimeout(resizeTextareas, 200);
       setTimeout(resizeTextareas, 500);
-      
-      // Also resize on window resize
+
       const handleResize = () => resizeTextareas();
       window.addEventListener('resize', handleResize);
-      
+
       return () => window.removeEventListener('resize', handleResize);
     }
   }, [sop]);
 
-  const saveSOPToStorage = (updatedSOP: SOP) => {
-    const savedSOPs = localStorage.getItem('creative-toolkit-sops');
-    if (savedSOPs) {
-      const sops: SOP[] = JSON.parse(savedSOPs);
-      const updatedSOPs = sops.map(s => 
-        s.id === updatedSOP.id ? { ...updatedSOP, updatedAt: new Date() } : s
+  // --- Update SOP via API ---
+  const updateMutation = useMutation({
+    mutationFn: async ({ updatedSOP, allSOPs }: { updatedSOP: SOP; allSOPs: SOP[] }) => {
+      if (!templateId) {
+        throw new Error('Template ID not available');
+      }
+
+      const updatedSOPs = allSOPs.map(s => 
+        s.id === updatedSOP.id ? updatedSOP : s
       );
-      localStorage.setItem('creative-toolkit-sops', JSON.stringify(updatedSOPs));
-      setSop({ ...updatedSOP, updatedAt: new Date() });
+
+      return apiRequest(`/api/workflow-templates/${templateId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          data: { 
+            sops: updatedSOPs,
+            lastModified: new Date().toISOString()
+          } 
+        }),
+      });
+    },
+    onSuccess: () => {
+      // Invalidate the queries so the hub page gets fresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/workflow-templates'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/workflow-templates/${templateId}`]});
+    },
+    onError: () => {
+      toast({
+        title: 'Save Failed',
+        description: 'Failed to save SOP changes.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // --- Debounced save ---
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sopsDataRef = useRef<SOP[] | null>(null);
+  const pendingSaveRef = useRef<SOP | null>(null);
+
+  // Keep sopsData in a ref to avoid stale closure
+  useEffect(() => {
+    if (sopsData) {
+      sopsDataRef.current = sopsData;
     }
-  };
+  }, [sopsData]);
+
+  const debouncedSave = useCallback((updatedSOP: SOP) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // Store the pending save
+    pendingSaveRef.current = updatedSOP;
+
+    timeoutRef.current = setTimeout(() => {
+      if (sopsDataRef.current && pendingSaveRef.current) {
+        updateMutation.mutate({ 
+          updatedSOP: { ...pendingSaveRef.current, updatedAt: new Date() },
+          allSOPs: sopsDataRef.current 
+        });
+        pendingSaveRef.current = null;
+      }
+    }, 600);
+  }, [updateMutation]);
+
+  // Force save on unmount if there's a pending save
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      if (pendingSaveRef.current && sopsDataRef.current) {
+        // Immediate save on unmount
+        updateMutation.mutate({ 
+          updatedSOP: { ...pendingSaveRef.current, updatedAt: new Date() },
+          allSOPs: sopsDataRef.current 
+        });
+      }
+    };
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+
 
   const updateSOPTitle = (newTitle: string) => {
     if (sop) {
       const updatedSOP = { ...sop, title: newTitle };
-      saveSOPToStorage(updatedSOP);
+      setSop(updatedSOP);
+      debouncedSave(updatedSOP);
     }
   };
 
@@ -109,7 +219,8 @@ export default function SOPEditor() {
           step.id === stepId ? { ...step, text: newText } : step
         )
       };
-      saveSOPToStorage(updatedSOP);
+      setSop(updatedSOP);
+      debouncedSave(updatedSOP);
     }
   };
 
@@ -121,7 +232,8 @@ export default function SOPEditor() {
           step.id === stepId ? { ...step, completed: !step.completed } : step
         )
       };
-      saveSOPToStorage(updatedSOP);
+      setSop(updatedSOP);
+      debouncedSave(updatedSOP);
     }
   };
 
@@ -136,7 +248,8 @@ export default function SOPEditor() {
         ...sop,
         steps: [...sop.steps, newStep]
       };
-      saveSOPToStorage(updatedSOP);
+      setSop(updatedSOP);
+      debouncedSave(updatedSOP);
     }
   };
 
@@ -146,11 +259,10 @@ export default function SOPEditor() {
         ...sop,
         steps: sop.steps.filter(step => step.id !== stepId)
       };
-      saveSOPToStorage(updatedSOP);
+      setSop(updatedSOP);
+      debouncedSave(updatedSOP);
     }
   };
-
-  
 
   const getCompletionStats = () => {
     if (!sop) return { completed: 0, total: 0, percentage: 0 };
@@ -159,7 +271,7 @@ export default function SOPEditor() {
     return { completed, total, percentage: total > 0 ? (completed / total) * 100 : 0 };
   };
 
-  if (isLoading) {
+  if (isLoading || isSopLoading || isTemplatesLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
         <div className="max-w-4xl mx-auto">
@@ -212,12 +324,12 @@ export default function SOPEditor() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </div>
-          
+
           {/* Desktop Navigation - Full Buttons */}
           <div className="hidden lg:flex items-center gap-4 mb-4">
             <Button 
               variant="ghost" 
-              onClick={() => window.location.href = "/"}
+              onClick={() => setLocation("/")}
               className="text-gray-600 hover:text-gray-800"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -225,7 +337,7 @@ export default function SOPEditor() {
             </Button>
             <Button 
               variant="ghost" 
-              onClick={() => window.location.href = "/sop-builder-hub"}
+              onClick={() => setLocation("/sop-builder-hub")}
               className="text-gray-600 hover:text-gray-800"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -269,7 +381,6 @@ export default function SOPEditor() {
                         value={step.text}
                         onChange={(e) => {
                           updateStepText(step.id, e.target.value);
-                          // Auto-resize textarea for desktop - use setTimeout to ensure DOM update
                           setTimeout(() => {
                             e.target.style.height = 'auto';
                             e.target.style.height = e.target.scrollHeight + 'px';
@@ -277,7 +388,6 @@ export default function SOPEditor() {
                         }}
                         ref={(textarea) => {
                           if (textarea && step.text) {
-                            // Initial resize when textarea mounts with content
                             setTimeout(() => {
                               textarea.style.height = 'auto';
                               textarea.style.height = textarea.scrollHeight + 'px';
@@ -326,7 +436,7 @@ export default function SOPEditor() {
                         Step {index + 1}
                       </span>
                     </div>
-                    
+
                     {/* Completion Status and Delete */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -346,14 +456,13 @@ export default function SOPEditor() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    
+
                     {/* Full-width Text Input */}
                     <div className="w-full">
                       <Textarea
                         value={step.text}
                         onChange={(e) => {
                           updateStepText(step.id, e.target.value);
-                          // Auto-resize for mobile too
                           setTimeout(() => {
                             e.target.style.height = 'auto';
                             e.target.style.height = e.target.scrollHeight + 'px';
@@ -361,7 +470,6 @@ export default function SOPEditor() {
                         }}
                         ref={(textarea) => {
                           if (textarea && step.text) {
-                            // Initial resize when textarea mounts with content
                             setTimeout(() => {
                               textarea.style.height = 'auto';
                               textarea.style.height = textarea.scrollHeight + 'px';

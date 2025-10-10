@@ -18,7 +18,7 @@ export async function apiRequest(
   const headers: Record<string, string> = {
     ...options?.headers,
   };
-  
+
   const method = options?.method || 'GET';
   
   // Add Content-Type header for POST/PATCH/PUT requests with body
