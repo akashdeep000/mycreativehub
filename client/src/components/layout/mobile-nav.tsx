@@ -12,6 +12,8 @@ const mobileNavigationItems = [
   { ...navigationItems.find(item => item.moduleKey === "Content Creation System")!, label: "Content" },
   // Product Launch → "Launch"
   { ...navigationItems.find(item => item.moduleKey === "Product Launch System")!, label: "Launch" },
+  // Financial Management → "Finance"
+  { ...navigationItems.find(item => item.moduleKey === "Financial Management System")!, label: "Finance" },
   // Affiliate Hub → "Affiliate"
   { ...navigationItems.find(item => item.moduleKey === "The Affiliate Link Hub")!, label: "Affiliate" }
 ];
