@@ -357,8 +357,7 @@ export default function SOPBuilderHub() {
               </Link>
               <Link href="/streamline-workflow">
                 <Button variant="ghost" size="sm">
-                  <ArrowLeft className="w-4 h-4 mr-1" />
-                  Back to Streamline Your Workflow
+                  <ArrowLeft className="w-4 h-4" />
                 </Button>
               </Link>
             </div>
