@@ -604,12 +604,6 @@ function ResourceCard({
           </div>
         </div>
         <GripVertical className="w-4 h-4 absolute top-2 left-2 text-white/60" />
-        {isShared && (
-          <Badge className="absolute top-2 right-2 bg-white/20 text-white border-white/30" data-testid={`badge-shared-${item.id}`}>
-            <Users className="w-3 h-3 mr-1" />
-            Shared
-          </Badge>
-        )}
       </CardHeader>
       
       <CardContent className="p-4 flex-1 flex flex-col">
