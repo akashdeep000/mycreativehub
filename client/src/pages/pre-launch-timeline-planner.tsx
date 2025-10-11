@@ -10,6 +10,9 @@ import { Calendar, ArrowLeft, Plus, Edit3, Trash2, Clock, Target, Lightbulb } fr
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 import Sidebar from '@/components/layout/sidebar';
+import { useDebouncedEffect } from '@/hooks/use-debounced-effect';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 
 interface ChecklistItem {
@@ -89,35 +92,45 @@ const getStatusColor = (status: 'in progress' | 'scheduled' | 'completed') => {
 export default function PreLaunchTimelinePlanner() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  
-  // Initialize launches from localStorage with migration support
-  const [launches, setLaunches] = useState<Launch[]>(() => {
-    const saved = localStorage.getItem('prelaunchLaunches');
-    if (saved) {
-      return JSON.parse(saved);
+
+  const [launches, setLaunches] = useState<Launch[]>([]);
+  const queryClient = useQueryClient();
+
+  const { data: plannerData, isLoading } = useQuery({
+    queryKey: ['prelaunchTimelinePlanner'],
+    queryFn: async () => {
+      const res = await apiRequest('/api/persistent/prelaunch-timeline-planner');
+      return res.json();
+    },
+  });
+
+  useEffect(() => {
+    if (plannerData && plannerData.launches) {
+      setLaunches(plannerData.launches);
     }
-    
-    // Check for legacy single timeline data and migrate
-    const legacyData = localStorage.getItem('prelaunchTimeline');
-    if (legacyData) {
-      try {
-        const data = JSON.parse(legacyData);
-        const migratedLaunch: Launch = {
-          id: 'migrated-launch',
-          title: data.projectName || 'Pre-Launch Timeline Planner',
-          timelineData: data,
-          createdAt: new Date().toISOString(),
-          lastModified: new Date().toISOString(),
-        };
-        // Remove legacy data
-        localStorage.removeItem('prelaunchTimeline');
-        return [migratedLaunch];
-      } catch (error) {
-        console.error('Error migrating legacy data:', error);
-      }
-    }
-    
-    return [];
+  }, [plannerData]);
+
+  const { mutate: savePlanner } = useMutation({
+    mutationFn: (updatedLaunches: Launch[]) =>
+      apiRequest('/api/persistent/prelaunch-timeline-planner', {
+        method: 'PUT',
+        body: JSON.stringify({ launches: updatedLaunches }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prelaunchTimelinePlanner'] });
+      // toast({
+      //   title: 'Saved!',
+      //   description: 'Your timeline has been saved.',
+      // });
+    },
+    onError: (error) => {
+      console.error('Error saving pre-launch timeline planner data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save timeline data.',
+        variant: 'destructive',
+      });
+    },
   });
 
   const [selectedLaunch, setSelectedLaunch] = useState<Launch | null>(null);
@@ -129,13 +142,15 @@ export default function PreLaunchTimelinePlanner() {
   const [editingLaunchTitle, setEditingLaunchTitle] = useState('');
   const [editingLaunchId, setEditingLaunchId] = useState<string | null>(null);
   const [escapedEdit, setEscapedEdit] = useState(false);
-  
-  
 
-  // Auto-save launches to localStorage
-  useEffect(() => {
-    localStorage.setItem('prelaunchLaunches', JSON.stringify(launches));
-  }, [launches]);
+
+
+  // Auto-save launches to DB with debounce
+  useDebouncedEffect(() => {
+    if (launches.length > 0 && !isLoading) {
+      savePlanner(launches);
+    }
+  }, [launches, isLoading], 1000);
 
   const generateId = () => Math.random().toString(36).substring(2, 9);
 
@@ -191,7 +206,7 @@ export default function PreLaunchTimelinePlanner() {
   // Timeline functions (work with the selected launch)
   const addWeek = () => {
     if (!selectedLaunch) return;
-    
+
     const newWeekNumber = selectedLaunch.timelineData.weeks.length + 1;
     const newWeek: WeekData = {
       weekNumber: newWeekNumber,
@@ -199,7 +214,7 @@ export default function PreLaunchTimelinePlanner() {
       content: [],
       notes: '',
     };
-    
+
     const updatedLaunch = {
       ...selectedLaunch,
       timelineData: {
@@ -216,7 +231,7 @@ export default function PreLaunchTimelinePlanner() {
     ));
   };
 
-  
+
 
   const resetDialogState = () => {
     setCustomContentType('');
@@ -360,10 +375,10 @@ export default function PreLaunchTimelinePlanner() {
 
     if (editingLaunchId && editingLaunchTitle.trim()) {
       const newTitle = editingLaunchTitle.trim();
-      
+
       // Update the launches array
       updateLaunchTitle(editingLaunchId, newTitle);
-      
+
       // Also update selectedLaunch if it matches the edited launch
       if (selectedLaunch && selectedLaunch.id === editingLaunchId) {
         setSelectedLaunch({
@@ -373,7 +388,7 @@ export default function PreLaunchTimelinePlanner() {
           lastModified: new Date().toISOString(),
         });
       }
-      
+
       setIsEditingLaunchTitle(false);
       setEditingLaunchId(null);
       toast({
@@ -430,7 +445,7 @@ export default function PreLaunchTimelinePlanner() {
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               </div>
-              
+
               {/* Desktop Navigation - Full Buttons */}
               <div className="hidden lg:flex gap-2">
                 <Button
@@ -451,7 +466,7 @@ export default function PreLaunchTimelinePlanner() {
                 </Button>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl flex items-center justify-center">
                 <Clock className="w-5 h-5 text-white" />
@@ -460,7 +475,7 @@ export default function PreLaunchTimelinePlanner() {
                 <h1 className="text-2xl font-serif font-semibold text-gray-900">Pre-Launch Timeline Planner</h1>
               </div>
             </div>
-            
+
             <p className="text-gray-600 mb-6">Manage multiple launch timelines with detailed planning for each</p>
           </div>
 
@@ -606,7 +621,7 @@ export default function PreLaunchTimelinePlanner() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </div>
-            
+
             {/* Desktop Navigation - Full Buttons */}
             <div className="hidden lg:flex gap-2">
               <Button
@@ -627,7 +642,7 @@ export default function PreLaunchTimelinePlanner() {
               </Button>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl flex items-center justify-center">
               <Clock className="w-5 h-5 text-white" />
@@ -671,11 +686,11 @@ export default function PreLaunchTimelinePlanner() {
               )}
             </div>
           </div>
-          
+
           <p className="text-gray-600 mb-6">Map out your pre-launch timeline with week by week content planning</p>
 
-          
-          
+
+
           {/* Instructions */}
           <p className="text-sm text-gray-600 mb-4">
             Click "Add Week" to build your launch timeline.
@@ -724,7 +739,7 @@ export default function PreLaunchTimelinePlanner() {
                               ))}
                             </div>
                           </div>
-                          
+
                           <div className="border-t pt-4">
                             <h4 className="font-medium text-gray-900 mb-3">Custom Content</h4>
                             <div className="space-y-3">
@@ -751,14 +766,14 @@ export default function PreLaunchTimelinePlanner() {
                               </Button>
                             </div>
                           </div>
-                          
-                          
+
+
                         </div>
                       </DialogContent>
                     </Dialog>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="space-y-3">
                   {week.content.length === 0 ? (
                     <div className="text-center py-8 text-gray-400">
@@ -799,7 +814,7 @@ export default function PreLaunchTimelinePlanner() {
                       </div>
                     ))
                   )}
-                  
+
                   {/* Week Notes */}
                   <div className="border-t pt-3">
                     <Textarea
@@ -813,7 +828,7 @@ export default function PreLaunchTimelinePlanner() {
               </Card>
             ))}
           </div>
-          
+
           {/* Add Week Button */}
           <div className="mt-6 flex justify-center">
             <Button onClick={addWeek} variant="outline" className="flex items-center gap-2">

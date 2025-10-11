@@ -56,7 +56,7 @@ async function updateUserStatsOnTaskCompletion(userId: string) {
   try {
     // Get current stats
     let stats = await storage.getUserStats(userId);
-    
+
     if (!stats) {
       // Create initial stats if they don't exist
       stats = await storage.updateUserStats(userId, {
@@ -68,15 +68,15 @@ async function updateUserStatsOnTaskCompletion(userId: string) {
     } else {
       // Update completed tasks count
       const newCompletedTasks = (stats.completedTasks || 0) + 1;
-      
+
       // Calculate streak
       const today = new Date();
       const lastCompletion = stats.lastTaskCompletionDate ? new Date(stats.lastTaskCompletionDate) : null;
       let newStreak = stats.daysShowedUp || 0;
-      
+
       if (lastCompletion) {
         const daysSinceLastCompletion = Math.floor((today.getTime() - lastCompletion.getTime()) / (1000 * 60 * 60 * 24));
-        
+
         if (daysSinceLastCompletion === 0) {
           // Same day, keep streak
           newStreak = stats.daysShowedUp || 1;
@@ -91,7 +91,7 @@ async function updateUserStatsOnTaskCompletion(userId: string) {
         // First completion
         newStreak = 1;
       }
-      
+
       // Update stats
       await storage.updateUserStats(userId, {
         completedTasks: newCompletedTasks,
@@ -99,7 +99,7 @@ async function updateUserStatsOnTaskCompletion(userId: string) {
         lastTaskCompletionDate: today,
       });
     }
-    
+
     console.log(`Updated stats for user ${userId}: tasks completed, streak calculated`);
   } catch (error) {
     console.error('Error updating user stats:', error);
@@ -112,13 +112,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (process.env.NODE_ENV === 'production') {
       return res.status(404).json({ error: 'Not found' });
     }
-    
+
     try {
       const to = String(req.query.to || '').trim().toLowerCase();
       if (!to) {
         return res.status(400).json({ ok: false, error: 'Email required' });
       }
-      
+
       const result = await resend.emails.send({
         from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
         to,
@@ -141,25 +141,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/signup', async (req, res) => {
     try {
       const { firstName, lastName, email, password } = req.body;
-      
+
       // Check if email is whitelisted first
       const isWhitelisted = await storage.isEmailWhitelisted(email);
       if (!isWhitelisted) {
-        return res.status(403).json({ 
+        return res.status(403).json({
           message: "Access is restricted to course members only. Please purchase the course to gain access.",
           accessDenied: true
         });
       }
-      
+
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
         return res.status(400).json({ message: "User already exists with this email" });
       }
-      
+
       // Hash password
       const hashedPassword = await hashPassword(password);
-      
+
       // Create user
       const user = await storage.createUser({
         id: nanoid(),
@@ -169,11 +169,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword,
         authProvider: "custom"
       });
-      
+
       // Generate JWT token
       console.log("Signup - Generating JWT token for user:", user.email);
       const token = generateToken(user.id, user.email);
-      
+
       // Set httpOnly cookie with environment-specific settings
       const isProduction = process.env.NODE_ENV === 'production';
       res.cookie('authToken', token, {
@@ -183,9 +183,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxAge: isProduction ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000, // 30 days for preview
         path: '/',
       });
-      
+
       console.log("Signup - JWT token generated and cookie set");
-      
+
       // Return user (without password) and token
       const { password: _, ...userWithoutPassword } = user;
       res.json({ user: userWithoutPassword, token });
@@ -200,19 +200,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Login - Starting authentication process");
       console.log("Login - Environment:", process.env.NODE_ENV);
       console.log("Login - Request body:", { email: req.body.email, hasPassword: !!req.body.password });
-      
+
       const { email, password } = req.body;
-      
+
       // Check if email is whitelisted first
       const isWhitelisted = await storage.isEmailWhitelisted(email);
       if (!isWhitelisted) {
         console.log("Login - Email not whitelisted:", email);
-        return res.status(403).json({ 
+        return res.status(403).json({
           message: "Access is restricted to course members only. Please purchase the course to gain access.",
           accessDenied: true
         });
       }
-      
+
       // Find user
       console.log("Login - Looking up user:", email);
       const user = await storage.getUserByEmail(email);
@@ -220,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Login - User not found or no password");
         return res.status(401).json({ message: "Invalid email or password" });
       }
-      
+
       console.log("Login - User found, checking password");
       // Check password
       const isValidPassword = await comparePassword(password, user.password);
@@ -228,13 +228,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Login - Password invalid");
         return res.status(401).json({ message: "Invalid email or password" });
       }
-      
+
       // Generate JWT token
       console.log("Login - Generating JWT token for user:", user.email);
       const token = generateToken(user.id, user.email);
       console.log("Login - JWT token generated, length:", token.length);
       console.log("Login - Token preview:", token.substring(0, 20) + "...");
-      
+
       // Set httpOnly cookie with environment-specific settings
       console.log("Login - Setting httpOnly cookie");
       console.log("Login - Cookie secure flag:", process.env.NODE_ENV === 'production');
@@ -248,12 +248,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       console.log("Login - Cookie options:", JSON.stringify(cookieOptions, null, 2));
       res.cookie('authToken', token, cookieOptions);
-      
+
       // ALSO store in localStorage as backup for production
       console.log("Login - Also providing token for localStorage storage");
-      
+
       console.log("Login - JWT token generated and cookie set");
-      
+
       // Return user (without password) and token
       const { password: _, ...userWithoutPassword } = user;
       res.json({ user: userWithoutPassword, token });
@@ -284,21 +284,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Auth check - No user in middleware");
         return res.status(401).json({ message: "Unauthorized" });
       }
-      
+
       // Check if user's email is still whitelisted
       const isWhitelisted = await storage.isEmailWhitelisted(user.email);
       if (!isWhitelisted) {
         console.log("Auth check - User not whitelisted:", user.email);
-        return res.status(403).json({ 
+        return res.status(403).json({
           message: "Access is restricted to course members only. Please purchase the course to gain access.",
           accessDenied: true
         });
       }
-      
+
       console.log("Auth check - Recording dashboard access for user:", user.email);
       // Record dashboard access when user is authenticated
       await storage.recordDashboardAccess(user.id);
-      
+
       console.log("Auth check - Returning user:", user.email);
       // Return user (without password)
       const { password: _, ...userWithoutPassword } = user;
@@ -314,16 +314,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { businessTitle } = req.body;
       const userId = req.user.id;
-      
+
       if (!businessTitle || typeof businessTitle !== 'string') {
         return res.status(400).json({ message: "Valid business title is required" });
       }
-      
+
       // Update the user's business title
       const updatedUser = await storage.updateUser(userId, { businessTitle: businessTitle.trim() });
-      
+
       console.log(`Updated business title for user ${userId}: ${businessTitle}`);
-      
+
       // Return updated user (without password)
       const { password: _, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
@@ -338,20 +338,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { firstName, lastName, businessTitle } = req.body;
       const userId = req.user.id;
-      
+
       if (!firstName || !lastName || !businessTitle) {
         return res.status(400).json({ message: "All fields are required" });
       }
-      
+
       // Update the user's profile
-      const updatedUser = await storage.updateUser(userId, { 
+      const updatedUser = await storage.updateUser(userId, {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        businessTitle: businessTitle.trim() 
+        businessTitle: businessTitle.trim()
       });
-      
+
       console.log(`Updated profile for user ${userId}: ${firstName} ${lastName}, ${businessTitle}`);
-      
+
       // Return updated user (without password)
       const { password: _, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
@@ -366,18 +366,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { profileImageUrl } = req.body;
       const userId = req.user.id;
-      
+
       if (!profileImageUrl) {
         return res.status(400).json({ message: "Profile image URL is required" });
       }
-      
+
       // Update the user's profile image
-      const updatedUser = await storage.updateUser(userId, { 
-        profileImageUrl: profileImageUrl 
+      const updatedUser = await storage.updateUser(userId, {
+        profileImageUrl: profileImageUrl
       });
-      
+
       console.log(`Updated profile image for user ${userId}`);
-      
+
       // Return updated user (without password)
       const { password: _, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
@@ -392,31 +392,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { currentPassword, newPassword } = req.body;
       const userId = req.user.id;
-      
+
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ message: "Current password and new password are required" });
       }
-      
+
       // Get current user to verify password
       const currentUser = await storage.getUser(userId);
       if (!currentUser || !currentUser.password) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       // Verify current password
       const isValidPassword = await comparePassword(currentPassword, currentUser.password);
       if (!isValidPassword) {
         return res.status(401).json({ message: "Current password is incorrect" });
       }
-      
+
       // Hash new password
       const hashedNewPassword = await hashPassword(newPassword);
-      
+
       // Update the user's password
       const updatedUser = await storage.updateUser(userId, { password: hashedNewPassword });
-      
+
       console.log(`Updated password for user ${userId}`);
-      
+
       // Return success message (don't send back user data for security)
       res.json({ message: "Password updated successfully" });
     } catch (error) {
@@ -452,12 +452,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if user exists (but don't leak this information)
       const user = await storage.getUserByEmail(email);
-      
+
       if (user) {
         // Generate and store reset code
         const resetCode = await storage.createPasswordResetCode(email);
         console.log('[request-reset] code generated', { email, codeLength: resetCode.code.length });
-        
+
         // Send email with code
         try {
           await sendPasswordResetCodeEmail(email, resetCode.code);
@@ -483,13 +483,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/auth/confirm-reset', async (req, res) => {
     try {
       const { email, code, newPassword } = req.body;
-      
+
       // Validate input
       if (!email || !code || !newPassword) {
-        return res.status(400).json({ 
-          ok: false, 
+        return res.status(400).json({
+          ok: false,
           error: 'invalid_input',
-          message: 'Email, code, and new password are required' 
+          message: 'Email, code, and new password are required'
         });
       }
 
@@ -498,10 +498,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validate code format (6 digits)
       if (!/^\d{6}$/.test(normalizedCode)) {
-        return res.status(400).json({ 
-          ok: false, 
+        return res.status(400).json({
+          ok: false,
           error: 'invalid_code',
-          message: 'Code must be 6 digits' 
+          message: 'Code must be 6 digits'
         });
       }
 
@@ -510,7 +510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify code and update password using storage method
       const result = await storage.verifyResetCodeAndUpdatePassword(
         normalizedEmail,
-        normalizedCode, 
+        normalizedCode,
         newPassword
       );
 
@@ -519,11 +519,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ ok: true, message: 'Password reset successful' });
       } else {
         console.log('[confirm-reset] failed:', result.message);
-        
+
         // Map storage errors to user-friendly messages
         let userMessage = 'That code isn\'t right. Please try again.';
         let errorType = 'invalid_code';
-        
+
         if (result.message.includes('Too many attempts')) {
           userMessage = 'Too many tries. Please wait a few minutes and request a new code.';
           errorType = 'too_many_attempts';
@@ -531,19 +531,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userMessage = 'That code isn\'t right. Please try again.';
           errorType = 'invalid_code';
         }
-        
-        return res.status(400).json({ 
-          ok: false, 
+
+        return res.status(400).json({
+          ok: false,
           error: errorType,
-          message: userMessage 
+          message: userMessage
         });
       }
     } catch (e: any) {
       console.error('[confirm-reset] error', e?.message || e);
-      return res.status(500).json({ 
-        ok: false, 
+      return res.status(500).json({
+        ok: false,
         error: 'server_error',
-        message: 'An error occurred. Please try again.' 
+        message: 'An error occurred. Please try again.'
       });
     }
   });
@@ -552,13 +552,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/verify-reset-code', async (req, res) => {
     try {
       const { email, code } = req.body;
-      
+
       // Validate input
       if (!email || !code) {
-        return res.status(400).json({ 
-          ok: false, 
+        return res.status(400).json({
+          ok: false,
           error: 'invalid_input',
-          message: 'Email and code are required' 
+          message: 'Email and code are required'
         });
       }
 
@@ -572,17 +572,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (result.success) {
         console.log('[verify-reset-code] code verified successfully');
-        return res.json({ 
-          ok: true, 
-          resetSessionId: result.resetSessionId 
+        return res.json({
+          ok: true,
+          resetSessionId: result.resetSessionId
         });
       } else {
         console.log('[verify-reset-code] verification failed:', result.message);
-        
+
         // Map storage errors to user-friendly messages
         let userMessage = 'Invalid or expired code. Please try again.';
         let errorType = result.message;
-        
+
         if (result.message === 'too_many_attempts') {
           userMessage = 'Too many attempts. Please wait and request a new code.';
         } else if (result.message === 'expired_code') {
@@ -590,19 +590,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else if (result.message === 'invalid_code') {
           userMessage = 'Invalid code. Please check and try again.';
         }
-        
-        return res.status(400).json({ 
-          ok: false, 
+
+        return res.status(400).json({
+          ok: false,
           error: errorType,
-          message: userMessage 
+          message: userMessage
         });
       }
     } catch (e: any) {
       console.error('[verify-reset-code] error', e?.message || e);
-      return res.status(500).json({ 
-        ok: false, 
+      return res.status(500).json({
+        ok: false,
         error: 'server_error',
-        message: 'An error occurred. Please try again.' 
+        message: 'An error occurred. Please try again.'
       });
     }
   });
@@ -611,22 +611,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/complete-reset', async (req, res) => {
     try {
       const { resetSessionId, newPassword } = req.body;
-      
+
       // Validate input
       if (!resetSessionId || !newPassword) {
-        return res.status(400).json({ 
-          ok: false, 
+        return res.status(400).json({
+          ok: false,
           error: 'invalid_input',
-          message: 'Reset session ID and new password are required' 
+          message: 'Reset session ID and new password are required'
         });
       }
 
       // Validate password strength
       if (newPassword.length < 6) {
-        return res.status(400).json({ 
-          ok: false, 
+        return res.status(400).json({
+          ok: false,
           error: 'weak_password',
-          message: 'Password must be at least 6 characters long' 
+          message: 'Password must be at least 6 characters long'
         });
       }
 
@@ -643,19 +643,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ ok: true, message: 'Password updated successfully' });
       } else {
         console.log('[complete-reset] failed:', result.message);
-        
-        return res.status(400).json({ 
-          ok: false, 
+
+        return res.status(400).json({
+          ok: false,
           error: 'session_invalid',
-          message: 'Reset session invalid or expired. Please start over.' 
+          message: 'Reset session invalid or expired. Please start over.'
         });
       }
     } catch (e: any) {
       console.error('[complete-reset] error', e?.message || e);
-      return res.status(500).json({ 
-        ok: false, 
+      return res.status(500).json({
+        ok: false,
         error: 'server_error',
-        message: 'An error occurred. Please try again.' 
+        message: 'An error occurred. Please try again.'
       });
     }
   });
@@ -690,10 +690,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       console.log(`Fetching daily focus tasks for userId: ${userId}`);
-      
+
       const tasks = await storage.getDailyFocusTasks(userId);
       console.log(`Retrieved ${tasks.length} tasks:`, tasks);
-      
+
       res.json(tasks);
     } catch (error) {
       console.error("Error fetching daily focus tasks:", error);
@@ -706,16 +706,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       console.log(`Creating daily focus task for userId: ${userId}`);
       console.log(`Request body:`, req.body);
-      
+
       const taskData = insertDailyFocusTaskSchema.parse({
         ...req.body,
         userId,
       });
       console.log(`Parsed task data:`, taskData);
-      
+
       const task = await storage.createDailyFocusTask(taskData);
       console.log(`Created task:`, task);
-      
+
       // Log activity
       await storage.createActivityLog({
         userId,
@@ -723,7 +723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: `Added new ${taskData.priority} task`,
         metadata: { taskId: task.id, priority: taskData.priority },
       });
-      
+
       res.json(task);
     } catch (error) {
       console.error("Error creating daily focus task:", error);
@@ -736,18 +736,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const taskId = parseInt(req.params.id);
       const { completed } = req.body;
-      
+
       const task = await storage.updateDailyFocusTask(taskId, completed);
-      
+
       // Log task completion for stats tracking
       if (completed) {
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
         const categoryMap = {
           'must': 'Must Do',
-          'should': 'Should Do', 
+          'should': 'Should Do',
           'could': 'Could Do'
         };
-        
+
         try {
           await storage.logTaskCompletion({
             userId,
@@ -760,7 +760,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('Task completion already logged for this date');
         }
       }
-      
+
       // Log activity
       await storage.createActivityLog({
         userId,
@@ -768,12 +768,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: completed ? 'Completed task' : 'Uncompleted task',
         metadata: { taskId: task.id, priority: task.priority },
       });
-      
+
       // Update user stats when task is completed
       if (completed) {
         await updateUserStatsOnTaskCompletion(userId);
       }
-      
+
       res.json(task);
     } catch (error) {
       console.error("Error updating daily focus task:", error);
@@ -787,19 +787,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const taskId = parseInt(req.params.id);
       const { task } = req.body;
-      
+
       // Check if task exists and belongs to user
       const existingTask = await storage.getDailyFocusTask(taskId);
       if (!existingTask) {
         return res.status(404).json({ message: 'Task not found' });
       }
-      
+
       if (existingTask.userId !== userId) {
         return res.status(403).json({ message: 'Access denied' });
       }
-      
+
       const updatedTask = await storage.updateDailyFocusTaskText(taskId, task);
-      
+
       // Log activity
       await storage.createActivityLog({
         userId,
@@ -807,7 +807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: `Edited task: ${task}`,
         metadata: { taskId: updatedTask.id, priority: updatedTask.priority },
       });
-      
+
       res.json(updatedTask);
     } catch (error) {
       console.error("Error editing daily focus task:", error);
@@ -820,19 +820,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const taskId = parseInt(req.params.id);
-      
+
       // Check if task exists and belongs to user
       const task = await storage.getDailyFocusTask(taskId);
       if (!task) {
         return res.status(404).json({ message: 'Task not found' });
       }
-      
+
       if (task.userId !== userId) {
         return res.status(403).json({ message: 'Access denied' });
       }
-      
+
       await storage.deleteDailyFocusTask(taskId);
-      
+
       // Log activity
       await storage.createActivityLog({
         userId,
@@ -840,7 +840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: `Deleted task: ${task.task}`,
         metadata: { taskId, priority: task.priority },
       });
-      
+
       res.json({ message: 'Task deleted successfully' });
     } catch (error) {
       console.error("Error deleting task:", error);
@@ -852,9 +852,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/daily-focus/clear-all', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      
+
       await storage.clearDailyFocusTasks(userId);
-      
+
       // Log activity
       await storage.createActivityLog({
         userId,
@@ -862,7 +862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: 'Cleared all daily focus tasks',
         metadata: {},
       });
-      
+
       res.json({ message: 'All daily tasks cleared successfully' });
     } catch (error) {
       console.error("Error clearing daily tasks:", error);
@@ -876,7 +876,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
-      
+
       const completions = await storage.getMonthlyTaskCompletions(userId, year, month);
       res.json({ completions });
     } catch (error) {
@@ -906,16 +906,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const currentDate = new Date();
       const currentYear = currentDate.getFullYear();
       const currentMonth = currentDate.getMonth() + 1;
-      
+
       // Get monthly task completions from log
       const monthlyCompletions = await storage.getMonthlyTaskCompletions(userId, currentYear, currentMonth);
-      
+
       // Override completedTasks with monthly data
       const updatedStats = {
         ...(stats || { completedTasks: 0, focusHours: 0, daysShowedUp: 0 }),
         completedTasks: monthlyCompletions
       };
-      
+
       res.json(updatedStats);
     } catch (error) {
       console.error("Error fetching user stats:", error);
@@ -939,12 +939,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const { minutes, sessionType } = req.body;
-      
+
       // Get current stats
       let stats = await storage.getUserStats(userId);
       const currentFocusHours = stats?.focusHours || 0;
       const newFocusHours = currentFocusHours + minutes;
-      
+
       // Update focus hours
       if (!stats) {
         await storage.updateUserStats(userId, {
@@ -957,7 +957,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           focusHours: newFocusHours,
         });
       }
-      
+
       // Log the focus session activity
       await storage.createActivityLog({
         userId,
@@ -965,7 +965,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: `Completed ${minutes} minute ${sessionType || 'focus'} session`,
         metadata: { duration: minutes, sessionType },
       });
-      
+
       res.json({ success: true, totalFocusHours: newFocusHours });
     } catch (error) {
       console.error("Error logging focus time:", error);
@@ -1006,7 +1006,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
       });
       const instance = await storage.createUserTemplateInstance(instanceData);
-      
+
       // Log activity
       await storage.createActivityLog({
         userId,
@@ -1014,7 +1014,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: `Created new template instance: ${instanceData.name}`,
         metadata: { templateId: instanceData.templateId },
       });
-      
+
       res.json(instance);
     } catch (error) {
       console.error("Error creating user template instance:", error);
@@ -1027,9 +1027,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const instanceId = parseInt(req.params.id);
       const { data } = req.body;
-      
+
       const instance = await storage.updateUserTemplateInstance(instanceId, data);
-      
+
       // Log activity
       await storage.createActivityLog({
         userId,
@@ -1037,7 +1037,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: `Updated template instance: ${instance.name}`,
         metadata: { templateId: instance.templateId },
       });
-      
+
       res.json(instance);
     } catch (error) {
       console.error("Error updating user template instance:", error);
@@ -1049,9 +1049,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const instanceId = parseInt(req.params.id);
-      
+
       await storage.deleteUserTemplateInstance(instanceId);
-      
+
       // Log activity
       await storage.createActivityLog({
         userId,
@@ -1059,7 +1059,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: 'Deleted template instance',
         metadata: { instanceId },
       });
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting user template instance:", error);
@@ -1072,13 +1072,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const { templateType, includeArchived } = req.query;
-      
+
       const templates = await storage.getWorkflowTemplateInstances(
-        userId, 
-        templateType as string, 
+        userId,
+        templateType as string,
         includeArchived === 'true'
       );
-      
+
       res.json(templates);
     } catch (error) {
       console.error("Error fetching workflow templates:", error);
@@ -1102,16 +1102,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const template = await storage.getWorkflowTemplateInstance(parseInt(id));
-      
+
       if (!template) {
         return res.status(404).json({ message: "Template not found" });
       }
-      
+
       // Check if user owns this template
       if (template.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       res.json(template);
     } catch (error) {
       console.error("Error fetching workflow template:", error);
@@ -1123,14 +1123,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const { templateType, title, data } = req.body;
-      
+
       const template = await storage.createWorkflowTemplateInstance({
         userId,
         templateType,
         title,
         data: data || {},
       });
-      
+
       res.status(201).json(template);
     } catch (error) {
       console.error("Error creating workflow template:", error);
@@ -1142,19 +1142,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { data, title } = req.body;
-      
+
       // Check if user owns this template
       const existingTemplate = await storage.getWorkflowTemplateInstance(parseInt(id));
       if (!existingTemplate || existingTemplate.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       const template = await storage.updateWorkflowTemplateInstance(
-        parseInt(id), 
-        data, 
+        parseInt(id),
+        data,
         title
       );
-      
+
       res.json(template);
     } catch (error) {
       console.error("Error updating workflow template:", error);
@@ -1167,13 +1167,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/workflow-templates/:id/archive", jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
-      
+
       // Check if user owns this template
       const existingTemplate = await storage.getWorkflowTemplateInstance(parseInt(id));
       if (!existingTemplate || existingTemplate.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       const template = await storage.archiveWorkflowTemplateInstance(parseInt(id));
       res.json(template);
     } catch (error) {
@@ -1185,13 +1185,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/workflow-templates/:id/restore", jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
-      
+
       // Check if user owns this template
       const existingTemplate = await storage.getWorkflowTemplateInstance(parseInt(id));
       if (!existingTemplate || existingTemplate.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       const template = await storage.restoreWorkflowTemplateInstance(parseInt(id));
       res.json(template);
     } catch (error) {
@@ -1203,11 +1203,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/workflow-templates/bulk-delete", jwtAuth, async (req: any, res) => {
     try {
       const { templateIds } = req.body;
-      
+
       if (!Array.isArray(templateIds) || templateIds.length === 0) {
         return res.status(400).json({ message: "Template IDs are required" });
       }
-      
+
       // Verify user owns all templates
       for (const id of templateIds) {
         const template = await storage.getWorkflowTemplateInstance(parseInt(id));
@@ -1215,7 +1215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ message: "Access denied" });
         }
       }
-      
+
       await storage.bulkDeleteWorkflowTemplateInstances(templateIds.map(id => parseInt(id)));
       res.status(204).send();
     } catch (error) {
@@ -1227,13 +1227,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/workflow-templates/:id", jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
-      
+
       // Check if user owns this template
       const existingTemplate = await storage.getWorkflowTemplateInstance(parseInt(id));
       if (!existingTemplate || existingTemplate.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       await storage.deleteWorkflowTemplateInstance(parseInt(id));
       res.status(204).send();
     } catch (error) {
@@ -1273,7 +1273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Debug - Environment check failed:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         environment: process.env.NODE_ENV,
         userId: req.user?.id,
         dbConnected: false,
@@ -1310,16 +1310,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       // Verify ownership
       if (board.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       res.json(board);
     } catch (error) {
       console.error("Error fetching inspiration board:", error);
@@ -1337,24 +1337,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("PRODUCTION DEBUG - Request body:", JSON.stringify(req.body, null, 2));
       console.log("PRODUCTION DEBUG - Database URL available:", !!process.env.DATABASE_URL);
       console.log("PRODUCTION DEBUG - Database URL preview:", process.env.DATABASE_URL?.substring(0, 50) + "...");
-      
+
       // Validate authentication
       if (!req.user || !req.user.id) {
         console.log("PRODUCTION DEBUG - AUTH ERROR: No user found in request");
         console.log("PRODUCTION DEBUG - req.user:", req.user);
         return res.status(401).json({ message: "Authentication required" });
       }
-      
+
       const userId = req.user.id;
       console.log("PRODUCTION DEBUG - Creating inspiration board - User ID:", userId);
       console.log("PRODUCTION DEBUG - User object:", JSON.stringify(req.user, null, 2));
-      
+
       const { title, description, backgroundColor, backgroundTexture } = req.body;
-      
+
       if (!title?.trim()) {
         return res.status(400).json({ message: "Title is required" });
       }
-      
+
       const boardData = {
         userId,
         title: title.trim(),
@@ -1362,9 +1362,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         backgroundColor: backgroundColor || "white",
         backgroundTexture: backgroundTexture || "paper",
       };
-      
+
       console.log("PRODUCTION DEBUG - Creating inspiration board - Board data:", JSON.stringify(boardData, null, 2));
-      
+
       // Test database connection
       console.log("PRODUCTION DEBUG - Testing database connection...");
       try {
@@ -1377,13 +1377,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("PRODUCTION DEBUG - DB Error stack:", dbError instanceof Error ? dbError.stack : 'No stack');
         return res.status(500).json({ message: "Database connection failed" });
       }
-      
+
       console.log("PRODUCTION DEBUG - About to create board...");
       const board = await storage.createInspirationBoard(boardData);
       console.log("PRODUCTION DEBUG - Board created successfully:", JSON.stringify(board, null, 2));
       console.log("PRODUCTION DEBUG - Board ID:", board.id);
       console.log("=== BOARD CREATION SUCCESS ===");
-      
+
       res.status(201).json(board);
     } catch (error: any) {
       console.error("=== BOARD CREATION ERROR ===");
@@ -1408,7 +1408,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       console.error("PRODUCTION DEBUG - Full error object:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
       console.error("=== BOARD CREATION ERROR END ===");
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to create inspiration board",
         error: error?.message,
         errorCode: error?.code,
@@ -1421,15 +1421,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       if (board.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       const updatedBoard = await storage.updateInspirationBoard(parseInt(id), req.body);
       res.json(updatedBoard);
     } catch (error) {
@@ -1443,15 +1443,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const userId = req.user.id;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       if (board.userId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       const duplicatedBoard = await storage.duplicateInspirationBoard(parseInt(id), userId);
       res.status(201).json(duplicatedBoard);
     } catch (error) {
@@ -1464,15 +1464,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       if (board.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       const archivedBoard = await storage.archiveInspirationBoard(parseInt(id));
       res.json(archivedBoard);
     } catch (error) {
@@ -1485,15 +1485,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       if (board.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       const restoredBoard = await storage.restoreInspirationBoard(parseInt(id));
       res.json(restoredBoard);
     } catch (error) {
@@ -1506,15 +1506,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       if (board.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       await storage.deleteInspirationBoard(parseInt(id));
       res.status(204).send();
     } catch (error) {
@@ -1528,11 +1528,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       const images = await storage.getBoardImages(parseInt(id));
       res.json(images);
     } catch (error) {
@@ -1546,11 +1546,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       const { ObjectStorageService } = await import('./objectStorage');
       const objectStorageService = new ObjectStorageService();
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
@@ -1566,14 +1566,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       console.log("Creating board image for board ID:", id);
       console.log("Request body:", req.body);
-      
+
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         console.log("Board not found or access denied:", { boardExists: !!board, userId: req.user.id });
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       // Normalize the image URL if it's from object storage
       let { imageUrl } = req.body;
       if (imageUrl && imageUrl.startsWith('https://storage.googleapis.com/')) {
@@ -1581,7 +1581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const objectStorageService = new ObjectStorageService();
         imageUrl = objectStorageService.normalizeObjectEntityPath(imageUrl);
       }
-      
+
       const image = await storage.createBoardImage({
         boardId: parseInt(id),
         ...req.body,
@@ -1599,11 +1599,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id, imageId } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       const image = await storage.updateBoardImage(parseInt(imageId), req.body);
       res.json(image);
     } catch (error) {
@@ -1616,11 +1616,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id, imageId } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       await storage.deleteBoardImage(parseInt(imageId));
       res.status(204).send();
     } catch (error) {
@@ -1633,11 +1633,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       const notes = await storage.getBoardNotes(parseInt(id));
       res.json(notes);
     } catch (error) {
@@ -1650,11 +1650,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       const note = await storage.createBoardNote({
         boardId: parseInt(id),
         ...req.body,
@@ -1670,16 +1670,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id, noteId } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       const updatedNote = await storage.updateBoardNote(parseInt(noteId), req.body);
       if (!updatedNote) {
         return res.status(404).json({ message: "Note not found" });
       }
-      
+
       res.json(updatedNote);
     } catch (error) {
       console.error("Error updating board note:", error);
@@ -1691,11 +1691,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id, noteId } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       await storage.deleteBoardNote(parseInt(noteId));
       res.json({ message: "Note deleted successfully" });
     } catch (error) {
@@ -1708,11 +1708,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       const palettes = await storage.getBoardColorPalettes(parseInt(id));
       res.json(palettes);
     } catch (error) {
@@ -1725,11 +1725,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       const palette = await storage.createColorPalette({
         boardId: parseInt(id),
         ...req.body,
@@ -1745,11 +1745,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id, paletteId } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       const palette = await storage.updateColorPalette(parseInt(paletteId), req.body);
       res.json(palette);
     } catch (error) {
@@ -1762,11 +1762,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id, paletteId } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       await storage.deleteColorPalette(parseInt(paletteId));
       res.status(204).send();
     } catch (error) {
@@ -1779,11 +1779,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       const links = await storage.getBoardLinks(parseInt(id));
       res.json(links);
     } catch (error) {
@@ -1796,11 +1796,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       const link = await storage.createBoardLink({
         boardId: parseInt(id),
         ...req.body,
@@ -1816,11 +1816,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id, linkId } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       const link = await storage.updateBoardLink(parseInt(linkId), req.body);
       res.json(link);
     } catch (error) {
@@ -1833,11 +1833,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id, linkId } = req.params;
       const board = await storage.getInspirationBoard(parseInt(id));
-      
+
       if (!board || board.userId !== req.user.id) {
         return res.status(404).json({ message: "Board not found" });
       }
-      
+
       await storage.deleteBoardLink(parseInt(linkId));
       res.status(204).send();
     } catch (error) {
@@ -1851,7 +1851,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { minutes, sessionType, taskDescription } = req.body;
       const userId = req.user.id;
-      
+
       // Log activity
       await storage.createActivityLog({
         userId,
@@ -1859,15 +1859,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: 'focus',
         metadata: { sessionType, taskDescription, minutes }
       });
-      
+
       // Update user stats
       const currentStats = await storage.getUserStats(userId);
       const currentFocusHours = currentStats?.focusHours || 0;
-      
+
       await storage.updateUserStats(userId, {
         focusHours: currentFocusHours + minutes
       });
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error("Error logging focus session:", error);
@@ -1880,16 +1880,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const strategy = await storage.getSocialMediaStrategy(userId);
-      
+
       if (!strategy) {
         return res.json({ pillars: [] });
       }
-      
+
       // Ensure pillars is always an array
       if (!Array.isArray(strategy.pillars)) {
         strategy.pillars = [];
       }
-      
+
       res.json(strategy);
     } catch (error) {
       console.error("Error fetching social media strategy:", error);
@@ -1900,22 +1900,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/social-media-strategy', jwtAuth, async (req: any, res) => {
     const userId = req.user.id;
     const { contentGoals, pillars } = req.body;
-    
+
     console.log("=== SAVING SOCIAL MEDIA STRATEGY ===");
     console.log("UserId:", userId);
     console.log("Content Goals:", contentGoals);
     console.log("Pillars received:", JSON.stringify(pillars, null, 2));
-    
+
     try {
       const strategy = await storage.upsertSocialMediaStrategy({
         userId,
         contentGoals,
         pillars
       });
-      
+
       console.log("Strategy saved successfully");
       console.log("Saved pillars:", JSON.stringify(strategy.pillars, null, 2));
-      
+
       res.json(strategy);
     } catch (error: any) {
       console.error("Error saving social media strategy:", error);
@@ -1942,7 +1942,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         ...req.body
       };
-      
+
       const item = await storage.createResourceLibraryItem(itemData);
       res.status(201).json(item);
     } catch (error) {
@@ -1956,21 +1956,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const { id } = req.params;
       const itemId = parseInt(id);
-      
+
       if (isNaN(itemId)) {
         return res.status(400).json({ message: "Invalid item ID" });
       }
-      
+
       // Check if item exists and verify ownership
       const existingItem = await storage.getResourceLibraryItem(itemId);
       if (!existingItem) {
         return res.status(404).json({ message: "Item not found" });
       }
-      
+
       if (existingItem.userId !== userId) {
         return res.status(403).json({ message: "Access denied: You can only update your own items" });
       }
-      
+
       const item = await storage.updateResourceLibraryItem(itemId, req.body);
       res.json(item);
     } catch (error) {
@@ -1984,21 +1984,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const { id } = req.params;
       const itemId = parseInt(id);
-      
+
       if (isNaN(itemId)) {
         return res.status(400).json({ message: "Invalid item ID" });
       }
-      
+
       // Check if item exists and verify ownership
       const existingItem = await storage.getResourceLibraryItem(itemId);
       if (!existingItem) {
         return res.status(404).json({ message: "Item not found" });
       }
-      
+
       if (existingItem.userId !== userId) {
         return res.status(403).json({ message: "Access denied: You can only delete your own items" });
       }
-      
+
       await storage.deleteResourceLibraryItem(itemId);
       res.status(204).send();
     } catch (error) {
@@ -2035,7 +2035,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/affiliate-links', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      
+
       // Map frontend fields to database schema
       const linkData = {
         userId,
@@ -2050,7 +2050,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: req.body.notes,
         status: req.body.status
       };
-      
+
       const link = await storage.createAffiliateLink(linkData);
       res.status(201).json(link);
     } catch (error) {
@@ -2062,7 +2062,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/affiliate-links/:id', jwtAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
-      
+
       // Map frontend fields to database schema
       const updateData = {
         productName: req.body.productName,
@@ -2076,7 +2076,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: req.body.notes,
         status: req.body.status
       };
-      
+
       const link = await storage.updateAffiliateLink(parseInt(id), updateData);
       res.json(link);
     } catch (error) {
@@ -2118,7 +2118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const { year, month, calendarData, colorTags } = req.body;
-      
+
       console.log('=== CALENDAR SAVE START ===');
       console.log('Received data:', {
         userId,
@@ -2129,22 +2129,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         calendarDataFirst: calendarData?.[0],
         colorTagsFirst: colorTags?.[0]
       });
-      
+
       // Ensure year and month are numbers
       const validYear = year && typeof year === 'number' ? year : new Date().getFullYear();
       const validMonth = month && typeof month === 'number' ? month : new Date().getMonth() + 1;
-      
+
       // Ensure data is properly serialized
       const serializedCalendarData = JSON.parse(JSON.stringify(calendarData || []));
       const serializedColorTags = JSON.parse(JSON.stringify(colorTags || []));
-      
+
       console.log('Serialized data for DB:', {
         serializedCalendarDataLength: serializedCalendarData.length,
         serializedColorTagsLength: serializedColorTags.length,
         serializedCalendarData,
         serializedColorTags
       });
-      
+
       const calendar = await storage.upsertMonthlyContentCalendar({
         userId,
         year: validYear,
@@ -2152,7 +2152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         calendarData: serializedCalendarData,
         colorTags: serializedColorTags
       });
-      
+
       console.log('=== CALENDAR SAVE RESULT ===');
       console.log('Saved calendar:', calendar);
       console.log('=== CALENDAR SAVE END ===');
@@ -2327,12 +2327,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/persistent/prelaunch-timeline-planner', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { timelineLength, weeklyContent, weekNotes } = req.body;
+      const { launches } = req.body;
       const planner = await storage.upsertPrelaunchTimelinePlanner({
         userId,
-        timelineLength,
-        weeklyContent,
-        weekNotes
+        launches
       });
       res.json(planner);
     } catch (error) {
@@ -2442,11 +2440,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const { prompts } = req.body;
-      
+
       if (!Array.isArray(prompts)) {
         return res.status(400).json({ message: 'Prompts must be an array' });
       }
-      
+
       const result = await storage.bulkUpsertAutomationPrompts(userId, prompts);
       res.json(result);
     } catch (error) {
@@ -2459,7 +2457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const promptData = { ...req.body, userId };
-      
+
       const prompt = await storage.createAutomationPrompt(promptData);
       res.json(prompt);
     } catch (error) {
@@ -2472,7 +2470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const promptId = req.params.id;
-      
+
       // Check ownership
       const existingPrompt = await storage.getAutomationPrompt(promptId);
       if (!existingPrompt) {
@@ -2481,7 +2479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (existingPrompt.userId !== userId) {
         return res.status(403).json({ message: 'Not authorized to modify this prompt' });
       }
-      
+
       const prompt = await storage.updateAutomationPrompt(promptId, req.body);
       res.json(prompt);
     } catch (error) {
@@ -2494,7 +2492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const promptId = req.params.id;
-      
+
       // Check ownership
       const existingPrompt = await storage.getAutomationPrompt(promptId);
       if (!existingPrompt) {
@@ -2503,7 +2501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (existingPrompt.userId !== userId) {
         return res.status(403).json({ message: 'Not authorized to delete this prompt' });
       }
-      
+
       await storage.deleteAutomationPrompt(promptId);
       res.status(204).send();
     } catch (error) {
@@ -2516,15 +2514,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/automation/cheatsheet', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      
+
       // Try to get existing document
       let doc = await storage.getCheatSheetDoc(userId);
-      
+
       // If no document exists, seed one
       if (!doc) {
         doc = await storage.seedCheatSheetDoc(userId);
       }
-      
+
       // Transform to frontend-expected format
       const data = doc.data as any;
       const transformed = {
@@ -2533,7 +2531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rows: data.rows || [],
         updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString()
       };
-      
+
       res.json(transformed);
     } catch (error) {
       console.error('Error fetching cheat sheet document:', error);
@@ -2544,13 +2542,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/automation/cheatsheet', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      
+
       // Validate request body
       const { version, rows } = cheatSheetDocPutBodySchema.parse(req.body);
-      
+
       // Attempt optimistic update
       const result = await storage.updateCheatSheetDocOptimistic(userId, version, rows);
-      
+
       if (result.success && result.doc) {
         // Transform to frontend-expected format
         const data = result.doc.data as any;
@@ -2612,18 +2610,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
-      
+
       console.log(`Calendar V2 GET - User: ${userId}, Year: ${year}, Month: ${month}`);
-      
+
       const calendar = await storage.getCalendarV2(userId, year, month);
-      
+
       console.log('Calendar V2 GET - Database result:', {
         found: !!calendar,
         id: calendar?.id,
         colorKeysCount: Array.isArray(calendar?.colorKeys) ? calendar.colorKeys.length : 0,
         daysCount: Array.isArray(calendar?.days) ? calendar.days.length : 0
       });
-      
+
       res.json(calendar || null);
     } catch (error) {
       console.error('Error fetching calendar v2:', error);
@@ -2635,7 +2633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const { year, month, colorKeys, days } = req.body;
-      
+
       console.log('Calendar V2 PUT - Received data:', {
         userId,
         year,
@@ -2645,7 +2643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         colorKeysType: typeof colorKeys,
         daysType: typeof days
       });
-      
+
       const calendar = await storage.upsertCalendarV2({
         userId,
         year,
@@ -2653,13 +2651,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         colorKeys: colorKeys || [],
         days: days || []
       });
-      
+
       console.log('Calendar V2 PUT - Save successful:', {
         id: calendar.id,
         savedColorKeys: calendar.colorKeys,
         savedDays: calendar.days
       });
-      
+
       res.json(calendar);
     } catch (error) {
       console.error('Error saving calendar v2:', error);
@@ -2673,21 +2671,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
-      
+
       console.log(`Calendar V3 GET - User: ${userId}, Year: ${year}, Month: ${month}`);
-      
+
       // Get the month-specific calendar (for days data)
       const calendar = await storage.getCalendarV3(userId, year, month);
-      
+
       // Get global color keys
       let globalKeys = await storage.getGlobalColorKeys(userId);
-      
+
       // Backward compatibility: If no global keys exist, seed from existing data or defaults
       if (!globalKeys) {
         console.log('Calendar V3 GET - No global keys found, seeding...');
-        
+
         let seedColorKeys = [];
-        
+
         // Try to seed from current month's data if it exists
         if (calendar && calendar.colorKeys && calendar.colorKeys.length > 0) {
           seedColorKeys = calendar.colorKeys.map((key: any) => ({
@@ -2717,14 +2715,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ];
           console.log('Calendar V3 GET - Seeding with default keys');
         }
-        
+
         // Create global color keys
         globalKeys = await storage.upsertGlobalColorKeys({
           userId,
           colorKeys: seedColorKeys
         });
       }
-      
+
       // If calendar doesn't exist for this month, create it with empty days
       if (!calendar) {
         console.log('Calendar V3 GET - Creating new calendar for month');
@@ -2736,14 +2734,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           days: []
         });
       }
-      
+
       // Normalize colorKeys to always use 'color' field (not 'colour')
       const normalizedColorKeys = (globalKeys.colorKeys || []).map((key: any) => ({
         id: key.id,
         label: key.label,
         color: key.colour || key.color
       }));
-      
+
       const response = {
         userId,
         year,
@@ -2751,13 +2749,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         colorKeys: normalizedColorKeys,
         days: calendar?.days || []
       };
-      
+
       console.log('Calendar V3 GET - Sending response:', {
         colorKeysCount: response.colorKeys.length,
         daysCount: response.days.length,
         source: 'global'
       });
-      
+
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
@@ -2773,33 +2771,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const { year, month } = req.body;
-      
+
       const calendar = await storage.getCalendarV3(userId, year, month);
-      
+
       if (calendar && calendar.colorKeys) {
         // Map old labels to new labels
         const labelMap = {
           'Email Marketing': 'Email',
-          'Content Creation': 'Reel', 
+          'Content Creation': 'Reel',
           'Filming': 'Carousel',
           'Editing': 'Post',
           'Planning': 'Story',
           'Product Development': 'YouTube Video',
           'Creative Time': 'Long Form'
         };
-        
+
         const updatedColorKeys = calendar.colorKeys.map((key: any) => ({
           ...key,
           label: labelMap[key.label as keyof typeof labelMap] || key.label
         }));
-        
+
         // Add missing labels if we have fewer than 9 keys
         const newLabels = ['Email', 'Reel', 'Carousel', 'Post', 'Story', 'YouTube Video', 'Long Form', 'TikTok', 'Shorts'];
         const existingLabels = updatedColorKeys.map((k: any) => k.label);
         const colors = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#14B8A6', '#EC4899', '#6366F1', '#F97316'];
-        
+
         let nextId = Math.max(...updatedColorKeys.map((k: any) => parseInt(k.id.replace(/\D/g, '')) || 0)) + 1;
-        
+
         newLabels.forEach((label, index) => {
           if (!existingLabels.includes(label)) {
             updatedColorKeys.push({
@@ -2809,7 +2807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
         });
-        
+
         await storage.upsertCalendarV3({
           userId,
           year,
@@ -2817,7 +2815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           colorKeys: updatedColorKeys,
           days: calendar.days || []
         });
-        
+
         res.json({ success: true, updatedKeys: updatedColorKeys.length });
       } else {
         res.json({ success: false, message: 'No calendar found' });
@@ -2834,7 +2832,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
       const { colorKeys, days } = req.body;
-      
+
       console.log('Calendar V3 PUT - Received data:', {
         userId,
         year,
@@ -2842,20 +2840,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         colorKeysCount: Array.isArray(colorKeys) ? colorKeys.length : 0,
         daysCount: Array.isArray(days) ? days.length : 0
       });
-      
+
       // Normalize colorKeys to always use 'color' field (not 'colour')
       const normalizedColorKeys = (colorKeys || []).map((key: any) => ({
         id: key.id,
         label: key.label,
         color: key.colour || key.color
       }));
-      
+
       // Save color keys GLOBALLY (not month-specific)
       const globalKeys = await storage.upsertGlobalColorKeys({
         userId,
         colorKeys: normalizedColorKeys
       });
-      
+
       // Save days to month-specific calendar (colorKeys field empty since we use global now)
       const calendar = await storage.upsertCalendarV3({
         userId,
@@ -2864,14 +2862,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         colorKeys: [], // Empty - using global keys
         days: days || []
       });
-      
+
       // Normalize response colorKeys to always use 'color' field
       const responseColorKeys = (globalKeys.colorKeys || []).map((key: any) => ({
         id: key.id,
         label: key.label,
         color: key.colour || key.color
       }));
-      
+
       const response = {
         userId: calendar.userId,
         year: calendar.year,
@@ -2879,13 +2877,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         colorKeys: responseColorKeys,
         days: calendar.days || []
       };
-      
+
       console.log('Calendar V3 PUT - Sending response:', {
         colorKeysCount: response.colorKeys.length,
         daysCount: response.days.length,
         colorKeysSavedAs: 'global'
       });
-      
+
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
@@ -2915,22 +2913,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/time-blocking-color-keys', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      
+
       console.log(`Time Blocking Color Keys GET - User: ${userId}`);
-      
+
       // Get global color keys for this user
       let colorKeys = await storage.getTimeBlockingColorKeys(userId);
-      
+
       // If no keys exist, seed defaults
       if (!colorKeys) {
         console.log('Time Blocking Color Keys - No keys found, seeding defaults');
-        
+
         colorKeys = await storage.upsertTimeBlockingColorKeys({
           userId,
           colorKeys: DEFAULT_TIME_BLOCKING_COLOR_KEYS,
         });
       }
-      
+
       res.setHeader('Cache-Control', 'no-store');
       res.json({
         colorKeys: colorKeys.colorKeys || [],
@@ -2945,14 +2943,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const { colorKeys } = req.body;
-      
+
       console.log(`Time Blocking Color Keys PUT - User: ${userId}, Keys: ${colorKeys?.length || 0}`);
-      
+
       const updated = await storage.upsertTimeBlockingColorKeys({
         userId,
         colorKeys: colorKeys || [],
       });
-      
+
       res.setHeader('Cache-Control', 'no-store');
       res.json({
         colorKeys: updated.colorKeys || [],
@@ -2968,16 +2966,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const { startDate, endDate } = req.query;
-      
+
       if (!startDate || !endDate) {
         return res.status(400).json({ message: 'startDate and endDate are required' });
       }
-      
+
       const start = new Date(startDate);
       const end = new Date(endDate);
-      
+
       const events = await storage.getTimeBlockingEvents(userId, start, end);
-      
+
       res.setHeader('Cache-Control', 'no-store');
       res.json(events);
     } catch (error) {
@@ -2990,16 +2988,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const event = await storage.getTimeBlockingEvent(id);
-      
+
       if (!event) {
         return res.status(404).json({ message: 'Event not found' });
       }
-      
+
       // Verify ownership
       if (event.userId !== req.user.id) {
         return res.status(403).json({ message: 'Access denied' });
       }
-      
+
       res.setHeader('Cache-Control', 'no-store');
       res.json(event);
     } catch (error) {
@@ -3012,9 +3010,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const eventData = { ...req.body, userId };
-      
+
       const event = await storage.createTimeBlockingEvent(eventData);
-      
+
       console.log(`Created time blocking event ${event.id} for user ${userId}`);
       res.setHeader('Cache-Control', 'no-store');
       res.status(201).json(event);
@@ -3028,15 +3026,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const userId = req.user.id;
-      
+
       // Verify ownership first
       const existingEvent = await storage.getTimeBlockingEvent(id);
       if (!existingEvent || existingEvent.userId !== userId) {
         return res.status(404).json({ message: 'Event not found' });
       }
-      
+
       const updatedEvent = await storage.updateTimeBlockingEvent(id, req.body);
-      
+
       console.log(`Updated time blocking event ${id} for user ${userId}`);
       res.setHeader('Cache-Control', 'no-store');
       res.json(updatedEvent);
@@ -3050,15 +3048,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const userId = req.user.id;
-      
+
       // Verify ownership first
       const existingEvent = await storage.getTimeBlockingEvent(id);
       if (!existingEvent || existingEvent.userId !== userId) {
         return res.status(404).json({ message: 'Event not found' });
       }
-      
+
       await storage.deleteTimeBlockingEvent(id, userId);
-      
+
       console.log(`Deleted time blocking event ${id} for user ${userId}`);
       res.setHeader('Cache-Control', 'no-store');
       res.status(204).send();
@@ -3072,12 +3070,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/systeme-webhook', async (req, res) => {
     console.log('=== WEBHOOK START ===');
     console.log('Systeme.io webhook received:', JSON.stringify(req.body, null, 2));
-    
+
     try {
       // Extract email from webhook data with comprehensive search
       // Systeme.io can send email in various formats
       let email = null;
-      
+
       // Try different possible email field locations
       if (req.body?.contact?.email) {
         email = req.body.contact.email;
@@ -3103,10 +3101,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
         email = searchForEmail(req.body);
       }
-      
+
       console.log('Extracted email:', email);
       console.log('Email extraction method: comprehensive search');
-      
+
       if (!email) {
         console.error('No email found in webhook data');
         const errorResponse = { error: 'No email found in webhook data' };
@@ -3114,25 +3112,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(400).json(errorResponse);
         return;
       }
-      
+
       // Add email to whitelist
       console.log('Adding email to whitelist...');
       const whitelistEntry = await storage.addEmailToWhitelist(email, 'systeme_webhook');
       console.log('Whitelist entry created:', whitelistEntry);
-      
+
       console.log(`Email ${email} added to whitelist successfully`);
-      
+
       // Respond with 200 OK as required by Systeme.io
-      const response = { 
-        success: true, 
+      const response = {
+        success: true,
         message: 'Email added to whitelist',
-        email: email 
+        email: email
       };
-      
+
       console.log('Sending response:', response);
       res.status(200).json(response);
       console.log('=== WEBHOOK END ===');
-      
+
     } catch (error) {
       console.error('Webhook processing error:', error);
       const errorResponse = { error: 'Internal server error' };
@@ -3142,19 +3140,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Financial Management System Routes
-  
+
   // Get transactions for a specific month/year
   app.get('/api/finance/transactions/:year/:month', jwtAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
-      
+
       if (isNaN(year) || isNaN(month)) {
         res.status(400).json({ error: 'Invalid year or month' });
         return;
       }
-      
+
       const transactions = await storage.getFinanceTransactions(userId, year, month);
       res.json(transactions);
     } catch (error) {
@@ -3167,15 +3165,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/finance/transactions', jwtAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
-      
+
       // Convert date string to Date object (JSON serialization converts Date to string)
       if (req.body.date && typeof req.body.date === 'string') {
         req.body.date = new Date(req.body.date);
       }
-      
+
       // Validate request body
       const validatedData = insertFinanceTransactionSchema.omit({ userId: true }).parse(req.body);
-      
+
       const transaction = await storage.createFinanceTransaction({
         userId,
         ...validatedData
@@ -3196,20 +3194,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       const id = parseInt(req.params.id);
-      
+
       if (isNaN(id)) {
         res.status(400).json({ error: 'Invalid transaction ID' });
         return;
       }
-      
+
       // Convert date string to Date object (JSON serialization converts Date to string)
       if (req.body.date && typeof req.body.date === 'string') {
         req.body.date = new Date(req.body.date);
       }
-      
+
       // Validate request body (partial update)
       const validatedData = insertFinanceTransactionSchema.omit({ userId: true }).partial().parse(req.body);
-      
+
       const transaction = await storage.updateFinanceTransaction(id, userId, validatedData);
       res.json(transaction);
     } catch (error) {
@@ -3227,12 +3225,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       const id = parseInt(req.params.id);
-      
+
       if (isNaN(id)) {
         res.status(400).json({ error: 'Invalid transaction ID' });
         return;
       }
-      
+
       await storage.deleteFinanceTransaction(id, userId);
       res.json({ success: true });
     } catch (error) {
@@ -3247,12 +3245,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
-      
+
       if (isNaN(year) || isNaN(month)) {
         res.status(400).json({ error: 'Invalid year or month' });
         return;
       }
-      
+
       const settings = await storage.getMoneyMapMonth(userId, year, month);
       res.json(settings);
     } catch (error) {
@@ -3267,15 +3265,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
-      
+
       if (isNaN(year) || isNaN(month)) {
         res.status(400).json({ error: 'Invalid year or month' });
         return;
       }
-      
+
       // Validate request body (partial update for month settings)
       const validatedData = insertMoneyMapMonthSchema.omit({ userId: true, year: true, month: true }).partial().parse(req.body);
-      
+
       const settings = await storage.upsertMoneyMapMonth({
         userId,
         year,
@@ -3299,16 +3297,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
-      
+
       if (isNaN(year) || isNaN(month)) {
         res.status(400).json({ error: 'Invalid year or month' });
         return;
       }
-      
+
       // Get current month data and update with closed status
       const currentMonth = await storage.getMoneyMapMonth(userId, year, month);
       const transactions = await storage.getFinanceTransactions(userId, year, month);
-      
+
       const settings = await storage.upsertMoneyMapMonth({
         userId,
         year,
@@ -3321,7 +3319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         closedAt: new Date(),
         closedSnapshot: { transactions } as any
       });
-      
+
       res.json(settings);
     } catch (error) {
       console.error('Error closing month:', error);
@@ -3335,15 +3333,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
-      
+
       if (isNaN(year) || isNaN(month)) {
         res.status(400).json({ error: 'Invalid year or month' });
         return;
       }
-      
+
       // Get current month data and update with reopened status
       const currentMonth = await storage.getMoneyMapMonth(userId, year, month);
-      
+
       const settings = await storage.upsertMoneyMapMonth({
         userId,
         year,
@@ -3356,7 +3354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         closedAt: null,
         closedSnapshot: null
       });
-      
+
       res.json(settings);
     } catch (error) {
       console.error('Error reopening month:', error);
@@ -3370,25 +3368,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
-      
+
       if (isNaN(year) || isNaN(month)) {
         res.status(400).json({ error: 'Invalid year or month' });
         return;
       }
-      
+
       const transactions = await storage.getFinanceTransactions(userId, year, month);
-      
+
       // Calculate totals
       const totalIncome = transactions
         .filter(t => t.type === 'income')
         .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-      
+
       const totalExpenses = transactions
         .filter(t => t.type === 'expense')
         .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-      
+
       const netIncome = totalIncome - totalExpenses;
-      
+
       // Create CSV content with new format
       const csvHeader = 'Date,Income,Expenses,Notes,Net Income\n';
       const csvRows = transactions.map(t => {
@@ -3398,17 +3396,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const notes = (t.notes || '').replace(/"/g, '""');
         return `${date},${income},${expense},"${notes}",`;
       }).join('\n');
-      
+
       // Add summary rows
       const summaryRows = `\n,,,Total Income:,${totalIncome.toFixed(2)}\n,,,Total Expenses:,${totalExpenses.toFixed(2)}\n,,,Net Income:,${netIncome.toFixed(2)}`;
-      
+
       const csv = csvHeader + csvRows + summaryRows;
-      
+
       // Create month name for filename
       const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
       const monthName = monthNames[month - 1];
       const filename = `${monthName} ${year}.csv`;
-      
+
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.send(csv);

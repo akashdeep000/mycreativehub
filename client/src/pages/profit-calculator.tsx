@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDebouncedEffect } from '@/hooks/use-debounced-effect';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -114,45 +117,67 @@ const POPULAR_CURRENCIES = [
 export default function ProfitCalculator() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: profitCalculatorData, isLoading } = useQuery({
+    queryKey: ['profit-calculator'],
+    queryFn: async () => {
+      const res = await apiRequest('/api/persistent/profit-calculator');
+      const data = await res.json();
+      // Ensure default structure if data is null
+      return data || { savedCalculations: [], currency: 'GBP', currentCalculation: {} };
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: (data: any) =>
+      apiRequest('/api/persistent/profit-calculator', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profit-calculator'] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save changes.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const [calculations, setCalculations] = useState<ProfitCalculation[]>([]);
+  const [pricingLibrary, setPricingLibrary] = useState<PricingLibraryEntry[]>([]);
   const [selectedCalculation, setSelectedCalculation] = useState<ProfitCalculation | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editingName, setEditingName] = useState('');
   const [pasteText, setPasteText] = useState('');
-  const [pricingLibrary, setPricingLibrary] = useState<PricingLibraryEntry[]>([]);
   const [activeTab, setActiveTab] = useState('calculator');
   const [editingLibraryEntryId, setEditingLibraryEntryId] = useState<string | null>(null);
 
-  // Load calculations and pricing library from localStorage on component mount
   useEffect(() => {
-    const savedCalculations = localStorage.getItem('profitCalculations');
-    const savedPricingLibrary = localStorage.getItem('pricingLibrary');
-    
-    if (savedCalculations) {
-      try {
-        setCalculations(JSON.parse(savedCalculations));
-      } catch (error) {
-        console.error('Failed to parse saved calculations:', error);
+    if (profitCalculatorData) {
+      setCalculations(profitCalculatorData.savedCalculations || []);
+      // For now, we'll keep the pricing library in state, but it could be moved to the DB
+      // setPricingLibrary(profitCalculatorData.pricingLibrary || []);
+    }
+  }, [profitCalculatorData]);
+
+  useDebouncedEffect(() => {
+    if (profitCalculatorData && !isLoading) {
+      const dataToSave = {
+        ...profitCalculatorData,
+        savedCalculations: calculations,
+      };
+      if (JSON.stringify(profitCalculatorData.savedCalculations) !== JSON.stringify(calculations)) {
+        mutation.mutate(dataToSave);
       }
     }
-    
-    if (savedPricingLibrary) {
-      try {
-        setPricingLibrary(JSON.parse(savedPricingLibrary));
-      } catch (error) {
-        console.error('Failed to parse saved pricing library:', error);
-      }
-    }
-  }, []);
+  }, [calculations, profitCalculatorData, isLoading], 1000);
 
-  // Save calculations to localStorage whenever calculations change
   useEffect(() => {
-    localStorage.setItem('profitCalculations', JSON.stringify(calculations));
-  }, [calculations]);
-
-  // Save pricing library to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('pricingLibrary', JSON.stringify(pricingLibrary));
+    // This can be extended to save the pricing library to the DB in the future
   }, [pricingLibrary]);
 
   const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -170,12 +195,12 @@ export default function ProfitCalculator() {
 
   const handleCurrencyChange = (newCurrency: string) => {
     if (!selectedCalculation) return;
-    
+
     const updatedCalculation = {
       ...selectedCalculation,
       currency: newCurrency
     };
-    
+
     updateCalculation(updatedCalculation);
   };
 
@@ -184,7 +209,7 @@ export default function ProfitCalculator() {
     const profitPerUnit = sellingPrice - totalCost;
     const profitMargin = sellingPrice > 0 ? (profitPerUnit / sellingPrice) * 100 : 0;
     const marginStrength = getMarginStrength(profitMargin);
-    
+
     return { totalCost, profitPerUnit, profitMargin, marginStrength };
   };
 
@@ -231,7 +256,7 @@ export default function ProfitCalculator() {
 
   const addComponent = () => {
     if (!selectedCalculation) return;
-    
+
     const newComponent: Component = {
       id: generateId(),
       name: '',
@@ -239,18 +264,18 @@ export default function ProfitCalculator() {
       quantity: 0,
       totalCost: 0
     };
-    
+
     const updatedCalculation = {
       ...selectedCalculation,
       components: [...selectedCalculation.components, newComponent]
     };
-    
+
     updateCalculation(updatedCalculation);
   };
 
   const updateComponent = (componentId: string, field: keyof Component, value: string | number) => {
     if (!selectedCalculation) return;
-    
+
     const updatedComponents = selectedCalculation.components.map(c => {
       if (c.id === componentId) {
         const updated = { ...c, [field]: value };
@@ -261,12 +286,12 @@ export default function ProfitCalculator() {
       }
       return c;
     });
-    
+
     const { totalCost, profitPerUnit, profitMargin, marginStrength } = calculateTotals(
       updatedComponents, 
       selectedCalculation.sellingPrice
     );
-    
+
     const updatedCalculation = {
       ...selectedCalculation,
       components: updatedComponents,
@@ -275,18 +300,18 @@ export default function ProfitCalculator() {
       profitMargin,
       marginStrength
     };
-    
+
     updateCalculation(updatedCalculation);
   };
 
   const updateSellingPrice = (price: number) => {
     if (!selectedCalculation) return;
-    
+
     const { totalCost, profitPerUnit, profitMargin, marginStrength } = calculateTotals(
       selectedCalculation.components, 
       price
     );
-    
+
     const updatedCalculation = {
       ...selectedCalculation,
       sellingPrice: price,
@@ -295,19 +320,19 @@ export default function ProfitCalculator() {
       profitMargin,
       marginStrength
     };
-    
+
     updateCalculation(updatedCalculation);
   };
 
   const deleteComponent = (componentId: string) => {
     if (!selectedCalculation) return;
-    
+
     const updatedComponents = selectedCalculation.components.filter(c => c.id !== componentId);
     const { totalCost, profitPerUnit, profitMargin, marginStrength } = calculateTotals(
       updatedComponents, 
       selectedCalculation.sellingPrice
     );
-    
+
     const updatedCalculation = {
       ...selectedCalculation,
       components: updatedComponents,
@@ -316,16 +341,16 @@ export default function ProfitCalculator() {
       profitMargin,
       marginStrength
     };
-    
+
     updateCalculation(updatedCalculation);
   };
 
   const handlePaste = () => {
     if (!pasteText.trim() || !selectedCalculation) return;
-    
+
     const lines = pasteText.trim().split('\n');
     const newComponents: Component[] = [];
-    
+
     lines.forEach(line => {
       const cleanLine = line.trim();
       if (cleanLine && !cleanLine.includes('=')) {
@@ -334,7 +359,7 @@ export default function ProfitCalculator() {
         if (match) {
           const [, , name, qty] = match;
           const quantity = qty ? parseFloat(qty) || 1 : 1;
-          
+
           newComponents.push({
             id: generateId(),
             name: name.trim(),
@@ -345,7 +370,7 @@ export default function ProfitCalculator() {
         }
       }
     });
-    
+
     if (newComponents.length > 0) {
       const updatedCalculation = {
         ...selectedCalculation,
@@ -362,12 +387,12 @@ export default function ProfitCalculator() {
 
   const handleNameSave = () => {
     if (!selectedCalculation || !editingName.trim()) return;
-    
+
     const updatedCalculation = {
       ...selectedCalculation,
       name: editingName.trim()
     };
-    
+
     updateCalculation(updatedCalculation);
     setIsEditing(false);
   };
@@ -379,7 +404,7 @@ export default function ProfitCalculator() {
 
   const saveToLibrary = () => {
     if (!selectedCalculation) return;
-    
+
     const libraryEntry: PricingLibraryEntry = {
       id: editingLibraryEntryId || generateId(),
       productName: selectedCalculation.name,
@@ -394,7 +419,7 @@ export default function ProfitCalculator() {
         new Date().toISOString(),
       currency: selectedCalculation.currency
     };
-    
+
     if (editingLibraryEntryId) {
       // Update existing entry
       setPricingLibrary(prev => 
@@ -420,10 +445,10 @@ export default function ProfitCalculator() {
   const editFromLibrary = (id: string) => {
     const entry = pricingLibrary.find(e => e.id === id);
     if (!entry) return;
-    
+
     // Set editing mode to track which library entry we're editing
     setEditingLibraryEntryId(id);
-    
+
     // Create a new calculation from the library entry with all original components
     const editCalculation: ProfitCalculation = {
       id: generateId(),
@@ -437,13 +462,13 @@ export default function ProfitCalculator() {
       currency: entry.currency || 'USD',
       lastModified: new Date().toISOString()
     };
-    
+
     // When editing from library, just set as selected without adding to calculations list
     setSelectedCalculation(editCalculation);
-    
+
     // Switch to calculator tab
     setActiveTab('calculator');
-    
+
     toast({
       title: "Loaded for editing",
       description: `${entry.productName} has been loaded into the calculator for editing. Changes will update the original entry.`,
@@ -528,7 +553,7 @@ export default function ProfitCalculator() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </div>
-            
+
             {/* Desktop Navigation - Full Button */}
             <Button
               variant="ghost"
@@ -538,7 +563,7 @@ export default function ProfitCalculator() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Calculations
             </Button>
-            
+
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-teal-400 rounded-xl flex items-center justify-center">
                 <Calculator className="w-5 h-5 text-white" />
@@ -678,7 +703,7 @@ export default function ProfitCalculator() {
                 </tbody>
               </table>
             </div>
-            
+
             {/* Add Component Button */}
             <div className="p-4 border-t bg-gray-50">
               <Button onClick={addComponent} size="sm" className="w-full sm:w-auto">
@@ -801,7 +826,7 @@ export default function ProfitCalculator() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </div>
-          
+
           {/* Desktop Navigation - Full Buttons */}
           <div className="hidden lg:flex gap-4">
             <Button
@@ -822,7 +847,7 @@ export default function ProfitCalculator() {
             </Button>
           </div>
         </div>
-        
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">

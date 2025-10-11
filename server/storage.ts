@@ -161,16 +161,16 @@ export interface IStorage {
   createUser(user: UpsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUser(userId: string, updates: Partial<User>): Promise<User>;
-  
+
   // Course whitelist operations
   isEmailWhitelisted(email: string): Promise<boolean>;
   addEmailToWhitelist(email: string, source?: string): Promise<CourseWhitelist>;
-  
+
   // Toolkit modules
   getToolkitModules(): Promise<ToolkitModule[]>;
   getUserToolkitData(userId: string, moduleId: number): Promise<UserToolkitData | undefined>;
   upsertUserToolkitData(data: any): Promise<UserToolkitData>;
-  
+
   // Daily focus tasks
   getDailyFocusTasks(userId: string): Promise<DailyFocusTask[]>;
   getDailyFocusTask(id: number): Promise<DailyFocusTask | undefined>;
@@ -178,30 +178,30 @@ export interface IStorage {
   updateDailyFocusTask(id: number, completed: boolean): Promise<DailyFocusTask>;
   deleteDailyFocusTask(id: number): Promise<void>;
   clearDailyFocusTasks(userId: string): Promise<void>;
-  
+
   // Task completion log
   logTaskCompletion(log: InsertTaskCompletionLog): Promise<TaskCompletionLog>;
   getMonthlyTaskCompletions(userId: string, year: number, month: number): Promise<number>;
-  
+
   // Activity log
   getRecentActivity(userId: string, limit: number): Promise<ActivityLog[]>;
   createActivityLog(activity: InsertActivityLog): Promise<ActivityLog>;
-  
+
   // User stats
   getUserStats(userId: string): Promise<UserStats | undefined>;
   updateUserStats(userId: string, stats: Partial<UserStats>): Promise<UserStats>;
-  
+
   // Dashboard access tracking
   recordDashboardAccess(userId: string): Promise<void>;
   getMonthlyDashboardAccess(userId: string, month: string): Promise<number>;
-  
+
   // Templates
   getTemplatesByModule(moduleId: number): Promise<Template[]>;
   getUserTemplateInstances(userId: string, templateId?: number): Promise<UserTemplateInstance[]>;
   createUserTemplateInstance(instance: InsertUserTemplateInstance): Promise<UserTemplateInstance>;
   updateUserTemplateInstance(id: number, data: any): Promise<UserTemplateInstance>;
   deleteUserTemplateInstance(id: number): Promise<void>;
-  
+
   // Workflow Templates
   getWorkflowTemplateInstances(userId: string, templateType?: string, includeArchived?: boolean): Promise<WorkflowTemplateInstance[]>;
   getArchivedWorkflowTemplateInstances(userId: string): Promise<WorkflowTemplateInstance[]>;
@@ -212,12 +212,12 @@ export interface IStorage {
   restoreWorkflowTemplateInstance(id: number): Promise<WorkflowTemplateInstance>;
   deleteWorkflowTemplateInstance(id: number): Promise<void>;
   bulkDeleteWorkflowTemplateInstances(ids: number[]): Promise<void>;
-  
+
   // Workflow Template Files
   getWorkflowTemplateFiles(templateInstanceId: number): Promise<WorkflowTemplateFile[]>;
   createWorkflowTemplateFile(file: InsertWorkflowTemplateFile): Promise<WorkflowTemplateFile>;
   deleteWorkflowTemplateFile(id: number): Promise<void>;
-  
+
   // Inspiration Boards
   getInspirationBoards(userId: string, includeArchived?: boolean): Promise<InspirationBoard[]>;
   getArchivedInspirationBoards(userId: string): Promise<InspirationBoard[]>;
@@ -228,35 +228,35 @@ export interface IStorage {
   archiveInspirationBoard(id: number): Promise<InspirationBoard>;
   restoreInspirationBoard(id: number): Promise<InspirationBoard>;
   deleteInspirationBoard(id: number): Promise<void>;
-  
+
   // Inspiration Board Images
   getBoardImages(boardId: number): Promise<InspirationBoardImage[]>;
   createBoardImage(image: InsertInspirationBoardImage): Promise<InspirationBoardImage>;
   updateBoardImage(id: number, data: any): Promise<InspirationBoardImage>;
   deleteBoardImage(id: number): Promise<void>;
-  
+
   // Inspiration Board Notes
   getBoardNotes(boardId: number): Promise<InspirationBoardNote[]>;
   createBoardNote(note: InsertInspirationBoardNote): Promise<InspirationBoardNote>;
   updateBoardNote(id: number, data: any): Promise<InspirationBoardNote>;
   deleteBoardNote(id: number): Promise<void>;
-  
+
   // Color Palettes
   getBoardColorPalettes(boardId: number): Promise<ColorPalette[]>;
   createColorPalette(palette: InsertColorPalette): Promise<ColorPalette>;
   updateColorPalette(id: number, data: any): Promise<ColorPalette>;
   deleteColorPalette(id: number): Promise<void>;
-  
+
   // Board Links
   getBoardLinks(boardId: number): Promise<BoardLink[]>;
   createBoardLink(link: InsertBoardLink): Promise<BoardLink>;
   updateBoardLink(id: number, data: any): Promise<BoardLink>;
   deleteBoardLink(id: number): Promise<void>;
-  
+
   // Social Media Strategy
   getSocialMediaStrategy(userId: string): Promise<SocialMediaStrategy | undefined>;
   upsertSocialMediaStrategy(strategy: InsertSocialMediaStrategy): Promise<SocialMediaStrategy>;
-  
+
   // Resource Library
   getResourceLibraryItems(userId: string): Promise<ResourceLibraryItem[]>;
   getResourceLibraryItem(id: number): Promise<ResourceLibraryItem | undefined>;
@@ -264,56 +264,56 @@ export interface IStorage {
   updateResourceLibraryItem(id: number, data: any): Promise<ResourceLibraryItem>;
   deleteResourceLibraryItem(id: number): Promise<void>;
   updateResourceDisplayOrder(items: { id: number; displayOrder: number }[]): Promise<void>;
-  
-  
+
+
   // Affiliate Links
   getAffiliateLinks(userId: string): Promise<AffiliateLink[]>;
   createAffiliateLink(link: InsertAffiliateLink): Promise<AffiliateLink>;
   updateAffiliateLink(id: number, data: any): Promise<AffiliateLink>;
   deleteAffiliateLink(id: number): Promise<void>;
-  
+
   // Persistent Data Operations - Content Creation System
   getMonthlyContentCalendar(userId: string, year: number, month: number): Promise<MonthlyContentCalendar | undefined>;
   upsertMonthlyContentCalendar(data: InsertMonthlyContentCalendar): Promise<MonthlyContentCalendar>;
-  
+
   getContentBatchingPlanner(userId: string): Promise<ContentBatchingPlanner | undefined>;
   upsertContentBatchingPlanner(data: InsertContentBatchingPlanner): Promise<ContentBatchingPlanner>;
-  
+
   getContentStatusTracker(userId: string): Promise<ContentStatusTracker | undefined>;
   upsertContentStatusTracker(data: InsertContentStatusTracker): Promise<ContentStatusTracker>;
-  
+
   getRepurposingToolkit(userId: string): Promise<RepurposingToolkit | undefined>;
   upsertRepurposingToolkit(data: InsertRepurposingToolkit): Promise<RepurposingToolkit>;
-  
+
   getContentPerformanceStrategy(userId: string): Promise<ContentPerformanceStrategy | undefined>;
   upsertContentPerformanceStrategy(data: InsertContentPerformanceStrategy): Promise<ContentPerformanceStrategy>;
-  
+
   getPerformanceTrackingTable(userId: string): Promise<PerformanceTrackingTable | undefined>;
   upsertPerformanceTrackingTable(data: InsertPerformanceTrackingTable): Promise<PerformanceTrackingTable>;
-  
+
   // Product Launch System
   getSeasonalityTimeline(userId: string, year: number): Promise<SeasonalityTimeline | undefined>;
   upsertSeasonalityTimeline(data: InsertSeasonalityTimeline): Promise<SeasonalityTimeline>;
-  
+
   getQuarterDetailPlan(userId: string, year: number, quarter: number): Promise<QuarterDetailPlan | undefined>;
   upsertQuarterDetailPlan(data: InsertQuarterDetailPlan): Promise<QuarterDetailPlan>;
-  
+
   getProductComponentChecklist(userId: string): Promise<ProductComponentChecklist | undefined>;
   upsertProductComponentChecklist(data: InsertProductComponentChecklist): Promise<ProductComponentChecklist>;
-  
+
   getProfitCalculator(userId: string): Promise<ProfitCalculator | undefined>;
   upsertProfitCalculator(data: InsertProfitCalculator): Promise<ProfitCalculator>;
-  
+
   getPrelaunchTimelinePlanner(userId: string): Promise<PrelaunchTimelinePlanner | undefined>;
   upsertPrelaunchTimelinePlanner(data: InsertPrelaunchTimelinePlanner): Promise<PrelaunchTimelinePlanner>;
-  
+
   getLaunchGrowthPlans(userId: string): Promise<LaunchGrowthPlan | undefined>;
   upsertLaunchGrowthPlans(data: InsertLaunchGrowthPlan): Promise<LaunchGrowthPlan>;
-  
+
   // Financial Management System
   getMoneyMap(userId: string): Promise<MoneyMap | undefined>;
   upsertMoneyMap(data: InsertMoneyMap): Promise<MoneyMap>;
-  
+
   // Finance Ledger (Money Map) Operations
   getMoneyMapMonth(userId: string, year: number, month: number): Promise<MoneyMapMonth | undefined>;
   upsertMoneyMapMonth(data: InsertMoneyMapMonth): Promise<MoneyMapMonth>;
@@ -322,14 +322,14 @@ export interface IStorage {
   createFinanceTransaction(data: InsertFinanceTransaction): Promise<FinanceTransaction>;
   updateFinanceTransaction(id: number, userId: string, updates: Partial<InsertFinanceTransaction>): Promise<FinanceTransaction>;
   deleteFinanceTransaction(id: number, userId: string): Promise<void>;
-  
+
   // Streamline Your Workflow System
   getSopBuilder(userId: string): Promise<SopBuilder | undefined>;
   upsertSopBuilder(data: InsertSopBuilder): Promise<SopBuilder>;
-  
+
   getAutomationToolkit(userId: string): Promise<AutomationToolkit | undefined>;
   upsertAutomationToolkit(data: InsertAutomationToolkit): Promise<AutomationToolkit>;
-  
+
   // Automation Prompts CRUD
   getAutomationPrompts(userId: string): Promise<AutomationPrompt[]>;
   getAutomationPrompt(id: string): Promise<AutomationPrompt | undefined>;
@@ -337,47 +337,47 @@ export interface IStorage {
   updateAutomationPrompt(id: string, data: Partial<InsertAutomationPrompt>): Promise<AutomationPrompt>;
   deleteAutomationPrompt(id: string): Promise<void>;
   bulkUpsertAutomationPrompts(userId: string, prompts: InsertAutomationPrompt[]): Promise<AutomationPrompt[]>;
-  
+
   // Focus Timer System
   logFocusSession(session: InsertFocusSessionLog): Promise<FocusSessionLog>;
   getFocusSessionLogs(userId: string, limit?: number): Promise<FocusSessionLog[]>;
-  
+
   // Calendar V2 Operations
   getCalendarV2(userId: string, year: number, month: number): Promise<CalendarV2 | undefined>;
   upsertCalendarV2(data: InsertCalendarV2): Promise<CalendarV2>;
-  
+
   // Calendar V3 Operations
   getCalendarV3(userId: string, year: number, month: number): Promise<CalendarV3 | undefined>;
   upsertCalendarV3(data: InsertCalendarV3): Promise<CalendarV3>;
-  
+
   // Global Color Keys Operations (shared across all months)
   getGlobalColorKeys(userId: string): Promise<GlobalColorKeys | undefined>;
   upsertGlobalColorKeys(data: InsertGlobalColorKeys): Promise<GlobalColorKeys>;
-  
+
   // Time Blocking Color Keys Operations (global per user)
   getTimeBlockingColorKeys(userId: string): Promise<TimeBlockingColorKeys | undefined>;
   upsertTimeBlockingColorKeys(data: InsertTimeBlockingColorKeys): Promise<TimeBlockingColorKeys>;
-  
+
   // Time Blocking Events Operations
   getTimeBlockingEvents(userId: string, startDate: Date, endDate: Date): Promise<TimeBlockingEvent[]>;
   getTimeBlockingEvent(id: string): Promise<TimeBlockingEvent | undefined>;
   createTimeBlockingEvent(event: InsertTimeBlockingEvent): Promise<TimeBlockingEvent>;
   updateTimeBlockingEvent(id: string, updates: Partial<InsertTimeBlockingEvent>): Promise<TimeBlockingEvent>;
   deleteTimeBlockingEvent(id: string, userId: string): Promise<void>;
-  
+
   // Password Reset Operations
   createPasswordResetCode(email: string, requestedIp?: string, userAgent?: string): Promise<{ code: string; record: PasswordResetCode }>;
   getPasswordResetCodeByEmail(email: string): Promise<PasswordResetCode | undefined>;
   incrementCodeAttempts(codeId: string): Promise<void>;
   verifyResetCodeAndUpdatePassword(email: string, code: string, newPasswordHash: string): Promise<{ success: boolean; message: string; user?: User }>;
   checkEmailResetRateLimit(email: string, ipAddress?: string): Promise<{ allowed: boolean; message?: string }>;
-  
+
   // Reset Session Operations (Two-step flow)
   verifyResetCode(email: string, code: string): Promise<{ success: boolean; message: string; resetSessionId?: string }>;
   createResetSession(email: string): Promise<ResetSession>;
   getResetSession(resetSessionId: string): Promise<ResetSession | undefined>;
   completePasswordReset(resetSessionId: string, newPasswordHash: string): Promise<{ success: boolean; message: string; user?: User }>;
-  
+
   // Cheat Sheet Document Operations (Single document per user with optimistic versioning)
   getCheatSheetDoc(userId: string): Promise<CheatSheetDoc | undefined>;
   seedCheatSheetDoc(userId: string): Promise<CheatSheetDoc>;
@@ -443,7 +443,7 @@ export class DatabaseStorage implements IStorage {
       .values({ email, source })
       .onConflictDoNothing()
       .returning();
-    
+
     // If no result (already exists), return the existing entry
     if (!result) {
       const [existing] = await db
@@ -452,7 +452,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(courseWhitelist.email, email));
       return existing;
     }
-    
+
     return result;
   }
 
@@ -536,7 +536,7 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(taskCompletionLog)
       .where(eq(taskCompletionLog.taskId, id));
-    
+
     // Then delete the task itself
     await db
       .delete(dailyFocusTasks)
@@ -561,7 +561,7 @@ export class DatabaseStorage implements IStorage {
   async getMonthlyTaskCompletions(userId: string, year: number, month: number): Promise<number> {
     const startOfMonth = `${year}-${month.toString().padStart(2, '0')}-01`;
     const endOfMonth = `${year}-${month.toString().padStart(2, '0')}-31`;
-    
+
     const [result] = await db
       .select({ count: sql<number>`count(*)` })
       .from(taskCompletionLog)
@@ -572,7 +572,7 @@ export class DatabaseStorage implements IStorage {
           lte(taskCompletionLog.dateCompleted, endOfMonth)
         )
       );
-    
+
     return result?.count || 0;
   }
 
@@ -606,7 +606,7 @@ export class DatabaseStorage implements IStorage {
   async updateUserStats(userId: string, statsUpdate: Partial<UserStats>): Promise<UserStats> {
     // Check if stats exist for this user
     const existingStats = await this.getUserStats(userId);
-    
+
     if (existingStats) {
       // Update existing stats
       const [result] = await db
@@ -676,11 +676,11 @@ export class DatabaseStorage implements IStorage {
   async deleteUserTemplateInstance(id: number): Promise<void> {
     await db.delete(userTemplateInstances).where(eq(userTemplateInstances.id, id));
   }
-  
+
   async recordDashboardAccess(userId: string): Promise<void> {
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD format
     const currentMonth = today.slice(0, 7); // YYYY-MM format
-    
+
     try {
       // Try to insert a new access record (will fail if already exists for today)
       await db.insert(dashboardAccess).values({
@@ -688,14 +688,14 @@ export class DatabaseStorage implements IStorage {
         accessDate: today,
         month: currentMonth,
       });
-      
+
       // If successful, update the user's stats
       await this.updateDashboardAccessStats(userId, currentMonth);
     } catch (error) {
       // Access already recorded for today, that's fine
     }
   }
-  
+
   async getMonthlyDashboardAccess(userId: string, month: string): Promise<number> {
     const result = await db
       .select({ count: sql<number>`count(*)` })
@@ -704,17 +704,17 @@ export class DatabaseStorage implements IStorage {
         eq(dashboardAccess.userId, userId),
         eq(dashboardAccess.month, month)
       ));
-    
+
     return result[0]?.count || 0;
   }
-  
+
   private async updateDashboardAccessStats(userId: string, currentMonth: string): Promise<void> {
     // Get current stats
     const existingStats = await this.getUserStats(userId);
-    
+
     // Check if we need to reset for a new month
     const shouldReset = existingStats?.currentMonth !== currentMonth;
-    
+
     if (shouldReset) {
       // Reset stats for new month
       await this.updateUserStats(userId, {
@@ -733,15 +733,15 @@ export class DatabaseStorage implements IStorage {
   // Workflow Templates
   async getWorkflowTemplateInstances(userId: string, templateType?: string, includeArchived?: boolean): Promise<WorkflowTemplateInstance[]> {
     const conditions = [eq(workflowTemplateInstances.userId, userId)];
-    
+
     if (templateType) {
       conditions.push(eq(workflowTemplateInstances.templateType, templateType));
     }
-    
+
     if (!includeArchived) {
       conditions.push(eq(workflowTemplateInstances.isArchived, false));
     }
-    
+
     return await db.select()
       .from(workflowTemplateInstances)
       .where(and(...conditions))
@@ -769,11 +769,11 @@ export class DatabaseStorage implements IStorage {
       lastEditedAt: new Date(),
       updatedAt: new Date(),
     };
-    
+
     if (title) {
       updateData.title = title;
     }
-    
+
     const [updatedInstance] = await db
       .update(workflowTemplateInstances)
       .set(updateData)
@@ -822,7 +822,7 @@ export class DatabaseStorage implements IStorage {
     // First delete associated files
     await db.delete(workflowTemplateFiles)
       .where(eq(workflowTemplateFiles.templateInstanceId, id));
-    
+
     // Then delete the instance
     await db.delete(workflowTemplateInstances)
       .where(eq(workflowTemplateInstances.id, id));
@@ -830,11 +830,11 @@ export class DatabaseStorage implements IStorage {
 
   async bulkDeleteWorkflowTemplateInstances(ids: number[]): Promise<void> {
     if (ids.length === 0) return;
-    
+
     // First delete associated files for all instances
     await db.delete(workflowTemplateFiles)
       .where(inArray(workflowTemplateFiles.templateInstanceId, ids));
-    
+
     // Then delete all instances
     await db.delete(workflowTemplateInstances)
       .where(inArray(workflowTemplateInstances.id, ids));
@@ -1292,19 +1292,19 @@ export class DatabaseStorage implements IStorage {
       colorTagsIsArray: Array.isArray(data.colorTags),
       colorTagsLength: Array.isArray(data.colorTags) ? data.colorTags.length : 0
     });
-    
+
     // Force JSON serialization to ensure proper storage
     const finalData = {
       ...data,
       calendarData: Array.isArray(data.calendarData) ? data.calendarData : [],
       colorTags: Array.isArray(data.colorTags) ? data.colorTags : []
     };
-    
+
     console.log('Final data for DB insert:', {
       calendarDataFinal: finalData.calendarData,
       colorTagsFinal: finalData.colorTags
     });
-    
+
     try {
       // First, try to get existing record
       const existing = await db
@@ -1337,7 +1337,7 @@ export class DatabaseStorage implements IStorage {
           .values(finalData)
           .returning();
       }
-      
+
       console.log('Database insert/update successful - returned result:', {
         id: calendar.id,
         userId: calendar.userId,
@@ -1350,7 +1350,7 @@ export class DatabaseStorage implements IStorage {
         calendarDataIsArray: Array.isArray(calendar.calendarData),
         colorTagsIsArray: Array.isArray(calendar.colorTags)
       });
-      
+
       // Immediately verify the data was saved by querying it back
       const verification = await db
         .select()
@@ -1358,13 +1358,13 @@ export class DatabaseStorage implements IStorage {
         .where(and(
           eq(monthlyContentCalendar.id, calendar.id)
         ));
-      
+
       console.log('VERIFICATION QUERY - Data actually in database:', {
         verificationResult: verification[0],
         verificationCalendarData: verification[0]?.calendarData,
         verificationColorTags: verification[0]?.colorTags
       });
-      
+
       console.log('=== STORAGE UPSERT RESULT ===');
       console.log('Database returned:', {
         id: calendar.id,
@@ -1634,9 +1634,7 @@ export class DatabaseStorage implements IStorage {
       .onConflictDoUpdate({
         target: prelaunchTimelinePlanner.userId,
         set: {
-          timelineLength: data.timelineLength,
-          weeklyContent: data.weeklyContent,
-          weekNotes: data.weekNotes,
+          launches: data.launches,
           updatedAt: new Date(),
         },
       })
@@ -1851,7 +1849,7 @@ export class DatabaseStorage implements IStorage {
       .from(automationPrompts)
       .where(eq(automationPrompts.userId, userId))
       .orderBy(asc(automationPrompts.createdAt));
-    
+
     // Migrate V1 to V2 format if needed
     return prompts.map(prompt => this.migrateAutomationPromptToV2(prompt));
   }
@@ -1910,7 +1908,7 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(automationPrompts)
       .where(eq(automationPrompts.userId, userId));
-    
+
     // Insert new prompts
     if (prompts.length === 0) {
       return [];
@@ -1932,7 +1930,7 @@ export class DatabaseStorage implements IStorage {
       .insert(automationPrompts)
       .values(v2Prompts)
       .returning();
-    
+
     // Apply migration to returned results to ensure consistency
     return result.map(prompt => this.migrateAutomationPromptToV2(prompt));
   }
@@ -2015,7 +2013,7 @@ export class DatabaseStorage implements IStorage {
       colorKeysCount: Array.isArray(data.colorKeys) ? data.colorKeys.length : 0,
       daysCount: Array.isArray(data.days) ? data.days.length : 0
     });
-    
+
     const [calendar] = await db
       .insert(calendarV3)
       .values({
@@ -2032,13 +2030,13 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
-      
+
     console.log('CalendarV3 UPSERT - Save successful:', {
       id: calendar.id,
       savedColorKeys: calendar.colorKeys,
       savedDays: calendar.days
     });
-    
+
     return calendar;
   }
 
@@ -2048,7 +2046,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(globalColorKeys)
       .where(eq(globalColorKeys.userId, userId));
-    
+
     return globalKeys;
   }
 
@@ -2067,7 +2065,7 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
-    
+
     return keys;
   }
 
@@ -2077,7 +2075,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(timeBlockingColorKeys)
       .where(eq(timeBlockingColorKeys.userId, userId));
-    
+
     return keys;
   }
 
@@ -2096,7 +2094,7 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
-    
+
     return keys;
   }
 
@@ -2114,7 +2112,7 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(asc(timeBlockingEvents.startTime));
-    
+
     return events;
   }
 
@@ -2128,17 +2126,17 @@ export class DatabaseStorage implements IStorage {
           isNull(timeBlockingEvents.deletedAt)
         )
       );
-    
+
     return event;
   }
 
   async createTimeBlockingEvent(eventData: InsertTimeBlockingEvent): Promise<TimeBlockingEvent> {
     const eventId = `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     // Convert string timestamps to Date objects if needed
     const startTime = typeof eventData.startTime === 'string' ? new Date(eventData.startTime) : eventData.startTime;
     const endTime = typeof eventData.endTime === 'string' ? new Date(eventData.endTime) : eventData.endTime;
-    
+
     const [event] = await db
       .insert(timeBlockingEvents)
       .values({
@@ -2148,7 +2146,7 @@ export class DatabaseStorage implements IStorage {
         endTime,
       })
       .returning();
-    
+
     return event;
   }
 
@@ -2161,7 +2159,7 @@ export class DatabaseStorage implements IStorage {
     if (updates.endTime && typeof updates.endTime === 'string') {
       processedUpdates.endTime = new Date(updates.endTime);
     }
-    
+
     const [event] = await db
       .update(timeBlockingEvents)
       .set({
@@ -2175,11 +2173,11 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .returning();
-    
+
     if (!event) {
       throw new Error('Event not found or already deleted');
     }
-    
+
     return event;
   }
 
@@ -2197,7 +2195,7 @@ export class DatabaseStorage implements IStorage {
           isNull(timeBlockingEvents.deletedAt)
         )
       );
-    
+
     console.log(`Time blocking event ${id} soft deleted for user ${userId}`);
   }
 
@@ -2207,13 +2205,13 @@ export class DatabaseStorage implements IStorage {
   async createPasswordResetCode(email: string, requestedIp?: string, userAgent?: string): Promise<{ code: string; record: PasswordResetCode }> {
     // Generate 6-digit code with leading zeros
     const code = String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
-    
+
     // Hash the code for storage using SHA-256
     const codeHash = crypto.createHash('sha256').update(code).digest('hex');
-    
+
     // Set expiration to 15 minutes from now
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-    
+
     // Optional: Clean up old unused codes for this email
     await db
       .delete(passwordResetCodes)
@@ -2223,7 +2221,7 @@ export class DatabaseStorage implements IStorage {
           isNull(passwordResetCodes.usedAt)
         )
       );
-    
+
     // Create password reset code record
     const [passwordResetCode] = await db.insert(passwordResetCodes).values({
       id: nanoid(),
@@ -2233,7 +2231,7 @@ export class DatabaseStorage implements IStorage {
       requestedIp,
       userAgent,
     }).returning();
-    
+
     return {
       code, // Return the plain code for email sending
       record: passwordResetCode
@@ -2253,14 +2251,14 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(desc(passwordResetCodes.createdAt)) // Get most recent
       .limit(1);
-    
+
     return passwordResetCode;
   }
 
   async incrementCodeAttempts(codeId: string): Promise<void> {
     await db
       .update(passwordResetCodes)
-      .set({ 
+      .set({
         attempts: sql`${passwordResetCodes.attempts} + 1`
       })
       .where(eq(passwordResetCodes.id, codeId));
@@ -2268,14 +2266,14 @@ export class DatabaseStorage implements IStorage {
 
   async verifyResetCodeAndUpdatePassword(email: string, code: string, newPasswordHash: string): Promise<{ success: boolean; message: string; user?: User }> {
     const normalizedEmail = email.toLowerCase().trim();
-    
+
     // Find the most recent unused code for this email
     const passwordResetCode = await this.getPasswordResetCodeByEmail(normalizedEmail);
-    
+
     if (!passwordResetCode) {
       return { success: false, message: "Code invalid or expired" };
     }
-    
+
     // Check if too many attempts (5+ attempts locks for 10 minutes)
     if ((passwordResetCode.attempts ?? 0) >= 5) {
       const lockoutTime = new Date((passwordResetCode.createdAt ?? new Date()).getTime() + 10 * 60 * 1000); // 10 minutes from creation
@@ -2283,54 +2281,54 @@ export class DatabaseStorage implements IStorage {
         return { success: false, message: "Too many attempts. Please try again later." };
       }
     }
-    
+
     // Hash the provided code for comparison
     const providedCodeHash = crypto.createHash('sha256').update(code).digest('hex');
-    
+
     // Constant-time comparison using Node.js crypto
     const isValidCode = crypto.timingSafeEqual(
       Buffer.from(passwordResetCode.codeHash, 'hex'),
       Buffer.from(providedCodeHash, 'hex')
     );
-    
+
     if (!isValidCode) {
       // Increment attempts on invalid code
       await this.incrementCodeAttempts(passwordResetCode.id);
       return { success: false, message: "Code invalid or expired" };
     }
-    
+
     // Check if code is expired
     const now = new Date();
     if (now > passwordResetCode.expiresAt) {
       return { success: false, message: "Code invalid or expired" };
     }
-    
+
     // Find user by email
     const [user] = await db
       .select()
       .from(users)
       .where(eq(users.email, normalizedEmail));
-    
+
     if (!user) {
       return { success: false, message: "User not found" };
     }
-    
+
     // Update user's password
     const [updatedUser] = await db
       .update(users)
-      .set({ 
+      .set({
         password: newPasswordHash,
         updatedAt: new Date()
       })
       .where(eq(users.id, user.id))
       .returning();
-    
+
     // Mark the code as used
     await db
       .update(passwordResetCodes)
       .set({ usedAt: new Date() })
       .where(eq(passwordResetCodes.id, passwordResetCode.id));
-    
+
     // Clean up any other pending codes for this email
     await db
       .delete(passwordResetCodes)
@@ -2341,18 +2339,18 @@ export class DatabaseStorage implements IStorage {
           ne(passwordResetCodes.id, passwordResetCode.id) // Don't delete the one we just used
         )
       );
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       message: "Password reset successfully",
-      user: updatedUser 
+      user: updatedUser
     };
   }
 
   async checkEmailResetRateLimit(email: string, ipAddress?: string): Promise<{ allowed: boolean; message?: string }> {
     const normalizedEmail = email.toLowerCase().trim();
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    
+
     // Check email rate limit (5 per hour)
     const emailCount = await db
       .select({ count: sql<number>`count(*)` })
@@ -2363,11 +2361,11 @@ export class DatabaseStorage implements IStorage {
           gt(passwordResetCodes.createdAt, oneHourAgo)
         )
       );
-    
+
     if (emailCount[0]?.count >= 5) {
       return { allowed: false, message: "Too many reset attempts. Please try again later." };
     }
-    
+
     // Check IP rate limit if provided (5 per hour)
     if (ipAddress) {
       const ipCount = await db
@@ -2379,12 +2377,12 @@ export class DatabaseStorage implements IStorage {
             gt(passwordResetCodes.createdAt, oneHourAgo)
           )
         );
-      
+
       if (ipCount[0]?.count >= 5) {
         return { allowed: false, message: "Too many reset attempts from this location. Please try again later." };
       }
     }
-    
+
     // Check cooldown (60 seconds since last request for this email)
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
     const recentCount = await db
@@ -2396,25 +2394,25 @@ export class DatabaseStorage implements IStorage {
           gt(passwordResetCodes.createdAt, oneMinuteAgo)
         )
       );
-    
+
     if (recentCount[0]?.count > 0) {
       return { allowed: false, message: "Please wait 60 seconds before requesting another code." };
     }
-    
+
     return { allowed: true };
   }
 
   // Reset Session Operations (Two-step flow)
   async verifyResetCode(email: string, code: string): Promise<{ success: boolean; message: string; resetSessionId?: string }> {
     const normalizedEmail = email.toLowerCase().trim();
-    
+
     // Find the most recent unused code for this email
     const passwordResetCode = await this.getPasswordResetCodeByEmail(normalizedEmail);
-    
+
     if (!passwordResetCode) {
       return { success: false, message: "invalid_code" };
     }
-    
+
     // Check if too many attempts (5+ attempts locks for 10 minutes)
     if ((passwordResetCode.attempts ?? 0) >= 5) {
       const lockoutTime = new Date((passwordResetCode.createdAt ?? new Date()).getTime() + 10 * 60 * 1000); // 10 minutes from creation
@@ -2422,53 +2420,53 @@ export class DatabaseStorage implements IStorage {
         return { success: false, message: "too_many_attempts" };
       }
     }
-    
+
     // Hash the provided code for comparison
     const providedCodeHash = crypto.createHash('sha256').update(code).digest('hex');
-    
+
     // Constant-time comparison using Node.js crypto
     const isValidCode = crypto.timingSafeEqual(
       Buffer.from(passwordResetCode.codeHash, 'hex'),
       Buffer.from(providedCodeHash, 'hex')
     );
-    
+
     if (!isValidCode) {
       // Increment attempts on invalid code
       await this.incrementCodeAttempts(passwordResetCode.id);
       return { success: false, message: "invalid_code" };
     }
-    
+
     // Check if code is expired
     const now = new Date();
     if (now > passwordResetCode.expiresAt) {
       return { success: false, message: "expired_code" };
     }
-    
+
     // Find user by email to ensure they exist
     const user = await this.getUserByEmail(normalizedEmail);
     if (!user) {
       return { success: false, message: "invalid_code" };
     }
-    
+
     // Mark the code as used
     await db
       .update(passwordResetCodes)
       .set({ usedAt: new Date() })
       .where(eq(passwordResetCodes.id, passwordResetCode.id));
-    
+
     // Create reset session
     const resetSession = await this.createResetSession(normalizedEmail);
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       message: "Code verified successfully",
-      resetSessionId: resetSession.id 
+      resetSessionId: resetSession.id
     };
   }
 
   async createResetSession(email: string): Promise<ResetSession> {
     const normalizedEmail = email.toLowerCase().trim();
-    
+
     // Clean up any existing unused reset sessions for this email
     await db
       .delete(resetSessions)
@@ -2478,16 +2476,16 @@ export class DatabaseStorage implements IStorage {
           eq(resetSessions.used, false)
         )
       );
-    
+
     // Create new reset session (expires in 10 minutes)
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-    
+
     const [resetSession] = await db.insert(resetSessions).values({
       email: normalizedEmail,
       expiresAt,
       used: false,
     }).returning();
-    
+
     return resetSession;
   }
 
@@ -2503,40 +2501,40 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .limit(1);
-    
+
     return resetSession;
   }
 
   async completePasswordReset(resetSessionId: string, newPasswordHash: string): Promise<{ success: boolean; message: string; user?: User }> {
     // Find and validate reset session
     const resetSession = await this.getResetSession(resetSessionId);
-    
+
     if (!resetSession) {
       return { success: false, message: "Reset session invalid or expired" };
     }
-    
+
     // Find user by email
     const user = await this.getUserByEmail(resetSession.email);
     if (!user) {
       return { success: false, message: "User not found" };
     }
-    
+
     // Update user's password
     const [updatedUser] = await db
       .update(users)
-      .set({ 
+      .set({
         password: newPasswordHash,
         updatedAt: new Date()
       })
       .where(eq(users.id, user.id))
       .returning();
-    
+
     // Mark the reset session as used
     await db
       .update(resetSessions)
       .set({ used: true })
       .where(eq(resetSessions.id, resetSessionId));
-    
+
     // Clean up any other pending reset sessions for this email
     await db
       .delete(resetSessions)
@@ -2546,11 +2544,11 @@ export class DatabaseStorage implements IStorage {
           ne(resetSessions.id, resetSessionId)
         )
       );
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       message: "Password reset successfully",
-      user: updatedUser 
+      user: updatedUser
     };
   }
 
@@ -2608,7 +2606,7 @@ export class DatabaseStorage implements IStorage {
   ): Promise<{ success: boolean; doc?: CheatSheetDoc; conflict?: { version: number; rows: CheatSheetRow[] } }> {
     // Get current document
     const currentDoc = await this.getCheatSheetDoc(userId);
-    
+
     if (!currentDoc) {
       // No document exists, this shouldn't happen but handle gracefully
       const seededDoc = await this.seedCheatSheetDoc(userId);
@@ -2619,12 +2617,12 @@ export class DatabaseStorage implements IStorage {
 
     // Check for version conflict
     if (clientVersion < currentData.version) {
-      return { 
-        success: false, 
-        conflict: { 
-          version: currentData.version, 
-          rows: currentData.rows 
-        } 
+      return {
+        success: false,
+        conflict: {
+          version: currentData.version,
+          rows: currentData.rows
+        }
       };
     }
 
@@ -2656,12 +2654,12 @@ export class DatabaseStorage implements IStorage {
         const latestDoc = await this.getCheatSheetDoc(userId);
         if (latestDoc) {
           const latestData = latestDoc.data as CheatSheetDocData;
-          return { 
-            success: false, 
-            conflict: { 
-              version: latestData.version, 
-              rows: latestData.rows 
-            } 
+          return {
+            success: false,
+            conflict: {
+              version: latestData.version,
+              rows: latestData.rows
+            }
           };
         }
       }
@@ -2670,12 +2668,12 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error updating cheat sheet doc:", error);
       // In case of any error, return current state as conflict
-      return { 
-        success: false, 
-        conflict: { 
-          version: currentData.version, 
-          rows: currentData.rows 
-        } 
+      return {
+        success: false,
+        conflict: {
+          version: currentData.version,
+          rows: currentData.rows
+        }
       };
     }
   }

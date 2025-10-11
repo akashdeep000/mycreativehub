@@ -12,6 +12,8 @@ import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface GrowthPlan {
   id: string;
@@ -29,10 +31,36 @@ interface GrowthPlan {
 export default function LaunchGrowthPlan() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [growthPlans, setGrowthPlans] = useState<GrowthPlan[]>(() => {
-    const saved = localStorage.getItem('launchGrowthPlans');
-    return saved ? JSON.parse(saved) : [];
+  const queryClient = useQueryClient();
+
+  const { data: growthPlansData, isLoading } = useQuery<{ growthPlans: GrowthPlan[] }>({
+    queryKey: ['launch-growth-plans'],
+    queryFn: async () => {
+      const res = await apiRequest('/api/persistent/launch-growth-plans');
+      return res.json();
+    },
   });
+
+  const growthPlans = growthPlansData?.growthPlans || [];
+
+  const mutation = useMutation({
+    mutationFn: (updatedPlans: GrowthPlan[]) =>
+      apiRequest('/api/persistent/launch-growth-plans', {
+        method: 'PUT',
+        body: JSON.stringify({ growthPlans: updatedPlans }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['launch-growth-plans'] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save changes.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<GrowthPlan | null>(null);
   const [formData, setFormData] = useState({
@@ -45,10 +73,6 @@ export default function LaunchGrowthPlan() {
     teamNotes: '',
     isCompleted: false
   });
-
-  useEffect(() => {
-    localStorage.setItem('launchGrowthPlans', JSON.stringify(growthPlans));
-  }, [growthPlans]);
 
   const generateId = () => Math.random().toString(36).substring(2, 9);
 
@@ -103,7 +127,7 @@ export default function LaunchGrowthPlan() {
           ? { ...plan, ...formData }
           : plan
       );
-      setGrowthPlans(updatedPlans);
+      mutation.mutate(updatedPlans);
       toast({
         title: "Launch Reflection Updated",
         description: `Updated reflection for ${formData.productName}`,
@@ -115,7 +139,7 @@ export default function LaunchGrowthPlan() {
         ...formData,
         createdAt: new Date().toISOString(),
       };
-      setGrowthPlans([...growthPlans, newPlan]);
+      mutation.mutate([...growthPlans, newPlan]);
       toast({
         title: "Launch Reflection Created",
         description: `Created new reflection for ${formData.productName}`,
@@ -129,7 +153,7 @@ export default function LaunchGrowthPlan() {
 
   const deletePlan = (id: string) => {
     const planToDelete = growthPlans.find(p => p.id === id);
-    setGrowthPlans(growthPlans.filter(p => p.id !== id));
+    mutation.mutate(growthPlans.filter(p => p.id !== id));
     toast({
       title: "Launch Reflection Deleted",
       description: `Deleted reflection for ${planToDelete?.productName}`,
@@ -142,8 +166,8 @@ export default function LaunchGrowthPlan() {
         ? { ...plan, isCompleted: !plan.isCompleted }
         : plan
     );
-    setGrowthPlans(updatedPlans);
-    
+    mutation.mutate(updatedPlans);
+
     const plan = updatedPlans.find(p => p.id === id);
     toast({
       title: plan?.isCompleted ? "Reflection Completed" : "Reflection Unmarked",
@@ -155,7 +179,7 @@ export default function LaunchGrowthPlan() {
 
   const exportSelectedPlans = async () => {
     const completedPlans = growthPlans.filter(plan => plan.isCompleted);
-    
+
     if (completedPlans.length === 0) {
       toast({
         title: "No Completed Reflections",
@@ -179,7 +203,7 @@ export default function LaunchGrowthPlan() {
 
       for (let i = 0; i < completedPlans.length; i++) {
         const plan = completedPlans[i];
-        
+
         // Check if we need a new page
         if (yPosition > pageHeight - 60) {
           pdf.addPage();
@@ -195,7 +219,7 @@ export default function LaunchGrowthPlan() {
         // Plan content
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');
-        
+
         const fields = [
           { label: 'What Went Well:', content: plan.whatWentWell },
           { label: 'What Needs Improvement:', content: plan.whatNeedsImprovement },
@@ -207,7 +231,7 @@ export default function LaunchGrowthPlan() {
           pdf.setFont('helvetica', 'bold');
           pdf.text(field.label, 20, yPosition);
           yPosition += 7;
-          
+
           pdf.setFont('helvetica', 'normal');
           const splitContent = pdf.splitTextToSize(field.content || 'N/A', pageWidth - 40);
           pdf.text(splitContent, 20, yPosition);
@@ -242,7 +266,7 @@ export default function LaunchGrowthPlan() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
       <Sidebar />
-      
+
       <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
@@ -260,7 +284,7 @@ export default function LaunchGrowthPlan() {
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                 </div>
-                
+
                 {/* Desktop Navigation - Full Buttons */}
                 <div className="hidden lg:flex gap-2">
                   <Button
@@ -351,25 +375,25 @@ export default function LaunchGrowthPlan() {
                       </div>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="space-y-4">
                     <div className="space-y-3">
                       <div>
                         <h4 className="font-medium text-gray-900 mb-1">What Went Well</h4>
                         <p className="text-sm text-gray-600 line-clamp-2">{plan.whatWentWell || 'No notes recorded'}</p>
                       </div>
-                      
+
                       <div>
                         <h4 className="font-medium text-gray-900 mb-1">Needs Improvement</h4>
                         <p className="text-sm text-gray-600 line-clamp-2">{plan.whatNeedsImprovement || 'No improvements noted'}</p>
                       </div>
-                      
+
                       <div>
                         <h4 className="font-medium text-gray-900 mb-1">Notes or Customer Feedback</h4>
                         <p className="text-sm text-gray-600 line-clamp-2">{plan.teamNotes || 'No notes recorded'}</p>
                       </div>
                     </div>
-                    
+
                     {plan.isCompleted && (
                       <div className="border-t pt-3">
                         <div className="flex items-center gap-2 text-sm text-green-600">
@@ -402,7 +426,7 @@ export default function LaunchGrowthPlan() {
                   {editingPlan ? 'Edit Launch Reflection' : 'New Launch Reflection'}
                 </DialogTitle>
               </DialogHeader>
-              
+
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -416,7 +440,7 @@ export default function LaunchGrowthPlan() {
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     What Went Well
@@ -428,7 +452,7 @@ export default function LaunchGrowthPlan() {
                     rows={3}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     What Needs Improvement?
@@ -440,7 +464,7 @@ export default function LaunchGrowthPlan() {
                     rows={3}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     New Ideas to Try Next Time
@@ -452,7 +476,7 @@ export default function LaunchGrowthPlan() {
                     rows={3}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Notes or Customer Feedback
@@ -464,10 +488,10 @@ export default function LaunchGrowthPlan() {
                     rows={2}
                   />
                 </div>
-                
-                
+
+
               </div>
-              
+
               <div className="flex justify-end gap-3 mt-6">
                 <Button
                   variant="outline"

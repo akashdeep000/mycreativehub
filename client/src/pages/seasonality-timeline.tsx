@@ -27,6 +27,9 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useDebouncedEffect } from '@/hooks/use-debounced-effect';
 
 interface ChecklistItem {
   id: string;
@@ -75,19 +78,19 @@ const quickSuggestions = [
   { title: 'Valentine\'s Day Promo', type: 'Valentine\'s Day Promo', date: '2025-02-01' },
   { title: 'Spring Collection Teaser', type: 'Spring Collection Teaser', date: '2025-03-01' },
   { title: 'Quarter 1 Planning Sprint', type: 'Quarter 1 Planning Sprint', date: '2025-01-05' },
-  
+
   // Q2 (Apr-Jun)
   { title: 'Easter Promotion', type: 'Easter Promotion', date: '2025-04-07' },
   { title: 'Mother\'s Day Campaign', type: 'Mother\'s Day Campaign', date: '2025-04-28' },
   { title: 'Mid-Year Review & Promo', type: 'Mid-Year Review & Promo', date: '2025-06-01' },
   { title: 'Summer Launch Prep', type: 'Summer Launch Prep', date: '2025-06-17' },
-  
+
   // Q3 (Jul-Sep)
   { title: 'Back to School Campaign', type: 'Back to School Campaign', date: '2025-08-05' },
   { title: 'Black Friday Prep', type: 'Black Friday Prep', date: '2025-09-30' },
   { title: 'Seasonal Product Drop', type: 'Seasonal Product Drop', date: '2025-07-15' },
   { title: 'Q4 Planning Session', type: 'Q4 Planning Session', date: '2025-09-20' },
-  
+
   // Q4 (Oct-Dec)
   { title: 'Black Friday Promo', type: 'Black Friday Promo', date: '2025-11-24' },
   { title: 'Cyber Monday', type: 'Cyber Monday', date: '2025-12-01' },
@@ -117,7 +120,7 @@ export default function SeasonalityTimeline() {
     notes: '',
     checklist: [] as ChecklistItem[]
   });
-  
+
   // State for optional sections in dialog
   const [showDetailedNotes, setShowDetailedNotes] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
@@ -125,45 +128,53 @@ export default function SeasonalityTimeline() {
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
-  // Load events and event types from localStorage when selectedYear changes
-  useEffect(() => {
-    const savedEvents = localStorage.getItem(`seasonality-timeline-events-${selectedYear}`);
-    const savedEventTypes = localStorage.getItem(`seasonality-timeline-event-types-${selectedYear}`);
-    
-    if (savedEvents) {
-      try {
-        setEvents(JSON.parse(savedEvents));
-      } catch (error) {
-        console.error('Error loading events:', error);
-      }
-    } else {
-      // If no events exist for this year, start with empty array
-      setEvents([]);
+  const queryClient = useQueryClient();
+
+  const { data: timelineData, isLoading } = useQuery({
+    queryKey: ['seasonalityTimeline', selectedYear],
+    queryFn: async () => {
+      const res = await apiRequest(`/api/persistent/seasonality-timeline/${selectedYear}`);
+      return res.json();
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: (data: { year: number; events: TimelineEvent[]; eventTypes: any[] }) =>
+      apiRequest('/api/persistent/seasonality-timeline', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seasonalityTimeline', selectedYear] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save timeline changes.",
+        variant: "destructive"
+      });
     }
-    
-    if (savedEventTypes) {
-      try {
-        setEventTypes(JSON.parse(savedEventTypes));
-      } catch (error) {
-        console.error('Error loading event types:', error);
-      }
+  });
+
+  useEffect(() => {
+    if (timelineData) {
+      setEvents(timelineData.events || []);
+      setEventTypes(timelineData.eventTypes?.length > 0 ? timelineData.eventTypes : defaultEventTypes);
     } else {
-      // If no event types exist for this year, use defaults
+      setEvents([]);
       setEventTypes(defaultEventTypes);
     }
-  }, [selectedYear]);
+  }, [timelineData]);
 
-  // Save events to localStorage whenever events change
-  useEffect(() => {
-    localStorage.setItem(`seasonality-timeline-events-${selectedYear}`, JSON.stringify(events));
-    // Also sync events to quarter detail pages
-    syncEventsToQuarters();
-  }, [events, selectedYear]);
-
-  // Save event types to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem(`seasonality-timeline-event-types-${selectedYear}`, JSON.stringify(eventTypes));
-  }, [eventTypes, selectedYear]);
+  useDebouncedEffect(
+    () => {
+      if (!isLoading) {
+        mutation.mutate({ year: selectedYear, events, eventTypes });
+      }
+    },
+    [events, eventTypes, selectedYear, isLoading],
+    1000
+  );
 
   // Close color picker when clicking outside
   useEffect(() => {
@@ -179,15 +190,12 @@ export default function SeasonalityTimeline() {
     };
   }, [colorPickerOpen]);
 
-  // Load existing checklists from localStorage when events change
+  // Load existing checklists from events data
   useEffect(() => {
     const loadedChecklists: {[key: string]: any[]} = {};
-    
-    // Check all existing events and load their checklists
     events.forEach(event => {
-      const eventData = JSON.parse(localStorage.getItem(`event-${event.id}-data-${selectedYear}`) || '{}');
-      if (eventData.checklist && eventData.checklist.length > 0) {
-        loadedChecklists[event.id] = eventData.checklist;
+      if (event.checklist && event.checklist.length > 0) {
+        loadedChecklists[event.id] = event.checklist;
       }
     });
 
@@ -197,38 +205,7 @@ export default function SeasonalityTimeline() {
         ...loadedChecklists
       }));
     }
-  }, [events, selectedYear]);
-
-  // Sync events to quarter detail pages
-  const syncEventsToQuarters = () => {
-    // Clear existing quarter events for the current year
-    ['q1', 'q2', 'q3', 'q4'].forEach(quarter => {
-      localStorage.removeItem(`quarter-${quarter}-events-${selectedYear}`);
-    });
-
-    // Group events by quarter and save to respective quarter localStorage
-    events.forEach(event => {
-      const quarterKey = `q${event.quarter}`;
-      const quarterEvents = JSON.parse(localStorage.getItem(`quarter-${quarterKey}-events-${selectedYear}`) || '[]');
-      
-      // Convert timeline event to quarter event format
-      const quarterEvent = {
-        id: event.id,
-        type: event.type,
-        title: event.title,
-        date: event.date,
-        notes: event.notes,
-        emoji: event.emoji,
-        color: event.color,
-        detailedNotes: '',
-        checklist: [],
-        reminders: []
-      };
-      
-      quarterEvents.push(quarterEvent);
-      localStorage.setItem(`quarter-${quarterKey}-events-${selectedYear}`, JSON.stringify(quarterEvents));
-    });
-  };
+  }, [events]);
 
   // Year navigation functions
   const navigateToNextYear = () => {
@@ -249,7 +226,7 @@ export default function SeasonalityTimeline() {
         ? { ...type, label: newLabel }
         : type
     ));
-    
+
     toast({
       title: "Event type updated",
       description: "Changes saved successfully"
@@ -279,7 +256,7 @@ export default function SeasonalityTimeline() {
     }
 
     setEventTypes(prev => prev.filter(type => type.value !== typeValue));
-    
+
     toast({
       title: "Event type deleted",
       description: "Event type removed successfully"
@@ -310,7 +287,7 @@ export default function SeasonalityTimeline() {
     ));
 
     setColorPickerOpen(null);
-    
+
     toast({
       title: "Color updated",
       description: "Event type color has been changed"
@@ -320,14 +297,14 @@ export default function SeasonalityTimeline() {
   const addCustomEventType = () => {
     const colors = ['bg-indigo-500', 'bg-teal-500', 'bg-rose-500', 'bg-amber-500', 'bg-cyan-500'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    
+
     const newType = {
       value: `custom-${Date.now()}`,
       label: 'Custom Type',
       color: randomColor,
       emoji: '⭐'
     };
-    
+
     setEventTypes(prev => [...prev, newType]);
   };
 
@@ -354,37 +331,13 @@ export default function SeasonalityTimeline() {
   };
 
   const updateEventChecklist = (eventId: string, checklist: any[]) => {
-    // Update React state first for immediate UI response
-    setEventChecklists(prev => ({
-      ...prev,
-      [eventId]: checklist
-    }));
-    
-    // Store checklist in localStorage for persistence with year
-    const eventData = JSON.parse(localStorage.getItem(`event-${eventId}-data-${selectedYear}`) || '{}');
-    eventData.checklist = checklist;
-    localStorage.setItem(`event-${eventId}-data-${selectedYear}`, JSON.stringify(eventData));
+    setEvents(prev => prev.map(event =>
+      event.id === eventId ? { ...event, checklist } : event
+    ));
   };
 
   const getEventChecklist = (eventId: string) => {
-    // First check React state for immediate response
-    if (eventChecklists[eventId]) {
-      return eventChecklists[eventId];
-    }
-    
-    // Fallback to localStorage with year
-    const eventData = JSON.parse(localStorage.getItem(`event-${eventId}-data-${selectedYear}`) || '{}');
-    const checklist = eventData.checklist || [];
-    
-    // Update React state with the loaded data
-    if (checklist.length > 0) {
-      setEventChecklists(prev => ({
-        ...prev,
-        [eventId]: checklist
-      }));
-    }
-    
-    return checklist;
+    return events.find(event => event.id === eventId)?.checklist || [];
   };
 
   const addChecklistItem = (eventId: string) => {
@@ -401,17 +354,17 @@ export default function SeasonalityTimeline() {
   const addChecklistItemFromInput = (eventId: string) => {
     const newItemText = newItemInputs[eventId] || '';
     if (!newItemText.trim()) return;
-    
+
     const currentChecklist = getEventChecklist(eventId);
     const newItem = {
       id: `item-${Date.now()}`,
       text: newItemText.trim(),
       completed: false
     };
-    
+
     const updatedChecklist = [...currentChecklist, newItem];
     updateEventChecklist(eventId, updatedChecklist);
-    
+
     // Clear the input for this event
     setNewItemInputs(prev => ({ ...prev, [eventId]: '' }));
   };
@@ -433,13 +386,13 @@ export default function SeasonalityTimeline() {
   // Functions for checklist management in dialog
   const addChecklistItemToDialog = () => {
     if (!newChecklistItem.trim()) return;
-    
+
     const newItem: ChecklistItem = {
       id: generateId(),
       text: newChecklistItem.trim(),
       completed: false,
     };
-    
+
     setNewEvent(prev => ({
       ...prev,
       checklist: [...prev.checklist, newItem]
@@ -479,7 +432,7 @@ export default function SeasonalityTimeline() {
     const date = new Date(newEvent.date);
     const month = date.getMonth() + 1;
     const quarter = Math.ceil(month / 3);
-    
+
     // Use a default color scheme for custom events
     const colors = ['bg-purple-500', 'bg-blue-500', 'bg-green-500', 'bg-orange-500', 'bg-pink-500', 'bg-yellow-500', 'bg-red-500'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
@@ -499,15 +452,15 @@ export default function SeasonalityTimeline() {
     };
 
     setEvents(prev => [...prev, event]);
-    
+
     // If there are checklist items from the dialog, store them in the existing checklist system
     if (newEvent.checklist.length > 0) {
       updateEventChecklist(eventId, newEvent.checklist);
     }
-    
+
     resetDialogState();
     setIsAddModalOpen(false);
-    
+
     toast({
       title: "Event added",
       description: `${event.title} event added to your timeline`
@@ -544,7 +497,7 @@ export default function SeasonalityTimeline() {
 
   const handleDrop = (e: React.DragEvent, targetMonth: number) => {
     e.preventDefault();
-    
+
     if (!draggedEvent) return;
 
     const quarter = Math.ceil(targetMonth / 3);
@@ -559,7 +512,7 @@ export default function SeasonalityTimeline() {
     ));
 
     setDraggedEvent(null);
-    
+
     toast({
       title: "Event moved",
       description: `${draggedEvent.title} moved to ${months[targetMonth - 1]}`
@@ -592,7 +545,7 @@ export default function SeasonalityTimeline() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </div>
-          
+
           {/* Desktop Navigation - Full Buttons */}
           <div className="hidden lg:flex items-center gap-3">
             <Button
@@ -615,14 +568,14 @@ export default function SeasonalityTimeline() {
             </Button>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-rose-400 rounded-xl flex items-center justify-center">
             <Calendar className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-3xl font-serif font-semibold text-gray-800">Seasonality Timeline</h1>
         </div>
-        
+
         <p className="text-gray-600 mb-6">Plan your year with purpose - map your seasonal cycles, launches, and holidays.</p>
 
         {/* Quick-Use Summary */}
@@ -702,14 +655,14 @@ export default function SeasonalityTimeline() {
                 </Button>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {quarters.map((quarter) => (
                 <div key={quarter.name} className="border-2 border-gray-200 rounded-lg overflow-hidden">
                   <div className={`bg-gradient-to-r ${quarter.color} text-white p-4`}>
                     <h3 className="font-semibold text-lg">{quarter.name}</h3>
                   </div>
-                  
+
                   <div className="p-4 space-y-4">
                     {quarter.months.map((monthNum) => (
                       <div 
@@ -721,12 +674,12 @@ export default function SeasonalityTimeline() {
                         <h4 className="font-medium text-sm text-gray-700 mb-2">
                           {months[monthNum - 1]}
                         </h4>
-                        
+
                         <div className="space-y-2">
                           {getEventsForMonth(monthNum).map((event) => {
                             const isExpanded = expandedEvents.has(event.id);
                             const checklist = getEventChecklist(event.id);
-                            
+
                             return (
                               <div key={event.id} className="bg-white rounded-lg shadow-sm border">
                                 {/* Event Header */}
@@ -811,7 +764,7 @@ export default function SeasonalityTimeline() {
                                           className="h-6 text-xs"
                                         />
                                       </div>
-                                      
+
                                       <div className="space-y-1">
                                         {checklist.map((item: any) => (
                                           <div key={item.id} className="flex items-center gap-2 p-1 bg-gray-50 rounded text-xs">
@@ -843,7 +796,7 @@ export default function SeasonalityTimeline() {
                                             </Button>
                                           </div>
                                         ))}
-                                        
+
                                         {checklist.length === 0 && (
                                           <p className="text-xs text-gray-500 py-1">No checklist items yet. Add some to track your progress!</p>
                                         )}
@@ -1138,7 +1091,7 @@ function AddEventForm({
             {showDetailedNotes ? 'Hide' : 'Add'} Notes
           </Button>
         </div>
-        
+
         {showDetailedNotes && (
           <div className="space-y-3">
             <Textarea
@@ -1163,7 +1116,7 @@ function AddEventForm({
             {showChecklist ? 'Hide' : 'Add'} Checklist
           </Button>
         </div>
-        
+
         {showChecklist && (
           <div className="space-y-3">
             <div className="flex gap-2">
@@ -1187,7 +1140,7 @@ function AddEventForm({
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            
+
             {newEvent.checklist.length > 0 && (
               <div className="space-y-2 max-h-32 overflow-y-auto">
                 {newEvent.checklist.map((item: ChecklistItem) => (
@@ -1205,7 +1158,7 @@ function AddEventForm({
                 ))}
               </div>
             )}
-            
+
             {newEvent.checklist.length > 0 && (
               <p className="text-xs text-gray-500">
                 {newEvent.checklist.length} checklist item{newEvent.checklist.length !== 1 ? 's' : ''} will be added

@@ -629,19 +629,6 @@ function ResourceCard({
             </div>
             
             <div className="mt-auto space-y-2">
-              {isOwner && (
-                <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={isShared || false}
-                    onChange={(e) => onUpdate(item.id, { isShared: e.target.checked })}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    data-testid={`checkbox-share-${item.id}`}
-                  />
-                  <Users className="w-3 h-3" />
-                  Share with all users
-                </label>
-              )}
               {isFile ? (
                 <Button
                   onClick={handleOpenFile}

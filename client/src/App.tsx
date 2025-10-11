@@ -47,11 +47,12 @@ import MonthlyContentCalendarV3 from "@/pages/monthly-content-calendar-v3";
 import Help from "@/pages/help";
 import MobileFixedHeader from "@/components/layout/mobile-fixed-header";
 import FinancialManagement from "@/pages/financial-management";
+import { Toaster } from "@/components/ui/toaster";
 
 
 function TimerWrapper() {
   const { isVisible, timeLeft, totalTime, currentTask, isRunning, pauseTimer, resumeTimer, stopTimer, hideTimer, completeTimer } = useTimer();
-  
+
   return (
     <GlobalTimer
       isVisible={isVisible}
@@ -165,6 +166,7 @@ function App() {
       <TooltipProvider>
         <TimerProvider>
           <Router />
+          <Toaster />
         </TimerProvider>
       </TooltipProvider>
     </QueryClientProvider>
