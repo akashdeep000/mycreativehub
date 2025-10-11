@@ -338,7 +338,7 @@ export default function SOPBuilderHub() {
         <div className="p-6 pt-20 md:pt-6 pb-24 lg:pb-6">
           {/* Header */}
           <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4 mt-8 lg:hidden">
+            <div className="flex items-center gap-4 mb-4 mt-2 lg:hidden">
               <Link href="/streamline-workflow">
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="w-4 h-4" />
