@@ -389,6 +389,11 @@ export default function LaunchGrowthPlan() {
                       </div>
 
                       <div>
+                        <h4 className="font-medium text-gray-900 mb-1">New Ideas to Try Next Time</h4>
+                        <p className="text-sm text-gray-600 line-clamp-2">{plan.newIdeas || 'No new ideas recorded'}</p>
+                      </div>
+
+                      <div>
                         <h4 className="font-medium text-gray-900 mb-1">Notes or Customer Feedback</h4>
                         <p className="text-sm text-gray-600 line-clamp-2">{plan.teamNotes || 'No notes recorded'}</p>
                       </div>
