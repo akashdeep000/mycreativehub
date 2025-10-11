@@ -410,7 +410,7 @@ export default function FinancialManagement() {
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-500 rounded-xl flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-white" />
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Financial Management</h1>
+                <h1 className="text-3xl font-serif font-semibold text-gray-900 dark:text-white">Financial Management</h1>
               </div>
               <p className="text-gray-600 dark:text-gray-400 mt-2">Track and manage your business income and expenses</p>
             </div>
