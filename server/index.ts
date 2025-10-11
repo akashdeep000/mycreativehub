@@ -4,6 +4,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import dotenv from 'dotenv'
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,23 +66,23 @@ app.get('/api/health', (req, res) => {
 // CORS configuration for production
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  
+
   // Allow all origins for now - will be restrictive in production
   if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else {
     res.setHeader('Access-Control-Allow-Origin', '*');
   }
-  
+
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  
+
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
     return;
   }
-  
+
   next();
 });
 
@@ -126,7 +129,7 @@ app.use((req, res, next) => {
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     console.error('Unhandled error', err);
     const status = err.status || err.statusCode || 500;
-    
+
     if (req.path.startsWith('/api')) {
       res.status(status).json({ message: 'Internal Server Error' });
     } else {
@@ -139,7 +142,7 @@ app.use((req, res, next) => {
   // doesn't interfere with the other routes
   const isDevMode = process.env.NODE_ENV === "development";
   console.log(`Server mode: ${isDevMode ? 'DEVELOPMENT' : 'PRODUCTION'}`);
-  
+
   if (isDevMode) {
     console.log('Setting up Vite development server...');
     await setupVite(app, server);
@@ -147,10 +150,10 @@ app.use((req, res, next) => {
     console.log('Setting up static file serving for production...');
     // Enhanced production static serving
     const distPath = path.resolve(import.meta.dirname, "public");
-    
+
     // Serve static files
     app.use(express.static(distPath));
-    
+
     // SPA fallback - serve index.html for ALL non-API routes (including reset-password)
     app.get('*', (req, res) => {
       if (!req.path.startsWith('/api')) {
