@@ -6,7 +6,7 @@ import {
   TrendingUp, 
   Users,
   Link,
-  FolderOpen,
+  BookOpen,
   Camera,
   DollarSign,
   LucideIcon 
@@ -27,7 +27,7 @@ export const navigationItems: NavigationItem[] = [
   { href: "/launch", icon: Rocket, label: "Product Launch", moduleKey: "Product Launch System" },
   { href: "/financial-management", icon: TrendingUp, label: "Finances", moduleKey: "Financial Management System" },
   { href: "/affiliate-marketing", icon: Link, label: "Affiliate Hub", moduleKey: "The Affiliate Link Hub" },
-  { href: "/resource-library", icon: FolderOpen, label: "Resource Library", moduleKey: "Your Resource Library" },
+  { href: "/resource-library", icon: BookOpen, label: "Resource Library", moduleKey: "Your Resource Library" },
 ];
 
 // Create route mapping from navigation items

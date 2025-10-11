@@ -338,7 +338,7 @@ export default function ResourceLibrary() {
       <div className="mb-8">
         <BackToDashboard />
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
             <BookOpen className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-3xl font-serif font-semibold text-gray-800">Your Resource Library</h1>

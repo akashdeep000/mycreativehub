@@ -11,6 +11,7 @@ import {
   Users,
   Link,
   Camera,
+  BookOpen,
   LucideIcon
 } from "lucide-react";
 
@@ -38,6 +39,7 @@ const iconMap: Record<string, LucideIcon> = {
   "TrendingUp": TrendingUp,
   "Users": Users,
   "Link": Link,
+  "BookOpen": BookOpen,
 };
 
 const colorMap: Record<string, string> = {
