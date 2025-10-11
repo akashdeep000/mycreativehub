@@ -1610,6 +1610,7 @@ export class DatabaseStorage implements IStorage {
         target: profitCalculator.userId,
         set: {
           savedCalculations: data.savedCalculations,
+          pricingLibrary: data.pricingLibrary,
           currency: data.currency,
           currentCalculation: data.currentCalculation,
           updatedAt: new Date(),

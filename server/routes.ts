@@ -2298,10 +2298,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/persistent/profit-calculator', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { savedCalculations, currency, currentCalculation } = req.body;
+      const { savedCalculations, pricingLibrary, currency, currentCalculation } = req.body;
       const calculator = await storage.upsertProfitCalculator({
         userId,
         savedCalculations,
+        pricingLibrary,
         currency,
         currentCalculation
       });

@@ -688,6 +688,7 @@ export const profitCalculator = pgTable("profit_calculator", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id).unique(),
   savedCalculations: jsonb("saved_calculations").notNull().default('[]'), // Saved calculations library
+  pricingLibrary: jsonb("pricing_library").notNull().default('[]'), // Saved pricing library entries
   currency: varchar("currency").notNull().default('USD'), // Selected currency
   currentCalculation: jsonb("current_calculation").notNull().default('{}'), // Current workspace data
   createdAt: timestamp("created_at").defaultNow(),

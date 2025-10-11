@@ -159,8 +159,7 @@ export default function ProfitCalculator() {
   useEffect(() => {
     if (profitCalculatorData) {
       setCalculations(profitCalculatorData.savedCalculations || []);
-      // For now, we'll keep the pricing library in state, but it could be moved to the DB
-      // setPricingLibrary(profitCalculatorData.pricingLibrary || []);
+      setPricingLibrary(profitCalculatorData.pricingLibrary || []);
     }
   }, [profitCalculatorData]);
 
@@ -169,16 +168,16 @@ export default function ProfitCalculator() {
       const dataToSave = {
         ...profitCalculatorData,
         savedCalculations: calculations,
+        pricingLibrary: pricingLibrary,
       };
-      if (JSON.stringify(profitCalculatorData.savedCalculations) !== JSON.stringify(calculations)) {
+      if (
+        JSON.stringify(profitCalculatorData.savedCalculations) !== JSON.stringify(calculations) ||
+        JSON.stringify(profitCalculatorData.pricingLibrary) !== JSON.stringify(pricingLibrary)
+      ) {
         mutation.mutate(dataToSave);
       }
     }
-  }, [calculations, profitCalculatorData, isLoading], 1000);
-
-  useEffect(() => {
-    // This can be extended to save the pricing library to the DB in the future
-  }, [pricingLibrary]);
+  }, [calculations, pricingLibrary, profitCalculatorData, isLoading], 1000);
 
   const generateId = () => Math.random().toString(36).substring(2, 9);
 
