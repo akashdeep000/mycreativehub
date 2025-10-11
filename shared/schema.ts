@@ -686,7 +686,7 @@ export const productComponentChecklists = pgTable("product_component_checklists"
 
 export const profitCalculator = pgTable("profit_calculator", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id).unique(),
   savedCalculations: jsonb("saved_calculations").notNull().default('[]'), // Saved calculations library
   currency: varchar("currency").notNull().default('USD'), // Selected currency
   currentCalculation: jsonb("current_calculation").notNull().default('{}'), // Current workspace data
@@ -696,17 +696,15 @@ export const profitCalculator = pgTable("profit_calculator", {
 
 export const prelaunchTimelinePlanner = pgTable("prelaunch_timeline_planner", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  timelineLength: integer("timeline_length").notNull().default(3), // 2, 3, or 4 weeks
-  weeklyContent: jsonb("weekly_content").notNull().default('{}'), // Weekly content blocks
-  weekNotes: jsonb("week_notes").notNull().default('{}'), // Weekly notes/goals
+  userId: varchar("user_id").notNull().references(() => users.id).unique(),
+  launches: jsonb("launches").notNull().default('[]'), // Store all launch objects for the user
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const launchGrowthPlans = pgTable("launch_growth_plans", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id).unique(),
   growthPlans: jsonb("growth_plans").notNull().default('[]'), // Array of growth plan objects
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -860,7 +858,9 @@ export const insertProfitCalculatorSchema = createInsertSchema(profitCalculator)
   updatedAt: true,
 });
 
-export const insertPrelaunchTimelinePlannerSchema = createInsertSchema(prelaunchTimelinePlanner).omit({
+export const insertPrelaunchTimelinePlannerSchema = createInsertSchema(prelaunchTimelinePlanner, {
+  launches: z.array(z.any()),
+}).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -1099,14 +1099,14 @@ export const automationPrompts = pgTable("automation_prompts", {
   linkTitle: varchar("link_title"), // Link Title
   linkUrl: varchar("link_url"), // Link You Will Send
   followUpDM: text("follow_up_dm"), // Follow Up DM
-  
+
   // Legacy fields for migration (will be mapped to new structure)
   buttonTitle: varchar("button_title"), // Legacy - maps to clickableButtonTitle
   dmLink: text("dm_link"), // Legacy - maps to dmWithLink
   ctaButtons: varchar("cta_buttons"), // Legacy - maps to linkTitle
   followUp: text("follow_up"), // Legacy - maps to followUpDM
   bonusUpsell: text("bonus_upsell"), // Legacy - no longer used
-  
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
