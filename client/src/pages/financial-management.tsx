@@ -390,7 +390,7 @@ export default function FinancialManagement() {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="w-full lg:max-w-7xl lg:mx-auto p-4 lg:py-8 lg:px-8 space-y-6">
+          <div className="w-full lg:max-w-7xl lg:mx-auto p-4 pt-6 lg:py-8 lg:px-8 space-y-6">
             {/* Desktop Header */}
             <div className="hidden lg:flex items-center gap-4">
               <Button
