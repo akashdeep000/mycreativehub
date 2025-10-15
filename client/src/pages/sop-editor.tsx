@@ -137,11 +137,11 @@ export default function SOPEditor() {
       queryClient.invalidateQueries({ queryKey: [`/api/workflow-templates/${templateId}`]});
     },
     onError: () => {
-      toast({
-        title: 'Save Failed',
-        description: 'Failed to save SOP changes.',
-        variant: 'destructive',
-      });
+      // toast({
+      //   title: 'Save Failed',
+      //   description: 'Failed to save SOP changes.',
+      //   variant: 'destructive',
+      // });
     },
   });
 

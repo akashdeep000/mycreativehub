@@ -250,34 +250,39 @@ export default function SOPBuilderHub() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/workflow-templates/${id}`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workflow-templates/${id}`],
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/workflow-templates"] });
     },
     onError: () => {
-      toast({
-        title: "Save Failed",
-        description: "Failed to save SOP changes.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Save Failed",
+      //   description: "Failed to save SOP changes.",
+      //   variant: "destructive",
+      // });
     },
   });
 
   const sops = localSOPs.length > 0 ? localSOPs : defaultSOPs;
 
-  console.log({template, sops})
+  console.log({ template, sops });
 
   // Debounced save with useRef
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const debouncedSave = useCallback((data: SOPBuilderData) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+  const debouncedSave = useCallback(
+    (data: SOPBuilderData) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
 
-    timeoutRef.current = setTimeout(() => {
-      updateMutation.mutate(data);
-    }, 600);
-  }, [updateMutation]);
+      timeoutRef.current = setTimeout(() => {
+        updateMutation.mutate(data);
+      }, 600);
+    },
+    [updateMutation],
+  );
 
   const saveSOPs = (updatedSOPs: SOP[]) => {
     const data: SOPBuilderData = {
@@ -298,11 +303,16 @@ export default function SOPBuilderHub() {
     };
     const updatedSOPs = [...sops, newSOP];
     saveSOPs(updatedSOPs);
-    toast({ title: "New SOP Created", description: "Your new SOP has been saved." });
+    toast({
+      title: "New SOP Created",
+      description: "Your new SOP has been saved.",
+    });
   };
 
   const deleteSOP = (sopId: string) => {
-    if (["email-funnel", "product-launch", "batching-content"].includes(sopId)) {
+    if (
+      ["email-funnel", "product-launch", "batching-content"].includes(sopId)
+    ) {
       toast({
         title: "Cannot Delete Example SOP",
         description: "Example SOPs cannot be deleted.",
@@ -312,7 +322,10 @@ export default function SOPBuilderHub() {
     }
     const updatedSOPs = sops.filter((sop) => sop.id !== sopId);
     saveSOPs(updatedSOPs);
-    toast({ title: "SOP Deleted", description: "The SOP was deleted successfully." });
+    toast({
+      title: "SOP Deleted",
+      description: "The SOP was deleted successfully.",
+    });
   };
 
   const getCompletionPercentage = (sop: SOP) => {
@@ -345,7 +358,7 @@ export default function SOPBuilderHub() {
                 </Button>
               </Link>
             </div>
-            
+
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-4 mb-6">
               <Link href="/">
@@ -361,7 +374,7 @@ export default function SOPBuilderHub() {
                 </Button>
               </Link>
             </div>
-            
+
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg">
                 <FileText className="w-6 h-6 text-white" />
@@ -378,11 +391,16 @@ export default function SOPBuilderHub() {
           {/* SOP Cards */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {sops.map((sop) => (
-              <Card key={sop.id} className="hover:shadow-lg transition-shadow bg-white/70 backdrop-blur-sm">
+              <Card
+                key={sop.id}
+                className="hover:shadow-lg transition-shadow bg-white/70 backdrop-blur-sm"
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-2">
                     <FileText className="w-5 h-5 text-blue-600" />
-                    <CardTitle className="text-lg font-semibold">{sop.title}</CardTitle>
+                    <CardTitle className="text-lg font-semibold">
+                      {sop.title}
+                    </CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -392,7 +410,10 @@ export default function SOPBuilderHub() {
                         <span>Progress</span>
                         <span>{getCompletionPercentage(sop)}%</span>
                       </div>
-                      <Progress value={getCompletionPercentage(sop)} className="h-2" />
+                      <Progress
+                        value={getCompletionPercentage(sop)}
+                        className="h-2"
+                      />
                     </div>
                     <div className="text-sm text-gray-600">
                       Total steps: {sop.steps.length}
@@ -401,8 +422,16 @@ export default function SOPBuilderHub() {
                       <Button asChild size="sm" className="flex-1">
                         <Link href={`/sop/${sop.id}`}>Edit SOP</Link>
                       </Button>
-                      {!["email-funnel", "product-launch", "batching-content"].includes(sop.id) && (
-                        <Button variant="outline" size="sm" onClick={() => deleteSOP(sop.id)}>
+                      {![
+                        "email-funnel",
+                        "product-launch",
+                        "batching-content",
+                      ].includes(sop.id) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteSOP(sop.id)}
+                        >
                           Delete
                         </Button>
                       )}
