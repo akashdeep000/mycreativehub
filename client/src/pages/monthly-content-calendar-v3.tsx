@@ -153,18 +153,27 @@ export default function MonthlyContentCalendarV3() {
       });
       return response.json();
     },
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries({ queryKey: ['/api/calendar-v3', year, month] });
+      const previousData = queryClient.getQueryData(['/api/calendar-v3', year, month]);
+      queryClient.setQueryData(['/api/calendar-v3', year, month], (old: any) => ({
+        ...old,
+        ...newData,
+      }));
+      return { previousData };
+    },
     onSuccess: (serverData) => {
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
-      // Server already returns normalized data with 'color' field
       queryClient.setQueryData(['/api/calendar-v3', year, month], serverData);
     },
-    onError: (error) => {
+    onError: (error, newData, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(['/api/calendar-v3', year, month], context.previousData);
+      }
       console.error('Save error:', error);
-      console.error('Error details:', { year, month, colorKeysCount: colorKeys.length });
       setSaveStatus('idle');
       toast({ title: "Failed to save calendar", variant: "destructive" });
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar-v3', year, month] });
     },
   });
 
@@ -324,7 +333,6 @@ export default function MonthlyContentCalendarV3() {
       
       const updatedColorKeys = [...colorKeys, newKey];
       
-      // Save immediately for color key changes (no optimistic update to prevent flash)
       saveCalendarData.mutate({
         year,
         month,
@@ -348,7 +356,6 @@ export default function MonthlyContentCalendarV3() {
   const deleteColorKey = (keyId: string) => {
     const updatedColorKeys = colorKeys.filter(key => key.id !== keyId);
     
-    // Save immediately for color key changes (no optimistic update to prevent flash)
     saveCalendarData.mutate({
       year,
       month,
@@ -584,7 +591,7 @@ export default function MonthlyContentCalendarV3() {
                 <div className="flex items-center gap-2 rounded-lg p-2 bg-green-50 border-2 border-green-500 shadow-md">
                   <div className="relative">
                     <div
-                      className="w-4 h-4 rounded-full border border-green-400 cursor-pointer hover:ring-2 hover:ring-green-300"
+                      className="w-4 h-4 rJust need to ounded-full border border-green-400 cursor-pointer hover:ring-2 hover:ring-green-300"
                       style={{ backgroundColor: newTagColor }}
                       onClick={() => setShowColorPicker(showColorPicker === 'newTag' ? null : 'newTag')}
                       title="Click to change color"
@@ -756,7 +763,7 @@ export default function MonthlyContentCalendarV3() {
                                 className="w-3 h-3 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: colorKey?.color || '#gray' }}
                               />
-                              <span className="text-xs font-medium text-gray-700 flex-1 min-w-0">
+                              <span className="text-xs font-medium text-gray-700 flex-1 min-w-0 line-clamp-1">
                                 {colorKey?.label || 'Unknown'}
                               </span>
                               {/* Desktop-only hover buttons */}

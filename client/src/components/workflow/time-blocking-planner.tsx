@@ -1332,7 +1332,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
                     {blocks.slice(0, 3).map(block => (
                       <div
                         key={block.id}
-                        className="text-xs px-1 py-1 lg:p-2 rounded text-white cursor-pointer shadow-sm hover:shadow-md transition-shadow group relative w-full"
+                        className="text-xs px-1 py-1 pt-6 md:pt-0 lg:p-2 rounded text-white cursor-pointer shadow-sm hover:shadow-md transition-shadow group relative w-full"
                         style={{ backgroundColor: block.colour }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1386,7 +1386,7 @@ export default function TimeBlockingPlanner({ templateId, initialData, onSave, o
                             </span>
                           )}
                         </div>
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute top-2 right-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             className="flex items-center justify-center w-4 h-4 rounded text-white hover:bg-red-500/30 transition-colors"
                             onClick={(e) => {

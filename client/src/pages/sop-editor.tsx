@@ -394,17 +394,7 @@ export default function SOPEditor() {
                             }, 50);
                           }
                         }}
-                        placeholder={`Example: ${
-                          index === 0 ? 'Step 1 - Plan your next 2-4 weeks\nPick goal(s): nurture, launch support, list growth, or evergreen.\nChoose channels: IG feed/Reels, Stories, TikTok, YouTube Shorts, Email, Blog, Pinterest.\nDecide timeline (e.g. 3 IG posts, 2 Reels, 1 email per week).\nList 3-5 content pillar themes you\'ll repeat (e.g., Tips, Behind-the-Scenes, Testimonials, Offers). Use Content Pillars within Content Creation System.\nUse Time Blocking Calendar: plug in key dates (promos, holidays, launches). Done when: you have a filled in calendar and a target number of assets to make.' :
-                          index === 1 ? 'Step 2 - Block your batching time\nTake Action! Pick 1-2 batching sessions this week for any given task within your Time Blocking Planner and get to work.\nSet a Quick Start Timer on your dashboard and turn off distractions. Done when: your time is blocked and your workspace/files are ready.' :
-                          index === 2 ? 'Step 4 - Plan content\nBrain dump 10-20 post ideas tied to your content pillars.\nFor each idea, jot 3-5 bullet points (what to show/say).\nMap ideas to formats (Carousel, Reel, Story, Email). Done when: you have enough outlines to hit your batching target for 2-4 weeks.' :
-                          index === 3 ? 'Step 5 - Produce visuals & videos (batch)\nRecord all clips in one go (same setup, different outfits/angles), OR film as you go, bank content throughout the week and batch the editing.\nDesign carousels/covers/thumbnails using your template packs.\nExport in correct sizes and store in organised desktop folder. Done when: all visuals/clips for this batch are exported and named properly.' :
-                          index === 4 ? 'Step 6 - Write captions & email copy\nFor each asset, write:\nHook → 3-5 value lines → CTA.\nAdd 3-5 relevant hashtags (if used), alt text, and any links. Done when: every asset has its caption/copy, CTA, and accessibility text.' :
-                          index === 5 ? 'Step 7 - Upload/Schedule\nLoad posts into your scheduler (or native app).\nSet dates/times; add first comments/links if needed.\nFinal checks:\nSpelling/brand voice, audio levels, CTAs, alt text/captions on.\nHit Schedule. Done when: everything is queued and ready to go.' :
-                          index === 6 ? 'Step 8 - Publish day checklist (super short)\nReply to early comments/DMs in the first hour.\nAdd links to Stories/Link-in-bio as needed.' :
-                          index === 7 ? 'Tips: Keep it simple to improve\n\nIf opens are low → try a stronger subject on the next email.\n\nIf clicks are low → move the CTA higher and make it clearer.\n\nIf someone buys → confirm they stop the sales funnel.' :
-                          'Add your step here'
-                        }`}
+                        placeholder="Write your Step by Step process here..."
                         className="min-h-[60px] resize-none overflow-y-auto auto-resize-textarea text-gray-900"
                         rows={1}
                       />
@@ -476,17 +466,7 @@ export default function SOPEditor() {
                             }, 50);
                           }
                         }}
-                        placeholder={`Example: ${
-                          index === 0 ? 'Step 1 - Plan your next 2-4 weeks\nPick goal(s): nurture, launch support, list growth, or evergreen.\nChoose channels: IG feed/Reels, Stories, TikTok, YouTube Shorts, Email, Blog, Pinterest.\nDecide timeline (e.g. 3 IG posts, 2 Reels, 1 email per week).\nList 3-5 content pillar themes you\'ll repeat (e.g., Tips, Behind-the-Scenes, Testimonials, Offers). Use Content Pillars within Content Creation System.\nUse Time Blocking Calendar: plug in key dates (promos, holidays, launches). Done when: you have a filled in calendar and a target number of assets to make.' :
-                          index === 1 ? 'Step 2 - Block your batching time\nTake Action! Pick 1-2 batching sessions this week for any given task within your Time Blocking Planner and get to work.\nSet a Quick Start Timer on your dashboard and turn off distractions. Done when: your time is blocked and your workspace/files are ready.' :
-                          index === 2 ? 'Step 4 - Plan content\nBrain dump 10-20 post ideas tied to your content pillars.\nFor each idea, jot 3-5 bullet points (what to show/say).\nMap ideas to formats (Carousel, Reel, Story, Email). Done when: you have enough outlines to hit your batching target for 2-4 weeks.' :
-                          index === 3 ? 'Step 5 - Produce visuals & videos (batch)\nRecord all clips in one go (same setup, different outfits/angles), OR film as you go, bank content throughout the week and batch the editing.\nDesign carousels/covers/thumbnails using your template packs.\nExport in correct sizes and store in organised desktop folder. Done when: all visuals/clips for this batch are exported and named properly.' :
-                          index === 4 ? 'Step 6 - Write captions & email copy\nFor each asset, write:\nHook → 3-5 value lines → CTA.\nAdd 3-5 relevant hashtags (if used), alt text, and any links. Done when: every asset has its caption/copy, CTA, and accessibility text.' :
-                          index === 5 ? 'Step 7 - Upload/Schedule\nLoad posts into your scheduler (or native app).\nSet dates/times; add first comments/links if needed.\nFinal checks:\nSpelling/brand voice, audio levels, CTAs, alt text/captions on.\nHit Schedule. Done when: everything is queued and ready to go.' :
-                          index === 6 ? 'Step 8 - Publish day checklist (super short)\nReply to early comments/DMs in the first hour.\nAdd links to Stories/Link-in-bio as needed.' :
-                          index === 7 ? 'Tips: Keep it simple to improve\n\nIf opens are low → try a stronger subject on the next email.\n\nIf clicks are low → move the CTA higher and make it clearer.\n\nIf someone buys → confirm they stop the sales funnel.' :
-                          'Add your step here'
-                        }`}
+                        placeholder="Write your Step by Step process here..."
                         className="min-h-[80px] w-full resize-none overflow-y-auto text-gray-900"
                       />
                     </div>

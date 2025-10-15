@@ -9,10 +9,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
-import { 
-  ArrowLeft, 
+import {
+  ArrowLeft,
   Plus, 
   Trash2, 
   Edit2,
@@ -364,34 +365,23 @@ export default function FinancialManagement() {
   ];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
-      
-      <div className="flex-1 flex flex-col overflow-hidden lg:ml-64">
-        {/* Mobile Header Banner */}
-        <div className="lg:hidden bg-gradient-to-br from-purple-600 to-purple-800 text-white p-4 flex items-center gap-3 shadow-md">
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="font-semibold text-base">Financial Management</h1>
-            <p className="text-xs text-purple-100">Track income & expenses</p>
-          </div>
-        </div>
-
-        {/* Mobile Back Arrow */}
-        <button
-          onClick={() => setLocation('/')}
-          className="lg:hidden fixed top-20 left-4 z-30 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700"
-          data-testid="button-back-mobile"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-        </button>
-
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="w-full lg:max-w-7xl lg:mx-auto p-4 pt-6 lg:py-8 lg:px-8 space-y-6">
-            {/* Desktop Header */}
+      <MobileNav />
+      <div className="lg:ml-64">
+        <main className="px-4 sm:px-6 lg:px-8 py-6 pb-20 lg:pb-6">
+          <div className="space-y-6">
+            {/* Page Header */}
+            <div className="flex items-center gap-3 lg:hidden mt-16">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/")}
+                className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </div>
             <div className="hidden lg:flex items-center gap-4">
               <Button
                 variant="ghost"
@@ -405,14 +395,14 @@ export default function FinancialManagement() {
               </Button>
             </div>
 
-            <div className="hidden lg:block">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-500 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-white" />
-                </div>
-                <h1 className="text-3xl font-serif font-semibold text-gray-900 dark:text-white">Financial Management</h1>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-500 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-white" />
               </div>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">Track and manage your business income and expenses</p>
+              <div>
+                <h1 className="text-3xl font-serif font-semibold text-gray-900 dark:text-white">Financial Management</h1>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">Track and manage your business income and expenses</p>
+              </div>
             </div>
 
             {/* Month Selector & Actions */}
@@ -486,7 +476,11 @@ export default function FinancialManagement() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</p>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-32" />
+                  ) : (
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -498,7 +492,11 @@ export default function FinancialManagement() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totalExpenses)}</p>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-32" />
+                  ) : (
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totalExpenses)}</p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -510,9 +508,13 @@ export default function FinancialManagement() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className={`text-2xl font-bold ${netIncome >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
-                    {formatCurrency(netIncome)}
-                  </p>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-32" />
+                  ) : (
+                    <p className={`text-2xl font-bold ${netIncome >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                      {formatCurrency(netIncome)}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -820,9 +822,8 @@ export default function FinancialManagement() {
             </Dialog>
           </div>
         </main>
-
-        <MobileNav />
       </div>
     </div>
   );
 }
+

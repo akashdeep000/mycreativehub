@@ -49,6 +49,7 @@ export default function SocialMediaStrategy() {
   const [, setLocation] = useLocation();
   const [pillars, setPillars] = useState<ContentPillar[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingPillarId, setEditingPillarId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -126,6 +127,7 @@ export default function SocialMediaStrategy() {
   }
 
   const handleOpenDialog = () => {
+    setEditingPillarId(null);
     setFormData({
       title: "",
       description: "",
@@ -145,18 +147,29 @@ export default function SocialMediaStrategy() {
       return;
     }
 
-    const newPillar: ContentPillar = {
-      id: Date.now().toString(),
-      title: formData.title,
-      description: formData.description,
-      goals: formData.goals,
-      cta: formData.cta
-    };
+    let updatedPillars: ContentPillar[];
 
-    const newPillars = [...pillars, newPillar];
-    setPillars(newPillars);
-    saveMutation.mutate(newPillars);
+    if (editingPillarId) {
+      updatedPillars = pillars.map(p =>
+        p.id === editingPillarId
+          ? { ...p, ...formData }
+          : p
+      );
+    } else {
+      const newPillar: ContentPillar = {
+        id: Date.now().toString(),
+        title: formData.title,
+        description: formData.description,
+        goals: formData.goals,
+        cta: formData.cta
+      };
+      updatedPillars = [...pillars, newPillar];
+    }
+
+    setPillars(updatedPillars);
+    saveMutation.mutate(updatedPillars);
     setIsDialogOpen(false);
+    setEditingPillarId(null);
   };
 
   const handleDelete = (pillarId: string) => {
@@ -167,6 +180,17 @@ export default function SocialMediaStrategy() {
       title: "Deleted",
       description: "Content pillar has been deleted.",
     });
+  };
+
+  const handleEdit = (pillar: ContentPillar) => {
+    setEditingPillarId(pillar.id);
+    setFormData({
+      title: pillar.title,
+      description: pillar.description,
+      goals: pillar.goals,
+      cta: pillar.cta
+    });
+    setIsDialogOpen(true);
   };
 
   return (
@@ -274,6 +298,7 @@ export default function SocialMediaStrategy() {
                     <div className="flex items-center gap-2">
                       <button
                         data-testid={`button-edit-${pillar.id}`}
+                        onClick={() => handleEdit(pillar)}
                         className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                       >
                         <Pencil className="w-4 h-4" />
@@ -328,7 +353,7 @@ export default function SocialMediaStrategy() {
           <DialogContent className="sm:max-w-[500px] bg-white dark:bg-gray-800">
             <DialogHeader>
               <DialogTitle className="text-gray-900 dark:text-white">
-                Add New Content Pillar
+                {editingPillarId ? "Edit Content Pillar" : "Add New Content Pillar"}
               </DialogTitle>
             </DialogHeader>
             

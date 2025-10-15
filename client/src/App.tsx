@@ -166,7 +166,7 @@ function App() {
       <TooltipProvider>
         <TimerProvider>
           <Router />
-          <Toaster />
+          {/* <Toaster /> */}
         </TimerProvider>
       </TooltipProvider>
     </QueryClientProvider>

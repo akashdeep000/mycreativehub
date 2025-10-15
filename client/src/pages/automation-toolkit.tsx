@@ -573,7 +573,7 @@ export default function AutomationToolkit() {
           </div>
 
           {/* Conversation Flow Table */}
-          <Card>
+          <Card className="max-w-[calc(100vw_-_3rem)] lg:max-w-[calc(100vw_-_19rem)] mb-16">
             <CardHeader>
               <CardTitle>ManyChat Conversation Flow (copy & paste)</CardTitle>
               <CardDescription>
@@ -582,7 +582,7 @@ export default function AutomationToolkit() {
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
-                <div className="min-w-[1200px]">
+                <div className="min-w-[1400px]">
                   {/* Table Header */}
                   <div className="grid grid-cols-9 gap-4 mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -804,8 +804,9 @@ export default function AutomationToolkit() {
                       </div>
                     </div>
                   ))}
-
-                  {/* Add Row Button */}
+                </div>
+              </div>
+               {/* Add Row Button */}
                   <Button
                     onClick={addRow}
                     variant="outline"
@@ -816,8 +817,6 @@ export default function AutomationToolkit() {
                     <Plus className="h-4 w-4 mr-2" />
                     Add New Prompt
                   </Button>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </main>

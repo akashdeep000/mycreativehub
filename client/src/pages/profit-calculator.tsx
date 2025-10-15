@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
@@ -539,13 +540,14 @@ export default function ProfitCalculator() {
       <div className="min-h-screen flex flex-col lg:flex-row bg-white">
         <Sidebar />
         <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
+          <MobileNav />
           {/* Header */}
           <div className="mb-6">
             {/* Mobile Navigation - Single Back Arrow */}
             <div className="flex items-center gap-3 lg:hidden mt-16 mb-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setSelectedCalculation(null)}
                 className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
               >
@@ -651,11 +653,9 @@ export default function ProfitCalculator() {
                         />
                       </td>
                       <td className="p-4">
-                        <Input
-                          type="number"
+                        <NumericInput
                           value={component.costPerUnit}
-                          onChange={(e) => updateComponent(component.id, 'costPerUnit', parseFloat(e.target.value) || 0)}
-                          onFocus={(e) => e.target.select()}
+                          onChange={(value) => updateComponent(component.id, 'costPerUnit', value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               (e.target as HTMLInputElement).blur();
@@ -667,11 +667,9 @@ export default function ProfitCalculator() {
                         />
                       </td>
                       <td className="p-4">
-                        <Input
-                          type="number"
+                        <NumericInput
                           value={component.quantity}
-                          onChange={(e) => updateComponent(component.id, 'quantity', parseFloat(e.target.value) || 0)}
-                          onFocus={(e) => e.target.select()}
+                          onChange={(value) => updateComponent(component.id, 'quantity', value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               (e.target as HTMLInputElement).blur();
@@ -723,11 +721,9 @@ export default function ProfitCalculator() {
                   <label className="block text-lg font-semibold text-gray-900 mb-3">
                     Desired Selling Price ({getCurrencySymbol(selectedCalculation.currency)})
                   </label>
-                  <Input
-                    type="number"
+                  <NumericInput
                     value={selectedCalculation.sellingPrice}
-                    onChange={(e) => updateSellingPrice(parseFloat(e.target.value) || 0)}
-                    onFocus={(e) => e.target.select()}
+                    onChange={(value) => updateSellingPrice(value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         (e.target as HTMLInputElement).blur();
@@ -812,13 +808,14 @@ export default function ProfitCalculator() {
     <div className="min-h-screen flex flex-col lg:flex-row bg-white">
       <Sidebar />
       <div className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8 lg:ml-64">
+        <MobileNav />
         {/* Navigation */}
         <div className="mb-4">
           {/* Mobile Navigation - Single Back Arrow */}
           <div className="flex items-center gap-3 lg:hidden mt-16">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setLocation("/launch")}
               className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
             >
@@ -1022,7 +1019,7 @@ export default function ProfitCalculator() {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
+      </div>     
     </div>
   );
 }
