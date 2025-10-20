@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,13 +23,31 @@ import {
   ChevronUp,
   Check,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ChevronsUpDown,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { useDebouncedEffect } from '@/hooks/use-debounced-effect';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
+
+// A simple debounce utility
+function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+
+  const debounced = (...args: Parameters<F>) => {
+    if (timeout !== null) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+    timeout = setTimeout(() => func(...args), waitFor);
+  };
+
+  return debounced as (...args: Parameters<F>) => void;
+}
 
 interface ChecklistItem {
   id: string;
@@ -116,7 +134,7 @@ export default function SeasonalityTimeline() {
 
   const [newEvent, setNewEvent] = useState({
     type: '',
-    date: '',
+    date: new Date().toISOString().split('T')[0],
     notes: '',
     checklist: [] as ChecklistItem[]
   });
@@ -144,9 +162,6 @@ export default function SeasonalityTimeline() {
         method: 'PUT',
         body: JSON.stringify(data),
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seasonalityTimeline', selectedYear] });
-    },
     onError: () => {
       toast({
         title: "Error",
@@ -166,15 +181,28 @@ export default function SeasonalityTimeline() {
     }
   }, [timelineData]);
 
-  useDebouncedEffect(
-    () => {
-      if (!isLoading) {
-        mutation.mutate({ year: selectedYear, events, eventTypes });
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['seasonalityTimeline', selectedYear] });
+  }, [selectedYear, queryClient]);
+
+  const saveTimeline = (year: number, eventsToSave: TimelineEvent[], typesToSave: any[], invalidate: boolean = false) => {
+    mutation.mutate(
+      { year, events: eventsToSave, eventTypes: typesToSave },
+      {
+        onSuccess: () => {
+          if (invalidate) {
+            queryClient.invalidateQueries({ queryKey: ['seasonalityTimeline', year] });
+          }
+        },
       }
-    },
-    [events, eventTypes, selectedYear, isLoading],
-    1000
-  );
+    );
+  };
+
+  const debouncedSave = useRef(
+    debounce((year: number, eventsToSave: TimelineEvent[], typesToSave: any[]) => {
+      saveTimeline(year, eventsToSave, typesToSave, false); // Don't invalidate on debounced saves
+    }, 1000)
+  ).current;
 
   // Close color picker when clicking outside
   useEffect(() => {
@@ -221,11 +249,13 @@ export default function SeasonalityTimeline() {
   };
 
   const handleEditEventType = (typeValue: string, newLabel: string) => {
-    setEventTypes(prev => prev.map(type => 
-      type.value === typeValue 
+    const updatedEventTypes = eventTypes.map(type =>
+      type.value === typeValue
         ? { ...type, label: newLabel }
         : type
-    ));
+    );
+    setEventTypes(updatedEventTypes);
+    saveTimeline(selectedYear, events, updatedEventTypes, true);
 
     toast({
       title: "Event type updated",
@@ -255,7 +285,9 @@ export default function SeasonalityTimeline() {
       return;
     }
 
-    setEventTypes(prev => prev.filter(type => type.value !== typeValue));
+    const updatedEventTypes = eventTypes.filter(type => type.value !== typeValue);
+    setEventTypes(updatedEventTypes);
+    saveTimeline(selectedYear, events, updatedEventTypes, true);
 
     toast({
       title: "Event type deleted",
@@ -273,18 +305,21 @@ export default function SeasonalityTimeline() {
   ];
 
   const handleColorChange = (typeValue: string, newColor: string) => {
-    setEventTypes(prev => prev.map(type => 
-      type.value === typeValue 
+    const updatedEventTypes = eventTypes.map(type =>
+      type.value === typeValue
         ? { ...type, color: newColor }
         : type
-    ));
+    );
+    setEventTypes(updatedEventTypes);
 
     // Update all existing events with this type to use the new color
-    setEvents(prev => prev.map(event => 
-      event.type === typeValue 
+    const updatedEvents = events.map(event =>
+      event.type === typeValue
         ? { ...event, color: newColor }
         : event
-    ));
+    );
+    setEvents(updatedEvents);
+    saveTimeline(selectedYear, updatedEvents, updatedEventTypes, true);
 
     setColorPickerOpen(null);
 
@@ -305,7 +340,9 @@ export default function SeasonalityTimeline() {
       emoji: '⭐'
     };
 
-    setEventTypes(prev => [...prev, newType]);
+    const updatedEventTypes = [...eventTypes, newType];
+    setEventTypes(updatedEventTypes);
+    saveTimeline(selectedYear, events, updatedEventTypes, true);
   };
 
   const navigateToQuarter = (quarterNum: number) => {
@@ -325,15 +362,19 @@ export default function SeasonalityTimeline() {
   };
 
   const updateEventNotes = (eventId: string, notes: string) => {
-    setEvents(prev => prev.map(event => 
+    const updatedEvents = events.map(event =>
       event.id === eventId ? { ...event, notes } : event
-    ));
+    );
+    setEvents(updatedEvents);
+    debouncedSave(selectedYear, updatedEvents, eventTypes);
   };
 
   const updateEventChecklist = (eventId: string, checklist: any[]) => {
-    setEvents(prev => prev.map(event =>
+    const updatedEvents = events.map(event =>
       event.id === eventId ? { ...event, checklist } : event
-    ));
+    );
+    setEvents(updatedEvents);
+    debouncedSave(selectedYear, updatedEvents, eventTypes);
   };
 
   const getEventChecklist = (eventId: string) => {
@@ -413,13 +454,13 @@ export default function SeasonalityTimeline() {
     setNewChecklistItem('');
     setNewEvent({
       type: '',
-      date: '',
+      date: new Date().toISOString().split('T')[0],
       notes: '',
       checklist: []
     });
   };
 
-  const handleAddEvent = () => {
+  const handleAddEvent = async () => {
     if (!newEvent.type || !newEvent.date) {
       toast({
         title: "Missing fields",
@@ -430,12 +471,9 @@ export default function SeasonalityTimeline() {
     }
 
     const date = new Date(newEvent.date);
+    const year = date.getFullYear();
     const month = date.getMonth() + 1;
     const quarter = Math.ceil(month / 3);
-
-    // Use a default color scheme for custom events
-    const colors = ['bg-purple-500', 'bg-blue-500', 'bg-green-500', 'bg-orange-500', 'bg-pink-500', 'bg-yellow-500', 'bg-red-500'];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
     const eventId = generateId();
     const event: TimelineEvent = {
@@ -447,15 +485,31 @@ export default function SeasonalityTimeline() {
       title: newEvent.type,
       notes: newEvent.notes || '',
       emoji: '📅',
-      color: randomColor,
+      color: 'bg-blue-500', // Default color
       checklist: newEvent.checklist.length > 0 ? newEvent.checklist : undefined
     };
 
-    setEvents(prev => [...prev, event]);
+    if (year !== selectedYear) {
+      const existingData = await queryClient.fetchQuery({
+        queryKey: ['seasonalityTimeline', year],
+        queryFn: async () => {
+          try {
+            const res = await apiRequest(`/api/persistent/seasonality-timeline/${year}`);
+            return res.json();
+          } catch (error) {
+            return { events: [] }; // Return empty events if year not found
+          }
+        },
+      });
 
-    // If there are checklist items from the dialog, store them in the existing checklist system
-    if (newEvent.checklist.length > 0) {
-      updateEventChecklist(eventId, newEvent.checklist);
+      const existingEvents = existingData?.events || [];
+      const updatedEvents = [...existingEvents, event];
+      saveTimeline(year, updatedEvents, eventTypes, true);
+      setSelectedYear(year);
+    } else {
+      const updatedEvents = [...events, event];
+      setEvents(updatedEvents);
+      saveTimeline(selectedYear, updatedEvents, eventTypes, true);
     }
 
     resetDialogState();
@@ -468,7 +522,9 @@ export default function SeasonalityTimeline() {
   };
 
   const handleDeleteEvent = (id: string) => {
-    setEvents(prev => prev.filter(e => e.id !== id));
+    const updatedEvents = events.filter(e => e.id !== id);
+    setEvents(updatedEvents);
+    saveTimeline(selectedYear, updatedEvents, eventTypes, true);
     toast({
       title: "Event deleted",
       description: "Event removed from timeline"
@@ -507,9 +563,11 @@ export default function SeasonalityTimeline() {
       quarter
     };
 
-    setEvents(prev => prev.map(event => 
+    const updatedEvents = events.map(event =>
       event.id === draggedEvent.id ? updatedEvent : event
-    ));
+    );
+    setEvents(updatedEvents);
+    saveTimeline(selectedYear, updatedEvents, eventTypes, true);
 
     setDraggedEvent(null);
 
@@ -621,6 +679,7 @@ export default function SeasonalityTimeline() {
                 setNewChecklistItem={setNewChecklistItem}
                 addChecklistItemToDialog={addChecklistItemToDialog}
                 removeChecklistItemFromDialog={removeChecklistItemFromDialog}
+                selectedYear={selectedYear}
               />
             </DialogContent>
           </Dialog>
@@ -639,6 +698,15 @@ export default function SeasonalityTimeline() {
                   variant="ghost"
                   size="sm"
                   onClick={navigateToPreviousYear}
+                  onMouseEnter={() => {
+                    queryClient.prefetchQuery({
+                      queryKey: ['seasonalityTimeline', selectedYear - 1],
+                      queryFn: async () => {
+                        const res = await apiRequest(`/api/persistent/seasonality-timeline/${selectedYear - 1}`);
+                        return res.json();
+                      },
+                    });
+                  }}
                   className="h-7 w-7 p-0 text-gray-600 hover:text-gray-800"
                   data-testid="button-previous-year"
                 >
@@ -648,6 +716,15 @@ export default function SeasonalityTimeline() {
                   variant="ghost"
                   size="sm"
                   onClick={navigateToNextYear}
+                  onMouseEnter={() => {
+                    queryClient.prefetchQuery({
+                      queryKey: ['seasonalityTimeline', selectedYear + 1],
+                      queryFn: async () => {
+                        const res = await apiRequest(`/api/persistent/seasonality-timeline/${selectedYear + 1}`);
+                        return res.json();
+                      },
+                    });
+                  }}
                   className="h-7 w-7 p-0 text-gray-600 hover:text-gray-800"
                   data-testid="button-next-year"
                 >
@@ -865,7 +942,60 @@ export default function SeasonalityTimeline() {
   );
 }
 
-function CustomEventTypeDropdown({ 
+function YearCombobox({ selectedYear, value, onChange }: { selectedYear: number, value: number, onChange: (value: number) => void }) {
+  const [open, setOpen] = React.useState(false);
+  const years = Array.from({ length: 20 }, (_, i) => new Date().getFullYear() - 5 + i);
+
+  const yearOptions = years.map(year => ({ value: year.toString(), label: year.toString() }));
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between"
+        >
+          {value
+            ? yearOptions.find((year) => year.value === value.toString())?.label
+            : "Select year..."}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0">
+        <Command>
+          <CommandInput placeholder="Search year..." />
+          <CommandList>
+            <CommandEmpty>No year found.</CommandEmpty>
+            <CommandGroup>
+              {yearOptions.map((year) => (
+                <CommandItem
+                  key={year.value}
+                  value={year.value}
+                  onSelect={(currentValue) => {
+                    onChange(parseInt(currentValue));
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value.toString() === year.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {year.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function CustomEventTypeDropdown({
   value, 
   onChange, 
   eventTypes, 
@@ -1017,7 +1147,8 @@ function AddEventForm({
   newChecklistItem,
   setNewChecklistItem,
   addChecklistItemToDialog,
-  removeChecklistItemFromDialog
+  removeChecklistItemFromDialog,
+  selectedYear,
 }: {
   newEvent: any;
   setNewEvent: any;
@@ -1033,6 +1164,7 @@ function AddEventForm({
   setNewChecklistItem: (text: string) => void;
   addChecklistItemToDialog: () => void;
   removeChecklistItemFromDialog: (itemId: string) => void;
+  selectedYear: number;
 }) {
   const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState('');
@@ -1067,14 +1199,41 @@ function AddEventForm({
         />
       </div>
 
-      <div>
-        <Label htmlFor="date">Date</Label>
-        <Input
-          id="date"
-          type="date"
-          value={newEvent.date}
-          onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="month">Month</Label>
+          <Select
+            value={newEvent.date ? new Date(newEvent.date).getMonth().toString() : new Date().getMonth().toString()}
+            onValueChange={(value) => {
+              const newDate = newEvent.date ? new Date(newEvent.date) : new Date();
+              newDate.setMonth(parseInt(value));
+              setNewEvent({ ...newEvent, date: newDate.toISOString().split('T')[0] });
+            }}
+          >
+            <SelectTrigger id="month">
+              <SelectValue placeholder="Select month" />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((month, index) => (
+                <SelectItem key={index} value={index.toString()}>
+                  {month}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="year">Year</Label>
+          <YearCombobox
+            selectedYear={selectedYear}
+            value={newEvent.date ? new Date(newEvent.date).getFullYear() : selectedYear}
+            onChange={(year: number) => {
+              const newDate = newEvent.date ? new Date(newEvent.date) : new Date();
+              newDate.setFullYear(year);
+              setNewEvent({ ...newEvent, date: newDate.toISOString().split('T')[0] });
+            }}
+          />
+        </div>
       </div>
 
 

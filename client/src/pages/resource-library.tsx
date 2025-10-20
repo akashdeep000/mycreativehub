@@ -472,8 +472,22 @@ export default function ResourceLibrary() {
 
       {/* Website Links Section */}
       <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Favourite Websites & Resources</h2>
-        <p className="text-gray-600 mb-4">If you have websites or tools you visit regularly, add them here so they're easy to access.</p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Favourite Websites & Resources</h2>
+            <p className="text-gray-600">If you have websites or tools you visit regularly, add them here so they're easy to access.</p>
+          </div>
+          {linkItems.length > 0 && (
+            <Button
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+              size="sm"
+            >
+              <Link className="w-4 h-4 mr-2" />
+              Add New Website
+            </Button>
+          )}
+        </div>
         {linkItems.length === 0 ? (
           <Card className="text-center py-8 border-dashed border-2 border-gray-300 bg-white shadow-md">
             <CardContent>

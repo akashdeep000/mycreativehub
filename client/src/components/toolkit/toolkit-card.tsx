@@ -120,7 +120,7 @@ export default function ToolkitCard({ module }: ToolkitCardProps) {
               <li>• Seasonality Timeline</li>
               <li>• Pre-Launch Timeline Planner</li>
               <li>• Product Profit Calculator</li>
-              <li>• Launch Growth Plan</li>
+              <li>• Launch Reflection</li>
             </ul>
           </div>
         )}
