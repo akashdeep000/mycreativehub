@@ -118,7 +118,7 @@ export default function ToolkitCard({ module }: ToolkitCardProps) {
             <h4 className="text-sm font-medium text-gray-800 mb-2">What's Inside:</h4>
             <ul className="text-xs text-gray-600 space-y-1">
               <li>• Seasonality Timeline</li>
-              <li>• Pre-Launch Timeline Planner</li>
+              <li>• Launch Timeline Planner</li>
               <li>• Product Profit Calculator</li>
               <li>• Launch Reflection</li>
             </ul>
@@ -149,7 +149,6 @@ export default function ToolkitCard({ module }: ToolkitCardProps) {
           </div>
         )}
       </CardHeader>
-      
     </Card>
   );
 }
