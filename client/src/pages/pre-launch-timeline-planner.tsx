@@ -472,7 +472,7 @@ export default function PreLaunchTimelinePlanner() {
                 <Clock className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1">
-                <h1 className="text-2xl font-serif font-semibold text-gray-900">Pre-Launch Timeline Planner</h1>
+                <h1 className="text-2xl font-serif font-semibold text-gray-900">Launch Timeline Planner</h1>
               </div>
             </div>
 
