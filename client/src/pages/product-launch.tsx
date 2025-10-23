@@ -26,7 +26,7 @@ export default function ProductLaunch() {
     {
       id: 2,
       title: "Launch Timeline Planner",
-      subtitle: "Map out your 2–4 week pre-launch timeline.",
+      subtitle: "Map out your launch and pre-launch weeks within this timeline",
       icon: Clock,
       gradient: "from-purple-400 to-pink-400",
       route: "/pre-launch-timeline-planner"
