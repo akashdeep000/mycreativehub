@@ -687,7 +687,7 @@ export default function PreLaunchTimelinePlanner() {
             </div>
           </div>
 
-          <p className="text-gray-600 mb-6">Map out your pre-launch timeline with week by week content planning</p>
+          <p className="text-gray-600 mb-6">Map out your launch and/or pre-launch timeline with week by week content planning</p>
 
 
 
