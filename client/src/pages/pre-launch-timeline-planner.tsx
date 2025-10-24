@@ -93,10 +93,9 @@ export default function PreLaunchTimelinePlanner() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  const [launches, setLaunches] = useState<Launch[]>([]);
   const queryClient = useQueryClient();
 
-  const { data: plannerData, isLoading } = useQuery({
+  const { data: plannerData, isLoading } = useQuery<{ launches: Launch[] }>({
     queryKey: ['prelaunchTimelinePlanner'],
     queryFn: async () => {
       const res = await apiRequest('/api/persistent/prelaunch-timeline-planner');
@@ -104,36 +103,42 @@ export default function PreLaunchTimelinePlanner() {
     },
   });
 
-  useEffect(() => {
-    if (plannerData && plannerData.launches) {
-      setLaunches(plannerData.launches);
-    }
-  }, [plannerData]);
+  const launches: Launch[] = plannerData?.launches ?? [];
 
-  const { mutate: savePlanner } = useMutation({
+
+  const { mutate: savePlanner, isPending: isSaving } = useMutation({
     mutationFn: (updatedLaunches: Launch[]) =>
       apiRequest('/api/persistent/prelaunch-timeline-planner', {
         method: 'PUT',
         body: JSON.stringify({ launches: updatedLaunches }),
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prelaunchTimelinePlanner'] });
-      // toast({
-      //   title: 'Saved!',
-      //   description: 'Your timeline has been saved.',
-      // });
+    onMutate: async (updatedLaunches: Launch[]) => {
+      await queryClient.cancelQueries({ queryKey: ['prelaunchTimelinePlanner'] });
+      const previousPlannerData = queryClient.getQueryData(['prelaunchTimelinePlanner']);
+      queryClient.setQueryData(['prelaunchTimelinePlanner'], (old: any) => ({
+        ...old,
+        launches: updatedLaunches,
+      }));
+      return { previousPlannerData };
     },
-    onError: (error) => {
-      console.error('Error saving pre-launch timeline planner data:', error);
+    onError: (err, updatedLaunches, context) => {
+      if (context?.previousPlannerData) {
+        queryClient.setQueryData(['prelaunchTimelinePlanner'], context.previousPlannerData);
+      }
+      console.error('Error saving pre-launch timeline planner data:', err);
       toast({
         title: 'Error',
         description: 'Failed to save timeline data.',
         variant: 'destructive',
       });
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['prelaunchTimelinePlanner'] });
+    },
   });
 
-  const [selectedLaunch, setSelectedLaunch] = useState<Launch | null>(null);
+  const [selectedLaunchId, setSelectedLaunchId] = useState<string | null>(null);
+  const selectedLaunch = launches.find((l: Launch) => l.id === selectedLaunchId) || null;
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
   const [customContentType, setCustomContentType] = useState('');
@@ -143,16 +148,8 @@ export default function PreLaunchTimelinePlanner() {
   const [editingLaunchId, setEditingLaunchId] = useState<string | null>(null);
   const [escapedEdit, setEscapedEdit] = useState(false);
 
-
-
-  // Auto-save launches to DB with debounce
-  useDebouncedEffect(() => {
-    if (launches.length > 0 && !isLoading) {
-      savePlanner(launches);
-    }
-  }, [launches, isLoading], 1000);
-
   const generateId = () => Math.random().toString(36).substring(2, 9);
+
 
   // Launch management functions
   const createNewLaunch = () => {
@@ -171,7 +168,7 @@ export default function PreLaunchTimelinePlanner() {
       lastModified: new Date().toISOString(),
     };
 
-    setLaunches([...launches, newLaunch]);
+    savePlanner([...launches, newLaunch]);
     toast({
       title: "New Launch Created",
       description: "Created a new launch timeline",
@@ -179,7 +176,7 @@ export default function PreLaunchTimelinePlanner() {
   };
 
   const updateLaunchTitle = (launchId: string, newTitle: string) => {
-    setLaunches(launches.map(launch => {
+    const updatedLaunches = launches.map((launch: Launch) => {
       if (launch.id === launchId) {
         return {
           ...launch,
@@ -189,13 +186,15 @@ export default function PreLaunchTimelinePlanner() {
         };
       }
       return launch;
-    }));
+    });
+    savePlanner(updatedLaunches);
   };
 
   const deleteLaunch = (launchId: string) => {
-    setLaunches(launches.filter(launch => launch.id !== launchId));
-    if (selectedLaunch?.id === launchId) {
-      setSelectedLaunch(null);
+    const updatedLaunches = launches.filter((launch: Launch) => launch.id !== launchId);
+    savePlanner(updatedLaunches);
+    if (selectedLaunchId === launchId) {
+      setSelectedLaunchId(null);
     }
     toast({
       title: "Launch Deleted",
@@ -225,10 +224,11 @@ export default function PreLaunchTimelinePlanner() {
       lastModified: new Date().toISOString(),
     };
 
-    setSelectedLaunch(updatedLaunch);
-    setLaunches(launches.map(launch => 
-      launch.id === selectedLaunch.id ? updatedLaunch : launch
-    ));
+    savePlanner(
+      launches.map((launch: Launch) =>
+        launch.id === selectedLaunch!.id ? updatedLaunch : launch
+      )
+    );
   };
 
 
@@ -241,7 +241,7 @@ export default function PreLaunchTimelinePlanner() {
   const addContentToWeek = (weekNumber: number, contentType: string, emoji?: string, isCustom: boolean = false) => {
     if (!selectedLaunch) return;
 
-    const weeks = selectedLaunch.timelineData.weeks.map(week => {
+    const weeks = selectedLaunch.timelineData.weeks.map((week: WeekData) => {
       if (week.weekNumber === weekNumber) {
         const newContent: ContentBlock = {
           id: generateId(),
@@ -262,10 +262,11 @@ export default function PreLaunchTimelinePlanner() {
       lastModified: new Date().toISOString(),
     };
 
-    setSelectedLaunch(updatedLaunch);
-    setLaunches(launches.map(launch => 
-      launch.id === selectedLaunch.id ? updatedLaunch : launch
-    ));
+    savePlanner(
+      launches.map((launch: Launch) =>
+        launch.id === selectedLaunchId ? updatedLaunch : launch
+      )
+    );
 
     setIsAddModalOpen(false);
     setSelectedWeek(null);
@@ -280,9 +281,9 @@ export default function PreLaunchTimelinePlanner() {
   const removeContent = (weekNumber: number, contentId: string) => {
     if (!selectedLaunch) return;
 
-    const weeks = selectedLaunch.timelineData.weeks.map(week => {
+    const weeks = selectedLaunch.timelineData.weeks.map((week: WeekData) => {
       if (week.weekNumber === weekNumber) {
-        return { ...week, content: week.content.filter(c => c.id !== contentId) };
+        return { ...week, content: week.content.filter((c: ContentBlock) => c.id !== contentId) };
       }
       return week;
     });
@@ -293,10 +294,11 @@ export default function PreLaunchTimelinePlanner() {
       lastModified: new Date().toISOString(),
     };
 
-    setSelectedLaunch(updatedLaunch);
-    setLaunches(launches.map(launch => 
-      launch.id === selectedLaunch.id ? updatedLaunch : launch
-    ));
+    savePlanner(
+      launches.map((launch: Launch) =>
+        launch.id === selectedLaunchId ? updatedLaunch : launch
+      )
+    );
 
     toast({
       title: "Content Removed",
@@ -307,11 +309,11 @@ export default function PreLaunchTimelinePlanner() {
   const updateContentStatus = (weekNumber: number, contentId: string, status: 'in progress' | 'scheduled' | 'completed') => {
     if (!selectedLaunch) return;
 
-    const weeks = selectedLaunch.timelineData.weeks.map(week => {
+    const weeks = selectedLaunch.timelineData.weeks.map((week: WeekData) => {
       if (week.weekNumber === weekNumber) {
         return {
           ...week,
-          content: week.content.map(c => 
+          content: week.content.map((c: ContentBlock) =>
             c.id === contentId ? { ...c, status } : c
           )
         };
@@ -325,16 +327,17 @@ export default function PreLaunchTimelinePlanner() {
       lastModified: new Date().toISOString(),
     };
 
-    setSelectedLaunch(updatedLaunch);
-    setLaunches(launches.map(launch => 
-      launch.id === selectedLaunch.id ? updatedLaunch : launch
-    ));
+    savePlanner(
+      launches.map((launch: Launch) =>
+        launch.id === selectedLaunchId ? updatedLaunch : launch
+      )
+    );
   };
 
   const updateWeekNotes = (weekNumber: number, notes: string) => {
     if (!selectedLaunch) return;
 
-    const weeks = selectedLaunch.timelineData.weeks.map(week => {
+    const weeks = selectedLaunch.timelineData.weeks.map((week: WeekData) => {
       if (week.weekNumber === weekNumber) {
         return { ...week, notes };
       }
@@ -347,10 +350,11 @@ export default function PreLaunchTimelinePlanner() {
       lastModified: new Date().toISOString(),
     };
 
-    setSelectedLaunch(updatedLaunch);
-    setLaunches(launches.map(launch => 
-      launch.id === selectedLaunch.id ? updatedLaunch : launch
-    ));
+    savePlanner(
+      launches.map((launch: Launch) =>
+        launch.id === selectedLaunchId ? updatedLaunch : launch
+      )
+    );
   };
 
   const handleCustomContentSubmit = () => {
@@ -380,13 +384,8 @@ export default function PreLaunchTimelinePlanner() {
       updateLaunchTitle(editingLaunchId, newTitle);
 
       // Also update selectedLaunch if it matches the edited launch
-      if (selectedLaunch && selectedLaunch.id === editingLaunchId) {
-        setSelectedLaunch({
-          ...selectedLaunch,
-          title: newTitle,
-          timelineData: { ...selectedLaunch.timelineData, projectName: newTitle },
-          lastModified: new Date().toISOString(),
-        });
+      if (selectedLaunchId === editingLaunchId) {
+        // No need to setSelectedLaunch, it's derived
       }
 
       setIsEditingLaunchTitle(false);
@@ -417,7 +416,7 @@ export default function PreLaunchTimelinePlanner() {
       lastModified: new Date().toISOString(),
     };
 
-    setLaunches([...launches, duplicatedLaunch]);
+    savePlanner([...launches, duplicatedLaunch]);
     toast({
       title: "Timeline Duplicated",
       description: `Created a copy of "${launchToDuplicate.title}"`,
@@ -481,7 +480,7 @@ export default function PreLaunchTimelinePlanner() {
 
           {/* Add New Launch Button */}
           <div className="mb-6">
-            <Button onClick={createNewLaunch} className="flex items-center gap-2">
+            <Button onClick={createNewLaunch} className="flex items-center gap-2" disabled={isSaving}>
               <Plus className="w-4 h-4" />
               Add New Launch
             </Button>
@@ -506,7 +505,7 @@ export default function PreLaunchTimelinePlanner() {
                 <Card 
                   key={launch.id} 
                   className="min-h-[200px] w-full cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => setSelectedLaunch(launch)}
+                  onClick={() => setSelectedLaunchId(launch.id)}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -521,6 +520,7 @@ export default function PreLaunchTimelinePlanner() {
                             setEditingLaunchTitle(launch.title);
                             setIsEditingLaunchTitle(true);
                           }}
+                          disabled={isSaving}
                         >
                           <Edit3 className="w-4 h-4" />
                         </Button>
@@ -531,6 +531,7 @@ export default function PreLaunchTimelinePlanner() {
                             e.stopPropagation();
                             deleteLaunch(launch.id);
                           }}
+                          disabled={isSaving}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -547,7 +548,7 @@ export default function PreLaunchTimelinePlanner() {
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedLaunch(launch);
+                            setSelectedLaunchId(launch.id);
                           }}
                         >
                           Open Timeline
@@ -560,6 +561,7 @@ export default function PreLaunchTimelinePlanner() {
                             duplicateLaunch(launch);
                           }}
                           title="Duplicate Timeline"
+                          disabled={isSaving}
                         >
                           Duplicate
                         </Button>
@@ -615,7 +617,7 @@ export default function PreLaunchTimelinePlanner() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setSelectedLaunch(null)}
+                onClick={() => setSelectedLaunchId(null)}
                 className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -634,7 +636,7 @@ export default function PreLaunchTimelinePlanner() {
               </Button>
               <Button
                 variant="ghost"
-                onClick={() => setSelectedLaunch(null)}
+                onClick={() => setSelectedLaunchId(null)}
                 className="text-gray-600 hover:text-gray-900"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -714,7 +716,7 @@ export default function PreLaunchTimelinePlanner() {
                       }
                     }}>
                       <DialogTrigger asChild>
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" disabled={isSaving}>
                           <Plus className="w-4 h-4 mr-1" />
                           Add
                         </Button>
@@ -806,6 +808,7 @@ export default function PreLaunchTimelinePlanner() {
                               variant="ghost"
                               onClick={() => removeContent(week.weekNumber, content.id)}
                               className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
+                              disabled={isSaving}
                             >
                               <Trash2 className="w-3 h-3" />
                             </Button>
@@ -831,7 +834,7 @@ export default function PreLaunchTimelinePlanner() {
 
           {/* Add Week Button */}
           <div className="mt-6 flex justify-center">
-            <Button onClick={addWeek} variant="outline" className="flex items-center gap-2">
+            <Button onClick={addWeek} variant="outline" className="flex items-center gap-2" disabled={isSaving}>
               <Plus className="w-4 h-4" />
               Add Week
             </Button>
