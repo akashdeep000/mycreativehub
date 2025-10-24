@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Palette, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function SignUp() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -75,11 +77,15 @@ export default function SignUp() {
         window.location.href = "/";
       }, 1500);
     } catch (error: any) {
-      toast({
-        title: "Sign-up failed",
-        description: error.message || "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
+      if (error.message === "Access is restricted to course members only. Please purchase the course to gain access.") {
+        setErrorMessage("We couldn’t find access for this email. <a href='https://toolkit.fizzandflourish.com/mycreativehub' class='underline'>Learn More Here.</a>");
+      } else {
+        toast({
+          title: "Sign-up failed",
+          description: error.message || "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -128,6 +134,12 @@ export default function SignUp() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {errorMessage && (
+                  <div
+                    className="mb-4 text-center text-sm text-red-600 font-bold"
+                    dangerouslySetInnerHTML={{ __html: errorMessage }}
+                  />
+                )}
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -222,6 +234,7 @@ export default function SignUp() {
           </div>
         </div>
       </div>
+      <Toaster />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function Login() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -264,6 +265,7 @@ export default function Login() {
           </div>
         </div>
       </div>
+      <Toaster/>
     </div>
   );
 }
