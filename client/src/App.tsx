@@ -1,5 +1,5 @@
 import { Switch, Route } from "wouter";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -47,6 +47,7 @@ import MonthlyContentCalendarV3 from "@/pages/monthly-content-calendar-v3";
 import Help from "@/pages/help";
 import MobileFixedHeader from "@/components/layout/mobile-fixed-header";
 import FinancialManagement from "@/pages/financial-management";
+import OfflinePage from "@/pages/offline";
 import { Toaster } from "@/components/ui/toaster";
 
 
@@ -71,6 +72,24 @@ function TimerWrapper() {
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  if (!isOnline) {
+    return <OfflinePage />;
+  }
 
   // Show loading state while authentication is being checked
   if (isLoading) {
