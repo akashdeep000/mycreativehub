@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Calendar, ArrowLeft, Plus, Edit3, Trash2, Clock, Target, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import MobileNav from '@/components/layout/mobile-nav';
 import Sidebar from '@/components/layout/sidebar';
 import { useDebouncedEffect } from '@/hooks/use-debounced-effect';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -600,6 +601,7 @@ export default function PreLaunchTimelinePlanner() {
             </DialogContent>
           </Dialog>
         </div>
+        <MobileNav />
       </div>
     );
   }
@@ -871,6 +873,7 @@ export default function PreLaunchTimelinePlanner() {
           </CardContent>
         </Card>
       </div>
+      <MobileNav />
     </div>
   );
 }
