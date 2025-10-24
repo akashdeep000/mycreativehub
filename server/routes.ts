@@ -3078,29 +3078,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let email = null;
 
       // Try different possible email field locations
-      if (req.body?.contact?.email) {
-        email = req.body.contact.email;
-      } else if (req.body?.email) {
-        email = req.body.email;
-      } else if (req.body?.customer?.email) {
-        email = req.body.customer.email;
-      } else if (req.body?.user?.email) {
-        email = req.body.user.email;
-      } else {
-        // Search for any email field in the entire object
-        const searchForEmail = (obj: any): string | null => {
-          for (const key in obj) {
-            if (key.toLowerCase().includes('email') && typeof obj[key] === 'string' && obj[key].includes('@')) {
-              return obj[key];
-            }
-            if (typeof obj[key] === 'object' && obj[key] !== null) {
-              const found: string | null = searchForEmail(obj[key]);
-              if (found) return found;
-            }
-          }
-          return null;
-        };
-        email = searchForEmail(req.body);
+      if (req.body?.data?.contact?.email) {
+        email = req.body.data.contact.email;
       }
 
       console.log('Extracted email:', email);
