@@ -37,20 +37,25 @@ export default function ReelCarouselTemplates() {
       description: "Customisable Canva templates for short-form video content",
       icon: Video,
       colour: "purple",
-      url: "https://www.canva.com"
+      url: "/Reel Template Pack.pdf"
     },
     {
       id: 2,
-      name: "Editable Carousel Template", 
+      name: "Editable Carousel Template",
       description: "Swipe-worthy Canva templates designed for engagement and clarity",
       icon: Image,
       colour: "blue",
-      url: "https://www.canva.com"
+      url: "/Carousel Template Pack.pdf"
     }
   ];
 
   const handleTemplateClick = (template: any) => {
-    window.open(template.url, '_blank');
+    const link = document.createElement('a');
+    link.href = template.url;
+    link.setAttribute('download', template.name.replace(/ /g, '_') + '.pdf');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -139,7 +144,7 @@ export default function ReelCarouselTemplates() {
                         handleTemplateClick(template);
                       }}
                     >
-                      Open in Canva
+                      Open PDF
                     </Button>
                   </div>
                 </CardContent>
