@@ -16,6 +16,7 @@ export default defineConfig({
         name: "My Creative Hub",
         short_name: "MyCreativeHub",
         description: "Your all-in-one platform for creative work.",
+        display: "standalone",
         theme_color: "#ffffff",
         icons: [
           {

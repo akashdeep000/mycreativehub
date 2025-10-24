@@ -1,16 +1,19 @@
 import { useAuth } from "@/hooks/useAuth";
+import { usePWA } from "@/contexts/PWAContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLocation } from "wouter";
 import { navigationItems } from "@/lib/navigation";
-import { 
-  Settings, 
+import {
+  Settings,
   LogOut,
   Palette,
-  HelpCircle
+  HelpCircle,
+  Download
 } from "lucide-react";
 
 export default function Sidebar() {
   const { user } = useAuth();
+  const { isInstallable, promptInstall } = usePWA();
   const [location, setLocation] = useLocation();
 
   return (
@@ -101,9 +104,22 @@ export default function Sidebar() {
           </button>
         </div>
 
+        {/* Install Button */}
+        {isInstallable && (
+          <div className="mb-6 px-2">
+            <button
+              onClick={promptInstall}
+              className="w-full flex items-center justify-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-300 bg-pink-500 text-white font-semibold shadow-md hover:bg-pink-600 hover:shadow-lg transform hover:-translate-y-px"
+            >
+              <Download className="w-5 h-5 flex-shrink-0" />
+              <span className="text-left text-sm">Install App</span>
+            </button>
+          </div>
+        )}
+
         {/* Logout */}
         <div className="border-t border-pink-200 pt-6">
-          <button 
+          <button
             onClick={async () => {
               try {
                 await fetch("/api/auth/logout", {

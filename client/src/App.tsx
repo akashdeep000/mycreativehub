@@ -48,6 +48,7 @@ import Help from "@/pages/help";
 import MobileFixedHeader from "@/components/layout/mobile-fixed-header";
 import FinancialManagement from "@/pages/financial-management";
 import OfflinePage from "@/pages/offline";
+import { PWAProvider } from "@/contexts/PWAContext";
 import { Toaster } from "@/components/ui/toaster";
 
 
@@ -183,10 +184,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <TimerProvider>
-          <Router />
-          {/* <Toaster /> */}
-        </TimerProvider>
+        <PWAProvider>
+          <TimerProvider>
+            <Router />
+            {/* <Toaster /> */}
+          </TimerProvider>
+        </PWAProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

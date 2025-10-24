@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { usePWA } from "@/contexts/PWAContext";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -13,11 +14,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { HelpCircle, LogOut, LogIn } from "lucide-react";
+import { HelpCircle, LogOut, LogIn, Download } from "lucide-react";
 
 export default function MobileFixedHeader() {
   const [, setLocation] = useLocation();
   const { isAuthenticated } = useAuth();
+  const { isInstallable, promptInstall } = usePWA();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
@@ -82,6 +84,17 @@ export default function MobileFixedHeader() {
       >
         <div className="flex justify-end p-4">
           <div className="flex items-center space-x-3">
+            {/* Install Button */}
+            {isInstallable && (
+              <Button
+                size="sm"
+                onClick={promptInstall}
+                className="bg-pink-500 text-white font-semibold shadow-md hover:bg-pink-600 hover:shadow-lg transform hover:-translate-y-px transition-all duration-300"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Install
+              </Button>
+            )}
             {/* Help Button */}
             <Button
               variant="outline"
