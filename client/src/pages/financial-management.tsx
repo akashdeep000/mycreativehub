@@ -22,7 +22,8 @@ import {
   Unlock,
   TrendingUp,
   TrendingDown,
-  DollarSign
+  DollarSign,
+  Loader2
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { Badge } from '@/components/ui/badge';
@@ -97,6 +98,7 @@ export default function FinancialManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Transaction currency preference (persisted in localStorage)
   const [transactionCurrency, setTransactionCurrency] = useState(() => {
@@ -165,7 +167,9 @@ export default function FinancialManagement() {
     }
   };
 
-  const handleAddTransaction = async () => {
+  const handleAddTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
     try {
       const response = await apiRequest('/api/finance/transactions', {
         method: 'POST',
@@ -200,11 +204,15 @@ export default function FinancialManagement() {
         description: 'Failed to add transaction',
         variant: 'destructive'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleEditTransaction = async () => {
+  const handleEditTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!editingTransaction) return;
+    setIsSubmitting(true);
 
     try {
       const response = await apiRequest(`/api/finance/transactions/${editingTransaction.id}`, {
@@ -232,6 +240,8 @@ export default function FinancialManagement() {
         description: 'Failed to update transaction',
         variant: 'destructive'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -613,7 +623,10 @@ export default function FinancialManagement() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={handleAddTransaction} data-testid="button-save-transaction">Add Transaction</Button>
+                    <Button onClick={(e) => handleAddTransaction(e)} data-testid="button-save-transaction" disabled={isSubmitting}>
+                      {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Add Transaction
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -816,7 +829,10 @@ export default function FinancialManagement() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={handleEditTransaction} data-testid="button-update-transaction">Update Transaction</Button>
+                  <Button onClick={(e) => handleEditTransaction(e)} data-testid="button-update-transaction" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Update Transaction
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
