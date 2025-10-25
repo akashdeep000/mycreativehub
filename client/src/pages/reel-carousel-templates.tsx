@@ -37,25 +37,20 @@ export default function ReelCarouselTemplates() {
       description: "Customisable Canva templates for short-form video content",
       icon: Video,
       colour: "purple",
-      url: "/Reel Template Pack.pdf"
+      url: "https://www.canva.com"
     },
     {
       id: 2,
-      name: "Editable Carousel Template",
+      name: "Editable Carousel Template", 
       description: "Swipe-worthy Canva templates designed for engagement and clarity",
       icon: Image,
       colour: "blue",
-      url: "/Carousel Template Pack.pdf"
+      url: "https://www.canva.com"
     }
   ];
 
   const handleTemplateClick = (template: any) => {
-    const link = document.createElement('a');
-    link.href = template.url;
-    link.setAttribute('download', template.name.replace(/ /g, '_') + '.pdf');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    window.open(template.url, '_blank');
   };
 
   return (
@@ -133,9 +128,7 @@ export default function ReelCarouselTemplates() {
                   <CardDescription className="text-gray-600">{template.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Ready to customise</span>
-                  </div>
+                  <span className="text-sm text-gray-500">Ready to customise</span>
                 </CardContent>
               </Card>
             ))}

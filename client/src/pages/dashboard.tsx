@@ -10,7 +10,6 @@ import ToolkitCard from "@/components/toolkit/toolkit-card";
 import DailyFocus from "@/components/toolkit/daily-focus";
 import QuickStartTimer from "@/components/toolkit/quick-start-timer-simple";
 import { Button } from "@/components/ui/button";
-import InstallPrompt from "@/components/InstallPrompt";
 import type { User } from "@shared/schema";
 
 export default function Dashboard() {
@@ -103,7 +102,6 @@ export default function Dashboard() {
       </div>
       {/* Mobile Navigation */}
       <MobileNav />
-      <InstallPrompt isAuthenticated={isAuthenticated} />
     </div>
   );
 }

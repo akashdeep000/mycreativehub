@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
-import InstallPrompt from "@/components/InstallPrompt";
 
 export default function Login() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -267,7 +266,6 @@ export default function Login() {
         </div>
       </div>
       <Toaster/>
-      <InstallPrompt isAuthenticated={isAuthenticated} />
     </div>
   );
 }

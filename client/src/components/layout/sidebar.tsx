@@ -1,19 +1,16 @@
 import { useAuth } from "@/hooks/useAuth";
-import { usePWA } from "@/contexts/PWAContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLocation } from "wouter";
 import { navigationItems } from "@/lib/navigation";
-import {
-  Settings,
+import { 
+  Settings, 
   LogOut,
   Palette,
-  HelpCircle,
-  Download
+  HelpCircle
 } from "lucide-react";
 
 export default function Sidebar() {
   const { user } = useAuth();
-  const { isInstallable, promptInstall } = usePWA();
   const [location, setLocation] = useLocation();
 
   return (
@@ -21,8 +18,8 @@ export default function Sidebar() {
       <div className="p-6">
         {/* Logo/Brand */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 aspect-square shrink-0 rounded-[10px] flex items-center justify-center mb-3">
-            <img src="/attached_assets/transparent app_1761385398656.png" alt="My Creative Hub" className="w-full h-full object-contain" />
+          <div className="w-12 h-12 aspect-square shrink-0 rounded-[10px] flex items-center justify-center bg-gradient-to-br from-pink-300 to-purple-300 mb-3">
+            <Palette className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-xl font-serif font-semibold text-gray-800 text-center">My Creative Hub</h1>
         </div>
@@ -104,22 +101,9 @@ export default function Sidebar() {
           </button>
         </div>
 
-        {/* Install Button */}
-        {isInstallable && (
-          <div className="mb-6 px-2">
-            <button
-              onClick={promptInstall}
-              className="w-full flex items-center justify-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-300 bg-pink-500 text-white font-semibold shadow-md hover:bg-pink-600 hover:shadow-lg transform hover:-translate-y-px"
-            >
-              <Download className="w-5 h-5 flex-shrink-0" />
-              <span className="text-left text-sm">Install App</span>
-            </button>
-          </div>
-        )}
-
         {/* Logout */}
         <div className="border-t border-pink-200 pt-6">
-          <button
+          <button 
             onClick={async () => {
               try {
                 await fetch("/api/auth/logout", {
