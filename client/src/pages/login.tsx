@@ -16,6 +16,7 @@ export default function Login() {
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -32,6 +33,7 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage(null);
 
     try {
       console.log("Frontend - Starting login process");
@@ -101,11 +103,15 @@ export default function Login() {
         window.location.replace("/");
       }, redirectDelay);
     } catch (error: any) {
-      toast({
-        title: "Login failed",
-        description: error.message || "Invalid email or password. Please try again.",
-        variant: "destructive",
-      });
+      if (error.message === "Access is restricted to course members only. Please purchase the course to gain access.") {
+        setErrorMessage("We couldn’t find access for this email. <a href='https://toolkit.fizzandflourish.com/mycreativehub' class='underline'>Learn More Here.</a>");
+      } else {
+        toast({
+          title: "Login failed",
+          description: error.message || "Invalid email or password. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -162,6 +168,12 @@ export default function Login() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {errorMessage && (
+                  <div
+                    className="mb-4 text-center text-sm text-red-600 font-bold"
+                    dangerouslySetInnerHTML={{ __html: errorMessage }}
+                  />
+                )}
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
