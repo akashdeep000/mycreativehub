@@ -135,6 +135,17 @@ export default function ReelCarouselTemplates() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500">Ready to customise</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-pink-600 hover:text-pink-700 bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTemplateClick(template);
+                      }}
+                    >
+                      Open PDF
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
