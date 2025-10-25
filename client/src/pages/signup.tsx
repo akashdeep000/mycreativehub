@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Palette, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
@@ -118,9 +118,7 @@ export default function SignUp() {
           <div className="w-full max-w-md">
             {/* Logo and Header */}
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#b9e6e0] to-[#8dd3c7] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl drop-shadow-lg">
-                <Palette className="w-8 h-8 text-white" />
-              </div>
+              <img src="/icons/icon-trans-192x192.png" alt="My Creative Hub Logo" className="w-16 h-16 mx-auto mb-4" />
               <h1 className="text-3xl font-serif font-bold text-gray-800 mb-2">Access your Creative Business Headquarters!</h1>
               <p className="text-gray-600">Sign up to unlock your personalised toolkit for planning, organising, and growing your creative business.</p>
             </div>

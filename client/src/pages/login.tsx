@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Palette } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -129,9 +128,7 @@ export default function Login() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#fff7e5'}}>
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-[#b9e6e0] to-[#8dd3c7] rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse shadow-2xl drop-shadow-lg">
-            <Palette className="w-8 h-8 text-white" />
-          </div>
+          <img src="/icons/icon-trans-192x192.png" alt="My Creative Hub Logo" className="w-16 h-16 mx-auto mb-4 animate-pulse" />
           <p className="text-gray-600">Loading your creative workspace...</p>
         </div>
       </div>
@@ -144,9 +141,7 @@ export default function Login() {
         {/* Main Header */}
         <div className="text-center mb-16">
           <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-[#b9e6e0] to-[#8dd3c7] rounded-2xl flex items-center justify-center shadow-2xl drop-shadow-lg">
-              <Palette className="w-8 h-8 text-white" />
-            </div>
+            <img src="/icons/icon-trans-192x192.png" alt="My Creative Hub Logo" className="w-16 h-16" />
           </div>
           <h1 className="text-5xl font-serif font-bold text-gray-800 mb-4">
             My Creative Hub

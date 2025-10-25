@@ -82,7 +82,11 @@ export default function MobileFixedHeader() {
         }`}
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
-        <div className="flex justify-end p-4">
+        <div className="flex justify-between items-center px-4 py-1.5">
+          {/* Logo */}
+          <div className="flex items-center">
+            <img src="/icons/icon-trans-192x192.png" alt="My Creative Hub Logo" className="size-12" />
+          </div>
           <div className="flex items-center space-x-3">
             {/* Install Button */}
             {isInstallable && (

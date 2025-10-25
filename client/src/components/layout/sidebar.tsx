@@ -6,7 +6,6 @@ import { navigationItems } from "@/lib/navigation";
 import {
   Settings,
   LogOut,
-  Palette,
   HelpCircle,
   Download
 } from "lucide-react";
@@ -21,9 +20,7 @@ export default function Sidebar() {
       <div className="p-6">
         {/* Logo/Brand */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 aspect-square shrink-0 rounded-[10px] flex items-center justify-center bg-gradient-to-br from-pink-300 to-purple-300 mb-3">
-            <Palette className="w-6 h-6 text-white" />
-          </div>
+          <img src="/icons/icon-trans-192x192.png" alt="My Creative Hub Logo" className="size-16 mb-1" />
           <h1 className="text-xl font-serif font-semibold text-gray-800 text-center">My Creative Hub</h1>
         </div>
 

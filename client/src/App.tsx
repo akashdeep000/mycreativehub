@@ -95,8 +95,11 @@ function Router() {
   // Show loading state while authentication is being checked
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#fff7e5'}}>
+        <div className="text-center">
+          <img src="/icons/icon-trans-192x192.png" alt="My Creative Hub Logo" className="w-16 h-16 mx-auto mb-4 animate-pulse" />
+          <p className="text-gray-600">Loading your creative workspace...</p>
+        </div>
       </div>
     );
   }
