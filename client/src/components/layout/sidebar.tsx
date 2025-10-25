@@ -21,8 +21,8 @@ export default function Sidebar() {
       <div className="p-6">
         {/* Logo/Brand */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 aspect-square shrink-0 rounded-[10px] flex items-center justify-center bg-gradient-to-br from-pink-300 to-purple-300 mb-3">
-            <Palette className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 aspect-square shrink-0 rounded-[10px] flex items-center justify-center mb-3">
+            <img src="/attached_assets/transparent app_1761385398656.png" alt="My Creative Hub" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-xl font-serif font-semibold text-gray-800 text-center">My Creative Hub</h1>
         </div>
