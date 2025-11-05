@@ -7,7 +7,8 @@ import {
   Settings,
   LogOut,
   HelpCircle,
-  Download
+  Download,
+  Lightbulb
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -89,10 +90,11 @@ export default function Sidebar() {
                   href="https://1c21-info.systeme.io/dashboard/en/login"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center space-x-3 pl-12 pr-4 py-3 text-left transition-colors text-gray-600 hover:bg-gray-50 rounded-lg mt-1"
+                  className="w-full flex items-center justify-between space-x-3 pl-12 pr-4 py-3 text-left transition-colors text-gray-600 hover:bg-gray-50 rounded-lg mt-1"
                   data-testid="link-bonus-course"
                 >
                   <span className="text-left text-sm">Bonus Course: Systems for Success</span>
+                  <Lightbulb className="w-4 h-4 flex-shrink-0" />
                 </a>
               )}
             </div>
