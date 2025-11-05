@@ -70,18 +70,32 @@ export default function Sidebar() {
         {/* Navigation Menu */}
         <nav className="space-y-3 mb-8">
           {navigationItems.map((item) => (
-            <button
-              key={item.href}
-              onClick={() => setLocation(item.href)}
-              className={`w-full flex items-center space-x-3 px-4 py-4 rounded-xl text-left transition-colors ${
-                location === item.href
-                  ? "bg-pink-100 text-pink-600 font-medium"
-                  : "text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-              <span className="text-left text-sm whitespace-nowrap">{item.label}</span>
-            </button>
+            <div key={item.href}>
+              <button
+                onClick={() => setLocation(item.href)}
+                className={`w-full flex items-center space-x-3 px-4 py-4 rounded-xl text-left transition-colors ${
+                  location === item.href
+                    ? "bg-pink-100 text-pink-600 font-medium"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <span className="text-left text-sm whitespace-nowrap">{item.label}</span>
+              </button>
+              
+              {/* Bonus Course Link under Resource Library */}
+              {item.href === '/resource-library' && (
+                <a
+                  href="https://1c21-info.systeme.io/dashboard/en/login"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center space-x-3 pl-12 pr-4 py-3 text-left transition-colors text-gray-600 hover:bg-gray-50 rounded-lg mt-1"
+                  data-testid="link-bonus-course"
+                >
+                  <span className="text-left text-sm">Bonus Course: Systems for Success</span>
+                </a>
+              )}
+            </div>
           ))}
         </nav>
 
