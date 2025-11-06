@@ -87,7 +87,7 @@ export default function Sidebar() {
               {/* Bonus Course Link under Resource Library */}
               {item.href === '/resource-library' && (
                 <a
-                  href="https://1c21-info.systeme.io/dashboard/en/login"
+                  href="https://1c21-info.systeme.io/school/course/mycreativehub"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full flex items-start space-x-3 px-4 py-4 text-left transition-colors text-gray-600 hover:bg-gray-50 rounded-xl mt-1"
