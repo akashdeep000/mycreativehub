@@ -23,7 +23,8 @@ import {
   TrendingUp,
   TrendingDown,
   DollarSign,
-  Loader2
+  Loader2,
+  Search
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { Badge } from '@/components/ui/badge';
@@ -80,6 +81,7 @@ export default function FinancialManagement() {
   // Current month/year
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
+  const [searchTerm, setSearchTerm] = useState('');
   
   // Transactions
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -338,12 +340,18 @@ export default function FinancialManagement() {
     }
   };
 
+  // Filter transactions based on search term
+  const filteredTransactions = transactions.filter(t => 
+    t.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (t.notes && t.notes.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   // Calculate summary
-  const totalIncome = transactions
+  const totalIncome = filteredTransactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + parseFloat(t.amount), 0);
 
-  const totalExpenses = transactions
+  const totalExpenses = filteredTransactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + parseFloat(t.amount), 0);
 
@@ -461,6 +469,15 @@ export default function FinancialManagement() {
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap">
+                    <div className="relative w-full sm:w-64">
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+                      <Input
+                        placeholder="Search transactions..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-8"
+                      />
+                    </div>
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -645,11 +662,11 @@ export default function FinancialManagement() {
                 <CardContent>
                   {isLoading ? (
                     <p className="text-center py-8 text-gray-500">Loading...</p>
-                  ) : transactions.filter(t => t.type === 'income').length === 0 ? (
-                    <p className="text-center py-8 text-gray-500">No income for this month</p>
+                  ) : filteredTransactions.filter(t => t.type === 'income').length === 0 ? (
+                    <p className="text-center py-8 text-gray-500">No income found</p>
                   ) : (
                     <div className="space-y-3">
-                      {transactions.filter(t => t.type === 'income').map((transaction) => (
+                      {filteredTransactions.filter(t => t.type === 'income').map((transaction) => (
                         <div key={transaction.id} className="border rounded-lg p-3 space-y-2">
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
@@ -701,11 +718,11 @@ export default function FinancialManagement() {
                 <CardContent>
                   {isLoading ? (
                     <p className="text-center py-8 text-gray-500">Loading...</p>
-                  ) : transactions.filter(t => t.type === 'expense').length === 0 ? (
-                    <p className="text-center py-8 text-gray-500">No expenses for this month</p>
+                  ) : filteredTransactions.filter(t => t.type === 'expense').length === 0 ? (
+                    <p className="text-center py-8 text-gray-500">No expenses found</p>
                   ) : (
                     <div className="space-y-3">
-                      {transactions.filter(t => t.type === 'expense').map((transaction) => (
+                      {filteredTransactions.filter(t => t.type === 'expense').map((transaction) => (
                         <div key={transaction.id} className="border rounded-lg p-3 space-y-2">
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
