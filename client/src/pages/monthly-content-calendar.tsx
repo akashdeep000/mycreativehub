@@ -880,7 +880,7 @@ export default function MonthlyContentCalendar() {
                         {cellData.tags.map((tag) => (
                           <div 
                             key={tag.id} 
-                            className="flex items-center gap-1 shrink min-w-0 max-w-full group"
+                            className="flex items-center gap-1 shrink min-w-0 max-w-full group relative"
                           >
                             <div 
                               className="w-2 h-2 rounded-full shrink-0" 
@@ -889,7 +889,7 @@ export default function MonthlyContentCalendar() {
                             <span className="inline-block max-w-full overflow-hidden whitespace-nowrap [text-overflow:clip] align-top text-xs font-medium text-gray-800">
                               {tag.tagLabel}
                             </span>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-auto">
+                            <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur-sm rounded shadow-sm px-1">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();

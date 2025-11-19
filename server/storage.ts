@@ -150,7 +150,7 @@ import {
   type CheatSheetDocPutBody,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, asc, gte, lte, sql, inArray, isNull, gt, ne } from "drizzle-orm";
+import { eq, and, or, desc, asc, gte, lte, lt, sql, inArray, isNull, gt, ne } from "drizzle-orm";
 import crypto from "crypto";
 import { nanoid } from "nanoid";
 
@@ -1273,9 +1273,67 @@ export class DatabaseStorage implements IStorage {
         eq(monthlyContentCalendar.year, year),
         eq(monthlyContentCalendar.month, month)
       ));
-    console.log('Storage GET - Raw database result:', calendar);
-    console.log('Storage GET - Calendar data type:', typeof calendar?.calendarData, 'Value:', calendar?.calendarData);
-    console.log('Storage GET - Color tags type:', typeof calendar?.colorTags, 'Value:', calendar?.colorTags);
+
+    // Find the most recent calendar entry for this user to potentially merge keys
+    const [previousCalendar] = await db
+      .select()
+      .from(monthlyContentCalendar)
+      .where(and(
+        eq(monthlyContentCalendar.userId, userId),
+        or(
+          lt(monthlyContentCalendar.year, year),
+          and(
+            eq(monthlyContentCalendar.year, year),
+            lt(monthlyContentCalendar.month, month)
+          )
+        )
+      ))
+      .orderBy(desc(monthlyContentCalendar.year), desc(monthlyContentCalendar.month))
+      .limit(1);
+
+    // If no previous calendar, just return what we have (or undefined)
+    if (!previousCalendar || !Array.isArray(previousCalendar.colorTags) || previousCalendar.colorTags.length === 0) {
+      return calendar;
+    }
+
+    const prevTags = previousCalendar.colorTags as any[];
+
+    // CASE 1: No current calendar exists for this month
+    // Return a virtual calendar with previous tags to initialize it
+    if (!calendar) {
+      console.log('Storage GET - New month, inheriting all tags from previous month');
+      return {
+        id: 0, // Placeholder
+        userId,
+        year,
+        month,
+        calendarData: [],
+        colorTags: prevTags,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
+
+    // CASE 2: Current calendar exists
+    // We need to merge previous tags into current tags if they are missing
+    // This satisfies "revalidate when changing november" -> changes in Nov propagate to Dec
+    const currentTags = Array.isArray(calendar.colorTags) ? calendar.colorTags as any[] : [];
+
+    // Find tags in Previous that are NOT in Current (matching by Label to avoid duplicates)
+    // We match by Label because that's the user-facing identity of the tag
+    const newTagsToAdd = prevTags.filter(pTag =>
+      !currentTags.some(cTag => cTag.label === pTag.label)
+    );
+
+    if (newTagsToAdd.length > 0) {
+      console.log(`Storage GET - Merging ${newTagsToAdd.length} tags from previous month into current month`);
+      return {
+        ...calendar,
+        colorTags: [...currentTags, ...newTagsToAdd]
+      };
+    }
+
+    // If nothing to merge, return original
     return calendar;
   }
 

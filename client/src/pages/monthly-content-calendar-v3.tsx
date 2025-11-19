@@ -766,29 +766,31 @@ export default function MonthlyContentCalendarV3() {
                               <span className="text-xs font-medium text-gray-700 flex-1 min-w-0 line-clamp-1">
                                 {colorKey?.label || 'Unknown'}
                               </span>
-                              {/* Desktop-only hover buttons */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setShowNotesPopup(`${dayNumber}-${entry.id}`);
-                                  setCurrentEntryId(entry.id);
-                                  setNotesValue(entry.notes);
-                                }}
-                                className="hidden lg:block opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-gray-100 hover:bg-gray-200 rounded px-1 ml-1"
-                                title="Edit notes"
-                              >
-                                <Pencil className="w-3 h-3 text-gray-500" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteEntry(dayNumber, entry.id);
-                                }}
-                                className="hidden lg:block opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-red-100 hover:bg-red-200 rounded px-1 ml-1"
-                                title="Delete entry"
-                              >
-                                <Trash2 className="w-3 h-3 text-red-600" />
-                              </button>
+                              {/* Desktop-only hover buttons - Absolute positioned to not take space */}
+                              <div className="hidden lg:flex absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity items-center gap-1 bg-white/80 backdrop-blur-sm rounded shadow-sm px-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowNotesPopup(`${dayNumber}-${entry.id}`);
+                                    setCurrentEntryId(entry.id);
+                                    setNotesValue(entry.notes);
+                                  }}
+                                  className="text-xs hover:bg-gray-200 rounded p-1 text-gray-500 hover:text-gray-700"
+                                  title="Edit notes"
+                                >
+                                  <Pencil className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteEntry(dayNumber, entry.id);
+                                  }}
+                                  className="text-xs hover:bg-red-100 rounded p-1 text-red-500 hover:text-red-700"
+                                  title="Delete entry"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
                               {/* Custom instant tooltip - desktop only */}
                               {entry.notes && (
                                 <div className="hidden lg:block absolute left-0 bottom-full mb-2 bg-gray-900 text-white text-sm px-4 py-2 rounded-md shadow-xl z-[100] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-normal break-words min-w-[12rem] max-w-[min(80vw,36rem)] border border-gray-700">
