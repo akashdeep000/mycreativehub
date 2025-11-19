@@ -47,6 +47,10 @@ interface ProfitCalculation {
   profitPerUnit: number;
   profitMargin: number;
   marginStrength: 'strong' | 'moderate' | 'low';
+  discountPercentage: number;
+  discountedSellingPrice: number;
+  discountedProfitPerUnit: number;
+  discountedProfitMargin: number;
   lastModified: string;
   currency: string;
 }
@@ -60,6 +64,10 @@ interface PricingLibraryEntry {
   profitPerUnit: number;
   profitMargin: number;
   marginStrength: 'strong' | 'moderate' | 'low';
+  discountPercentage: number;
+  discountedSellingPrice: number;
+  discountedProfitPerUnit: number;
+  discountedProfitMargin: number;
   dateAdded: string;
   currency: string;
 }
@@ -204,13 +212,25 @@ export default function ProfitCalculator() {
     updateCalculation(updatedCalculation);
   };
 
-  const calculateTotals = (components: Component[], sellingPrice: number) => {
+  const calculateTotals = (components: Component[], sellingPrice: number, discountPercentage: number = 0) => {
     const totalCost = components.reduce((sum, comp) => sum + comp.totalCost, 0);
     const profitPerUnit = sellingPrice - totalCost;
     const profitMargin = sellingPrice > 0 ? (profitPerUnit / sellingPrice) * 100 : 0;
     const marginStrength = getMarginStrength(profitMargin);
 
-    return { totalCost, profitPerUnit, profitMargin, marginStrength };
+    const discountedSellingPrice = sellingPrice * (1 - discountPercentage / 100);
+    const discountedProfitPerUnit = discountedSellingPrice - totalCost;
+    const discountedProfitMargin = discountedSellingPrice > 0 ? (discountedProfitPerUnit / discountedSellingPrice) * 100 : 0;
+
+    return { 
+      totalCost, 
+      profitPerUnit, 
+      profitMargin, 
+      marginStrength,
+      discountedSellingPrice,
+      discountedProfitPerUnit,
+      discountedProfitMargin
+    };
   };
 
   const createNewCalculation = () => {
@@ -225,6 +245,10 @@ export default function ProfitCalculator() {
       profitPerUnit: 0,
       profitMargin: 0,
       marginStrength: 'low',
+      discountPercentage: 0,
+      discountedSellingPrice: 0,
+      discountedProfitPerUnit: 0,
+      discountedProfitMargin: 0,
       lastModified: new Date().toISOString(),
       currency: 'GBP'
     };
@@ -287,9 +311,18 @@ export default function ProfitCalculator() {
       return c;
     });
 
-    const { totalCost, profitPerUnit, profitMargin, marginStrength } = calculateTotals(
+    const { 
+      totalCost, 
+      profitPerUnit, 
+      profitMargin, 
+      marginStrength,
+      discountedSellingPrice,
+      discountedProfitPerUnit,
+      discountedProfitMargin
+    } = calculateTotals(
       updatedComponents, 
-      selectedCalculation.sellingPrice
+      selectedCalculation.sellingPrice,
+      selectedCalculation.discountPercentage
     );
 
     const updatedCalculation = {
@@ -298,7 +331,10 @@ export default function ProfitCalculator() {
       totalCost,
       profitPerUnit,
       profitMargin,
-      marginStrength
+      marginStrength,
+      discountedSellingPrice,
+      discountedProfitPerUnit,
+      discountedProfitMargin
     };
 
     updateCalculation(updatedCalculation);
@@ -307,9 +343,18 @@ export default function ProfitCalculator() {
   const updateSellingPrice = (price: number) => {
     if (!selectedCalculation) return;
 
-    const { totalCost, profitPerUnit, profitMargin, marginStrength } = calculateTotals(
+    const { 
+      totalCost, 
+      profitPerUnit, 
+      profitMargin, 
+      marginStrength,
+      discountedSellingPrice,
+      discountedProfitPerUnit,
+      discountedProfitMargin
+    } = calculateTotals(
       selectedCalculation.components, 
-      price
+      price,
+      selectedCalculation.discountPercentage
     );
 
     const updatedCalculation = {
@@ -318,7 +363,42 @@ export default function ProfitCalculator() {
       totalCost,
       profitPerUnit,
       profitMargin,
-      marginStrength
+      marginStrength,
+      discountedSellingPrice,
+      discountedProfitPerUnit,
+      discountedProfitMargin
+    };
+
+    updateCalculation(updatedCalculation);
+  };
+
+  const updateDiscount = (percentage: number) => {
+    if (!selectedCalculation) return;
+
+    const { 
+      totalCost, 
+      profitPerUnit, 
+      profitMargin, 
+      marginStrength,
+      discountedSellingPrice,
+      discountedProfitPerUnit,
+      discountedProfitMargin
+    } = calculateTotals(
+      selectedCalculation.components, 
+      selectedCalculation.sellingPrice,
+      percentage
+    );
+
+    const updatedCalculation = {
+      ...selectedCalculation,
+      discountPercentage: percentage,
+      totalCost,
+      profitPerUnit,
+      profitMargin,
+      marginStrength,
+      discountedSellingPrice,
+      discountedProfitPerUnit,
+      discountedProfitMargin
     };
 
     updateCalculation(updatedCalculation);
@@ -328,9 +408,18 @@ export default function ProfitCalculator() {
     if (!selectedCalculation) return;
 
     const updatedComponents = selectedCalculation.components.filter(c => c.id !== componentId);
-    const { totalCost, profitPerUnit, profitMargin, marginStrength } = calculateTotals(
+    const { 
+      totalCost, 
+      profitPerUnit, 
+      profitMargin, 
+      marginStrength,
+      discountedSellingPrice,
+      discountedProfitPerUnit,
+      discountedProfitMargin
+    } = calculateTotals(
       updatedComponents, 
-      selectedCalculation.sellingPrice
+      selectedCalculation.sellingPrice,
+      selectedCalculation.discountPercentage
     );
 
     const updatedCalculation = {
@@ -339,7 +428,10 @@ export default function ProfitCalculator() {
       totalCost,
       profitPerUnit,
       profitMargin,
-      marginStrength
+      marginStrength,
+      discountedSellingPrice,
+      discountedProfitPerUnit,
+      discountedProfitMargin
     };
 
     updateCalculation(updatedCalculation);
@@ -414,6 +506,10 @@ export default function ProfitCalculator() {
       profitPerUnit: selectedCalculation.profitPerUnit,
       profitMargin: selectedCalculation.profitMargin,
       marginStrength: selectedCalculation.marginStrength,
+      discountPercentage: selectedCalculation.discountPercentage,
+      discountedSellingPrice: selectedCalculation.discountedSellingPrice,
+      discountedProfitPerUnit: selectedCalculation.discountedProfitPerUnit,
+      discountedProfitMargin: selectedCalculation.discountedProfitMargin,
       dateAdded: editingLibraryEntryId ? 
         pricingLibrary.find(e => e.id === editingLibraryEntryId)?.dateAdded || new Date().toISOString() :
         new Date().toISOString(),
@@ -459,6 +555,10 @@ export default function ProfitCalculator() {
       profitPerUnit: entry.profitPerUnit,
       profitMargin: entry.profitMargin,
       marginStrength: entry.marginStrength,
+      discountPercentage: entry.discountPercentage || 0,
+      discountedSellingPrice: entry.discountedSellingPrice || entry.sellingPrice,
+      discountedProfitPerUnit: entry.discountedProfitPerUnit || entry.profitPerUnit,
+      discountedProfitMargin: entry.discountedProfitMargin || entry.profitMargin,
       currency: entry.currency || 'USD',
       lastModified: new Date().toISOString()
     };
@@ -500,6 +600,12 @@ export default function ProfitCalculator() {
       'Selling Price', 
       'Profit per Unit',
       'Profit Margin %',
+      'Profit per Unit',
+      'Profit Margin %',
+      'Discount %',
+      'Discounted Price',
+      'Discounted Profit',
+      'Discounted Margin %',
       'Margin Strength',
       'Currency',
       'Date Added'
@@ -512,7 +618,12 @@ export default function ProfitCalculator() {
         entry.totalCost.toFixed(2),
         entry.sellingPrice.toFixed(2),
         entry.profitPerUnit.toFixed(2),
+        entry.profitPerUnit.toFixed(2),
         entry.profitMargin.toFixed(1),
+        (entry.discountPercentage || 0).toString(),
+        (entry.discountedSellingPrice || entry.sellingPrice).toFixed(2),
+        (entry.discountedProfitPerUnit || entry.profitPerUnit).toFixed(2),
+        (entry.discountedProfitMargin || entry.profitMargin).toFixed(1),
         `"${MARGIN_CONFIG[entry.marginStrength].label}"`,
         entry.currency || 'USD',
         new Date(entry.dateAdded).toLocaleDateString()
@@ -735,6 +846,24 @@ export default function ProfitCalculator() {
                   />
                 </div>
                 <div>
+                  <label className="block text-lg font-semibold text-gray-900 mb-3">
+                    Discount (%)
+                  </label>
+                  <NumericInput
+                    value={selectedCalculation.discountPercentage}
+                    onChange={(value) => updateDiscount(value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        (e.target as HTMLInputElement).blur();
+                      }
+                    }}
+                    placeholder="0"
+                    className="border-gray-300 text-2xl p-4 font-semibold"
+                    step="1"
+                    max={100}
+                  />
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Total Cost to Produce
                   </label>
@@ -767,6 +896,46 @@ export default function ProfitCalculator() {
                       {selectedCalculation.profitMargin.toFixed(1)}%
                   </div>
                 </div>
+
+                {selectedCalculation.discountPercentage > 0 && (
+                  <>
+                    <div className="pt-4 border-t">
+                      <h4 className="text-sm font-semibold text-gray-900 mb-3">With {selectedCalculation.discountPercentage}% Discount</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">
+                            Discounted Price
+                          </label>
+                          <div className="text-lg font-semibold text-gray-900">
+                            {getCurrencySymbol(selectedCalculation.currency)}{selectedCalculation.discountedSellingPrice.toFixed(2)}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">
+                            Profit per Unit
+                          </label>
+                          <div className="text-lg font-semibold text-gray-900">
+                            {getCurrencySymbol(selectedCalculation.currency)}{selectedCalculation.discountedProfitPerUnit.toFixed(2)}
+                          </div>
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-xs text-gray-500 mb-1">
+                            Profit Margin
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <div className="text-lg font-semibold text-gray-900">
+                              {selectedCalculation.discountedProfitMargin.toFixed(1)}%
+                            </div>
+                            <Badge variant={selectedCalculation.discountedProfitMargin >= 40 ? "default" : "destructive"} className={selectedCalculation.discountedProfitMargin >= 40 ? "bg-green-100 text-green-800 hover:bg-green-200" : "bg-red-100 text-red-800 hover:bg-red-200"}>
+                              {selectedCalculation.discountedProfitMargin >= 40 ? "Healthy" : "Low"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Margin Strength
@@ -970,6 +1139,9 @@ export default function ProfitCalculator() {
                           <th className="text-left p-4 font-medium text-gray-700">Selling Price</th>
                           <th className="text-left p-4 font-medium text-gray-700">Profit per Unit</th>
                           <th className="text-left p-4 font-medium text-gray-700">Profit Margin %</th>
+                          <th className="text-left p-4 font-medium text-gray-700">Discount %</th>
+                          <th className="text-left p-4 font-medium text-gray-700">Discounted Price</th>
+                          <th className="text-left p-4 font-medium text-gray-700">Discounted Margin</th>
                           <th className="text-left p-4 font-medium text-gray-700">Margin Strength</th>
                           <th className="text-left p-4 font-medium text-gray-700">Date Added</th>
                           <th className="text-left p-4 font-medium text-gray-700">Actions</th>
@@ -983,6 +1155,29 @@ export default function ProfitCalculator() {
                             <td className="p-4 text-gray-900">{getCurrencySymbol(entry.currency || 'USD')}{entry.sellingPrice.toFixed(2)}</td>
                             <td className="p-4 text-gray-900">{getCurrencySymbol(entry.currency || 'USD')}{entry.profitPerUnit.toFixed(2)}</td>
                             <td className="p-4 text-gray-900">{entry.profitMargin.toFixed(1)}%</td>
+                            <td className="p-4 text-gray-900">
+                              {entry.discountPercentage > 0 ? (
+                                <span className="text-orange-600 font-medium">{entry.discountPercentage}%</span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </td>
+                            <td className="p-4 text-gray-900">
+                              {entry.discountPercentage > 0 ? (
+                                <span>{getCurrencySymbol(entry.currency || 'USD')}{entry.discountedSellingPrice?.toFixed(2)}</span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </td>
+                            <td className="p-4 text-gray-900">
+                              {entry.discountPercentage > 0 ? (
+                                <span className={entry.discountedProfitMargin >= 40 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                                  {entry.discountedProfitMargin?.toFixed(1)}%
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </td>
                             <td className={`p-4 ${MARGIN_CONFIG[entry.marginStrength].cellColor}`}>
                               <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${MARGIN_CONFIG[entry.marginStrength].color}`}>
                                 {MARGIN_CONFIG[entry.marginStrength].label}
