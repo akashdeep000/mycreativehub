@@ -24,8 +24,10 @@ import {
   Home,
   Plus,
   Pencil,
-  Trash2
+  Trash2,
+  GripVertical
 } from "lucide-react";
+import { Reorder } from "framer-motion";
 
 interface ContentPillar {
   id: string;
@@ -283,68 +285,90 @@ export default function SocialMediaStrategy() {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 gap-6">
+            <Reorder.Group 
+              axis="y" 
+              values={pillars} 
+              onReorder={(newPillars: ContentPillar[]) => {
+                setPillars(newPillars);
+                // Optional: Auto-save on reorder or wait for user to manually save? 
+                // The current UI doesn't have a global "Save" button for the list, 
+                // but individual edits save. 
+                // Let's trigger a save on reorder to persist the new order.
+                saveMutation.mutate(newPillars);
+              }}
+              className="space-y-6"
+            >
               {pillars.map((pillar) => (
-                <Card 
-                  key={pillar.id}
-                  data-testid={`card-pillar-${pillar.id}`}
-                  className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-6"
+                <Reorder.Item 
+                  key={pillar.id} 
+                  value={pillar}
+                  className="bg-transparent"
                 >
-                  {/* Title with action icons */}
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {pillar.title}
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      <button
-                        data-testid={`button-edit-${pillar.id}`}
-                        onClick={() => handleEdit(pillar)}
-                        className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        data-testid={`button-delete-${pillar.id}`}
-                        onClick={() => handleDelete(pillar.id)}
-                        className="p-1.5 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Compact field display */}
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Description
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {pillar.description || 'No description recorded'}
-                      </p>
+                  <Card 
+                    data-testid={`card-pillar-${pillar.id}`}
+                    className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-6"
+                  >
+                    {/* Title with action icons */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="cursor-grab active:cursor-grabbing p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
+                          <GripVertical className="w-5 h-5" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          {pillar.title}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          data-testid={`button-edit-${pillar.id}`}
+                          onClick={() => handleEdit(pillar)}
+                          className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          data-testid={`button-delete-${pillar.id}`}
+                          onClick={() => handleDelete(pillar.id)}
+                          className="p-1.5 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Content Pillar Goals
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {pillar.goals || 'No goals recorded'}
-                      </p>
-                    </div>
+                    {/* Compact field display */}
+                    <div className="space-y-3 pl-9">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Description
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {pillar.description || 'No description recorded'}
+                        </p>
+                      </div>
 
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Call-to-Action
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {pillar.cta || 'No call-to-action recorded'}
-                      </p>
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Content Pillar Goals
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {pillar.goals || 'No goals recorded'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Call-to-Action
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {pillar.cta || 'No call-to-action recorded'}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </Reorder.Item>
               ))}
-            </div>
+            </Reorder.Group>
           </>
         )}
 
