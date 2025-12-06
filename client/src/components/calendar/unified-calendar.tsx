@@ -15,6 +15,18 @@ import MonthlyView from './views/monthly-view';
 import DailyView from './views/daily-view';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from 'lucide-react';
 
 export interface UnifiedCalendarProps {
   calendarType: 'content' | 'time_blocking';
@@ -34,6 +46,8 @@ export interface UnifiedCalendarProps {
   onAddEntry: (date: number | string, colorKeyId: string, entryData?: Partial<CalendarEntry>) => void;
   onUpdateEntry: (entryId: string, updates: Partial<CalendarEntry>) => void;
   onDeleteEntry: (date: number | string, entryId: string) => void;
+  onDeleteAllEntries?: (date: number | string) => void;
+  onDeleteMonthEntries?: (year: number, month: number) => void;
   onToggleComplete: (entryId: string) => void;
   onMoveEntry?: (entryId: string, newDate: number) => void;
   
@@ -60,9 +74,11 @@ export interface UnifiedCalendarProps {
   // Save status
   eventSaveStatus?: 'idle' | 'saving' | 'saved';
   keySaveStatus?: 'idle' | 'saving' | 'saved';
+  goalsSaveStatus?: 'idle' | 'saving' | 'saved';
   
   // Loading state
-  isLoading?: boolean;
+  isLoadingKeys?: boolean;
+  isLoadingEvents?: boolean;
   
   // Feature flags
   features?: {
@@ -322,17 +338,70 @@ export default function UnifiedCalendar(props: UnifiedCalendarProps) {
     <div className="max-w-7xl mx-auto">
       {/* Month Goals Section (if enabled) */}
       {view === 'month' && props.features?.enableMonthGoals && (
-        <div className="bg-white rounded-lg shadow-md border-0 p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">
-            Goals for {MONTH_NAMES[props.month - 1]} {props.year}
-          </h3>
+        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-sm border border-gray-200 p-6 mb-6 hover:shadow-md transition-shadow duration-200">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Monthly Goals
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {MONTH_NAMES[props.month - 1]} {props.year}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {props.goalsSaveStatus === 'saving' && (
+                <div className="text-xs text-gray-500 flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-full animate-in fade-in duration-200">
+                  <span className="inline-block w-2.5 h-2.5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></span>
+                  Saving...
+                </div>
+              )}
+              {props.goalsSaveStatus === 'saved' && (
+                <div className="text-xs text-green-600 flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-full animate-in fade-in duration-200">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Saved
+                </div>
+              )}
+              {props.goalsSaveStatus === 'idle' && props.monthGoals && (
+                <div className="text-xs text-gray-400 flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Auto-saved
+                </div>
+              )}
+            </div>
+          </div>
           <textarea
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full p-4 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none transition-all duration-200 placeholder-gray-400 text-gray-700 bg-white min-h-[100px]"
             rows={3}
-            placeholder="What do you want to achieve this month?"
+            placeholder="What do you want to achieve this month? Set your goals here..."
             value={props.monthGoals || ''}
-            onChange={(e) => props.onUpdateMonthGoals?.(e.target.value)}
+            onChange={(e) => {
+              props.onUpdateMonthGoals?.(e.target.value);
+              // Auto-grow textarea
+              e.target.style.height = 'auto';
+              e.target.style.height = Math.max(100, e.target.scrollHeight) + 'px';
+            }}
+            onFocus={(e) => {
+              e.target.style.height = 'auto';
+              e.target.style.height = Math.max(100, e.target.scrollHeight) + 'px';
+            }}
           />
+          <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Tip: Break down your goals into specific, measurable outcomes
+          </p>
         </div>
       )}
       
@@ -346,6 +415,7 @@ export default function UnifiedCalendar(props: UnifiedCalendarProps) {
           onDelete={props.onDeleteColorKey}
           onAdd={props.onAddColorKey}
           saveStatus={props.keySaveStatus}
+          isLoading={props.isLoadingKeys}
         />
 
         {/* Main Calendar Card */}
@@ -368,27 +438,64 @@ export default function UnifiedCalendar(props: UnifiedCalendarProps) {
             </div>
 
             <div className="flex flex-col items-end gap-2">
-              <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-100">
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={props.onPrevMonth}
-                  className="h-8 w-8 hover:bg-white hover:shadow-sm"
-                >
-                  <ChevronLeft className="w-4 h-4 text-gray-600" />
-                </Button>
-                
-                <div className="h-4 w-px bg-gray-200 mx-1" />
-                
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={props.onNextMonth}
-                  className="h-8 w-8 hover:bg-white hover:shadow-sm"
-                >
-                  <ChevronRight className="w-4 h-4 text-gray-600" />
-                </Button>
+              <div className="flex items-center gap-2">
+                {props.onDeleteMonthEntries && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="h-8 w-8 hover:bg-red-50 hover:text-red-600 hover:shadow-sm"
+                        title="Clear entire month"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Clear entire month?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete ALL events for {MONTH_NAMES[props.month - 1]} {props.year}. 
+                          This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => props.onDeleteMonthEntries?.(props.year, props.month)}
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          Clear Month
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+
+                <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-100">
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={props.onPrevMonth}
+                    className="h-8 w-8 hover:bg-white hover:shadow-sm"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-gray-600" />
+                  </Button>
+                  
+                  <div className="h-4 w-px bg-gray-200 mx-1" />
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={props.onNextMonth}
+                    className="h-8 w-8 hover:bg-white hover:shadow-sm"
+                  >
+                    <ChevronRight className="w-4 h-4 text-gray-600" />
+                  </Button>
+                </div>
               </div>
+
+
 
               {/* Event Save Status Indicator - Fixed height to prevent flicker */}
               <div className="h-6 flex items-center justify-end">
@@ -445,7 +552,7 @@ export default function UnifiedCalendar(props: UnifiedCalendarProps) {
             }}
             enableCompletion={true}
             enableDragAndDrop={true}
-            isLoading={props.isLoading}
+            isLoading={props.isLoadingEvents}
           />
         ) : (
           <DailyView
@@ -464,8 +571,11 @@ export default function UnifiedCalendar(props: UnifiedCalendarProps) {
             onDeleteEntry={(entryId) => {
               props.onDeleteEntry?.(selectedDate!.getDate(), entryId);
             }}
+            onDeleteAll={() => {
+              props.onDeleteAllEntries?.(selectedDate!.getDate());
+            }}
             enableDragAndDrop={true}
-            isLoading={props.isLoading}
+            isLoading={props.isLoadingEvents}
           />
         )}
         
@@ -495,6 +605,7 @@ export default function UnifiedCalendar(props: UnifiedCalendarProps) {
         initialDate={editorDate}
         initialEntry={editingEntry}
         colorKeys={props.colorKeys}
+        calendarType={props.calendarType}
       />
     </div>
   );

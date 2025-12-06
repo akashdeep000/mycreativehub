@@ -6,10 +6,11 @@ import { generateToken, jwtAuth, hashPassword, comparePassword } from "./jwtAuth
 import { nanoid } from "nanoid";
 import crypto from "crypto";
 import { Resend } from "resend";
-import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplateInstanceSchema, cheatSheetDocPutBodySchema, insertFinanceTransactionSchema, insertMoneyMapMonthSchema, insertCalendarEventSchema, insertCalendarColorKeySchema } from "@shared/schema";
+import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplateInstanceSchema, cheatSheetDocPutBodySchema, insertFinanceTransactionSchema, insertMoneyMapMonthSchema, insertCalendarEventSchema, insertCalendarColorKeySchema, calendarV3, calendarColorKeys, calendarEvents, timeBlockingColorKeys, timeBlockingEvents, globalColorKeys, type ColorKeyV3, type CalendarDayV3 } from "@shared/schema";
+import { eq, desc, and } from "drizzle-orm";
 import { ZodError } from "zod";
 import { db } from "./db";
-import { inspirationBoards } from "@shared/schema";
+import { inspirationBoards, users } from "@shared/schema";
 
 // Standardize environment variable reads
 const RESEND_KEY = process.env.RESEND_API_KEY || process.env.EMAIL_API_KEY;
@@ -2606,6 +2607,262 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===========================================
+  // MIGRATION API
+  // ===========================================
+  app.post('/api/calendar/migrate', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { timezoneOffset } = req.body; // Client's timezone offset in minutes
+
+      if (typeof timezoneOffset !== 'number') {
+        return res.status(400).json({ message: "timezoneOffset is required" });
+      }
+
+      // Check migration status
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, userId)
+      });
+
+      if (user?.isUnifiedCalendarMigrated) {
+        console.log(`User ${userId} already migrated. Skipping.`);
+        return res.json({ message: "Migration already completed" });
+      }
+
+      console.log(`Starting migration for user ${userId} with offset ${timezoneOffset}`);
+
+      const stats = {
+        tbKeys: 0,
+        tbEvents: 0,
+        contentKeys: 0,
+        contentEvents: 0
+      };
+
+      // 0. CLEANUP (Idempotency)
+      await db.delete(calendarEvents).where(eq(calendarEvents.userId, userId));
+      await db.delete(calendarColorKeys).where(eq(calendarColorKeys.userId, userId));
+      console.log("Cleaned up existing calendar data.");
+
+      // ==========================================
+      // MIGRATE TIME BLOCKING
+      // ==========================================
+      const timeBlockingKeyMap = new Map<string, string>();
+      const tbKeys = await db.select().from(timeBlockingColorKeys).where(eq(timeBlockingColorKeys.userId, userId));
+
+      if (tbKeys.length > 0) {
+        const keys = tbKeys[0].colorKeys as ColorKeyV3[];
+        const defaultLabels = ['Work', 'Personal', 'Urgent', 'Health', 'Deep Work', 'Meeting'];
+
+        const keysToInsert = [];
+        const keyIdMap = new Map<string, string>(); // Old ID -> New ID
+
+        for (const key of keys) {
+          const newId = crypto.randomUUID();
+          keysToInsert.push({
+            id: newId,
+            userId: userId,
+            label: key.label,
+            color: key.color,
+            type: 'time_blocking',
+            isDefault: defaultLabels.includes(key.label)
+          });
+          keyIdMap.set(key.id, newId);
+        }
+
+        if (keysToInsert.length > 0) {
+          // @ts-expect-error
+          await db.insert(calendarColorKeys).values(keysToInsert);
+          stats.tbKeys = keysToInsert.length;
+        }
+
+        // Populate map for event migration
+        // @ts-expect-error
+        for (const [oldId, newId] of keyIdMap.entries()) {
+          timeBlockingKeyMap.set(oldId, newId);
+        }
+      }
+
+      // 2. Migrate Time Blocking Events
+      const tbEvents = await db.select().from(timeBlockingEvents).where(eq(timeBlockingEvents.userId, userId));
+      const tbEventsToInsert = [];
+
+      for (const event of tbEvents) {
+        const newColorKeyId = event.colorKeyId ? timeBlockingKeyMap.get(event.colorKeyId) : null;
+
+        // Timezone Adjustment
+        const startTime = new Date(event.startTime.getTime() + (timezoneOffset * 60 * 1000));
+        const endTime = new Date(event.endTime.getTime() + (timezoneOffset * 60 * 1000));
+
+        tbEventsToInsert.push({
+          userId: userId,
+          title: event.title,
+          description: event.notes,
+          startTime: startTime,
+          endTime: endTime,
+          isAllDay: false,
+          colorKeyId: newColorKeyId,
+          type: 'time_blocking',
+          completed: event.completed,
+          completedAt: event.completedAt,
+        });
+      }
+
+      if (tbEventsToInsert.length > 0) {
+        // @ts-expect-error
+        await db.insert(calendarEvents).values(tbEventsToInsert);
+        stats.tbEvents = tbEventsToInsert.length;
+      }
+
+      // ==========================================
+      // MIGRATE CONTENT CALENDAR
+      // ==========================================
+      const contentKeyMap = new Map<string, string>();
+
+      const calendarRecords = await db.select()
+        .from(calendarV3)
+        .where(eq(calendarV3.userId, userId))
+        .orderBy(desc(calendarV3.year), desc(calendarV3.month));
+
+      const globalKeysRecord = await db.query.globalColorKeys.findFirst({
+        where: eq(globalColorKeys.userId, userId)
+      });
+
+      // console.log(`Found ${calendarRecords.length} content calendar records.`);
+
+      if (calendarRecords.length > 0 || globalKeysRecord) {
+        // 1. Collect ALL unique keys from Global Keys AND Records
+        const uniqueKeys = new Map<string, ColorKeyV3>();
+
+        // First, add global keys (primary source)
+        if (globalKeysRecord && globalKeysRecord.colorKeys) {
+          const keys = globalKeysRecord.colorKeys as ColorKeyV3[];
+          for (const key of keys) {
+            if (key && key.id) {
+              uniqueKeys.set(key.id, key);
+            }
+          }
+        }
+
+        // Then add any keys found in records (legacy/fallback)
+        for (const record of calendarRecords) {
+          const keys = record.colorKeys as ColorKeyV3[];
+          if (keys && Array.isArray(keys)) {
+            for (const key of keys) {
+              if (key && key.id) {
+                if (!uniqueKeys.has(key.id)) {
+                  uniqueKeys.set(key.id, key);
+                }
+              }
+            }
+          }
+        }
+
+        // console.log(`Found ${uniqueKeys.size} unique content color keys.`);
+        const allKeys = Array.from(uniqueKeys.values());
+
+        const defaultLabels = ['Email', 'Reel', 'TikTok', 'Shorts', 'Long-Form Video', 'YouTube', 'Pinterest', 'Carousel', 'Static Post', 'Story', 'Newsletter', 'Blog'];
+
+        // 2. Insert all unique keys (Batch)
+        const contentKeysToInsert = [];
+
+        for (const key of allKeys) {
+          const newId = crypto.randomUUID();
+          const isDefault = defaultLabels.includes(key.label);
+
+          contentKeysToInsert.push({
+            id: newId,
+            userId: userId,
+            label: key.label,
+            color: key.color,
+            type: 'content',
+            isDefault: isDefault
+          });
+
+          // Populate map immediately
+          contentKeyMap.set(key.id, newId);
+        }
+
+        if (contentKeysToInsert.length > 0) {
+          // @ts-expect-error
+          await db.insert(calendarColorKeys).values(contentKeysToInsert);
+          stats.contentKeys = contentKeysToInsert.length;
+        }
+
+        // 3. Migrate Events (Batch)
+        const contentEventsToInsert = [];
+
+        for (const record of calendarRecords) {
+          const days = record.days as CalendarDayV3[];
+          for (const day of days) {
+            if (!day.entries) continue;
+            for (const entry of day.entries) {
+              const newColorKeyId = entry.colorKeyId ? contentKeyMap.get(entry.colorKeyId) : null;
+
+              // console.warn(`  [WARNING] Could not find new key ID for old key ID: ${entry.colorKeyId} in entry ${entry.id}`);
+
+              let title = entry.label;
+              if (!title && entry.colorKeyId) {
+                const key = uniqueKeys.get(entry.colorKeyId);
+                if (key) {
+                  title = key.label;
+                }
+              }
+              if (!title) title = "Content";
+
+              const startTime = new Date(record.year, record.month - 1, parseInt(day.date as any));
+              startTime.setHours(0, 0, 0, 0);
+              const endTime = new Date(record.year, record.month - 1, parseInt(day.date as any));
+              endTime.setHours(23, 59, 59, 999);
+
+              contentEventsToInsert.push({
+                userId: userId,
+                title: title,
+                description: entry.notes,
+                startTime: startTime,
+                endTime: endTime,
+                isAllDay: true,
+                colorKeyId: newColorKeyId,
+                type: 'content',
+                completed: entry.completed || false,
+                completedAt: entry.completedAt ? new Date(entry.completedAt) : null,
+              });
+            }
+          }
+        }
+
+        if (contentEventsToInsert.length > 0) {
+          // Split into chunks of 1000 to avoid query size limits if necessary,
+          // but for now simple batch is fine unless massive.
+          // @ts-expect-error
+          await db.insert(calendarEvents).values(contentEventsToInsert);
+          stats.contentEvents = contentEventsToInsert.length;
+        }
+      }
+
+      // Mark user as migrated
+      await db.update(users)
+        .set({ isUnifiedCalendarMigrated: true })
+        .where(eq(users.id, userId));
+
+      console.log(`
+========================================
+MIGRATION SUMMARY
+----------------------------------------
+Time Blocking Keys   : ${stats.tbKeys}
+Time Blocking Events : ${stats.tbEvents}
+Content Keys         : ${stats.contentKeys}
+Content Events       : ${stats.contentEvents}
+----------------------------------------
+TOTAL EVENTS         : ${stats.tbEvents + stats.contentEvents}
+========================================
+      `);
+
+      res.json({ message: "Migration completed successfully", stats, userId });
+    } catch (error) {
+      console.error("Migration error:", error);
+      res.status(500).json({ message: "Migration failed" });
+    }
+  });
+  // ===========================================
   // NEW NORMALIZED CALENDAR API
   // ===========================================
 
@@ -2679,6 +2936,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting calendar event:", error);
       res.status(500).json({ message: "Failed to delete calendar event" });
+    }
+  });
+
+  // Delete calendar events by range
+  app.delete('/api/calendar/events', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { type, start, end } = req.query;
+
+      if (!type || !start || !end) {
+        return res.status(400).json({ message: "Missing required parameters: type, start, end" });
+      }
+
+      const startDate = new Date(start as string);
+      const endDate = new Date(end as string);
+
+      await storage.deleteCalendarEventsByRange(userId, type as "content" | "time_blocking", startDate, endDate);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting calendar events:", error);
+      res.status(500).json({ message: "Failed to delete calendar events" });
     }
   });
 
@@ -3240,6 +3518,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting time blocking event:', error);
       res.status(500).json({ message: 'Failed to delete event' });
+    }
+  });
+
+  // ==========================================
+  // Calendar Event Media Management
+  // ==========================================
+
+  // Get all media for a calendar event
+  app.get('/api/calendar-events/:id/media', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      // Verify event ownership
+      const event = await storage.getCalendarEvent(id);
+      if (!event || event.userId !== userId) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+
+      const media = await storage.getEventMedia(id);
+      res.json(media);
+    } catch (error) {
+      console.error('Error fetching event media:', error);
+      res.status(500).json({ message: 'Failed to fetch media' });
+    }
+  });
+
+  // Get upload URL for event media
+  app.post('/api/calendar-events/:id/media/upload-url', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const { fileName, fileSize, mediaType } = req.body;
+
+      // Verify event ownership
+      const event = await storage.getCalendarEvent(id);
+      if (!event || event.userId !== userId) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+
+      // Get upload URL
+      const { ObjectStorageService } = await import('./objectStorage');
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+
+      // Create media record
+      const media = await storage.createEventMedia({
+        eventId: id,
+        mediaType,
+        fileName,
+        fileSize,
+        objectPath: objectStorageService.normalizeObjectEntityPath(uploadURL),
+        displayOrder: 0,
+      });
+
+      console.log(`Created media record ${media.id} for event ${id}`);
+      res.json({ uploadURL, media });
+    } catch (error) {
+      console.error('Error creating media upload URL:', error);
+      res.status(500).json({ message: 'Failed to create upload URL' });
+    }
+  });
+
+  // Delete event media
+  app.delete('/api/calendar-events/:eventId/media/:mediaId', jwtAuth, async (req: any, res) => {
+    try {
+      const { eventId, mediaId } = req.params;
+      const userId = req.user.id;
+
+      // Verify event ownership
+      const event = await storage.getCalendarEvent(eventId);
+      if (!event || event.userId !== userId) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+
+      await storage.deleteEventMedia(parseInt(mediaId));
+
+      console.log(`Deleted media ${mediaId} from event ${eventId}`);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting event media:', error);
+      res.status(500).json({ message: 'Failed to delete media' });
     }
   });
 

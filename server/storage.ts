@@ -157,6 +157,9 @@ import {
   type InsertCalendarColorKey,
   type CalendarMonthGoal,
   type InsertCalendarMonthGoal,
+  type CalendarMedia,
+  type InsertCalendarMedia,
+  calendarMedia,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, gte, lte, lt, sql, inArray, isNull, gt, ne } from "drizzle-orm";
@@ -397,6 +400,7 @@ export interface IStorage {
   createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent>;
   updateCalendarEvent(id: string, event: Partial<InsertCalendarEvent>): Promise<CalendarEvent>;
   deleteCalendarEvent(id: string): Promise<void>;
+  deleteCalendarEventsByRange(userId: string, type: string, start: Date, end: Date): Promise<void>;
 
   // Calendar Color Keys (Normalized)
   getCalendarColorKeys(userId: string, type: string): Promise<CalendarColorKey[]>;
@@ -408,6 +412,12 @@ export interface IStorage {
   // Calendar Month Goals
   getCalendarMonthGoal(userId: string, year: number, month: number): Promise<CalendarMonthGoal | undefined>;
   upsertCalendarMonthGoal(goal: InsertCalendarMonthGoal): Promise<CalendarMonthGoal>;
+
+  // Calendar Event Media
+  getCalendarEvent(id: string): Promise<CalendarEvent | undefined>;
+  getEventMedia(eventId: string): Promise<CalendarMedia[]>;
+  createEventMedia(media: InsertCalendarMedia): Promise<CalendarMedia>;
+  deleteEventMedia(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1795,6 +1805,36 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  // Calendar Event Media
+  async getCalendarEvent(id: string): Promise<CalendarEvent | undefined> {
+    const [event] = await db
+      .select()
+      .from(calendarEvents)
+      .where(eq(calendarEvents.id, id))
+      .limit(1);
+    return event;
+  }
+
+  async getEventMedia(eventId: string): Promise<CalendarMedia[]> {
+    return await db
+      .select()
+      .from(calendarMedia)
+      .where(eq(calendarMedia.eventId, eventId))
+      .orderBy(asc(calendarMedia.displayOrder), asc(calendarMedia.createdAt));
+  }
+
+  async createEventMedia(media: InsertCalendarMedia): Promise<CalendarMedia> {
+    const [newMedia] = await db
+      .insert(calendarMedia)
+      .values(media)
+      .returning();
+    return newMedia;
+  }
+
+  async deleteEventMedia(id: number): Promise<void> {
+    await db.delete(calendarMedia).where(eq(calendarMedia.id, id));
+  }
+
   async upsertMoneyMapMonth(data: InsertMoneyMapMonth): Promise<MoneyMapMonth> {
     const [result] = await db
       .insert(moneyMapMonths)
@@ -2798,6 +2838,16 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCalendarEvent(id: string): Promise<void> {
     await db.delete(calendarEvents).where(eq(calendarEvents.id, id));
+  }
+
+  async deleteCalendarEventsByRange(userId: string, type: "content" | "time_blocking", start: Date, end: Date): Promise<void> {
+    await db.delete(calendarEvents)
+      .where(and(
+        eq(calendarEvents.userId, userId),
+        eq(calendarEvents.type, type),
+        gte(calendarEvents.startTime, start),
+        lte(calendarEvents.startTime, end)
+      ));
   }
 
   // Calendar Color Keys (Normalized)

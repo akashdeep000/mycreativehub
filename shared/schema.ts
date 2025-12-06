@@ -49,6 +49,7 @@ export const users = pgTable("users", {
   businessTitle: varchar("business_title").default("Creative Business Owner"),
   password: varchar("password"), // For custom auth
   authProvider: varchar("auth_provider").default("custom"), // "replit" or "custom"
+  isUnifiedCalendarMigrated: boolean("is_unified_calendar_migrated").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -1459,16 +1460,14 @@ export type InsertTimeBlockingColorKeys = z.infer<
   typeof insertTimeBlockingColorKeysSchema
 >;
 
-// Calendar Media - Media storage for Content Calendar
+// Calendar Media - Media storage for Calendar Events
 export const calendarMedia = pgTable(
   "calendar_media",
   {
     id: serial("id").primaryKey(),
-    userId: varchar("user_id")
+    eventId: uuid("event_id")
       .notNull()
-      .references(() => users.id),
-    calendarType: varchar("calendar_type").notNull(), // 'content' or 'time_blocking'
-    date: varchar("date").notNull(), // YYYY-MM-DD format
+      .references(() => calendarEvents.id, { onDelete: 'cascade' }),
     mediaType: varchar("media_type").notNull(), // 'image' or 'video'
     fileName: varchar("file_name").notNull(),
     fileSize: integer("file_size").notNull(),
@@ -1477,8 +1476,7 @@ export const calendarMedia = pgTable(
     createdAt: timestamp("created_at").defaultNow(),
   },
   (table) => [
-    index("calendar_media_user_date_idx").on(table.userId, table.date),
-    index("calendar_media_calendar_type_idx").on(table.calendarType),
+    index("calendar_media_event_idx").on(table.eventId),
   ],
 );
 
@@ -1648,6 +1646,11 @@ export type InsertTimeBlockingEvent = z.infer<
 // NEW CALENDAR SYSTEM (Normalized)
 // ==========================================
 
+export const calendarEventTypeEnum = pgEnum("calendar_event_type", [
+  "content",
+  "time_blocking",
+]);
+
 export const calendarColorKeys = pgTable("calendar_color_keys", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: varchar("user_id")
@@ -1655,7 +1658,7 @@ export const calendarColorKeys = pgTable("calendar_color_keys", {
     .references(() => users.id),
   label: varchar("label").notNull(),
   color: varchar("color").notNull(),
-  type: pgEnum("type", ["content", "time_blocking"])("type").notNull(), // 'content' | 'time_blocking'
+  type: calendarEventTypeEnum("type").notNull(), // 'content' | 'time_blocking'
   isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -1672,7 +1675,7 @@ export const calendarEvents = pgTable("calendar_events", {
   endTime: timestamp("end_time").notNull(),
   isAllDay: boolean("is_all_day").default(false),
   colorKeyId: uuid("color_key_id").references(() => calendarColorKeys.id),
-  type: pgEnum("type", ["content", "time_blocking"])("type").notNull(), // 'content' | 'time_blocking'
+  type: calendarEventTypeEnum("type").notNull(), // 'content' | 'time_blocking'
   completed: boolean("completed").default(false),
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").defaultNow(),

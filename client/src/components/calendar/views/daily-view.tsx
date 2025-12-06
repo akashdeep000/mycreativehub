@@ -1,6 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, X, Plus, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Plus, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { CalendarEntry, ColorKey, getEntryDisplayTitle } from '../calendar-types';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +32,7 @@ interface DailyViewProps {
   onUpdateEntry: (entryId: string, updates: Partial<CalendarEntry>) => void;
   onEntryClick: (entry: CalendarEntry) => void;
   onDeleteEntry: (entryId: string) => void;
+  onDeleteAll: () => void;
   enableDragAndDrop?: boolean;
   calendarType?: 'content' | 'time_blocking';
   isLoading?: boolean;
@@ -37,6 +49,7 @@ export default function DailyView({
   onUpdateEntry,
   onEntryClick,
   onDeleteEntry,
+  onDeleteAll,
   enableDragAndDrop = false,
   calendarType = 'content',
   isLoading = false
@@ -200,6 +213,38 @@ export default function DailyView({
         </div>
         
         <div className="flex items-center gap-3">
+          {onDeleteAll && entries.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="rounded-full hover:bg-red-50 hover:text-red-600"
+                  title="Clear all events"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clear all events?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete all events for this day. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={() => onDeleteAll?.()}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Clear All
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+
           <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-1 border border-gray-100">
             <Button variant="ghost" size="icon" onClick={onPrevDay} className="h-8 w-8 hover:bg-white hover:shadow-sm">
               <ChevronLeft className="w-4 h-4 text-gray-600" />
@@ -267,7 +312,7 @@ export default function DailyView({
                 }}
               >
                 <div 
-                  className="px-3 py-1.5 rounded-md text-xs font-semibold shadow-sm border border-transparent flex items-center gap-2"
+                  className="px-2 py-1 rounded-md text-xs font-semibold shadow-sm border border-transparent flex items-center gap-1"
                   style={{ 
                     backgroundColor: baseColor,
                     color: '#fff',
@@ -275,6 +320,17 @@ export default function DailyView({
                   }}
                 >
                   <span>{getEntryDisplayTitle(entry, colorKeys)}</span>
+                  
+                  <button
+                    className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/20 rounded transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isOptimistic) onDeleteEntry(entry.id);
+                    }}
+                    title="Delete event"
+                  >
+                    <Trash2 className="w-3 h-3 text-white" />
+                  </button>
                 </div>
               </div>
             );

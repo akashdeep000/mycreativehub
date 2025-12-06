@@ -18,6 +18,7 @@ interface ColorKeyManagerProps {
   onDelete: (keyId: string) => void;
   onAdd: (label: string, color: string) => void;
   saveStatus?: 'idle' | 'saving' | 'saved';
+  isLoading?: boolean;
 }
 
 export default function ColorKeyManager({
@@ -27,7 +28,8 @@ export default function ColorKeyManager({
   onUpdate,
   onDelete,
   onAdd,
-  saveStatus = 'idle'
+  saveStatus = 'idle',
+  isLoading = false
 }: ColorKeyManagerProps) {
   const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
   const [editingKeyValue, setEditingKeyValue] = useState('');
@@ -110,127 +112,60 @@ export default function ColorKeyManager({
       <p className="text-gray-600 text-sm mb-4">
         Select a colour category, then click a calendar block to apply it.
       </p>
-      <div className="flex flex-wrap gap-3 items-center">
-        {/* Color keys */}
-        {colorKeys.map((colorKey) => {
-          const isOptimistic = colorKey.id.startsWith('temp-');
-          return (
-          <div
-            key={colorKey.id}
-            className={`group relative flex items-center gap-2 rounded-lg p-2 transition-all cursor-pointer ${
-              selectedKeyId === colorKey.id 
-                ? 'bg-blue-50 border-2 border-blue-500 shadow-md ring-2 ring-blue-200' 
-                : 'bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
-            } ${isOptimistic ? 'opacity-70 cursor-wait' : ''}`}
-            onClick={() => !isOptimistic && editingKeyId !== colorKey.id && onSelect(selectedKeyId === colorKey.id ? null : colorKey.id)}
-          >
-            {selectedKeyId === colorKey.id && (
-              <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
-                Selected
-              </div>
-            )}
-            <div className="relative">
-              <div
-                className={`w-4 h-4 rounded-full border transition-all cursor-pointer hover:ring-2 hover:ring-gray-300 ${
-                  selectedKeyId === colorKey.id ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
-                }`}
-                style={{ backgroundColor: colorKey.color }}
-                title={isOptimistic ? "Saving..." : "Click to change color"}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (!isOptimistic) setShowColorPicker(showColorPicker === colorKey.id ? null : colorKey.id);
-                }}
-              />
-              {/* Color Picker */}
-              {showColorPicker === colorKey.id && (
-                <div className="color-picker-container absolute top-6 left-0 z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-4 min-w-[200px]">
-                  <div className="grid grid-cols-4 gap-3">
-                    {COLOR_OPTIONS.map((color) => (
-                      <div
-                        key={color}
-                        className="w-7 h-7 rounded-full border border-gray-300 cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                        style={{ backgroundColor: color }}
-                        onClick={() => updateColorKeyColor(colorKey.id, color)}
-                        title={`Change to ${color}`}
-                      />
-                    ))}
-                  </div>
+      
+      {isLoading ? (
+        <div className="flex flex-wrap gap-3 items-center">
+          {/* Skeleton Loading State */}
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div 
+              key={`skeleton-key-${index}`} 
+              className="h-9 w-24 bg-gray-100 rounded-lg animate-pulse"
+            />
+          ))}
+          <div className="h-9 w-24 bg-gray-100 rounded-lg animate-pulse" />
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-3 items-center">
+          {/* Color keys */}
+          {colorKeys.map((colorKey) => {
+            const isOptimistic = colorKey.id.startsWith('temp-');
+            return (
+            <div
+              key={colorKey.id}
+              className={`group relative flex items-center gap-2 rounded-lg p-2 transition-all cursor-pointer ${
+                selectedKeyId === colorKey.id 
+                  ? 'bg-blue-50 border-2 border-blue-500 shadow-md ring-2 ring-blue-200' 
+                  : 'bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
+              } ${isOptimistic ? 'opacity-70 cursor-wait' : ''}`}
+              onClick={() => !isOptimistic && editingKeyId !== colorKey.id && onSelect(selectedKeyId === colorKey.id ? null : colorKey.id)}
+            >
+              {selectedKeyId === colorKey.id && (
+                <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
+                  Selected
                 </div>
               )}
-            </div>
-            {editingKeyId === colorKey.id ? (
-              <Input
-                value={editingKeyValue}
-                onChange={(e) => setEditingKeyValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') saveKeyEdit();
-                  if (e.key === 'Escape') cancelKeyEdit();
-                }}
-                onBlur={saveKeyEdit}
-                className="text-sm font-medium h-7 w-24"
-                autoFocus
-              />
-            ) : (
-              <>
-                <span className="text-sm font-medium">{colorKey.label}</span>
-                {!isOptimistic && (
-                  <>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        startEditingKey(colorKey.id, colorKey.label);
-                      }}
-                      className="ml-2 hover:bg-gray-200 rounded p-1"
-                      title="Edit tag name"
-                    >
-                      <Pencil className="w-3 h-3 text-gray-500 hover:text-gray-700" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(colorKey.id);
-                      }}
-                      className="ml-1 hover:bg-red-100 rounded p-1"
-                      title="Delete tag"
-                    >
-                      <X className="w-3 h-3 text-gray-500 hover:text-red-600" />
-                    </button>
-                  </>
-                )}
-                {isOptimistic && (
-                  <div className="ml-2">
-                    <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-          );
-        })}
-        
-        {/* Add new tag */}
-        {isCreatingNewTag ? (
-          <div className="relative">
-            <div className="flex items-center gap-2 rounded-lg p-2 bg-green-50 border-2 border-green-500 shadow-md">
               <div className="relative">
                 <div
-                  className="w-4 h-4 rounded-full border border-green-400 cursor-pointer hover:ring-2 hover:ring-green-300"
-                  style={{ backgroundColor: newTagColor }}
-                  onClick={() => setShowColorPicker(showColorPicker === 'newTag' ? null : 'newTag')}
-                  title="Click to change color"
+                  className={`w-4 h-4 rounded-full border transition-all cursor-pointer hover:ring-2 hover:ring-gray-300 ${
+                    selectedKeyId === colorKey.id ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'
+                  }`}
+                  style={{ backgroundColor: colorKey.color }}
+                  title={isOptimistic ? "Saving..." : "Click to change color"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!isOptimistic) setShowColorPicker(showColorPicker === colorKey.id ? null : colorKey.id);
+                  }}
                 />
-                {showColorPicker === 'newTag' && (
+                {/* Color Picker */}
+                {showColorPicker === colorKey.id && (
                   <div className="color-picker-container absolute top-6 left-0 z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-4 min-w-[200px]">
                     <div className="grid grid-cols-4 gap-3">
-                      {COLOR_OPTIONS.map((color: string) => (
+                      {COLOR_OPTIONS.map((color) => (
                         <div
                           key={color}
                           className="w-7 h-7 rounded-full border border-gray-300 cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
                           style={{ backgroundColor: color }}
-                          onClick={() => {
-                            setNewTagColor(color);
-                            setShowColorPicker(null);
-                          }}
+                          onClick={() => updateColorKeyColor(colorKey.id, color)}
                           title={`Change to ${color}`}
                         />
                       ))}
@@ -238,47 +173,128 @@ export default function ColorKeyManager({
                   </div>
                 )}
               </div>
-              <Input
-                value={newTagName}
-                onChange={(e) => setNewTagName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') addNewCustomTag();
-                  if (e.key === 'Escape') cancelNewTag();
-                }}
-                onBlur={() => {
-                  setTimeout(() => addNewCustomTag(), 50);
-                }}
-                placeholder="Tag name"
-                className="text-sm font-medium h-7 w-24"
-                autoFocus
-              />
-              <button
-                onClick={addNewCustomTag}
-                className="text-green-600 hover:text-green-800"
-                title="Save new tag"
-              >
-                ✓
-              </button>
-              <button
-                onClick={cancelNewTag}
-                className="text-gray-400 hover:text-gray-600"
-                title="Cancel"
-              >
-                ✕
-              </button>
+              {editingKeyId === colorKey.id ? (
+                <Input
+                  value={editingKeyValue}
+                  onChange={(e) => setEditingKeyValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') saveKeyEdit();
+                    if (e.key === 'Escape') cancelKeyEdit();
+                  }}
+                  onBlur={saveKeyEdit}
+                  className="text-sm font-medium h-7 w-24"
+                  autoFocus
+                />
+              ) : (
+                <>
+                  <span className="text-sm font-medium">{colorKey.label}</span>
+                  {!isOptimistic && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startEditingKey(colorKey.id, colorKey.label);
+                        }}
+                        className="ml-2 hover:bg-gray-200 rounded p-1"
+                        title="Edit tag name"
+                      >
+                        <Pencil className="w-3 h-3 text-gray-500 hover:text-gray-700" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(colorKey.id);
+                        }}
+                        className="ml-1 hover:bg-red-100 rounded p-1"
+                        title="Delete tag"
+                      >
+                        <X className="w-3 h-3 text-gray-500 hover:text-red-600" />
+                      </button>
+                    </>
+                  )}
+                  {isOptimistic && (
+                    <div className="ml-2">
+                      <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setIsCreatingNewTag(true)}
-            className="flex items-center gap-1 rounded-lg p-2 bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all text-gray-600 hover:text-gray-800"
-            title="Add new custom tag"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="text-sm font-medium">Add Tag</span>
-          </button>
-        )}
-      </div>
+            );
+          })}
+          
+          {/* Add new tag */}
+          {isCreatingNewTag ? (
+            <div className="relative">
+              <div className="flex items-center gap-2 rounded-lg p-2 bg-green-50 border-2 border-green-500 shadow-md">
+                <div className="relative">
+                  <div
+                    className="w-4 h-4 rounded-full border border-green-400 cursor-pointer hover:ring-2 hover:ring-green-300"
+                    style={{ backgroundColor: newTagColor }}
+                    onClick={() => setShowColorPicker(showColorPicker === 'newTag' ? null : 'newTag')}
+                    title="Click to change color"
+                  />
+                  {showColorPicker === 'newTag' && (
+                    <div className="color-picker-container absolute top-6 left-0 z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-4 min-w-[200px]">
+                      <div className="grid grid-cols-4 gap-3">
+                        {COLOR_OPTIONS.map((color: string) => (
+                          <div
+                            key={color}
+                            className="w-7 h-7 rounded-full border border-gray-300 cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
+                            style={{ backgroundColor: color }}
+                            onClick={() => {
+                              setNewTagColor(color);
+                              setShowColorPicker(null);
+                            }}
+                            title={`Change to ${color}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <Input
+                  value={newTagName}
+                  onChange={(e) => setNewTagName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') addNewCustomTag();
+                    if (e.key === 'Escape') cancelNewTag();
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => addNewCustomTag(), 50);
+                  }}
+                  placeholder="Tag name"
+                  className="text-sm font-medium h-7 w-24"
+                  autoFocus
+                />
+                <button
+                  onClick={addNewCustomTag}
+                  className="text-green-600 hover:text-green-800"
+                  title="Save new tag"
+                >
+                  ✓
+                </button>
+                <button
+                  onClick={cancelNewTag}
+                  className="text-gray-400 hover:text-gray-600"
+                  title="Cancel"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsCreatingNewTag(true)}
+              className="flex items-center gap-1 rounded-lg p-2 bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all text-gray-600 hover:text-gray-800"
+              title="Add new custom tag"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="text-sm font-medium">Add Tag</span>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

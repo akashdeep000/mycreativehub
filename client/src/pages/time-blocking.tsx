@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { useLocation } from 'wouter';
 import UnifiedCalendar from '@/components/calendar/unified-calendar';
 import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
+import { useAuth } from '@/hooks/useAuth';
 
 import { CalendarEntry, ColorKey } from '@/components/calendar/calendar-types';
 
@@ -20,18 +21,52 @@ export default function TimeBlocking() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   
   // State
   const [currentDate, setCurrentDate] = useState(new Date());
   const [eventSaveStatus, setEventSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [keySaveStatus, setKeySaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [isReady, setIsReady] = useState(false);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
 
+  // Migration Logic
+  const { mutate: migrate, isPending: isMigrating } = useMutation({
+    mutationFn: async () => {
+      const timezoneOffset = new Date().getTimezoneOffset();
+      const res = await apiRequest('/api/calendar/migrate', {
+        method: 'POST',
+        body: JSON.stringify({ timezoneOffset })
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (user) {
+        localStorage.setItem(`migration_completed_${user.id}`, 'true');
+        setIsReady(true);
+        queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/calendar/keys'] });
+        toast({ title: "Migration Complete", description: "Your calendar has been updated." });
+      }
+    }
+  });
+
+  useEffect(() => {
+    if (user) {
+      const hasMigrated = localStorage.getItem(`migration_completed_${user.id}`);
+      if (hasMigrated) {
+        setIsReady(true);
+      } else {
+        migrate();
+      }
+    }
+  }, [user, migrate]);
+
   // Calculate start and end of month for fetching
   const startOfMonth = new Date(year, month - 1, 1);
-  const endOfMonth = new Date(year, month, 0, 23, 59, 59);
+  const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
 
   // Fetch Color Keys
   const { data: colorKeys = [], isLoading: isLoadingKeys } = useQuery({
@@ -39,7 +74,8 @@ export default function TimeBlocking() {
     queryFn: async () => {
       const response = await apiRequest('/api/calendar/keys?type=time_blocking');
       return response.json();
-    }
+    },
+    enabled: !!user && isReady
   });
 
   // Fetch Events
@@ -48,7 +84,8 @@ export default function TimeBlocking() {
     queryFn: async () => {
       const response = await apiRequest(`/api/calendar/events?type=time_blocking&start=${startOfMonth.toISOString()}&end=${endOfMonth.toISOString()}`);
       return response.json();
-    }
+    },
+    enabled: !!user && isReady
   });
 
   // Fetch Month Goals
@@ -235,6 +272,43 @@ export default function TimeBlocking() {
     }
   });
 
+  const deleteEventsByRangeMutation = useMutation({
+    mutationFn: async ({ start, end }: { start: string, end: string }) => {
+      setEventSaveStatus('saving');
+      await apiRequest(`/api/calendar/events?type=time_blocking&start=${start}&end=${end}`, {
+        method: 'DELETE',
+      });
+    },
+    onMutate: async ({ start, end }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousEvents = queryClient.getQueryData(queryKey);
+      
+      queryClient.setQueryData(queryKey, (old: any[] = []) => {
+        const startTime = new Date(start).getTime();
+        const endTime = new Date(end).getTime();
+        return old.filter(event => {
+          const eventStart = new Date(event.startTime).getTime();
+          return eventStart < startTime || eventStart > endTime;
+        });
+      });
+      
+      return { previousEvents };
+    },
+    onSuccess: () => {
+      setEventSaveStatus('saved');
+      setTimeout(() => setEventSaveStatus('idle'), 2000);
+      toast({ title: "Events cleared", variant: "default" });
+    },
+    onError: (err, variables, context) => {
+      setEventSaveStatus('idle');
+      queryClient.setQueryData(queryKey, context?.previousEvents);
+      toast({ title: "Failed to clear events", variant: "destructive" });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+    }
+  });
+
   const createKeyMutation = useMutation({
     mutationFn: async (key: any) => {
       setKeySaveStatus('saving');
@@ -400,6 +474,27 @@ export default function TimeBlocking() {
     deleteEventMutation.mutate(entryId);
   };
 
+  const deleteAllEntries = (date: number | string) => {
+    const dateNum = Number(date);
+    const startOfDay = new Date(year, month - 1, dateNum, 0, 0, 0, 0);
+    const endOfDay = new Date(year, month - 1, dateNum, 23, 59, 59, 999);
+    
+    deleteEventsByRangeMutation.mutate({
+      start: startOfDay.toISOString(),
+      end: endOfDay.toISOString()
+    });
+  };
+
+  const deleteAllMonthEntries = (year: number, month: number) => {
+    const startOfMonth = new Date(year, month - 1, 1, 0, 0, 0, 0);
+    const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
+    
+    deleteEventsByRangeMutation.mutate({
+      start: startOfMonth.toISOString(),
+      end: endOfMonth.toISOString()
+    });
+  };
+
   const toggleEntryCompletion = (entryId: string) => {
     // Find entry to get current status
     const entry = events.find((e: any) => e.id === entryId);
@@ -502,6 +597,8 @@ export default function TimeBlocking() {
             onAddEntry={addCalendarEntry}
             onUpdateEntry={updateEntry}
             onDeleteEntry={deleteEntry}
+            onDeleteAllEntries={deleteAllEntries}
+            onDeleteMonthEntries={deleteAllMonthEntries}
             onToggleComplete={toggleEntryCompletion}
             onMoveEntry={moveEntry}
             
@@ -527,7 +624,8 @@ export default function TimeBlocking() {
             keySaveStatus={keySaveStatus}
             
             // Loading state
-            isLoading={isLoadingKeys || isLoadingEvents}
+            isLoadingKeys={isLoadingKeys || isMigrating}
+            isLoadingEvents={isLoadingEvents || isMigrating}
             
             // Features
             features={{

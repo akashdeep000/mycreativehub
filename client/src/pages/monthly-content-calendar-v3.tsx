@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { useLocation } from 'wouter';
 import UnifiedCalendar from '@/components/calendar/unified-calendar';
 import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
+import { useAuth } from '@/hooks/useAuth';
 
 import { CalendarEntry, ColorKey } from '@/components/calendar/calendar-types';
 
@@ -22,18 +23,57 @@ export default function MonthlyContentCalendarV3() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   
   // State
   const [currentDate, setCurrentDate] = useState(new Date());
   const [eventSaveStatus, setEventSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [keySaveStatus, setKeySaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [goalsSaveStatus, setGoalsSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [isReady, setIsReady] = useState(false);
+  
+  // Local state for monthly goals with debouncing
+  const [localGoals, setLocalGoals] = useState<string>('');
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
 
+  // Migration Logic
+  const { mutate: migrate, isPending: isMigrating } = useMutation({
+    mutationFn: async () => {
+      const timezoneOffset = new Date().getTimezoneOffset();
+      const res = await apiRequest('/api/calendar/migrate', {
+        method: 'POST',
+        body: JSON.stringify({ timezoneOffset })
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (user) {
+        localStorage.setItem(`migration_completed_${user.id}`, 'true');
+        setIsReady(true);
+        queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/calendar/keys'] });
+        toast({ title: "Migration Complete", description: "Your calendar has been updated." });
+      }
+    }
+  });
+
+  useEffect(() => {
+    if (user) {
+      const hasMigrated = localStorage.getItem(`migration_completed_${user.id}`);
+      if (hasMigrated) {
+        setIsReady(true);
+      } else {
+        migrate();
+      }
+    }
+  }, [user, migrate]);
+
   // Calculate start and end of month for fetching
   const startOfMonth = new Date(year, month - 1, 1);
-  const endOfMonth = new Date(year, month, 0, 23, 59, 59);
+  const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
 
   // Fetch Color Keys
   const { data: colorKeys = [], isLoading: isLoadingKeys } = useQuery({
@@ -41,7 +81,8 @@ export default function MonthlyContentCalendarV3() {
     queryFn: async () => {
       const response = await apiRequest('/api/calendar/keys?type=content');
       return response.json();
-    }
+    },
+    enabled: !!user && isReady
   });
 
   // Fetch Events
@@ -50,7 +91,8 @@ export default function MonthlyContentCalendarV3() {
     queryFn: async () => {
       const response = await apiRequest(`/api/calendar/events?type=content&start=${startOfMonth.toISOString()}&end=${endOfMonth.toISOString()}`);
       return response.json();
-    }
+    },
+    enabled: !!user && isReady
   });
 
   // Fetch Month Goals
@@ -59,11 +101,20 @@ export default function MonthlyContentCalendarV3() {
     queryFn: async () => {
       const response = await apiRequest(`/api/calendar/goals?year=${year}&month=${month}`);
       return response.json();
-    }
+    },
+    enabled: !!user && isReady
   });
+
+  // Sync remote goals to local state when data changes
+  useEffect(() => {
+    if (monthGoalsData?.goals !== undefined) {
+      setLocalGoals(monthGoalsData.goals);
+    }
+  }, [monthGoalsData?.goals]);
 
   const updateMonthGoalsMutation = useMutation({
     mutationFn: async (goals: string) => {
+      setGoalsSaveStatus('saving');
       const response = await apiRequest('/api/calendar/goals', {
         method: 'POST',
         body: JSON.stringify({ year, month, goals }),
@@ -71,10 +122,59 @@ export default function MonthlyContentCalendarV3() {
       });
       return response.json();
     },
+    onMutate: async (newGoals) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['/api/calendar/goals', year, month] });
+      
+      // Snapshot the previous value
+      const previousGoals = queryClient.getQueryData(['/api/calendar/goals', year, month]);
+      
+      // Optimistically update to the new value
+      queryClient.setQueryData(['/api/calendar/goals', year, month], { goals: newGoals });
+      
+      // Return a context object with the snapshotted value
+      return { previousGoals };
+    },
     onSuccess: () => {
+      setGoalsSaveStatus('saved');
+      setTimeout(() => setGoalsSaveStatus('idle'), 2000);
+    },
+    onError: (err, newGoals, context) => {
+      setGoalsSaveStatus('idle');
+      // If the mutation fails, use the context returned from onMutate to roll back
+      queryClient.setQueryData(['/api/calendar/goals', year, month], context?.previousGoals);
+      toast({ title: "Failed to save goals", variant: "destructive" });
+    },
+    onSettled: () => {
+      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ['/api/calendar/goals', year, month] });
     }
   });
+
+  // Debounced update handler for monthly goals
+  const handleUpdateMonthGoals = useCallback((newGoals: string) => {
+    // Update local state immediately
+    setLocalGoals(newGoals);
+    
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    // Set new timer to save after 500ms of no typing
+    debounceTimerRef.current = setTimeout(() => {
+      updateMonthGoalsMutation.mutate(newGoals);
+    }, 500);
+  }, [updateMonthGoalsMutation]);
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   // Transform events to days format
   const days: CalendarDay[] = [];
@@ -231,6 +331,43 @@ export default function MonthlyContentCalendarV3() {
       setEventSaveStatus('idle');
       queryClient.setQueryData(queryKey, context?.previousEvents);
       toast({ title: "Failed to delete event", variant: "destructive" });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+    }
+  });
+
+  const deleteEventsByRangeMutation = useMutation({
+    mutationFn: async ({ start, end }: { start: string, end: string }) => {
+      setEventSaveStatus('saving');
+      await apiRequest(`/api/calendar/events?type=content&start=${start}&end=${end}`, {
+        method: 'DELETE',
+      });
+    },
+    onMutate: async ({ start, end }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousEvents = queryClient.getQueryData(queryKey);
+      
+      queryClient.setQueryData(queryKey, (old: any[] = []) => {
+        const startTime = new Date(start).getTime();
+        const endTime = new Date(end).getTime();
+        return old.filter(event => {
+          const eventStart = new Date(event.startTime).getTime();
+          return eventStart < startTime || eventStart > endTime;
+        });
+      });
+      
+      return { previousEvents };
+    },
+    onSuccess: () => {
+      setEventSaveStatus('saved');
+      setTimeout(() => setEventSaveStatus('idle'), 2000);
+      toast({ title: "Events cleared", variant: "default" });
+    },
+    onError: (err, variables, context) => {
+      setEventSaveStatus('idle');
+      queryClient.setQueryData(queryKey, context?.previousEvents);
+      toast({ title: "Failed to clear events", variant: "destructive" });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
@@ -402,6 +539,27 @@ export default function MonthlyContentCalendarV3() {
     deleteEventMutation.mutate(entryId);
   };
 
+  const deleteAllEntries = (date: number | string) => {
+    const dateNum = Number(date);
+    const startOfDay = new Date(year, month - 1, dateNum, 0, 0, 0, 0);
+    const endOfDay = new Date(year, month - 1, dateNum, 23, 59, 59, 999);
+    
+    deleteEventsByRangeMutation.mutate({
+      start: startOfDay.toISOString(),
+      end: endOfDay.toISOString()
+    });
+  };
+
+  const deleteAllMonthEntries = (year: number, month: number) => {
+    const startOfMonth = new Date(year, month - 1, 1, 0, 0, 0, 0);
+    const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
+    
+    deleteEventsByRangeMutation.mutate({
+      start: startOfMonth.toISOString(),
+      end: endOfMonth.toISOString()
+    });
+  };
+
   const toggleEntryCompletion = (entryId: string) => {
     // Find entry to get current status
     const entry = events.find((e: any) => e.id === entryId);
@@ -494,7 +652,7 @@ export default function MonthlyContentCalendarV3() {
             month={month}
             colorKeys={colorKeys}
             days={days}
-            monthGoals={monthGoalsData?.goals || ''}
+            monthGoals={localGoals}
             
             // Navigation
             onPrevMonth={() => navigateMonth('prev')}
@@ -504,6 +662,8 @@ export default function MonthlyContentCalendarV3() {
             onAddEntry={addCalendarEntry}
             onUpdateEntry={updateEntry}
             onDeleteEntry={deleteEntry}
+            onDeleteAllEntries={deleteAllEntries}
+            onDeleteMonthEntries={deleteAllMonthEntries}
             onToggleComplete={toggleEntryCompletion}
             onMoveEntry={moveEntry}
             
@@ -520,16 +680,16 @@ export default function MonthlyContentCalendarV3() {
             onDeleteColorKey={(keyId) => deleteKeyMutation.mutate(keyId)}
             
             // Month Goals
-            onUpdateMonthGoals={(goals) => {
-              updateMonthGoalsMutation.mutate(goals);
-            }}
+            onUpdateMonthGoals={handleUpdateMonthGoals}
             
             // Save status
             eventSaveStatus={eventSaveStatus}
             keySaveStatus={keySaveStatus}
+            goalsSaveStatus={goalsSaveStatus}
             
             // Loading state
-            isLoading={isLoadingKeys || isLoadingEvents}
+            isLoadingKeys={isLoadingKeys || isMigrating}
+            isLoadingEvents={isLoadingEvents || isMigrating}
             
             // Features
             features={{

@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, AlignLeft, Calendar as CalendarIcon, Trash2 } from 'lucide-react';
+import { Clock, AlignLeft, Calendar as CalendarIcon, Trash2, Image, ImagePlus } from 'lucide-react';
 import { CalendarEntry, ColorKey, getEntryDisplayTitle, getSmartDefaultTimes, getToggleOffDefaultTimes, getAllDayEventTimes } from './calendar-types';
 import { cn } from '@/lib/utils';
+import MediaGallery from './media-gallery';
 
 interface EventEditorDialogProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface EventEditorDialogProps {
   initialDate?: Date;
   initialEntry?: CalendarEntry;
   colorKeys: ColorKey[];
+  calendarType?: 'content' | 'time_blocking'; // NEW: to determine if media section should show
 }
 
 export default function EventEditorDialog({
@@ -27,7 +29,8 @@ export default function EventEditorDialog({
   onDelete,
   initialDate,
   initialEntry,
-  colorKeys
+  colorKeys,
+  calendarType = 'time_blocking', // Default to time_blocking for backwards compatibility
 }: EventEditorDialogProps) {
   const [title, setTitle] = useState('');
   const [titleManuallyEdited, setTitleManuallyEdited] = useState(false);
@@ -37,6 +40,7 @@ export default function EventEditorDialog({
   const [notes, setNotes] = useState('');
   const [selectedColorKeyId, setSelectedColorKeyId] = useState<string>('');
   const [completed, setCompleted] = useState(false);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   // Initialize state when dialog opens or props change
   useEffect(() => {
@@ -145,18 +149,61 @@ export default function EventEditorDialog({
     onClose();
   };
 
+  // Dialog-wide drag and drop handlers
+  const handleDialogDragOver = (e: React.DragEvent) => {
+    // Only handle if this is a file drag (for media upload)
+    if (calendarType === 'content' && initialEntry?.id && e.dataTransfer.types.includes('Files')) {
+      e.preventDefault();
+      setIsDraggingFile(true);
+    }
+  };
+
+  const handleDialogDragLeave = (e: React.DragEvent) => {
+    // Check if we're actually leaving the dialog
+    if (e.currentTarget === e.target) {
+      setIsDraggingFile(false);
+    }
+  };
+
+  const handleDialogDrop = (e: React.DragEvent) => {
+    if (calendarType === 'content' && initialEntry?.id) {
+      e.preventDefault();
+      setIsDraggingFile(false);
+      
+      const file = e.dataTransfer.files?.[0];
+      if (file && (window as any).__mediaUploadHandler) {
+        (window as any).__mediaUploadHandler(file);
+      }
+    }
+  };
+
   const selectedColorKey = colorKeys.find(k => k.id === selectedColorKeyId);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] p-0 gap-0 overflow-hidden rounded-xl">
-        <DialogHeader className="p-6 pb-4">
+      <DialogContent 
+        className="sm:max-w-[500px] p-0 gap-0 overflow-hidden rounded-xl max-h-[90vh] flex flex-col"
+        onDragOver={handleDialogDragOver}
+        onDragLeave={handleDialogDragLeave}
+        onDrop={handleDialogDrop}
+      >
+        {/* Drag overlay */}
+        {isDraggingFile && (
+          <div className="absolute inset-0 bg-blue-500/10 border-4 border-blue-500 border-dashed rounded-xl z-50 flex items-center justify-center pointer-events-none">
+            <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+              <ImagePlus className="w-12 h-12 text-blue-500 mx-auto mb-2" />
+              <p className="text-sm font-medium text-gray-700">Drop to upload media</p>
+            </div>
+          </div>
+        )}
+
+        <DialogHeader className="p-6 pb-4 flex-shrink-0">
           <DialogTitle className="text-xl font-semibold text-gray-800">
             {initialEntry ? 'Edit Event' : 'New Event'}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="px-6 pb-6 space-y-5">
+        <div className="px-6 pb-6 space-y-5 overflow-y-auto flex-1">
           {/* Event Type */}
           <div className="space-y-2">
             <Label className="text-sm font-medium text-gray-700">Event Type</Label>
@@ -354,6 +401,23 @@ export default function EventEditorDialog({
               className="flex-1 min-h-[100px] resize-none bg-gray-50/50 border-gray-200 focus:bg-white transition-colors"
             />
           </div>
+
+          {/* Media Section - Only for content calendar events */}
+          {calendarType === 'content' && initialEntry?.id && (
+            <div className="flex gap-4 items-start">
+              <Image className="w-5 h-5 text-gray-400 mt-2.5" />
+              <div className="flex-1 space-y-2">
+                <Label className="text-sm font-medium text-gray-700">Media</Label>
+                <MediaGallery 
+                  eventId={initialEntry.id}
+                  onUploadComplete={() => {
+                    // Media list will auto-refresh in MediaGallery component
+                  }}
+                  onDragStateChange={setIsDraggingFile}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="p-4 bg-gray-50 border-t border-gray-100 flex flex-row items-center justify-between sm:justify-between">
@@ -362,10 +426,8 @@ export default function EventEditorDialog({
               variant="ghost" 
               size="icon" 
               onClick={() => {
-                if (confirm('Are you sure you want to delete this event?')) {
-                  onDelete(initialEntry.id);
-                  onClose();
-                }
+                onDelete(initialEntry.id);
+                onClose();
               }}
               className="text-gray-400 hover:text-red-600 hover:bg-red-50"
             >

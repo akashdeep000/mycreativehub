@@ -40,7 +40,7 @@ export default function DayCell({
   entries,
   colorKeys,
   dayNotes,
-  mediaUrls = [],
+  // mediaUrls = [],
   selectedColorKeyId,
   onDayClick,
   onDateHeaderClick,
@@ -48,7 +48,7 @@ export default function DayCell({
   onToggleComplete,
   onDeleteEntry,
   onUpdateTitle,
-  showMedia = false,
+  // showMedia = false,
   showNotes = false,
   enableCompletion,
   enableDragAndDrop,
@@ -80,6 +80,12 @@ export default function DayCell({
   return (
     <div
       ref={enableDragAndDrop && isCurrentMonth ? setNodeRef : undefined}
+      onClick={(e) => {
+          e.stopPropagation();
+          if (isCurrentMonth && selectedColorKeyId) {
+            onDayClick(date);
+          }
+      }}
       className={`
         h-full min-h-[100px] @[150px]:min-h-[140px] p-1.5 @[150px]:p-3 flex flex-col relative transition-all duration-200 group
         ${roundingClasses}
@@ -142,16 +148,10 @@ export default function DayCell({
             : ''
           }
         `}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (isCurrentMonth && selectedColorKeyId) {
-            onDayClick(date);
-          }
-        }}
         title={isCurrentMonth && selectedColorKeyId ? "Click to add event" : ""}
       >
         {/* Media preview (if enabled) */}
-        {showMedia && mediaUrls.length > 0 && (
+        {/* {showMedia && mediaUrls.length > 0 && (
           <div className="flex gap-1 mb-2 flex-wrap">
             {mediaUrls.slice(0, 3).map((url, i) => (
               <img
@@ -167,11 +167,11 @@ export default function DayCell({
               </div>
             )}
           </div>
-        )}
+        )} */}
         
         {/* Entries */}
         <div className="space-y-1 flex-1">
-          {entries.map((entry) => {
+          {entries.slice(0, 3).map((entry) => {
             const colorKey = colorKeys.find(k => k.id === entry.colorKeyId);
             return (
               <div key={entry.id} className="@container">
@@ -189,6 +189,20 @@ export default function DayCell({
               </div>
             );
           })}
+          
+          {entries.length > 3 && (
+            <div 
+              className="text-xs text-gray-500 font-medium pl-1 hover:text-blue-600 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isCurrentMonth && onDateHeaderClick) {
+                  onDateHeaderClick(date);
+                }
+              }}
+            >
+              + {entries.length - 3} more
+            </div>
+          )}
         </div>
         
         {/* Add Entry Hint (when empty and color key selected) */}

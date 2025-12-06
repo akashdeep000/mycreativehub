@@ -96,7 +96,7 @@ export default function CalendarEntryCard({
       {...(enableDrag && !isOptimistic ? attributes : {})}
       {...(enableDrag && !isOptimistic ? listeners : {})}
       className={`
-        group/card relative flex flex-col @[120px]:flex-row @[120px]:items-center gap-1 @[120px]:gap-2 px-1.5 py-1.5 @[120px]:px-2 rounded-lg border transition-all duration-200 hover:z-[9999]
+        group/card relative flex flex-col @[120px]:flex-row @[120px]:items-center gap-0.5 @[120px]:gap-1 px-1 py-1 @[120px]:px-1.5 rounded-lg border transition-all duration-200 hover:z-[9999]
         ${isDragging ? 'ring-2 ring-blue-500 bg-blue-50 z-50 shadow-xl scale-105' : 'hover:shadow-md hover:-translate-y-0.5'}
         ${variant === 'time_blocking' 
           ? `border-transparent text-white shadow-sm ${entry.completed ? 'opacity-75 grayscale-[0.5]' : ''}`
@@ -113,7 +113,7 @@ export default function CalendarEntryCard({
       <div className="flex items-center justify-between w-full @[120px]:w-auto">
         
         {/* Icons Group */}
-        <div className="flex flex-col @[45px]:flex-row items-center gap-0.5 @[45px]:gap-1.5">
+        <div className="flex flex-col @[45px]:flex-row items-center gap-0.5 @[45px]:gap-1">
           {/* Drag handle */}
           {enableDrag && !isOptimistic && (
             <div className={`cursor-grab active:cursor-grabbing ${variant === 'time_blocking' ? 'text-white/50 hover:text-white' : 'text-gray-300 hover:text-gray-500'}`}>
@@ -213,13 +213,20 @@ export default function CalendarEntryCard({
         ) : (
           <div
             className={`
-              text-xs font-medium leading-tight overflow-hidden cursor-text hover:bg-black/5 px-1 py-0.5 rounded transition-colors
+              text-xs font-medium leading-tight overflow-hidden px-1 py-0.5 rounded transition-colors
               line-clamp-1
-              ${entry.completed ? 'text-gray-400 line-through' : (variant === 'time_blocking' ? 'text-white' : 'text-gray-700')}
+              ${entry.completed ? (variant === 'time_blocking' ? 'text-gray-200 line-through' : 'text-gray-400 line-through') : (variant === 'time_blocking' ? 'text-white' : 'text-gray-700')}
+              @[72px]:cursor-text @[72px]:hover:bg-black/5
             `}
             onClick={(e) => {
-              e.stopPropagation();
-              setIsEditingTitle(true);
+              // Only allow inline editing when edit buttons exist (≥72px)
+              // For <72px, let the click propagate to open the edit dialog
+              const target = e.currentTarget;
+              const containerWidth = target.closest('[class*="group/card"]')?.getBoundingClientRect().width || 0;
+              if (containerWidth >= 72) {
+                e.stopPropagation();
+                setIsEditingTitle(true);
+              }
             }}
             title="Click to edit title"
           >
@@ -227,12 +234,12 @@ export default function CalendarEntryCard({
           </div>
         )}
         
-        {/* Time display */}
-        {/* {variant === 'time_blocking' && (
-          <div className={`text-[10px] mt-0.5 pl-1 ${variant === 'time_blocking' ? 'text-white/80' : 'text-gray-400'}`}>
-            {new Date(entry.startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+        {/* Time display for time blocking events on larger widths */}
+        {variant === 'time_blocking' && !entry.isAllDay && (
+          <div className="hidden @[120px]:block text-[10px] pl-1 text-white/80">
+            {new Date(entry.startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} - {new Date(entry.endTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
           </div>
-        )} */}
+        )}
       </div>
 
       {/* Actions (State 4: >120px) - Absolute positioned overlay, hidden when editing */}
