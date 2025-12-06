@@ -79,18 +79,8 @@ export default function MonthlyView({
     }
   }
   
-  // Fill up to 42 cells if needed (6 rows)
-  while (calendarCells.length < 42) {
-    const lastCell = calendarCells[calendarCells.length - 1];
-    const nextDate = new Date(lastCell.actualDate);
-    nextDate.setDate(nextDate.getDate() + 1);
-    
-    calendarCells.push({
-      dayNumber: nextDate.getDate(),
-      isCurrentMonth: false,
-      actualDate: nextDate
-    });
-  }
+  // Fill up to 42 cells if needed (6 rows) - REMOVED based on user feedback
+  // We only want to fill the current week
   
   // Get day data
   const getDayData = (dayNumber: number): DayData | undefined => {
@@ -116,7 +106,7 @@ export default function MonthlyView({
       <div className="grid grid-cols-7 bg-gray-200 gap-px border border-gray-200 rounded-xl shadow-sm relative z-10">
         {isLoading ? (
           // Skeleton Loading State
-          Array.from({ length: 42 }).map((_, index) => (
+          Array.from({ length: calendarCells.length }).map((_, index) => (
             <div key={`skeleton-${index}`} className="bg-white min-h-[120px] p-2 animate-pulse">
               <div className="flex justify-end mb-2">
                 <div className="w-6 h-6 rounded-full bg-gray-100"></div>
@@ -153,8 +143,8 @@ export default function MonthlyView({
             let cornerPosition: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | undefined;
             if (index === 0) cornerPosition = 'top-left';
             else if (index === 6) cornerPosition = 'top-right';
-            else if (index === 35) cornerPosition = 'bottom-left'; // 6th row start
-            else if (index === 41) cornerPosition = 'bottom-right'; // 6th row end
+            else if (index === calendarCells.length - 7) cornerPosition = 'bottom-left'; // Last row start
+            else if (index === calendarCells.length - 1) cornerPosition = 'bottom-right'; // Last row end
             
             return (
               <div key={index} className="@container h-full overflow-visible">
