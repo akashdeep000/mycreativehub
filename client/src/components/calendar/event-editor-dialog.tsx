@@ -210,17 +210,23 @@ export default function EventEditorDialog({
             <Select value={selectedColorKeyId} onValueChange={setSelectedColorKeyId}>
               <SelectTrigger className="w-full">
                 <div className="flex items-center gap-2">
-                  <div 
+                  {/* <div 
                     className="w-3 h-3 rounded-full flex-shrink-0" 
                     style={{ backgroundColor: selectedColorKey?.color || '#ccc' }} 
-                  />
+                  /> */}
                   <SelectValue />
                 </div>
               </SelectTrigger>
               <SelectContent>
                 {colorKeys.map((key) => (
                   <SelectItem key={key.id} value={key.id}>
-                    {key.label}
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full flex-shrink-0" 
+                        style={{ backgroundColor: key.color }} 
+                      />
+                      {key.label}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
