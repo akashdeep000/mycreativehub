@@ -13,6 +13,7 @@ import {
   char,
   uuid,
   numeric,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { relations } from "drizzle-orm";
@@ -1356,11 +1357,14 @@ export interface CalendarEntryV3 {
   color: string;
   notes: string;
   time: string;
+  completed?: boolean;  // NEW: Completion status
+  completedAt?: string;  // NEW: ISO timestamp when marked complete
 }
 
 export interface CalendarDayV3 {
   date: string;
   entries: CalendarEntryV3[];
+  dayNotes?: string;  // NEW: Notes box at bottom of each day
 }
 
 // Calendar V3 table - final rebuilt calendar system
@@ -1381,6 +1385,7 @@ export const calendarV3 = pgTable(
       .$type<CalendarDayV3[]>()
       .notNull()
       .default(sql`'[]'::jsonb`),
+    monthGoals: text("month_goals"),  // NEW: Goals for this month/week
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
@@ -1454,6 +1459,37 @@ export type InsertTimeBlockingColorKeys = z.infer<
   typeof insertTimeBlockingColorKeysSchema
 >;
 
+// Calendar Media - Media storage for Content Calendar
+export const calendarMedia = pgTable(
+  "calendar_media",
+  {
+    id: serial("id").primaryKey(),
+    userId: varchar("user_id")
+      .notNull()
+      .references(() => users.id),
+    calendarType: varchar("calendar_type").notNull(), // 'content' or 'time_blocking'
+    date: varchar("date").notNull(), // YYYY-MM-DD format
+    mediaType: varchar("media_type").notNull(), // 'image' or 'video'
+    fileName: varchar("file_name").notNull(),
+    fileSize: integer("file_size").notNull(),
+    objectPath: text("object_path").notNull(), // e.g. "/objects/uploads/uuid"
+    displayOrder: integer("display_order").default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("calendar_media_user_date_idx").on(table.userId, table.date),
+    index("calendar_media_calendar_type_idx").on(table.calendarType),
+  ],
+);
+
+export const insertCalendarMediaSchema = createInsertSchema(calendarMedia).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type CalendarMedia = typeof calendarMedia.$inferSelect;
+export type InsertCalendarMedia = z.infer<typeof insertCalendarMediaSchema>;
+
 // Automation Prompts V2 - Conversation flow cheat sheet with 8 fields
 export const automationPrompts = pgTable(
   "automation_prompts",
@@ -1498,8 +1534,10 @@ export const timeBlockingEvents = pgTable(
     color: varchar("color").notNull(),
     colorKeyId: varchar("color_key_id"),
     notes: text("notes").default(""),
-    startTime: timestamp("start_time", { withTimezone: true }).notNull(),
+    startTime: timestamp("start_time", { withTimezone: true }).notNull(),  // Use this for sorting
     endTime: timestamp("end_time", { withTimezone: true }).notNull(),
+    completed: boolean("completed").default(false),  // NEW: Completion status
+    completedAt: timestamp("completed_at", { withTimezone: true }),  // NEW: When marked complete
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
@@ -1605,3 +1643,101 @@ export type TimeBlockingEvent = typeof timeBlockingEvents.$inferSelect;
 export type InsertTimeBlockingEvent = z.infer<
   typeof insertTimeBlockingEventSchema
 >;
+
+// ==========================================
+// NEW CALENDAR SYSTEM (Normalized)
+// ==========================================
+
+export const calendarColorKeys = pgTable("calendar_color_keys", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id),
+  label: varchar("label").notNull(),
+  color: varchar("color").notNull(),
+  type: pgEnum("type", ["content", "time_blocking"])("type").notNull(), // 'content' | 'time_blocking'
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const calendarEvents = pgTable("calendar_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id),
+  title: varchar("title").notNull(),
+  description: text("description"), // notes
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  isAllDay: boolean("is_all_day").default(false),
+  colorKeyId: uuid("color_key_id").references(() => calendarColorKeys.id),
+  type: pgEnum("type", ["content", "time_blocking"])("type").notNull(), // 'content' | 'time_blocking'
+  completed: boolean("completed").default(false),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const calendarColorKeysRelations = relations(calendarColorKeys, ({ one, many }) => ({
+  user: one(users, {
+    fields: [calendarColorKeys.userId],
+    references: [users.id],
+  }),
+  events: many(calendarEvents),
+}));
+
+export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
+  user: one(users, {
+    fields: [calendarEvents.userId],
+    references: [users.id],
+  }),
+  colorKey: one(calendarColorKeys, {
+    fields: [calendarEvents.colorKeyId],
+    references: [calendarColorKeys.id],
+  }),
+}));
+
+export const insertCalendarColorKeySchema = createInsertSchema(calendarColorKeys).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCalendarEventSchema = createInsertSchema(calendarEvents).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CalendarColorKey = typeof calendarColorKeys.$inferSelect;
+export type InsertCalendarColorKey = z.infer<typeof insertCalendarColorKeySchema>;
+export const calendarMonthGoals = pgTable("calendar_month_goals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id),
+  year: integer("year").notNull(),
+  month: integer("month").notNull(),
+  goals: text("goals").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  uniqueUserYearMonth: uniqueIndex("unique_goals_user_year_month").on(
+    table.userId,
+    table.year,
+    table.month,
+  ),
+}));
+
+export const insertCalendarMonthGoalsSchema = createInsertSchema(calendarMonthGoals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CalendarMonthGoal = typeof calendarMonthGoals.$inferSelect;
+export type InsertCalendarMonthGoal = z.infer<typeof insertCalendarMonthGoalsSchema>;
+
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
+export type InsertCalendarEvent = z.infer<typeof insertCalendarEventSchema>;

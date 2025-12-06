@@ -6,7 +6,7 @@ import { generateToken, jwtAuth, hashPassword, comparePassword } from "./jwtAuth
 import { nanoid } from "nanoid";
 import crypto from "crypto";
 import { Resend } from "resend";
-import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplateInstanceSchema, cheatSheetDocPutBodySchema, insertFinanceTransactionSchema, insertMoneyMapMonthSchema } from "@shared/schema";
+import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplateInstanceSchema, cheatSheetDocPutBodySchema, insertFinanceTransactionSchema, insertMoneyMapMonthSchema, insertCalendarEventSchema, insertCalendarColorKeySchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { db } from "./db";
 import { inspirationBoards } from "@shared/schema";
@@ -2605,6 +2605,178 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===========================================
+  // NEW NORMALIZED CALENDAR API
+  // ===========================================
+
+  // Calendar Events
+  app.get('/api/calendar/events', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { type, start, end } = req.query;
+
+      if (!type || !start || !end) {
+        return res.status(400).json({ message: "Missing required parameters: type, start, end" });
+      }
+
+      const startDate = new Date(start as string);
+      const endDate = new Date(end as string);
+
+      const events = await storage.getCalendarEvents(userId, type as "content" | "time_blocking", startDate, endDate);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching calendar events:", error);
+      res.status(500).json({ message: "Failed to fetch calendar events" });
+    }
+  });
+
+  // Create calendar event
+  app.post('/api/calendar/events', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      // Parse date strings to Date objects before validation
+      const eventData = {
+        ...req.body,
+        userId,
+        startTime: new Date(req.body.startTime),
+        endTime: new Date(req.body.endTime),
+      };
+
+      const validatedEvent = insertCalendarEventSchema.parse(eventData);
+      const newEvent = await storage.createCalendarEvent(validatedEvent);
+      res.status(201).json(newEvent);
+    } catch (error) {
+      console.error("Error creating calendar event:", error);
+      res.status(500).json({ message: "Failed to create calendar event" });
+    }
+  });
+
+  // Update calendar event  
+  app.patch('/api/calendar/events/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+
+      // Parse date strings to Date objects if present
+      const updates: any = { ...req.body };
+      if (updates.startTime) updates.startTime = new Date(updates.startTime);
+      if (updates.endTime) updates.endTime = new Date(updates.endTime);
+      if (updates.completedAt) updates.completedAt = new Date(updates.completedAt);
+
+      const event = await storage.updateCalendarEvent(id, updates);
+      res.json(event);
+    } catch (error) {
+      console.error("Error updating calendar event:", error);
+      res.status(500).json({ message: "Failed to update calendar event" });
+    }
+  });
+
+  app.delete('/api/calendar/events/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteCalendarEvent(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting calendar event:", error);
+      res.status(500).json({ message: "Failed to delete calendar event" });
+    }
+  });
+
+  // Calendar Color Keys
+  // Get color keys
+  app.get('/api/calendar/keys', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { type } = req.query;
+
+      if (!type || (type !== 'content' && type !== 'time_blocking')) {
+        return res.status(400).json({ message: "Invalid type parameter" });
+      }
+
+      // Auto-initialization happens inside getCalendarColorKeys
+      const keys = await storage.getCalendarColorKeys(userId, type as "content" | "time_blocking");
+
+      res.json(keys);
+    } catch (error) {
+      console.error("Error fetching calendar keys:", error);
+      res.status(500).json({ message: "Failed to fetch calendar keys" });
+    }
+  });
+
+  app.post('/api/calendar/keys', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const keyData = insertCalendarColorKeySchema.parse({
+        ...req.body,
+        userId
+      });
+
+      const key = await storage.createCalendarColorKey(keyData);
+      res.json(key);
+    } catch (error) {
+      console.error("Error creating calendar key:", error);
+      res.status(500).json({ message: "Failed to create calendar key" });
+    }
+  });
+
+  app.patch('/api/calendar/keys/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const key = await storage.updateCalendarColorKey(id, req.body);
+      res.json(key);
+    } catch (error) {
+      console.error("Error updating calendar key:", error);
+      res.status(500).json({ message: "Failed to update calendar key" });
+    }
+  });
+
+  app.delete('/api/calendar/keys/:id', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteCalendarColorKey(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting calendar key:", error);
+      res.status(500).json({ message: "Failed to delete calendar key" });
+    }
+  });
+
+  // Calendar Month Goals
+  app.get('/api/calendar/goals', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { year, month } = req.query;
+
+      if (!year || !month) {
+        return res.status(400).json({ message: "Missing required parameters: year, month" });
+      }
+
+      const goal = await storage.getCalendarMonthGoal(userId, parseInt(year as string), parseInt(month as string));
+      res.json(goal || { goals: '' });
+    } catch (error) {
+      console.error("Error fetching calendar goals:", error);
+      res.status(500).json({ message: "Failed to fetch calendar goals" });
+    }
+  });
+
+  app.post('/api/calendar/goals', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { year, month, goals } = req.body;
+
+      const goal = await storage.upsertCalendarMonthGoal({
+        userId,
+        year,
+        month,
+        goals
+      });
+      res.json(goal);
+    } catch (error) {
+      console.error("Error saving calendar goals:", error);
+      res.status(500).json({ message: "Failed to save calendar goals" });
+    }
+  });
+
   // Calendar V2 - Complete rebuild
   app.get('/api/calendar-v2/:year/:month', jwtAuth, async (req: any, res) => {
     try {
@@ -2748,7 +2920,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         year,
         month,
         colorKeys: normalizedColorKeys,
-        days: calendar?.days || []
+        days: calendar?.days || [],
+        monthGoals: calendar?.monthGoals || ''  // NEW: Include month goals
       };
 
       console.log('Calendar V3 GET - Sending response:', {
@@ -2832,14 +3005,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
-      const { colorKeys, days } = req.body;
+      const { colorKeys, days, monthGoals } = req.body;
 
       console.log('Calendar V3 PUT - Received data:', {
         userId,
         year,
         month,
         colorKeysCount: Array.isArray(colorKeys) ? colorKeys.length : 0,
-        daysCount: Array.isArray(days) ? days.length : 0
+        daysCount: Array.isArray(days) ? days.length : 0,
+        hasMonthGoals: !!monthGoals
       });
 
       // Normalize colorKeys to always use 'color' field (not 'colour')
@@ -2861,7 +3035,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         year,
         month,
         colorKeys: [], // Empty - using global keys
-        days: days || []
+        days: days || [],
+        monthGoals: monthGoals  // NEW: Save month goals
       });
 
       // Normalize response colorKeys to always use 'color' field
@@ -2876,7 +3051,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         year: calendar.year,
         month: calendar.month,
         colorKeys: responseColorKeys,
-        days: calendar.days || []
+        days: calendar.days || [],
+        monthGoals: calendar.monthGoals || ''  // NEW: Include month goals in response
       };
 
       console.log('Calendar V3 PUT - Sending response:', {

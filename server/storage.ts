@@ -49,6 +49,9 @@ import {
   timeBlockingColorKeys,
   timeBlockingEvents,
   cheatSheetDocs,
+  calendarEvents,
+  calendarColorKeys,
+  calendarMonthGoals,
   type CourseWhitelist,
   type InsertCourseWhitelist,
   type User,
@@ -148,6 +151,12 @@ import {
   type CheatSheetDocData,
   type CheatSheetRow,
   type CheatSheetDocPutBody,
+  type CalendarEvent,
+  type InsertCalendarEvent,
+  type CalendarColorKey,
+  type InsertCalendarColorKey,
+  type CalendarMonthGoal,
+  type InsertCalendarMonthGoal,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, gte, lte, lt, sql, inArray, isNull, gt, ne } from "drizzle-orm";
@@ -382,9 +391,27 @@ export interface IStorage {
   getCheatSheetDoc(userId: string): Promise<CheatSheetDoc | undefined>;
   seedCheatSheetDoc(userId: string): Promise<CheatSheetDoc>;
   updateCheatSheetDocOptimistic(userId: string, clientVersion: number, rows: CheatSheetRow[]): Promise<{ success: boolean; doc?: CheatSheetDoc; conflict?: { version: number; rows: CheatSheetRow[] } }>;
+
+  // Calendar Events (Normalized)
+  getCalendarEvents(userId: string, type: string, start: Date, end: Date): Promise<CalendarEvent[]>;
+  createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent>;
+  updateCalendarEvent(id: string, event: Partial<InsertCalendarEvent>): Promise<CalendarEvent>;
+  deleteCalendarEvent(id: string): Promise<void>;
+
+  // Calendar Color Keys (Normalized)
+  getCalendarColorKeys(userId: string, type: string): Promise<CalendarColorKey[]>;
+  createCalendarColorKey(key: InsertCalendarColorKey): Promise<CalendarColorKey>;
+  updateCalendarColorKey(id: string, key: Partial<InsertCalendarColorKey>): Promise<CalendarColorKey>;
+  deleteCalendarColorKey(id: string): Promise<void>;
+  initializeDefaultColorKeys(userId: string, type: 'content' | 'time_blocking'): Promise<void>;
+
+  // Calendar Month Goals
+  getCalendarMonthGoal(userId: string, year: number, month: number): Promise<CalendarMonthGoal | undefined>;
+  upsertCalendarMonthGoal(goal: InsertCalendarMonthGoal): Promise<CalendarMonthGoal>;
 }
 
 export class DatabaseStorage implements IStorage {
+
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
@@ -2079,12 +2106,14 @@ export class DatabaseStorage implements IStorage {
         ...data,
         colorKeys: (Array.isArray(data.colorKeys) ? data.colorKeys : []) as any,
         days: (Array.isArray(data.days) ? data.days : []) as any,
+        monthGoals: data.monthGoals,  // NEW: Include monthGoals
       })
       .onConflictDoUpdate({
         target: [calendarV3.userId, calendarV3.year, calendarV3.month],
         set: {
           colorKeys: (Array.isArray(data.colorKeys) ? data.colorKeys : []) as any,
           days: (Array.isArray(data.days) ? data.days : []) as any,
+          monthGoals: data.monthGoals,  // NEW: Update monthGoals
           updatedAt: new Date(),
         },
       })
@@ -2735,6 +2764,162 @@ export class DatabaseStorage implements IStorage {
         }
       };
     }
+  }
+
+  // Calendar Events (Normalized)
+  async getCalendarEvents(userId: string, type: "content" | "time_blocking", start: Date, end: Date): Promise<CalendarEvent[]> {
+    return await db
+      .select()
+      .from(calendarEvents)
+      .where(and(
+        eq(calendarEvents.userId, userId),
+        eq(calendarEvents.type, type),
+        gte(calendarEvents.startTime, start),
+        lte(calendarEvents.endTime, end)
+      ));
+  }
+
+  async createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent> {
+    const [newEvent] = await db
+      .insert(calendarEvents)
+      .values(event)
+      .returning();
+    return newEvent;
+  }
+
+  async updateCalendarEvent(id: string, event: Partial<InsertCalendarEvent>): Promise<CalendarEvent> {
+    const [updatedEvent] = await db
+      .update(calendarEvents)
+      .set({ ...event, updatedAt: new Date() })
+      .where(eq(calendarEvents.id, id))
+      .returning();
+    return updatedEvent;
+  }
+
+  async deleteCalendarEvent(id: string): Promise<void> {
+    await db.delete(calendarEvents).where(eq(calendarEvents.id, id));
+  }
+
+  // Calendar Color Keys (Normalized)
+  async getCalendarColorKeys(userId: string, type: "content" | "time_blocking"): Promise<CalendarColorKey[]> {
+    const keys = await db
+      .select()
+      .from(calendarColorKeys)
+      .where(and(
+        eq(calendarColorKeys.userId, userId),
+        eq(calendarColorKeys.type, type)
+      ))
+      .orderBy(asc(calendarColorKeys.createdAt));
+
+    // Auto-initialize default color keys if none exist
+    if (keys.length === 0) {
+      await this.initializeDefaultColorKeys(userId, type);
+      // Fetch again after initialization
+      return await db
+        .select()
+        .from(calendarColorKeys)
+        .where(and(
+          eq(calendarColorKeys.userId, userId),
+          eq(calendarColorKeys.type, type)
+        ));
+    }
+
+    return keys;
+  }
+
+  async createCalendarColorKey(key: InsertCalendarColorKey): Promise<CalendarColorKey> {
+    const [newKey] = await db
+      .insert(calendarColorKeys)
+      .values(key)
+      .returning();
+    return newKey;
+  }
+
+  async updateCalendarColorKey(id: string, key: Partial<InsertCalendarColorKey>): Promise<CalendarColorKey> {
+    const [updatedKey] = await db
+      .update(calendarColorKeys)
+      .set({ ...key, updatedAt: new Date() })
+      .where(eq(calendarColorKeys.id, id))
+      .returning();
+    return updatedKey;
+  }
+
+  async deleteCalendarColorKey(id: string): Promise<void> {
+    await db.delete(calendarColorKeys).where(eq(calendarColorKeys.id, id));
+  }
+
+  // Calendar Month Goals
+  async getCalendarMonthGoal(userId: string, year: number, month: number): Promise<CalendarMonthGoal | undefined> {
+    return await db.query.calendarMonthGoals.findFirst({
+      where: and(
+        eq(calendarMonthGoals.userId, userId),
+        eq(calendarMonthGoals.year, year),
+        eq(calendarMonthGoals.month, month)
+      )
+    });
+  }
+
+  async upsertCalendarMonthGoal(goal: InsertCalendarMonthGoal): Promise<CalendarMonthGoal> {
+    const existing = await this.getCalendarMonthGoal(goal.userId, goal.year, goal.month);
+
+    if (existing) {
+      const [updated] = await db
+        .update(calendarMonthGoals)
+        .set({ goals: goal.goals, updatedAt: new Date() })
+        .where(eq(calendarMonthGoals.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [inserted] = await db
+        .insert(calendarMonthGoals)
+        .values(goal)
+        .returning();
+      return inserted;
+    }
+  }
+
+  async initializeDefaultColorKeys(userId: string, type: 'content' | 'time_blocking'): Promise<void> {
+    // Use the same defaults as the old calendar implementation
+    const defaultKeys = type === 'content'
+      ? [
+        { label: 'Email', color: '#3B82F6', isDefault: true },
+        { label: 'Reel', color: '#10B981', isDefault: false },
+        { label: 'TikTok', color: '#8B5CF6', isDefault: false },
+        { label: 'Shorts', color: '#F59E0B', isDefault: false },
+        { label: 'Long-Form Video', color: '#EF4444', isDefault: false },
+        { label: 'YouTube', color: '#14B8A6', isDefault: false },
+        { label: 'Pinterest', color: '#EC4899', isDefault: false },
+        { label: 'Carousel', color: '#6366F1', isDefault: false },
+        { label: 'Static Post', color: '#F97316', isDefault: false },
+        { label: 'Story', color: '#FFD93D', isDefault: false },
+        { label: 'Newsletter', color: '#6BCF7F', isDefault: false },
+        { label: 'Blog', color: '#45B7D1', isDefault: false }
+      ]
+      : [
+        { label: 'Deep Work', color: '#3B82F6', isDefault: true },
+        { label: 'Reel', color: '#10B981', isDefault: false },
+        { label: 'Editing', color: '#8B5CF6', isDefault: false },
+        { label: 'Email Marketing', color: '#F59E0B', isDefault: false },
+        { label: 'Social Scheduling', color: '#EF4444', isDefault: false },
+        { label: 'Listing Work', color: '#14B8A6', isDefault: false },
+        { label: 'Admin/Ops', color: '#EC4899', isDefault: false },
+        { label: 'Finance', color: '#6366F1', isDefault: false },
+        { label: 'Product Dev', color: '#F97316', isDefault: false },
+        { label: 'Packing/Shipping', color: '#8B5CF6', isDefault: false },
+        { label: 'Creation Time', color: '#A855F7', isDefault: false }
+      ];
+
+    // Bulk insert all default keys at once (more efficient than loop)
+    const keysToInsert = defaultKeys.map((key, index) => ({
+      userId,
+      label: key.label,
+      color: key.color,
+      type,
+      isDefault: key.isDefault,
+      createdAt: new Date(Date.now() + index), // Ensure unique creation times for sorting
+    }));
+
+    await db.insert(calendarColorKeys).values(keysToInsert);
   }
 }
 
