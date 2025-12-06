@@ -3938,7 +3938,7 @@ TOTAL EVENTS         : ${stats.tbEvents + stats.contentEvents}
       const { ObjectStorageService } = await import('./objectStorage');
       const objectStorageService = new ObjectStorageService();
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
-      objectStorageService.downloadObject(objectFile, res);
+      objectStorageService.downloadObject(objectFile, req, res);
     } catch (error) {
       console.error("Error serving object:", error);
       res.status(404).json({ error: "Object not found" });
