@@ -648,6 +648,16 @@ export const insertSocialMediaStrategySchema = createInsertSchema(
   updatedAt: true,
 });
 
+
+// Resource Categories
+export const resourceCategories = pgTable("resource_categories", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull().unique(),
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Resource Library
 export const resourceLibrary = pgTable("resource_library", {
   id: serial("id").primaryKey(),
@@ -662,10 +672,22 @@ export const resourceLibrary = pgTable("resource_library", {
   fileName: varchar("file_name"), // Original filename for PDFs
   fileSize: integer("file_size"), // File size in bytes
   displayOrder: integer("display_order").default(0),
+  categoryId: integer("category_id").references(() => resourceCategories.id),
   isShared: boolean("is_shared").default(false).notNull(), // Allow all users to access this resource
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export const resourceCategoriesRelations = relations(resourceCategories, ({ many }) => ({
+  resources: many(resourceLibrary),
+}));
+
+export const resourceLibraryRelations = relations(resourceLibrary, ({ one }) => ({
+  category: one(resourceCategories, {
+    fields: [resourceLibrary.categoryId],
+    references: [resourceCategories.id],
+  }),
+}));
 
 // Affiliate Link Tracker
 export const affiliateLinks = pgTable("affiliate_links", {
@@ -686,6 +708,15 @@ export const affiliateLinks = pgTable("affiliate_links", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export const insertResourceCategorySchema = createInsertSchema(resourceCategories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ResourceCategory = typeof resourceCategories.$inferSelect;
+export type InsertResourceCategory = z.infer<typeof insertResourceCategorySchema>;
 
 export const insertResourceLibrarySchema = createInsertSchema(
   resourceLibrary,

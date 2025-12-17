@@ -10,7 +10,7 @@ import { insertDailyFocusTaskSchema, insertActivityLogSchema, insertUserTemplate
 import { eq, desc, and } from "drizzle-orm";
 import { ZodError } from "zod";
 import { db } from "./db";
-import { inspirationBoards, users } from "@shared/schema";
+import { inspirationBoards, users, insertResourceCategorySchema } from "@shared/schema";
 
 // Standardize environment variable reads
 const RESEND_KEY = process.env.RESEND_API_KEY || process.env.EMAIL_API_KEY;
@@ -1925,6 +1925,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Resource Library routes
+  // Resource Categories
+  app.get('/api/resource-categories', jwtAuth, async (req, res) => {
+    try {
+      const categories = await storage.getResourceCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching resource categories:", error);
+      res.status(500).json({ message: "Failed to fetch resource categories" });
+    }
+  });
+
+  app.post('/api/resource-categories', jwtAuth, async (req, res) => {
+    try {
+      const categoryData = insertResourceCategorySchema.parse(req.body);
+      const category = await storage.createResourceCategory(categoryData);
+      res.status(201).json(category);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: "Invalid category data", errors: error.errors });
+      }
+      console.error("Error creating resource category:", error);
+      res.status(500).json({ message: "Failed to create resource category" });
+    }
+  });
+
+  app.get('/api/resource-library/:id/content', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const item = await storage.getResourceLibraryItem(parseInt(id));
+
+      if (!item || !item.fileData) {
+        return res.status(404).send('File not found');
+      }
+
+      // Check if user has access
+      if (item.userId !== req.user.id && !item.isShared) {
+        return res.status(403).send('Access denied');
+      }
+
+      // Parse base64 data
+      // Format is usually "data:application/pdf;base64,JVBERi..."
+      const matches = item.fileData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+
+      if (!matches || matches.length !== 3) {
+        return res.status(500).send('Invalid file data');
+      }
+
+      const type = matches[1];
+      const data = Buffer.from(matches[2], 'base64');
+
+      res.writeHead(200, {
+        'Content-Type': type,
+        'Content-Length': data.length,
+        'Content-Disposition': `inline; filename="${item.fileName || 'document.pdf'}"`
+      });
+
+      res.end(data);
+    } catch (error) {
+      console.error("Error fetching resource content:", error);
+      res.status(500).send('Failed to fetch resource content');
+    }
+  });
+
   app.get('/api/resource-library', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;

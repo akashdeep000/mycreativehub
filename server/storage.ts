@@ -160,6 +160,9 @@ import {
   type CalendarMedia,
   type InsertCalendarMedia,
   calendarMedia,
+  resourceCategories,
+  type ResourceCategory,
+  type InsertResourceCategory,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, gte, lte, lt, sql, inArray, isNull, gt, ne } from "drizzle-orm";
@@ -277,7 +280,11 @@ export interface IStorage {
   deleteResourceLibraryItem(id: number): Promise<void>;
   updateResourceDisplayOrder(items: { id: number; displayOrder: number }[]): Promise<void>;
 
+  updateResourceDisplayOrder(items: { id: number; displayOrder: number }[]): Promise<void>;
 
+  // Resource Categories
+  getResourceCategories(): Promise<ResourceCategory[]>;
+  createResourceCategory(category: InsertResourceCategory): Promise<ResourceCategory>;
   // Affiliate Links
   getAffiliateLinks(userId: string): Promise<AffiliateLink[]>;
   createAffiliateLink(link: InsertAffiliateLink): Promise<AffiliateLink>;
@@ -1211,7 +1218,23 @@ export class DatabaseStorage implements IStorage {
   // Resource Library
   async getResourceLibraryItems(userId: string): Promise<ResourceLibraryItem[]> {
     return await db
-      .select()
+      .select({
+        id: resourceLibrary.id,
+        userId: resourceLibrary.userId,
+        type: resourceLibrary.type,
+        title: resourceLibrary.title,
+        description: resourceLibrary.description,
+        url: resourceLibrary.url,
+        // Exclude fileData for performance
+        fileData: sql<string>`null`,
+        fileName: resourceLibrary.fileName,
+        fileSize: resourceLibrary.fileSize,
+        displayOrder: resourceLibrary.displayOrder,
+        categoryId: resourceLibrary.categoryId,
+        isShared: resourceLibrary.isShared,
+        createdAt: resourceLibrary.createdAt,
+        updatedAt: resourceLibrary.updatedAt,
+      })
       .from(resourceLibrary)
       .where(or(
         eq(resourceLibrary.userId, userId),
@@ -1264,6 +1287,17 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getResourceCategories(): Promise<ResourceCategory[]> {
+    return await db.select().from(resourceCategories).orderBy(asc(resourceCategories.displayOrder));
+  }
+
+  async createResourceCategory(category: InsertResourceCategory): Promise<ResourceCategory> {
+    const [result] = await db
+      .insert(resourceCategories)
+      .values(category)
+      .returning();
+    return result;
+  }
 
   // Affiliate Links
   async getAffiliateLinks(userId: string): Promise<AffiliateLink[]> {

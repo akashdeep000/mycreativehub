@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/layout/sidebar";
@@ -7,11 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Play, Video, Image, Home } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import PdfViewer from "@/components/PdfViewer";
 
 export default function ReelCarouselTemplates() {
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const [viewingPdf, setViewingPdf] = useState<{ url: string; title: string } | null>(null);
 
   // Redirect to login if not authenticated
   if (!isLoading && !isAuthenticated) {
@@ -50,12 +53,7 @@ export default function ReelCarouselTemplates() {
   ];
 
   const handleTemplateClick = (template: any) => {
-    const link = document.createElement('a');
-    link.href = template.url;
-    link.setAttribute('download', template.name.replace(/ /g, '_') + '.pdf');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    setViewingPdf({ url: template.url, title: template.name });
   };
 
   return (
@@ -151,10 +149,15 @@ export default function ReelCarouselTemplates() {
               </Card>
             ))}
           </div>
-
-          
         </div>
       </div>
+
+      <PdfViewer
+        isOpen={!!viewingPdf}
+        onClose={() => setViewingPdf(null)}
+        url={viewingPdf?.url || null}
+        title={viewingPdf?.title}
+      />
     </div>
   );
 }

@@ -77,7 +77,7 @@ export default function MobileFixedHeader() {
     <div className="md:hidden"> 
       {/* Fixed header container using portal with hide/show animation */}
       <div 
-        className={`fixed top-0 left-0 right-0 z-[9999] bg-white/90 backdrop-blur-sm border-b border-gray-100 pointer-events-auto transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-sm border-b border-gray-100 pointer-events-auto transition-transform duration-300 ease-in-out ${
           isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
