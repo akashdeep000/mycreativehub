@@ -1721,7 +1721,7 @@ export const calendarColorKeysRelations = relations(calendarColorKeys, ({ one, m
   events: many(calendarEvents),
 }));
 
-export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
+export const calendarEventsRelations = relations(calendarEvents, ({ one, many }) => ({
   user: one(users, {
     fields: [calendarEvents.userId],
     references: [users.id],
@@ -1729,6 +1729,14 @@ export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
   colorKey: one(calendarColorKeys, {
     fields: [calendarEvents.colorKeyId],
     references: [calendarColorKeys.id],
+  }),
+  media: many(calendarMedia),
+}));
+
+export const calendarMediaRelations = relations(calendarMedia, ({ one }) => ({
+  event: one(calendarEvents, {
+    fields: [calendarMedia.eventId],
+    references: [calendarEvents.id],
   }),
 }));
 

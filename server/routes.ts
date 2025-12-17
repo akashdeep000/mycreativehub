@@ -2942,8 +2942,9 @@ TOTAL EVENTS         : ${stats.tbEvents + stats.contentEvents}
       const startDate = new Date(start as string);
       const endDate = new Date(end as string);
 
-      const events = await storage.getCalendarEvents(userId, type as "content" | "time_blocking", startDate, endDate);
-      res.json(events);
+      const eventsWithMedia = await storage.getCalendarEventsWithMedia(userId, type as "content" | "time_blocking", startDate, endDate);
+
+      res.json(eventsWithMedia);
     } catch (error) {
       console.error("Error fetching calendar events:", error);
       res.status(500).json({ message: "Failed to fetch calendar events" });

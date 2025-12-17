@@ -17,6 +17,7 @@ import { CalendarEntry, ColorKey } from '@/components/calendar/calendar-types';
 interface CalendarDay {
   date: number;
   entries: CalendarEntry[];
+  mediaUrls?: string[];
 }
 
 export default function MonthlyContentCalendarV3() {
@@ -206,13 +207,42 @@ export default function MonthlyContentCalendarV3() {
         createdAt: new Date(event.createdAt),
         updatedAt: new Date(event.updatedAt),
       };
+      
+      // Add media URLs to entry if present (though we aggregate them at day level)
+      // We'll store them in a temporary property on the day map entry if needed, 
+      // but simpler to just collect them here.
+      
       daysMap.get(date)?.push(entry);
     });
   }
 
-  // Convert map to array
+  // Convert map to array and aggregate media
   daysMap.forEach((entries, date) => {
-    days.push({ date, entries });
+    // Collect all media URLs from events for this day
+    const mediaUrls: string[] = [];
+    
+    // Find events for this day in the raw events array to get media
+    // (since we didn't add media to the CalendarEntry type yet, we look at raw events)
+    const dayEvents = Array.isArray(events) ? events.filter((e: any) => {
+      const d = new Date(e.startTime);
+      return d.getDate() === date && d.getMonth() === month - 1 && d.getFullYear() === year;
+    }) : [];
+    
+    dayEvents.forEach((e: any) => {
+      if (e.media && Array.isArray(e.media)) {
+        e.media.forEach((m: any) => {
+          if (m.objectPath) {
+             // Construct full URL (assuming objectPath is relative or we need a helper)
+             // Based on routes.ts: app.get("/objects/:objectPath(*)", ...)
+             // If objectPath starts with http, use it
+             const url = m.objectPath.startsWith('http') ? m.objectPath : `${m.objectPath}`;
+             mediaUrls.push(url);
+          }
+        });
+      }
+    });
+
+    days.push({ date, entries, mediaUrls });
   });
 
   // Mutations

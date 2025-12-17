@@ -3,6 +3,50 @@ import { useDroppable } from '@dnd-kit/core';
 import type { CalendarEntry, ColorKey } from '../calendar-types';
 import CalendarEntryCard from '../calendar-entry-card';
 
+interface MediaItemProps {
+  url: string;
+}
+
+function MediaItem({ url }: MediaItemProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
+  return (
+    <div className="relative w-full aspect-video rounded-md overflow-hidden border border-gray-200 bg-gray-50 group/media">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 animate-pulse">
+          <svg className="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+      )}
+      
+      {hasError ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+      ) : (
+        <img
+          src={url}
+          className={`w-full h-full object-cover transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+          alt="Event media"
+          onLoad={() => setIsLoading(false)}
+          onError={() => {
+            setIsLoading(false);
+            setHasError(true);
+          }}
+        />
+      )}
+      
+      {!isLoading && !hasError && (
+        <div className="absolute inset-0 bg-black/0 group-hover/media:bg-black/10 transition-colors pointer-events-none" />
+      )}
+    </div>
+  );
+}
+
 interface DayCellProps {
   date: number;
   month: number;
@@ -40,7 +84,7 @@ export default function DayCell({
   entries,
   colorKeys,
   dayNotes,
-  // mediaUrls = [],
+  mediaUrls = [],
   selectedColorKeyId,
   onDayClick,
   onDateHeaderClick,
@@ -87,7 +131,7 @@ export default function DayCell({
           }
       }}
       className={`
-        h-full min-h-[100px] @[150px]:min-h-[140px] p-1.5 @[150px]:p-3 flex flex-col relative transition-all duration-200 group
+        h-[250px] p-1.5 @[150px]:p-3 flex flex-col relative transition-all duration-200 group
         ${roundingClasses}
         ${overflowClass}
         ${isCurrentMonth ? 'bg-white' : 'bg-gray-50/30'}
@@ -111,6 +155,19 @@ export default function DayCell({
         }}
         title={isCurrentMonth ? "View full day schedule" : ""}
       >
+        {/* View Details Hint */}
+        {isCurrentMonth && (
+          <div className="hidden @[45px]:flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity mr-auto">
+            <svg className="w-3.5 h-3.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            <span className="hidden @[110px]:inline text-xs font-medium text-gray-600">
+              View day
+            </span>
+          </div>
+        )}
+
         <span 
           className={`
             text-xs @[150px]:text-sm font-semibold w-6 h-6 @[150px]:w-8 @[150px]:h-8 flex items-center justify-center rounded-full transition-all duration-200
@@ -124,25 +181,12 @@ export default function DayCell({
         >
           {date}
         </span>
-        
-        {/* View Details Hint */}
-        {isCurrentMonth && (
-          <div className="hidden @[45px]:flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            <svg className="w-3.5 h-3.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            <span className="hidden @[110px]:inline text-xs font-medium text-gray-600">
-              View day
-            </span>
-          </div>
-        )}
       </div>
       
       {/* Content Area - Click to add entry */}
       <div
         className={`
-          flex-1 flex flex-col transition-all duration-150
+          flex-1 flex flex-col transition-all duration-150 overflow-y-auto
           ${isCurrentMonth && selectedColorKeyId
             ? 'cursor-pointer hover:bg-gray-50 rounded-lg -mx-1 px-1 py-0.5' 
             : ''
@@ -150,24 +194,6 @@ export default function DayCell({
         `}
         title={isCurrentMonth && selectedColorKeyId ? "Click to add event" : ""}
       >
-        {/* Media preview (if enabled) */}
-        {/* {showMedia && mediaUrls.length > 0 && (
-          <div className="flex gap-1 mb-2 flex-wrap">
-            {mediaUrls.slice(0, 3).map((url, i) => (
-              <img
-                key={i}
-                src={url}
-                className="w-12 h-12 object-cover rounded"
-                alt={`Media ${i + 1}`}
-              />
-            ))}
-            {mediaUrls.length > 3 && (
-              <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-600">
-                +{mediaUrls.length - 3}
-              </div>
-            )}
-          </div>
-        )} */}
         
         {/* Entries */}
         <div className="space-y-1 flex-1">
@@ -214,6 +240,15 @@ export default function DayCell({
             <span className="hidden @[85px]:inline text-xs font-medium text-gray-500">
               Click to add
             </span>
+          </div>
+        )}
+
+        {/* Media preview (at bottom) */}
+        {mediaUrls && mediaUrls.length > 0 && (
+          <div className="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-2">
+            {mediaUrls.map((url, i) => (
+              <MediaItem key={i} url={url} />
+            ))}
           </div>
         )}
         

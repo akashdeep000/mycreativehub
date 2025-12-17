@@ -408,6 +408,7 @@ export interface IStorage {
   updateCalendarEvent(id: string, event: Partial<InsertCalendarEvent>): Promise<CalendarEvent>;
   deleteCalendarEvent(id: string): Promise<void>;
   deleteCalendarEventsByRange(userId: string, type: string, start: Date, end: Date): Promise<void>;
+  getCalendarEventsWithMedia(userId: string, type: string, start: Date, end: Date): Promise<CalendarEvent[]>;
 
   // Calendar Color Keys (Normalized)
   getCalendarColorKeys(userId: string, type: string): Promise<CalendarColorKey[]>;
@@ -2851,6 +2852,20 @@ export class DatabaseStorage implements IStorage {
         gte(calendarEvents.startTime, start),
         lte(calendarEvents.endTime, end)
       ));
+  }
+
+  async getCalendarEventsWithMedia(userId: string, type: "content" | "time_blocking", start: Date, end: Date): Promise<CalendarEvent[]> {
+    return await db.query.calendarEvents.findMany({
+      where: and(
+        eq(calendarEvents.userId, userId),
+        eq(calendarEvents.type, type),
+        gte(calendarEvents.startTime, start),
+        lte(calendarEvents.endTime, end)
+      ),
+      with: {
+        media: true
+      }
+    });
   }
 
   async createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent> {
