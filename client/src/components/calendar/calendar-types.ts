@@ -13,6 +13,17 @@ export interface DayData {
   mediaUrls?: string[];
 }
 
+export interface MediaItem {
+  id: number;
+  eventId: string;
+  mediaType: 'image' | 'video';
+  fileName: string;
+  fileSize: number;
+  objectPath: string;
+  displayOrder: number;
+  createdAt: string;
+}
+
 export interface CalendarView {
   type: 'monthly' | 'weekly' | 'daily';
   date: Date;

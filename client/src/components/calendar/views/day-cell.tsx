@@ -1,18 +1,28 @@
 import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import type { CalendarEntry, ColorKey } from '../calendar-types';
+import type { CalendarEntry, ColorKey, MediaItem } from '../calendar-types';
 import CalendarEntryCard from '../calendar-entry-card';
+import MediaLightbox from '../media-lightbox';
+
+
 
 interface MediaItemProps {
   url: string;
+  onClick: () => void;
 }
 
-function MediaItem({ url }: MediaItemProps) {
+function MediaItem({ url, onClick }: MediaItemProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
   return (
-    <div className="relative w-full aspect-video rounded-md overflow-hidden border border-gray-200 bg-gray-50 group/media">
+    <div 
+      className="relative w-full aspect-video rounded-md overflow-hidden border border-gray-200 bg-gray-50 group/media cursor-pointer"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+    >
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 animate-pulse">
           <svg className="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -100,6 +110,29 @@ export default function DayCell({
 }: DayCellProps) {
   
   const [showNotesEditor, setShowNotesEditor] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+  const handleMediaClick = (url: string) => {
+    // Construct a temporary MediaItem from the URL
+    // Since we only have the URL here, we'll make a best guess for other fields
+    const fileName = url.split('/').pop() || 'Media';
+    const isVideo = url.match(/\.(mp4|webm|ogg)$/i);
+    
+    const item: MediaItem = {
+      id: 0, // Temporary ID
+      eventId: '', // Not needed for display
+      mediaType: isVideo ? 'video' : 'image',
+      fileName: fileName,
+      fileSize: 0, // Unknown
+      objectPath: url,
+      displayOrder: 0,
+      createdAt: new Date().toISOString()
+    };
+    
+    setSelectedMedia(item);
+    setIsLightboxOpen(true);
+  };
   
   // Configure droppable
   const { setNodeRef, isOver } = useDroppable({
@@ -247,7 +280,11 @@ export default function DayCell({
         {mediaUrls && mediaUrls.length > 0 && (
           <div className="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-2">
             {mediaUrls.map((url, i) => (
-              <MediaItem key={i} url={url} />
+              <MediaItem 
+                key={i} 
+                url={url} 
+                onClick={() => handleMediaClick(url)}
+              />
             ))}
           </div>
         )}
@@ -261,6 +298,16 @@ export default function DayCell({
           </div>
         )}
       </div>
+
+
+      <MediaLightbox
+        item={selectedMedia}
+        isOpen={isLightboxOpen}
+        onClose={() => {
+          setIsLightboxOpen(false);
+          setSelectedMedia(null);
+        }}
+      />
     </div>
   );
 }
