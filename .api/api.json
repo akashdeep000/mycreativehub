@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "apis": [
+    {
+      "identifier": "systeme",
+      "source": "@systeme/v1.0.0#3yhsfop10mdzykxbd",
+      "integrity": "sha512-QFpWg6an6LeIQribYK5WDPSQCxNvUdWEO9nDbj/bngGMa8pfpq4OxflYa8XIKM8XO6VlLlVsb7JT2nTsGfSHJA==",
+      "installerVersion": "6.1.3"
+    }
+  ]
+}

@@ -8,7 +8,8 @@ import {
   LogOut,
   HelpCircle,
   Download,
-  Lightbulb
+  Lightbulb,
+  CreditCard
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -64,6 +65,17 @@ export default function Sidebar() {
             >
               <Settings className="w-4 h-4" />
               <span className="text-sm">Edit Profile</span>
+            </button>
+            <button 
+              onClick={() => setLocation('/subscription-management')}
+              className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                location === '/subscription-management'
+                  ? "bg-pink-200 text-pink-700 font-medium"
+                  : "text-gray-600 hover:bg-pink-100"
+              }`}
+            >
+              <CreditCard className="w-4 h-4" />
+              <span className="text-sm">Manage Subscription</span>
             </button>
           </div>
         </div>

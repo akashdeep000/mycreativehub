@@ -11,6 +11,18 @@ import { eq, desc, and } from "drizzle-orm";
 import { ZodError } from "zod";
 import { db } from "./db";
 import { inspirationBoards, users, insertResourceCategorySchema } from "@shared/schema";
+import systeme from "@api/systeme";
+import { default as dotenv } from "dotenv";
+
+dotenv.config()
+
+// Configure Systeme.io SDK
+const systemeInstance = (systeme as any).default || systeme;
+if (process.env.SYSTEME_API_KEY) {
+  systemeInstance.auth(process.env.SYSTEME_API_KEY);
+} else {
+  console.warn("SYSTEME_API_KEY is not set. Subscription features will not work.");
+}
 
 // Standardize environment variable reads
 const RESEND_KEY = process.env.RESEND_API_KEY || process.env.EMAIL_API_KEY;
@@ -307,6 +319,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Subscription Management Routes
+  app.get('/api/subscription', jwtAuth, async (req: any, res) => {
+    try {
+      const userEmail = req.user.email;
+      console.log(`Fetching subscription for ${userEmail}`);
+
+      if (!process.env.SYSTEME_API_KEY) {
+        return res.status(503).json({ message: "Subscription service unavailable" });
+      }
+
+      // 1. Get contact ID
+      const contactsResponse = await systemeInstance.api_contacts_get_collection({ email: userEmail });
+      const contact = contactsResponse.data.items?.[0];
+
+      if (!contact) {
+        return res.status(404).json({ message: "Contact not found in subscription system" });
+      }
+
+      // 2. Get subscriptions for this contact
+      // We attempt to filter by contactId. If the API doesn't support it, we might get all (which is bad, but we'll filter).
+      // Assuming the SDK passes the object as query params.
+      const subscriptionsResponse = await systemeInstance.api_paymentsubscriptions_get_collection({ contact: contact.id as number });
+      const subscriptions = subscriptionsResponse.data.items;
+
+      // Find active subscription
+      // We filter by contactId again in case the API returned all
+      const activeSubscription = subscriptions?.find((sub: any) =>
+        (sub.contactId === contact.id || sub.contact?.id === contact.id || true) && // We can't be sure of the field name, so we trust the API filter or just check status if we can't link
+        sub.status === 'active'
+      );
+
+      if (!activeSubscription) {
+        return res.json({ status: 'inactive', message: "No active subscription found" });
+      }
+
+      // Calculate next billing date if not provided
+      let nextBillingDate = activeSubscription.nextPaymentDate;
+      if (!nextBillingDate && activeSubscription.createdAt && activeSubscription.pricePlan?.recurringOptions) {
+        const createdAtDate = new Date(activeSubscription.createdAt);
+        const interval = activeSubscription.pricePlan.recurringOptions.interval;
+        const intervalCount = activeSubscription.pricePlan.recurringOptions.intervalCount || 1;
+
+        if (interval === 'year') {
+          createdAtDate.setFullYear(createdAtDate.getFullYear() + intervalCount);
+        } else if (interval === 'month') {
+          createdAtDate.setMonth(createdAtDate.getMonth() + intervalCount);
+        } else if (interval === 'day') {
+          createdAtDate.setDate(createdAtDate.getDate() + intervalCount);
+        }
+        nextBillingDate = createdAtDate.toISOString();
+      }
+
+      res.json({
+        status: 'active',
+        plan: activeSubscription.pricePlan?.name,
+        amount: activeSubscription.pricePlan?.amount,
+        currency: activeSubscription.pricePlan?.currency,
+        nextBillingDate: nextBillingDate,
+        lastBillingDate: activeSubscription.createdAt,
+        createdAt: activeSubscription.createdAt,
+        cancelUrl: "https://systeme.io/dashboard/profile/manage-subscriptions",
+        id: activeSubscription.id
+      });
+
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
+      res.status(500).json({ message: "Failed to fetch subscription details" });
+    }
+  });
+
+  app.post('/api/subscription/cancel', jwtAuth, async (req: any, res) => {
+    try {
+      const userEmail = req.user.email;
+      const { subscriptionId, cancelType = 'at_the_end_of_the_period' } = req.body;
+
+      if (!process.env.SYSTEME_API_KEY) {
+        return res.status(503).json({ message: "Subscription service unavailable" });
+      }
+
+      if (!subscriptionId) {
+        return res.status(400).json({ message: "Subscription ID is required" });
+      }
+
+      console.log(`Cancelling subscription ${subscriptionId} for ${userEmail} with type ${cancelType}`);
+
+      // 1. Cancel in Systeme.io
+      // cancelType should be 'immediate' or 'at_the_end_of_the_period'
+      await systemeInstance.cancel_subscription(
+        { cancel: cancelType },
+        { id: subscriptionId.toString() }
+      );
+
+      // 2. Add tag to contact (optional, but requested)
+      const contactsResponse = await systemeInstance.api_contacts_get_collection({ email: userEmail });
+      const contact = contactsResponse.data.items?.[0];
+
+      if (contact && process.env.SYSTEME_CANCELLED_TAG_ID) {
+        try {
+          await systemeInstance.post_contact_tag({ tagId: parseInt(process.env.SYSTEME_CANCELLED_TAG_ID) }, { id: contact.id?.toString() as string });
+        } catch (tagError) {
+          console.error("Error adding cancellation tag:", tagError);
+          // Continue even if tagging fails
+        }
+      }
+
+      // 3. Remove from whitelist ONLY if immediate
+      if (cancelType === 'immediate') {
+        await storage.removeEmailFromWhitelist(userEmail);
+      }
+
+      res.json({
+        message: cancelType === 'immediate'
+          ? "Subscription cancelled immediately"
+          : "Subscription will be cancelled at the end of the billing period"
+      });
+
+    } catch (error) {
+      console.error("Error cancelling subscription:", error);
+      res.status(500).json({ message: "Failed to cancel subscription" });
     }
   });
 
@@ -3680,35 +3814,44 @@ TOTAL EVENTS         : ${stats.tbEvents + stats.contentEvents}
       // Try different possible email field locations
       if (req.body?.data?.contact?.email) {
         email = req.body.data.contact.email;
+      } else if (req.body?.contact?.email) {
+        email = req.body.contact.email;
+      } else if (req.body?.email) {
+        email = req.body.email;
+      } else if (req.body?.data?.email) {
+        email = req.body.data.email;
       }
 
       console.log('Extracted email:', email);
-      console.log('Email extraction method: comprehensive search');
+
+      const eventType = req.body?.event || req.body?.type;
+      console.log('Event type:', eventType);
 
       if (!email) {
         console.error('No email found in webhook data');
-        const errorResponse = { error: 'No email found in webhook data' };
-        console.log('Sending error response:', errorResponse);
-        res.status(400).json(errorResponse);
-        return;
+        return res.status(400).json({ error: 'No email found in webhook data' });
       }
 
-      // Add email to whitelist
-      console.log('Adding email to whitelist...');
-      const whitelistEntry = await storage.addEmailToWhitelist(email, 'systeme_webhook');
-      console.log('Whitelist entry created:', whitelistEntry);
+      if (eventType === 'SALE_CANCELED') {
+        console.log(`Processing SALE_CANCELED for ${email}`);
+        await storage.removeEmailFromWhitelist(email);
+        return res.status(200).json({ success: true, message: 'Email removed from whitelist', email });
+      }
 
-      console.log(`Email ${email} added to whitelist successfully`);
+      if (eventType === 'SALE_NEW') {
+        console.log(`Processing SALE_NEW for ${email}`);
+        const whitelistEntry = await storage.addEmailToWhitelist(email, 'systeme_webhook');
+        console.log('Whitelist entry created:', whitelistEntry);
+        return res.status(200).json({ success: true, message: 'Email added to whitelist', email });
+      }
 
-      // Respond with 200 OK as required by Systeme.io
-      const response = {
+      // For other events (CONTACT_CREATED, etc.), just acknowledge receipt
+      console.log(`Acknowledging event ${eventType} for ${email} (no whitelist action)`);
+      res.status(200).json({
         success: true,
-        message: 'Email added to whitelist',
+        message: `Event ${eventType} acknowledged`,
         email: email
-      };
-
-      console.log('Sending response:', response);
-      res.status(200).json(response);
+      });
       console.log('=== WEBHOOK END ===');
 
     } catch (error) {

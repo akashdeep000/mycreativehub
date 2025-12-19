@@ -501,6 +501,12 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async removeEmailFromWhitelist(email: string): Promise<void> {
+    await db
+      .delete(courseWhitelist)
+      .where(eq(courseWhitelist.email, email));
+  }
+
   async getToolkitModules(): Promise<ToolkitModule[]> {
     return await db.select().from(toolkitModules);
   }
