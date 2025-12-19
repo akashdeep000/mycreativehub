@@ -357,21 +357,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ status: 'inactive', message: "No active subscription found" });
       }
 
-      // Calculate next billing date if not provided
+      // Calculate billing dates if not provided
       let nextBillingDate = activeSubscription.nextPaymentDate;
-      if (!nextBillingDate && activeSubscription.createdAt && activeSubscription.pricePlan?.recurringOptions) {
-        const createdAtDate = new Date(activeSubscription.createdAt);
-        const interval = activeSubscription.pricePlan.recurringOptions.interval;
-        const intervalCount = activeSubscription.pricePlan.recurringOptions.intervalCount || 1;
+      let lastBillingDate = activeSubscription.createdAt;
 
-        if (interval === 'year') {
-          createdAtDate.setFullYear(createdAtDate.getFullYear() + intervalCount);
-        } else if (interval === 'month') {
-          createdAtDate.setMonth(createdAtDate.getMonth() + intervalCount);
-        } else if (interval === 'day') {
-          createdAtDate.setDate(createdAtDate.getDate() + intervalCount);
+      if (activeSubscription.createdAt && activeSubscription.pricePlan?.recurringOptions) {
+        const { interval, intervalCount = 1, trialPeriod = 0, trialInterval = 'day' } = activeSubscription.pricePlan.recurringOptions;
+        let calcDate = new Date(activeSubscription.createdAt);
+        const now = new Date();
+
+        // 1. Add trial period if any
+        if (trialPeriod > 0) {
+          if (trialInterval === 'day') calcDate.setDate(calcDate.getDate() + trialPeriod);
+          else if (trialInterval === 'week') calcDate.setDate(calcDate.getDate() + (trialPeriod * 7));
+          else if (trialInterval === 'month') calcDate.setMonth(calcDate.getMonth() + trialPeriod);
         }
-        nextBillingDate = createdAtDate.toISOString();
+
+        // 2. Track the start of the current billing cycle
+        let currentCycleStart = new Date(calcDate);
+
+        // 3. Add intervals until we find the next future date
+        while (calcDate <= now) {
+          currentCycleStart = new Date(calcDate);
+          if (interval === 'year') calcDate.setFullYear(calcDate.getFullYear() + intervalCount);
+          else if (interval === 'month') calcDate.setMonth(calcDate.getMonth() + intervalCount);
+          else if (interval === 'day') calcDate.setDate(calcDate.getDate() + intervalCount);
+          else break;
+        }
+
+        if (!nextBillingDate) nextBillingDate = calcDate.toISOString();
+        lastBillingDate = currentCycleStart.toISOString();
       }
 
       res.json({
@@ -380,7 +395,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount: activeSubscription.pricePlan?.amount,
         currency: activeSubscription.pricePlan?.currency,
         nextBillingDate: nextBillingDate,
-        lastBillingDate: activeSubscription.createdAt,
+        lastBillingDate: lastBillingDate,
         createdAt: activeSubscription.createdAt,
         cancelUrl: "https://systeme.io/dashboard/profile/manage-subscriptions",
         id: activeSubscription.id

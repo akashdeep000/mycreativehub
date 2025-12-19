@@ -25,4 +25,4 @@ You can control the system using these settings in your `.env` file:
 
 ---
 **How it handles the "End of Period":**
-When a user cancels in the dashboard, we tell Systeme.io to "cancel at the end of the period." The user stays on your whitelist. Once the period actually ends, Systeme.io sends a signal (webhook) to our platform, and we then remove them from the whitelist automatically. No manual work required.
+When a user cancels in the dashboard, we tell Systeme.io to "cancel at the end of the period." The user stays on your whitelist. Once the period actually ends, Systeme.io sends a signal (webhook) to our platform, and we then remove them from the whitelist automatically. The system also intelligently calculates billing dates by considering trial periods and recurring intervals. No manual work required.
