@@ -306,7 +306,7 @@ export default function MediaGallery({ eventId, onUploadComplete, onDragStateCha
         <div className="flex items-center gap-2">
           <input
             type="file"
-            accept="image/*,video/*"
+            accept="image/*"
             onChange={handleFileSelect}
             className="hidden"
             id={`media-upload-${eventId}`}
