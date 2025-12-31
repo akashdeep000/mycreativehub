@@ -4,7 +4,7 @@ This system automates your member access and retention. Here is how it works:
 
 ### 1. The Member Experience
 *   **Dashboard**: Members see their plan, price, and billing dates.
-*   **Retention Flow**: If a member tries to cancel, they are shown the value they'll lose and offered a discount (configurable) before they can finish.
+*   **Retention Flow**: If a member tries to cancel, they are shown the value they'll lose before they can finish.
 *   **Access**: Members keep access until their paid period ends, even after cancelling.
 
 ### 2. Automated Access (Systeme.io Integration)
@@ -19,9 +19,7 @@ You can control the system using these settings in your `.env` file:
 | :--- | :--- |
 | `SYSTEME_API_KEY` | Connects the platform to your Systeme.io account. |
 | `SYSTEME_CANCELLED_TAG_ID` | (Optional) The ID of the tag to add when someone cancels. |
-| `VITE_DISCOUNT_OFFER_URL` | The link for the offer (Email or URL). |
-| `VITE_DISCOUNT_OFFER_TEXT` | The big text shown in the offer (e.g., "30% OFF"). |
-| `VITE_DISCOUNT_OFFER_BUTTON` | The text on the offer button (e.g., "Claim 30% Discount"). |
+| `SYSTEME_SUBSCRIPTION_CANCEL_TYPE` | Cancellation behavior: `Now` (immediate) or `WhenBillingCycleEnds` (default). |
 
 ---
 **How it handles the "End of Period":**

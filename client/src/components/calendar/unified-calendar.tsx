@@ -516,10 +516,10 @@ export default function UnifiedCalendar(props: UnifiedCalendarProps) {
               </div>
             </div>
           </div>
-      {/* Mobile Orientation Warning (Content Calendar only) */}
-      {props.calendarType === 'content' && view === 'month' && (
+      {/* Mobile Orientation Warning (Monthly View only) */}
+      {view === 'month' && (
         <div className="lg:hidden mx-2 p-3 bg-amber-50 text-amber-800 rounded-lg text-center text-sm font-medium border border-amber-100 portrait:block landscape:hidden">
-          For mobile view, please flip your phone horizontally
+          Note: when viewing on a mobile device, please rotate screen for optimal calendar view
         </div>
       )}
       <DndContext

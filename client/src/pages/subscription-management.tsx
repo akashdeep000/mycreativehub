@@ -23,13 +23,14 @@ type Subscription = {
   lastBillingDate: string;
   createdAt: string;
   cancelUrl: string;
+  cancelType: string;
 };
 
 export default function SubscriptionManagement() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-  const [cancelStep, setCancelStep] = useState<"confirm" | "retention" | "discount" | "final">("confirm");
+  const [cancelStep, setCancelStep] = useState<"confirm" | "retention" | "final">("confirm");
 
   const { data: subscription, isLoading, error } = useQuery<Subscription>({
     queryKey: ["/api/subscription"],
@@ -70,8 +71,7 @@ export default function SubscriptionManagement() {
 
   const handleNextStep = () => {
     if (cancelStep === "confirm") setCancelStep("retention");
-    else if (cancelStep === "retention") setCancelStep("discount");
-    else if (cancelStep === "discount") setCancelStep("final");
+    else if (cancelStep === "retention") setCancelStep("final");
   };
 
   const handleFinalCancel = () => {
@@ -278,14 +278,18 @@ export default function SubscriptionManagement() {
               <DialogHeader>
                 <DialogTitle>Are you sure you want to cancel?</DialogTitle>
                 <DialogDescription>
-                  Your subscription will remain active until the end of the current billing period.
+                  {subscription?.cancelType === 'Now' 
+                    ? "Your subscription will be cancelled immediately."
+                    : "Your subscription will remain active until the end of the current billing period."}
                 </DialogDescription>
               </DialogHeader>
               <div className="py-4">
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start space-x-3">
                   <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
                   <p className="text-sm text-yellow-800">
-                    Cancelling will disable auto-renewal. You will lose access to premium features after your current period ends.
+                    {subscription?.cancelType === 'Now'
+                      ? "Cancelling will remove your access to premium features immediately."
+                      : "Cancelling will disable auto-renewal. You will lose access to premium features after your current period ends."}
                   </p>
                 </div>
               </div>
@@ -327,37 +331,6 @@ export default function SubscriptionManagement() {
             </>
           )}
 
-          {cancelStep === "discount" && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-primary">Wait! Last Chance Offer</DialogTitle>
-                <DialogDescription>
-                  We'd love to keep you as a member. Here is a special offer just for you.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="py-6 text-center">
-                <div className="bg-primary/10 rounded-xl p-6 mb-4">
-                  <h3 className="text-2xl font-bold text-primary mb-2">
-                    {import.meta.env.VITE_DISCOUNT_OFFER_TEXT || "30% OFF"}
-                  </h3>
-                  <p className="text-gray-600">Your next renewal</p>
-                </div>
-                <p className="text-sm text-gray-500">
-                  Claim this offer to stay with us at a discounted rate.
-                </p>
-              </div>
-              <DialogFooter className="flex-col space-y-2 sm:space-y-0">
-                <Button className="w-full sm:w-auto bg-primary hover:bg-primary/90" onClick={() => {
-                  const offerUrl = import.meta.env.VITE_DISCOUNT_OFFER_URL || "mailto:support@mycreativehub.com?subject=Claim%2030%25%20Discount";
-                  window.open(offerUrl, "_blank");
-                  setIsCancelModalOpen(false);
-                }}>
-                  {import.meta.env.VITE_DISCOUNT_OFFER_BUTTON || "Claim 30% Discount"}
-                </Button>
-                <Button variant="ghost" className="text-gray-500" onClick={handleNextStep}>No thanks, cancel anyway</Button>
-              </DialogFooter>
-            </>
-          )}
 
           {cancelStep === "final" && (
             <>
@@ -369,7 +342,9 @@ export default function SubscriptionManagement() {
               </DialogHeader>
               <div className="py-4">
                 <p className="text-sm text-gray-600 mb-4">
-                  We're sorry to see you go. Your access will continue until <strong>{subscription?.nextBillingDate ? new Date(subscription.nextBillingDate).toLocaleDateString() : 'the end of the period'}</strong>.
+                  {subscription?.cancelType === 'Now'
+                    ? "We're sorry to see you go. Your access will be removed immediately upon confirmation."
+                    : <>We're sorry to see you go. Your access will continue until <strong>{subscription?.nextBillingDate ? new Date(subscription.nextBillingDate).toLocaleDateString() : 'the end of the period'}</strong>.</>}
                 </p>
               </div>
               <DialogFooter>

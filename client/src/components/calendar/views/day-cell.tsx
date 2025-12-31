@@ -17,7 +17,7 @@ function MediaItem({ url, onClick }: MediaItemProps) {
 
   return (
     <div 
-      className="relative w-full aspect-video rounded-md overflow-hidden border border-gray-200 bg-gray-50 group/media cursor-pointer"
+      className="relative w-full aspect-[4/5] rounded-md overflow-hidden border border-gray-200 bg-gray-50 group/media cursor-pointer"
       onClick={(e) => {
         e.stopPropagation();
         onClick();

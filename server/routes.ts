@@ -12,6 +12,7 @@ import { ZodError } from "zod";
 import { db } from "./db";
 import { inspirationBoards, users, insertResourceCategorySchema } from "@shared/schema";
 import systeme from "@api/systeme";
+import type { CancelSubscriptionBodyParam } from "@api/systeme/types";
 import { default as dotenv } from "dotenv";
 
 dotenv.config()
@@ -119,6 +120,57 @@ async function updateUserStatsOnTaskCompletion(userId: string) {
   }
 }
 
+// Helper function to sync user access from Systeme.io
+async function syncUserAccessFromSysteme(email: string): Promise<boolean> {
+  try {
+    console.log(`[sync] Attempting to sync access for ${email}`);
+
+    if (!process.env.SYSTEME_API_KEY) {
+      console.warn("[sync] SYSTEME_API_KEY not set, skipping sync");
+      return false;
+    }
+
+    // 1. Get contact from Systeme.io
+    const contactsResponse = await systemeInstance.api_contacts_get_collection({ email });
+    const contact = contactsResponse.data.items?.[0];
+
+    if (!contact) {
+      console.log(`[sync] No contact found for ${email} in Systeme.io`);
+      return false;
+    }
+
+    // 2. Check for active subscriptions
+    const subscriptionsResponse = await systemeInstance.api_paymentsubscriptions_get_collection({ contact: contact.id as number });
+    const subscriptions = subscriptionsResponse.data.items;
+
+    const hasActiveSubscription = subscriptions?.some((sub: any) => sub.status === 'active');
+
+    if (hasActiveSubscription) {
+      console.log(`[sync] Active subscription found for ${email}, adding to whitelist`);
+      await storage.addEmailToWhitelist(email, 'systeme_sync');
+      return true;
+    }
+
+    // 3. Check for course enrollments (common for one-time course purchases)
+    const enrollmentsResponse = await systemeInstance.api_schoolenrollments_get_collection({ contact: contact.id.toString() });
+    const enrollments = enrollmentsResponse.data.items;
+
+    const hasActiveEnrollment = enrollments?.some((enrollment: any) => enrollment.active === true);
+
+    if (hasActiveEnrollment) {
+      console.log(`[sync] Active enrollment found for ${email}, adding to whitelist`);
+      await storage.addEmailToWhitelist(email, 'systeme_sync');
+      return true;
+    }
+
+    console.log(`[sync] No active subscription or enrollment found for ${email}`);
+    return false;
+  } catch (error) {
+    console.error(`[sync] Error syncing access for ${email}:`, error);
+    return false;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Diagnostic test route for email sending (development only)
   app.get('/debug/send-test', async (req, res) => {
@@ -156,7 +208,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { firstName, lastName, email, password } = req.body;
 
       // Check if email is whitelisted first
-      const isWhitelisted = await storage.isEmailWhitelisted(email);
+      let isWhitelisted = await storage.isEmailWhitelisted(email);
+
+      // Backup: Try to sync from Systeme.io if not whitelisted
+      if (!isWhitelisted) {
+        console.log("Signup - Email not whitelisted, attempting sync from Systeme.io:", email);
+        isWhitelisted = await syncUserAccessFromSysteme(email);
+      }
+
       if (!isWhitelisted) {
         return res.status(403).json({
           message: "Access is restricted to course members only. Please purchase the course to gain access.",
@@ -217,7 +276,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email, password } = req.body;
 
       // Check if email is whitelisted first
-      const isWhitelisted = await storage.isEmailWhitelisted(email);
+      let isWhitelisted = await storage.isEmailWhitelisted(email);
+
+      // Backup: Try to sync from Systeme.io if not whitelisted
+      if (!isWhitelisted) {
+        console.log("Login - Email not whitelisted, attempting sync from Systeme.io:", email);
+        isWhitelisted = await syncUserAccessFromSysteme(email);
+      }
+
       if (!isWhitelisted) {
         console.log("Login - Email not whitelisted:", email);
         return res.status(403).json({
@@ -289,6 +355,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Expired tokens cleared successfully" });
   });
 
+  // Manual sync access endpoint
+  app.post('/api/auth/sync-access', async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const success = await syncUserAccessFromSysteme(email.toLowerCase());
+      if (success) {
+        res.json({ message: "Access synced successfully. You can now log in." });
+      } else {
+        res.status(404).json({ message: "No active subscription or purchase found for this email in Systeme.io." });
+      }
+    } catch (error) {
+      console.error("Manual sync error:", error);
+      res.status(500).json({ message: "Failed to sync access" });
+    }
+  });
+
   app.get('/api/auth/user', jwtAuth, async (req, res) => {
     try {
       console.log("Auth check - User from middleware:", req.user?.email);
@@ -325,7 +411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Subscription Management Routes
   app.get('/api/subscription', jwtAuth, async (req: any, res) => {
     try {
-      const userEmail = req.user.email;
+      const userEmail = req.user?.email;
       console.log(`Fetching subscription for ${userEmail}`);
 
       if (!process.env.SYSTEME_API_KEY) {
@@ -398,7 +484,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastBillingDate: lastBillingDate,
         createdAt: activeSubscription.createdAt,
         cancelUrl: "https://systeme.io/dashboard/profile/manage-subscriptions",
-        id: activeSubscription.id
+        id: activeSubscription.id,
+        cancelType: process.env.SYSTEME_SUBSCRIPTION_CANCEL_TYPE || 'WhenBillingCycleEnds'
       });
 
     } catch (error) {
@@ -409,8 +496,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/subscription/cancel', jwtAuth, async (req: any, res) => {
     try {
-      const userEmail = req.user.email;
-      const { subscriptionId, cancelType = 'at_the_end_of_the_period' } = req.body;
+      const userEmail = req.user?.email;
+      const { subscriptionId } = req.body;
+      const systemeCancelType = process.env.SYSTEME_SUBSCRIPTION_CANCEL_TYPE || 'WhenBillingCycleEnds';
 
       if (!process.env.SYSTEME_API_KEY) {
         return res.status(503).json({ message: "Subscription service unavailable" });
@@ -420,19 +508,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Subscription ID is required" });
       }
 
-      console.log(`Cancelling subscription ${subscriptionId} for ${userEmail} with type ${cancelType}`);
+      console.log(`Cancelling subscription ${subscriptionId} for ${userEmail} with type ${systemeCancelType}`);
 
-      // 1. Cancel in Systeme.io
-      // cancelType should be 'immediate' or 'at_the_end_of_the_period'
-      await systemeInstance.cancel_subscription(
-        { cancel: cancelType },
-        { id: subscriptionId.toString() }
-      );
-
-      // 2. Add tag to contact (optional, but requested)
+      // 0. Verify ownership
+      // 1. Get contact ID
       const contactsResponse = await systemeInstance.api_contacts_get_collection({ email: userEmail });
       const contact = contactsResponse.data.items?.[0];
 
+      if (!contact) {
+        return res.status(404).json({ message: "Contact not found in subscription system" });
+      }
+
+      // 2. Get subscriptions for this contact
+      const subscriptionsResponse = await systemeInstance.api_paymentsubscriptions_get_collection({ contact: contact.id as number });
+      const subscriptions = subscriptionsResponse.data.items;
+
+      // 3. Check if the subscriptionId belongs to this contact
+      const userOwnsSubscription = subscriptions?.some((sub: any) => sub.id.toString() === subscriptionId.toString());
+
+      if (!userOwnsSubscription) {
+        console.warn(`User ${userEmail} attempted to cancel subscription ${subscriptionId} which they do not own.`);
+        return res.status(403).json({ message: "You do not have permission to cancel this subscription" });
+      }
+
+      // 1. Cancel in Systeme.io (Using application/json as required by the API)
+      const url = `https://api.systeme.io/api/payment/subscriptions/${subscriptionId}/cancel`;
+      const body: CancelSubscriptionBodyParam = { cancel: systemeCancelType as any };
+      const bodyString = JSON.stringify(body);
+
+      console.log(`Sending POST to ${url} with body: ${bodyString}`);
+
+      const systemeRes = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'x-api-key': process.env.SYSTEME_API_KEY as string
+        },
+        body: bodyString
+      });
+
+      if (!systemeRes.ok) {
+        const errorText = await systemeRes.text();
+        console.error(`Systeme.io API error (${systemeRes.status}):`, errorText);
+        try {
+          const errorData = JSON.parse(errorText);
+          console.error("Parsed error details:", errorData);
+        } catch (e) { }
+        throw new Error(`Systeme.io API error: ${systemeRes.status} ${systemeRes.statusText}`);
+      }
+
+      console.log(`Successfully cancelled subscription ${subscriptionId} via application/json`);
+
+      // 2. Add tag to contact (optional, but requested)
       if (contact && process.env.SYSTEME_CANCELLED_TAG_ID) {
         try {
           await systemeInstance.post_contact_tag({ tagId: parseInt(process.env.SYSTEME_CANCELLED_TAG_ID) }, { id: contact.id?.toString() as string });
@@ -443,18 +571,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // 3. Remove from whitelist ONLY if immediate
-      if (cancelType === 'immediate') {
+      if (systemeCancelType === 'Now') {
         await storage.removeEmailFromWhitelist(userEmail);
       }
 
       res.json({
-        message: cancelType === 'immediate'
+        message: systemeCancelType === 'Now'
           ? "Subscription cancelled immediately"
           : "Subscription will be cancelled at the end of the billing period"
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error cancelling subscription:", error);
+      if (error.data) console.error("Error data:", error.data);
+      if (error.data?.violations) console.error("Violations:", error.data.violations);
       res.status(500).json({ message: "Failed to cancel subscription" });
     }
   });

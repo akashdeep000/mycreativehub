@@ -19,11 +19,11 @@ export function generateToken(userId: string, email: string): string {
   console.log("JWT Generate - Environment:", process.env.NODE_ENV);
   console.log("JWT Generate - JWT_SECRET available:", !!JWT_SECRET);
   console.log("JWT Generate - JWT_SECRET length:", JWT_SECRET.length);
-  
+
   const token = jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
   console.log("JWT Generate - Token created, length:", token.length);
   console.log("JWT Generate - Token preview:", token.substring(0, 30) + "...");
-  
+
   return token;
 }
 
@@ -34,11 +34,11 @@ export function verifyToken(token: string): JwtPayload | null {
     console.log("JWT Verify - JWT_SECRET available:", !!JWT_SECRET);
     console.log("JWT Verify - Token length:", token.length);
     console.log("JWT Verify - Token preview:", token.substring(0, 30) + "...");
-    
+
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     console.log("JWT Verify - Token verified successfully for user:", decoded.email);
     console.log("JWT Verify - Token payload:", JSON.stringify(decoded, null, 2));
-    
+
     return decoded;
   } catch (error) {
     console.error("JWT Verify - Token verification failed");
@@ -65,28 +65,28 @@ export const jwtAuth: RequestHandler = async (req, res, next) => {
     console.log("JWT Auth - Request URL:", req.url);
     console.log("JWT Auth - Request method:", req.method);
     console.log("JWT Auth - Checking authentication");
-    
+
     // Check for token in Authorization header
     const authHeader = req.headers.authorization;
     const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
+
     // Check for token in cookies
     const cookieToken = req.cookies?.authToken;
-    
+
     const token = headerToken || cookieToken;
-    
+
     console.log("JWT Auth - Token found:", !!token);
     console.log("JWT Auth - Token source:", headerToken ? "header" : cookieToken ? "cookie" : "none");
     console.log("JWT Auth - Auth header present:", !!authHeader);
     console.log("JWT Auth - Cookie token present:", !!cookieToken);
     console.log("JWT Auth - Available cookies:", Object.keys(req.cookies || {}));
-    
+
     if (!token) {
       console.log("JWT Auth - No token provided");
       console.log("=== JWT AUTH FAILED (NO TOKEN) ===");
       return res.status(401).json({ message: "Unauthorized" });
     }
-    
+
     const decoded = verifyToken(token);
     if (!decoded) {
       console.log("JWT Auth - Invalid token");
@@ -95,10 +95,10 @@ export const jwtAuth: RequestHandler = async (req, res, next) => {
       console.log("=== JWT AUTH FAILED (INVALID TOKEN) ===");
       return res.status(401).json({ message: "Unauthorized" });
     }
-    
+
     console.log("JWT Auth - Token valid for user:", decoded.email);
     console.log("JWT Auth - User ID from token:", decoded.userId);
-    
+
     // Fetch user from database
     const user = await storage.getUser(decoded.userId);
     if (!user) {
@@ -106,9 +106,24 @@ export const jwtAuth: RequestHandler = async (req, res, next) => {
       console.log("=== JWT AUTH FAILED (USER NOT FOUND) ===");
       return res.status(401).json({ message: "Unauthorized" });
     }
-    
+
     console.log("JWT Auth - User authenticated:", user.email);
-    console.log("JWT Auth - User object:", JSON.stringify(user, null, 2));
+
+    // Check if user's email is still whitelisted
+    // We allow /api/subscription routes so they can see their status even if access is removed
+    const isSubscriptionRoute = req.url.startsWith('/api/subscription');
+    if (!isSubscriptionRoute) {
+      const isWhitelisted = await storage.isEmailWhitelisted(user.email);
+      if (!isWhitelisted) {
+        console.log("JWT Auth - User not whitelisted:", user.email);
+        console.log("=== JWT AUTH FAILED (NOT WHITELISTED) ===");
+        return res.status(403).json({
+          message: "Access is restricted to course members only.",
+          accessDenied: true
+        });
+      }
+    }
+
     req.user = user;
     console.log("=== JWT AUTH SUCCESS ===");
     next();

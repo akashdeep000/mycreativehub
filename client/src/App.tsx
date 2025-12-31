@@ -35,7 +35,6 @@ import RepurposingToolkit from "@/pages/repurposing-toolkit";
 import ContentPerformanceStrategy from "@/pages/content-performance-strategy";
 import PerformanceTrackingTable from "@/pages/performance-tracking-table";
 import EditProfile from "@/pages/edit-profile";
-import SubscriptionManagement from "@/pages/subscription-management";
 
 import ResourceLibrary from "@/pages/resource-library";
 import ProductLaunch from "@/pages/product-launch";
@@ -155,7 +154,6 @@ function Router() {
         <Route path="/content-performance-strategy" component={ContentPerformanceStrategy} />
         <Route path="/performance-tracking-table" component={PerformanceTrackingTable} />
         <Route path="/edit-profile" component={EditProfile} />
-        <Route path="/subscription-management" component={SubscriptionManagement} />
 
         <Route path="/resource-library" component={ResourceLibrary} />
         <Route path="/launch" component={ProductLaunch} />

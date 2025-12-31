@@ -13,8 +13,9 @@ import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowLeft, Camera, User, Mail, Lock, Save } from "lucide-react";
+import { ArrowLeft, Camera, User, Mail, Lock, Save, CreditCard } from "lucide-react";
 import { useLocation } from "wouter";
+import { SubscriptionSection } from "@/components/subscription/SubscriptionSection";
 
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -154,7 +155,7 @@ export default function EditProfile() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-2xl">
+    <div className="container mx-auto py-8 px-4 max-w-3xl">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <Button
@@ -362,7 +363,14 @@ export default function EditProfile() {
             </form>
           </CardContent>
         </Card>
-
+        {/* Subscription Management */}
+        <div className="pt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <CreditCard className="w-5 h-5 text-gray-900" />
+            <h2 className="text-xl font-bold text-gray-900">Subscription Management</h2>
+          </div>
+          <SubscriptionSection />
+        </div>
 
       </div>
       

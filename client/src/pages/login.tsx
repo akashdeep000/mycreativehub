@@ -116,6 +116,51 @@ export default function Login() {
     }
   };
 
+  const handleSyncAccess = async () => {
+    if (!formData.email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      console.log("Frontend - Starting manual access sync");
+      const response = await fetch("/api/auth/sync-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email.toLowerCase() }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        toast({
+          title: "Sync successful",
+          description: data.message,
+        });
+        setErrorMessage(null);
+      } else {
+        toast({
+          title: "Sync failed",
+          description: data.message || "Could not find your subscription.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("Frontend - Sync access error:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while syncing access. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -164,10 +209,21 @@ export default function Login() {
               </CardHeader>
               <CardContent>
                 {errorMessage && (
-                  <div
-                    className="mb-4 text-center text-sm text-red-600 font-bold"
-                    dangerouslySetInnerHTML={{ __html: errorMessage }}
-                  />
+                  <div className="mb-4 text-center">
+                    <div
+                      className="text-sm text-red-600 font-bold mb-2"
+                      dangerouslySetInnerHTML={{ __html: errorMessage }}
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="text-xs border-red-200 text-red-600 hover:bg-red-50"
+                      onClick={handleSyncAccess}
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Syncing..." : "Already purchased? Sync Access"}
+                    </Button>
+                  </div>
                 )}
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
@@ -244,6 +300,16 @@ export default function Login() {
                       Sign up here
                     </Button>
                   </p>
+                </div>
+
+                <div className="text-center pt-4 border-t border-gray-100 mt-4">
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-[#f46454] text-[#f46454] hover:bg-[#f46454] hover:text-white rounded-full transition-all duration-300"
+                    onClick={() => window.location.href = 'https://toolkit.fizzandflourish.com/mycreativehub'}
+                  >
+                    Not a Member? Find out how to join
+                  </Button>
                 </div>
               </CardContent>
             </Card>
