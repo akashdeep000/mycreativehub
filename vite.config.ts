@@ -73,6 +73,7 @@ export default defineConfig({
         "theme_color": "#000000"
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 1024 * 1024 * 5,
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [
           {
