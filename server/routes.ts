@@ -485,7 +485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: activeSubscription.createdAt,
         cancelUrl: "https://systeme.io/dashboard/profile/manage-subscriptions",
         id: activeSubscription.id,
-        cancelType: process.env.SYSTEME_SUBSCRIPTION_CANCEL_TYPE || 'WhenBillingCycleEnds'
+        cancelType: process.env.SYSTEME_SUBSCRIPTION_CANCEL_TYPE || 'WhenBillingPeriodEnds'
       });
 
     } catch (error) {
@@ -498,7 +498,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userEmail = req.user?.email;
       const { subscriptionId } = req.body;
-      const systemeCancelType = process.env.SYSTEME_SUBSCRIPTION_CANCEL_TYPE || 'WhenBillingCycleEnds';
+      const systemeCancelType = process.env.SYSTEME_SUBSCRIPTION_CANCEL_TYPE || 'WhenBillingPeriodEnds';
 
       if (!process.env.SYSTEME_API_KEY) {
         return res.status(503).json({ message: "Subscription service unavailable" });
