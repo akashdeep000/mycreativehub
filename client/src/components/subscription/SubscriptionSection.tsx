@@ -22,6 +22,7 @@ type Subscription = {
   createdAt: string;
   cancelUrl: string;
   cancelType: string;
+  validUntil?: string;
 };
 
 export function SubscriptionSection() {
@@ -126,7 +127,7 @@ export function SubscriptionSection() {
     );
   }
 
-  if (error || !subscription || subscription.status !== 'active') {
+  if (error || !subscription || (subscription.status !== 'active' && subscription.status !== 'cancelled')) {
     return (
       <Card>
         <CardHeader>
@@ -148,6 +149,8 @@ export function SubscriptionSection() {
     );
   }
 
+  const isCancelled = subscription.status === 'cancelled';
+
   return (
     <div className="space-y-6">
       <Card className="border-l-4 border-l-pink-500 shadow-md">
@@ -157,7 +160,9 @@ export function SubscriptionSection() {
               <CardTitle className="text-xl">{subscription.plan}</CardTitle>
               <CardDescription className="mt-1">Current Active Plan</CardDescription>
             </div>
-            <Badge variant="default" className="bg-green-500 hover:bg-green-600">Active</Badge>
+            <Badge variant="default" className={isCancelled ? "bg-yellow-500 hover:bg-yellow-600" : "bg-green-500 hover:bg-green-600"}>
+              {isCancelled ? "Cancelled" : "Active"}
+            </Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -204,20 +209,34 @@ export function SubscriptionSection() {
                 <Calendar className="h-5 w-5 text-pink-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Next Billing Date</p>
+                <p className="text-sm font-medium text-gray-500">
+                  {isCancelled ? "Access Valid Until" : "Next Billing Date"}
+                </p>
                 <p className="text-lg font-semibold">
-                  {subscription.nextBillingDate ? new Date(subscription.nextBillingDate).toLocaleDateString() : 'N/A'}
+                  {isCancelled 
+                    ? (subscription.validUntil ? new Date(subscription.validUntil).toLocaleDateString() : 'N/A')
+                    : (subscription.nextBillingDate ? new Date(subscription.nextBillingDate).toLocaleDateString() : 'N/A')
+                  }
                 </p>
               </div>
             </div>
           </div>
 
         </CardContent>
-        <CardFooter className="flex justify-end bg-gray-50/50 border-t p-6">
-          <Button variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleCancelClick}>
-            Cancel Subscription
-          </Button>
-        </CardFooter>
+        {!isCancelled && (
+          <CardFooter className="flex justify-end bg-gray-50/50 border-t p-6">
+            <Button variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleCancelClick}>
+              Cancel Subscription
+            </Button>
+          </CardFooter>
+        )}
+        {isCancelled && (
+           <CardFooter className="flex justify-start bg-yellow-50/50 border-t p-6">
+            <p className="text-sm text-yellow-800">
+              Your subscription has been cancelled. You will continue to have access until {subscription.validUntil ? new Date(subscription.validUntil).toLocaleDateString() : 'the end of the period'}.
+            </p>
+          </CardFooter>
+        )}
       </Card>
 
       {/* Cancellation Flow Modal */}

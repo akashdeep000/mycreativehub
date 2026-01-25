@@ -121,55 +121,77 @@ async function updateUserStatsOnTaskCompletion(userId: string) {
 }
 
 // Helper function to sync user access from Systeme.io
+/**
+ * Synchronizes user access rights from Systeme.io based on their email address.
+ * This function checks for active subscriptions or course enrollments and updates the local whitelist.
+ * 
+ * @param email - The email address of the user to sync access for
+ * @returns Promise<boolean> - True if access was successfully synced (user has active sub/enrollment), false otherwise
+ */
+/*
 async function syncUserAccessFromSysteme(email: string): Promise<boolean> {
   try {
     console.log(`[sync] Attempting to sync access for ${email}`);
 
+    // Check if the Systeme.io API key is configured in environment variables
     if (!process.env.SYSTEME_API_KEY) {
       console.warn("[sync] SYSTEME_API_KEY not set, skipping sync");
       return false;
     }
 
-    // 1. Get contact from Systeme.io
+    // 1. Get contact ID from Systeme.io using the provided email
+    // This is the first step to link the local user to a Systeme.io contact
     const contactsResponse = await systemeInstance.api_contacts_get_collection({ email });
     const contact = contactsResponse.data.items?.[0];
 
+    // If no contact is found in Systeme.io, we cannot proceed with checking subscriptions
     if (!contact) {
       console.log(`[sync] No contact found for ${email} in Systeme.io`);
       return false;
     }
 
-    // 2. Check for active subscriptions
+    // 2. Check for active subscriptions for the found contact
+    // We query the payment subscriptions endpoint filtering by the contact's ID
     const subscriptionsResponse = await systemeInstance.api_paymentsubscriptions_get_collection({ contact: contact.id as number });
     const subscriptions = subscriptionsResponse.data.items;
 
+    // Check if any of the returned subscriptions have a status of 'active'
     const hasActiveSubscription = subscriptions?.some((sub: any) => sub.status === 'active');
 
+    // If an active subscription is found, grant access
     if (hasActiveSubscription) {
       console.log(`[sync] Active subscription found for ${email}, adding to whitelist`);
+      // Add the user's email to the local whitelist to allow login/access
       await storage.addEmailToWhitelist(email, 'systeme_sync');
       return true;
     }
 
     // 3. Check for course enrollments (common for one-time course purchases)
+    // If no subscription is found, we check if they are enrolled in any courses
     const enrollmentsResponse = await systemeInstance.api_schoolenrollments_get_collection({ contact: contact.id.toString() });
     const enrollments = enrollmentsResponse.data.items;
 
+    // Check if any enrollment is marked as active
     const hasActiveEnrollment = enrollments?.some((enrollment: any) => enrollment.active === true);
 
+    // If an active enrollment is found, grant access
     if (hasActiveEnrollment) {
       console.log(`[sync] Active enrollment found for ${email}, adding to whitelist`);
+      // Add the user's email to the local whitelist
       await storage.addEmailToWhitelist(email, 'systeme_sync');
       return true;
     }
 
+    // If neither active subscription nor enrollment is found, access is not granted
     console.log(`[sync] No active subscription or enrollment found for ${email}`);
     return false;
   } catch (error) {
+    // Log any errors that occur during the sync process
     console.error(`[sync] Error syncing access for ${email}:`, error);
     return false;
   }
 }
+*/
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Diagnostic test route for email sending (development only)
@@ -211,10 +233,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let isWhitelisted = await storage.isEmailWhitelisted(email);
 
       // Backup: Try to sync from Systeme.io if not whitelisted
+      /*
       if (!isWhitelisted) {
         console.log("Signup - Email not whitelisted, attempting sync from Systeme.io:", email);
         isWhitelisted = await syncUserAccessFromSysteme(email);
       }
+      */
 
       if (!isWhitelisted) {
         return res.status(403).json({
@@ -279,10 +303,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let isWhitelisted = await storage.isEmailWhitelisted(email);
 
       // Backup: Try to sync from Systeme.io if not whitelisted
+      /*
       if (!isWhitelisted) {
         console.log("Login - Email not whitelisted, attempting sync from Systeme.io:", email);
         isWhitelisted = await syncUserAccessFromSysteme(email);
       }
+      */
 
       if (!isWhitelisted) {
         console.log("Login - Email not whitelisted:", email);
@@ -356,6 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Manual sync access endpoint
+  /*
   app.post('/api/auth/sync-access', async (req, res) => {
     try {
       const { email } = req.body;
@@ -374,6 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to sync access" });
     }
   });
+  */
 
   app.get('/api/auth/user', jwtAuth, async (req, res) => {
     try {
@@ -440,6 +468,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       if (!activeSubscription) {
+        // Check for cancelled subscriptions that might still be valid
+        const cancelledSubscriptions = subscriptions?.filter((sub: any) =>
+          (sub.contactId === contact.id || sub.contact?.id === contact.id || true) &&
+          sub.status === 'cancelled'
+        ).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        const latestCancelledSubscription = cancelledSubscriptions?.[0];
+
+        if (latestCancelledSubscription) {
+          let validUntil = latestCancelledSubscription.cancelledAt; // Default to cancellation date
+          let lastBillingDate = latestCancelledSubscription.createdAt; // Default to creation date
+
+          if (latestCancelledSubscription.createdAt && latestCancelledSubscription.pricePlan?.recurringOptions) {
+            const { interval, intervalCount = 1, trialPeriod = 0, trialInterval = 'day' } = latestCancelledSubscription.pricePlan.recurringOptions;
+
+            // Calculate trial end date
+            let trialEndDate = new Date(latestCancelledSubscription.createdAt);
+            if (trialPeriod > 0) {
+              if (trialInterval === 'day') trialEndDate.setDate(trialEndDate.getDate() + trialPeriod);
+              else if (trialInterval === 'week') trialEndDate.setDate(trialEndDate.getDate() + (trialPeriod * 7));
+              else if (trialInterval === 'month') trialEndDate.setMonth(trialEndDate.getMonth() + trialPeriod);
+            }
+
+            const cancelledDate = new Date(latestCancelledSubscription.cancelledAt);
+
+            // If cancelled during trial, valid until trial end
+            if (cancelledDate <= trialEndDate) {
+              validUntil = trialEndDate.toISOString();
+              // Last billing date is when the trial started (same as creation)
+              lastBillingDate = latestCancelledSubscription.createdAt;
+            } else {
+              // If cancelled after trial, calculate end of current billing period
+              let cycleStart = new Date(trialEndDate); // Track start of current cycle
+              let cycleEnd = new Date(trialEndDate); // Billing cycles start after trial
+
+              // Advance cycles until we pass the cancellation date
+              while (cycleEnd <= cancelledDate) {
+                cycleStart = new Date(cycleEnd); // Update start to current cycle
+                if (interval === 'year') cycleEnd.setFullYear(cycleEnd.getFullYear() + intervalCount);
+                else if (interval === 'month') cycleEnd.setMonth(cycleEnd.getMonth() + intervalCount);
+                else if (interval === 'day') cycleEnd.setDate(cycleEnd.getDate() + intervalCount);
+                else break; // Safety break
+              }
+              validUntil = cycleEnd.toISOString();
+              lastBillingDate = cycleStart.toISOString(); // Start of the current billing cycle
+            }
+          }
+
+          // Only return as "cancelled" if the validity period hasn't passed yet
+          if (new Date(validUntil) > new Date()) {
+            return res.json({
+              id: latestCancelledSubscription.id,
+              status: 'cancelled',
+              message: "Subscription cancelled but still valid",
+              validUntil: validUntil,
+              plan: latestCancelledSubscription.pricePlan?.name,
+              amount: latestCancelledSubscription.pricePlan?.amount,
+              currency: latestCancelledSubscription.pricePlan?.currency,
+              createdAt: latestCancelledSubscription.createdAt,
+              cancelUrl: "https://systeme.io/dashboard/profile/manage-subscriptions",
+              cancelType: process.env.SYSTEME_SUBSCRIPTION_CANCEL_TYPE || 'WhenBillingPeriodEnds',
+              nextBillingDate: null,
+              lastBillingDate: lastBillingDate
+            });
+          }
+        }
+
         return res.json({ status: 'inactive', message: "No active subscription found" });
       }
 
@@ -3947,9 +4042,11 @@ TOTAL EVENTS         : ${stats.tbEvents + stats.contentEvents}
   });
 
   // Systeme.io webhook endpoint for course purchases
+  /*
   app.post('/api/systeme-webhook', async (req, res) => {
     console.log('=== WEBHOOK START ===');
     console.log('Systeme.io webhook received:', JSON.stringify(req.body, null, 2));
+
 
     try {
       // Extract email from webhook data with comprehensive search
@@ -4006,6 +4103,7 @@ TOTAL EVENTS         : ${stats.tbEvents + stats.contentEvents}
       res.status(500).json(errorResponse);
     }
   });
+  */
 
   // Financial Management System Routes
 

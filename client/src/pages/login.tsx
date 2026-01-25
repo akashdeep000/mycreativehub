@@ -116,6 +116,7 @@ export default function Login() {
     }
   };
 
+  /*
   const handleSyncAccess = async () => {
     if (!formData.email) {
       toast({
@@ -160,6 +161,7 @@ export default function Login() {
       setIsSubmitting(false);
     }
   };
+  */
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -214,6 +216,7 @@ export default function Login() {
                       className="text-sm text-red-600 font-bold mb-2"
                       dangerouslySetInnerHTML={{ __html: errorMessage }}
                     />
+                    {/* 
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -223,6 +226,7 @@ export default function Login() {
                     >
                       {isSubmitting ? "Syncing..." : "Already purchased? Sync Access"}
                     </Button>
+                    */}
                   </div>
                 )}
                 <form onSubmit={handleSubmit} className="space-y-4">

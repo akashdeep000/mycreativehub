@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
 import {
@@ -24,7 +25,8 @@ import {
   TrendingDown,
   DollarSign,
   Loader2,
-  Search
+  Search,
+  Repeat
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +40,7 @@ interface Transaction {
   notes: string;
   year: number;
   month: number;
+  isRecurring: boolean;
 }
 
 interface MonthSettings {
@@ -119,7 +122,8 @@ export default function FinancialManagement() {
     category: '',
     amount: '',
     date: new Date().toISOString().split('T')[0],
-    notes: ''
+    notes: '',
+    isRecurring: false
   });
 
   // Load transactions and month settings
@@ -196,7 +200,8 @@ export default function FinancialManagement() {
           category: '',
           amount: '',
           date: new Date().toISOString().split('T')[0],
-          notes: ''
+          notes: '',
+          isRecurring: false
         });
         loadData();
       }
@@ -372,7 +377,8 @@ export default function FinancialManagement() {
       category: transaction.category,
       amount: transaction.amount,
       date: new Date(transaction.date).toISOString().split('T')[0],
-      notes: transaction.notes || ''
+      notes: transaction.notes || '',
+      isRecurring: transaction.isRecurring || false
     });
     setIsEditDialogOpen(true);
   };
@@ -629,6 +635,20 @@ export default function FinancialManagement() {
                         data-testid="input-date"
                       />
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="recurring"
+                        checked={formData.isRecurring}
+                        onCheckedChange={(checked) => setFormData({ ...formData, isRecurring: checked as boolean })}
+                        data-testid="checkbox-recurring"
+                      />
+                      <Label
+                        htmlFor="recurring"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Make this recurring monthly
+                      </Label>
+                    </div>
                     <div className="space-y-2">
                       <Label>Notes (Optional)</Label>
                       <Textarea
@@ -666,11 +686,21 @@ export default function FinancialManagement() {
                     <p className="text-center py-8 text-gray-500">No income found</p>
                   ) : (
                     <div className="space-y-3">
-                      {filteredTransactions.filter(t => t.type === 'income').map((transaction) => (
-                        <div key={transaction.id} className="border rounded-lg p-3 space-y-2">
+                      {filteredTransactions
+                        .filter(t => t.type === 'income')
+                        .map((transaction) => (
+                        <div key={transaction.id} className={`border rounded-lg p-3 space-y-2 ${transaction.isRecurring ? 'bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800' : ''}`}>
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
-                              <p className="font-medium">{transaction.category}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{transaction.category}</p>
+                                {transaction.isRecurring && (
+                                  <Badge variant="secondary" className="gap-1 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+                                    <Repeat className="w-3 h-3" />
+                                    Monthly
+                                  </Badge>
+                                )}
+                              </div>
                               <p className="text-sm text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
                             </div>
                             <p className="text-lg font-bold text-green-600 dark:text-green-400">
@@ -722,11 +752,21 @@ export default function FinancialManagement() {
                     <p className="text-center py-8 text-gray-500">No expenses found</p>
                   ) : (
                     <div className="space-y-3">
-                      {filteredTransactions.filter(t => t.type === 'expense').map((transaction) => (
-                        <div key={transaction.id} className="border rounded-lg p-3 space-y-2">
+                      {filteredTransactions
+                        .filter(t => t.type === 'expense')
+                        .map((transaction) => (
+                        <div key={transaction.id} className={`border rounded-lg p-3 space-y-2 ${transaction.isRecurring ? 'bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800' : ''}`}>
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
-                              <p className="font-medium">{transaction.category}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{transaction.category}</p>
+                                {transaction.isRecurring && (
+                                  <Badge variant="secondary" className="gap-1 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+                                    <Repeat className="w-3 h-3" />
+                                    Monthly
+                                  </Badge>
+                                )}
+                              </div>
                               <p className="text-sm text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
                             </div>
                             <p className="text-lg font-bold text-red-600 dark:text-red-400">
@@ -834,6 +874,20 @@ export default function FinancialManagement() {
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       data-testid="input-edit-date"
                     />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="edit-recurring"
+                      checked={formData.isRecurring}
+                      onCheckedChange={(checked) => setFormData({ ...formData, isRecurring: checked as boolean })}
+                      data-testid="checkbox-edit-recurring"
+                    />
+                    <Label
+                      htmlFor="edit-recurring"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      Make this recurring monthly
+                    </Label>
                   </div>
                   <div className="space-y-2">
                     <Label>Notes (Optional)</Label>

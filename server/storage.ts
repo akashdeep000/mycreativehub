@@ -1898,19 +1898,41 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFinanceTransactions(userId: string, year: number, month: number): Promise<FinanceTransaction[]> {
+    // Single query: get current month transactions OR recurring transactions from same/earlier months
     const results = await db
       .select()
       .from(financeTransactions)
       .where(
         and(
           eq(financeTransactions.userId, userId),
-          eq(financeTransactions.year, year),
-          eq(financeTransactions.month, month),
-          eq(financeTransactions.isDeleted, false)
+          eq(financeTransactions.isDeleted, false),
+          or(
+            // Current month transactions (both recurring and non-recurring)
+            and(
+              eq(financeTransactions.year, year),
+              eq(financeTransactions.month, month)
+            ),
+            // Recurring transactions from same month or earlier (but not already counted above)
+            and(
+              eq(financeTransactions.isRecurring, true),
+              sql`(${financeTransactions.year} < ${year} OR (${financeTransactions.year} = ${year} AND ${financeTransactions.month} < ${month}))`
+            )
+          )
         )
-      )
-      .orderBy(desc(financeTransactions.date), desc(financeTransactions.createdAt));
-    return results;
+      );
+
+    // Sort: recurring first, then by date descending
+    return results.sort((a, b) => {
+      // Sort by recurring status first (recurring on top)
+      if (a.isRecurring !== b.isRecurring) {
+        return b.isRecurring ? 1 : -1;
+      }
+      // Then by date descending
+      const dateCompare = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateCompare !== 0) return dateCompare;
+      // Finally by creation date descending
+      return new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime();
+    });
   }
 
   async getFinanceTransaction(id: number): Promise<FinanceTransaction | undefined> {

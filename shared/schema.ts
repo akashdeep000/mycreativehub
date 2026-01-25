@@ -984,6 +984,7 @@ export const financeTransactions = pgTable(
     notes: text("notes"),
     year: integer("year").notNull(),
     month: integer("month").notNull(), // 1-12
+    isRecurring: boolean("is_recurring").notNull().default(false), // Monthly recurring
     isDeleted: boolean("is_deleted").notNull().default(false),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
