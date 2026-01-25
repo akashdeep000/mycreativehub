@@ -4042,7 +4042,7 @@ TOTAL EVENTS         : ${stats.tbEvents + stats.contentEvents}
   });
 
   // Systeme.io webhook endpoint for course purchases
-  /*
+  
   app.post('/api/systeme-webhook', async (req, res) => {
     console.log('=== WEBHOOK START ===');
     console.log('Systeme.io webhook received:', JSON.stringify(req.body, null, 2));
@@ -4103,7 +4103,7 @@ TOTAL EVENTS         : ${stats.tbEvents + stats.contentEvents}
       res.status(500).json(errorResponse);
     }
   });
-  */
+  
 
   // Financial Management System Routes
 
